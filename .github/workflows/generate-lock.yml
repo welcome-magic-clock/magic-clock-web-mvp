@@ -1,6 +1,5 @@
 name: Generate lockfile
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 permissions:
   contents: write
@@ -13,9 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm install --package-lock-only
+      - run: npm install
       - name: Commit lockfile
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: add package-lock.json"
+          commit_message: "chore: update package-lock.json"
           file_pattern: package-lock.json
