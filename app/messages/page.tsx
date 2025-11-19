@@ -1,1 +1,1 @@
-export default ()=> <div className='container'><h1 className='text-2xl font-semibold'>Messages</h1><p className='text-slate-600 mt-2'>Threads (mock).</p></div>
+export default function Page() { return (<div><h1 className="text-xl font-semibold">Messages</h1><p className="opacity-70">Placeholder messages.</p></div>); }

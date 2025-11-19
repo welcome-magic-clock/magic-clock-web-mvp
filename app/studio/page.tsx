@@ -1,10 +1,1 @@
-
-import BeforeAfter from "@/features/studio/BeforeAfter";
-export default function Page(){
-  return (
-    <div className="container space-y-4">
-      <h1 className="text-2xl font-semibold">Magic Studio — Création</h1>
-      <BeforeAfter />
-    </div>
-  );
-}
+export default function Page() { return (<div><h1 className="text-xl font-semibold">Studio</h1><p className="opacity-70">Placeholder studio.</p></div>); }

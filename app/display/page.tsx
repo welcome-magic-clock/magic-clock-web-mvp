@@ -1,9 +1,1 @@
-
-export default function Page(){
-  return (
-    <div className="container space-y-3">
-      <h1 className="text-2xl font-semibold">Magic Display (Cube 3D)</h1>
-      <p className="text-slate-600">Placeholder éditeur 3D (faces, aiguilles). À brancher.</p>
-    </div>
-  );
-}
+export default function Page() { return (<div><h1 className="text-xl font-semibold">Display</h1><p className="opacity-70">Placeholder display.</p></div>); }
