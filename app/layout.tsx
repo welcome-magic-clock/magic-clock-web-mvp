@@ -1,20 +1,18 @@
-import "./globals.css"
-import LeftNav from "@/components/LeftNav"
 
-export const metadata = {
-  title: "Magic Clock",
-  description: "MVP — Amazing / Meet me / Studio / Monétisation",
-}
-
+import "./globals.css";
+import LeftNav from "@/components/LeftNav";
+export const metadata = { title: "Magic Clock", description: "PWA MVP" };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
       <body>
-        <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
+        <div className="min-h-screen flex">
           <LeftNav />
-          <div className="min-h-screen">{children}</div>
+          <main className="flex-1 p-4">
+            {children}
+          </main>
         </div>
       </body>
     </html>
-  )
+  );
 }

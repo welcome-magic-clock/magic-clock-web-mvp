@@ -1,0 +1,1 @@
+export default ()=> <section className='container space-y-4'><h1 className='text-2xl font-semibold'>Privacy (MVP)</h1><p>À compléter (CH+UE).</p></section>

@@ -1,1 +1,5 @@
-export default { reactStrictMode: true, experimental: { optimizePackageImports: ["lucide-react"] } }
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: { unoptimized: true }
+};
+export default nextConfig;

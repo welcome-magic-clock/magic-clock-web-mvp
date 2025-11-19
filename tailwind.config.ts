@@ -1,16 +1,16 @@
-import type { Config } from "tailwindcss"
+
+import type { Config } from "tailwindcss";
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./features/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        brand: { DEFAULT: "#2563eb", 2: "#7c3aed" },
+        brand: { 500: "#6D4AFF", 600: "#5A36FF" }
       },
-      boxShadow: {
-        soft: "0 10px 28px rgba(30,64,175,.08), 0 6px 16px rgba(124,58,237,.06)",
-      }
-    },
+      borderRadius: { xl: "1.25rem", "2xl": "1.5rem" },
+      boxShadow: { soft: "0 4px 24px rgba(0,0,0,0.06)" }
+    }
   },
-  plugins: [],
-}
-export default config
+  plugins: []
+};
+export default config;

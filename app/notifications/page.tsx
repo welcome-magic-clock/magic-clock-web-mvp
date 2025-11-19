@@ -1,0 +1,1 @@
+export default ()=> <div className='container'><h1 className='text-2xl font-semibold'>Notifications</h1><p className='text-slate-600 mt-2'>Likes, follows, achats…</p></div>

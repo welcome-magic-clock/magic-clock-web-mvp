@@ -1,19 +1,24 @@
-# Magic Clock — Web MVP
 
-## Démarrer
+# Magic Clock — PWA Skeleton v2 (Full folders)
+
+**Pourquoi un seul ZIP ?** Pour cadrer l'architecture dès le départ et remplacer dossier par dossier ensuite.
+
+## Arborescence
+- `app/` : routes (Amazing, Meet me, Studio, Display, Monet, Messages, Notifications, Legal, profils)
+- `app/api/*` : endpoints mocks (feed, creators, checkout Adyen)
+- `core/` : `config`, `domain` (types), `i18n`, `analytics`, `storage`, `payments` (AdyenMock)
+- `features/` : `amazing`, `meet`, `studio`, `monet`, `messages`
+- `components/` : `LeftNav`, `ui/*`
+- `public/` : images, `manifest.webmanifest`, `sw.js`, icônes PWA
+
+## Lancer
 ```bash
 npm i
 npm run dev
-# puis ouvre http://localhost:3000
 ```
+Déployer sur Vercel (Next.js auto-détecté).
 
-## Routes
-- `/` Amazing (placeholder)
-- `/meet` Meet me (followers + Suivre)
-- `/studio` Magic Studio (split avant/après + avatar)
-- `/monet` Monétisation (simulateur clair)
-- `/legal` Légal
-- `/admin` Back‑office (mock)
-
-## Stack
-Next.js (App Router) + Tailwind + minimal UI, prêt à remplacer par shadcn/ui si souhaité.
+## Prochaines briques
+- Auth + rôles, paywall, i18n complet, thème persistant
+- Éditeurs Magic Studio/Display aboutis
+- Paiements Adyen réels, factures PDF & TVA

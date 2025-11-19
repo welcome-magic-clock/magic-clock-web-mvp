@@ -1,8 +1,13 @@
-export default function AmazingPage() {
+
+import { FEED } from "@/features/amazing/feed";
+import MediaCard from "@/features/amazing/MediaCard";
+export default function Page(){
   return (
-    <main className="p-6">
-      <h1 className="mb-4 text-2xl font-black">Amazing — Flux public (MVP)</h1>
-      <p className="text-slate-600">Grille à venir (virtualisée, menu flèche FREE/ABO/PPV).</p>
-    </main>
-  )
+    <div className="container space-y-6">
+      <h1 className="text-2xl font-semibold">Amazing — Flux public</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {FEED.map(item => <MediaCard key={item.id} item={item} />)}
+      </div>
+    </div>
+  );
 }

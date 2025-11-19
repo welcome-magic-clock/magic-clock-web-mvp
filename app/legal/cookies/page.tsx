@@ -1,0 +1,1 @@
+export default ()=> <section className='container space-y-4'><h1 className='text-2xl font-semibold'>Cookies (MVP)</h1><p>À compléter.</p></section>

@@ -1,0 +1,1 @@
+export default ()=> <section className='container space-y-4'><h1 className='text-2xl font-semibold'>CGV (MVP)</h1><p>À compléter par pays.</p></section>
