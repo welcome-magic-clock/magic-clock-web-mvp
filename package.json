@@ -1,13 +1,11 @@
 {
   "name": "magic-clock-pwa",
-  "version": "0.3.1",
   "private": true,
+  "version": "0.2.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings=0 || true",
-    "typecheck": "tsc --noEmit"
+    "start": "next start"
   },
   "dependencies": {
     "next": "16.0.0",
@@ -17,12 +15,9 @@
     "clsx": "2.1.1"
   },
   "devDependencies": {
-  "autoprefixer": "10.4.19",
-  "postcss": "8.4.35",
-  "tailwindcss": "3.4.14",
-  "typescript": "5.6.3",
-  "@types/react": "18.3.27",
-  "@types/react-dom": "18.3.0",
-  "@types/node": "20.11.30"
-}
+    "autoprefixer": "10.4.19",
+    "postcss": "8.4.35",
+    "tailwindcss": "3.4.14",
+    "typescript": "5.6.3"
+  }
 }

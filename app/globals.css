@@ -1,7 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-:root { --mc-bg: #0b0b0c; --mc-fg: #fafafa; }
-html, body, #__next { height: 100%; }
-body { background: #0f1115; color: #e7e9ee; }
+@tailwind base; @tailwind components; @tailwind utilities;
+:root { color-scheme: light; }
+body { @apply bg-slate-50 text-slate-900; }
+.container { @apply max-w-6xl mx-auto px-4; }
+.card { @apply rounded-2xl bg-white shadow-soft border; }
+.badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border; }
+.link { @apply text-brand-600 hover:underline; }

@@ -1,7 +1,1 @@
-export const metadata = { title: "Politique Cookies" };
-export default function Page() {
-  return (<article className="prose prose-invert max-w-none">
-    <h1>Politique Cookies</h1>
-    <p>Version 0.1 — contenu à compléter.</p>
-  </article>);
-}
+export default ()=> <section className='container space-y-4'><h1 className='text-2xl font-semibold'>Cookies (MVP)</h1><p>À compléter.</p></section>

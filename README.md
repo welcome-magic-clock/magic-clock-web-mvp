@@ -1,27 +1,24 @@
-# Magic Clock — PWA Skeleton v3.1 (Next.js 16)
 
-Pack prêt à pousser sur Vercel (App Router, TS, Tailwind).  
-Inclus : SEO, manifest PWA, robots/sitemap, pages légales, CookieBanner, sections placeholder.
+# Magic Clock — PWA Skeleton v2 (Full folders)
+
+**Pourquoi un seul ZIP ?** Pour cadrer l'architecture dès le départ et remplacer dossier par dossier ensuite.
+
+## Arborescence
+- `app/` : routes (Amazing, Meet me, Studio, Display, Monet, Messages, Notifications, Legal, profils)
+- `app/api/*` : endpoints mocks (feed, creators, checkout Adyen)
+- `core/` : `config`, `domain` (types), `i18n`, `analytics`, `storage`, `payments` (AdyenMock)
+- `features/` : `amazing`, `meet`, `studio`, `monet`, `messages`
+- `components/` : `LeftNav`, `ui/*`
+- `public/` : images, `manifest.webmanifest`, `sw.js`, icônes PWA
 
 ## Lancer
 ```bash
 npm i
 npm run dev
 ```
+Déployer sur Vercel (Next.js auto-détecté).
 
-## Environnement
-Copie `.env.example` → `.env.local` et ajuste :
-```
-NEXT_PUBLIC_SITE_URL=https://www.magic-clock.com
-```
-
-## Dossiers
-- `app/` : routes (Amazing, Meet, Studio, Display, Monet, Messages, Legal)
-- `components/` : UI (CookieBanner, LeftNav)
-- `lib/` : `constants`, `seo`
-- `public/` : icônes & OG, manifest alimenté par `app/manifest.ts`
-
-## À faire ensuite
-- Brancher l’analytics + consentement
-- Intégrer gating FREE / SUB / PPV (mock) + My Magic
-- Remplacer les icônes par les versions officielles
+## Prochaines briques
+- Auth + rôles, paywall, i18n complet, thème persistant
+- Éditeurs Magic Studio/Display aboutis
+- Paiements Adyen réels, factures PDF & TVA
