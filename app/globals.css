@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-white text-slate-900;
+}
+
+.leftnav-link { @apply flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-soft hover:border-indigo-200; }
+.leftnav-active { @apply bg-indigo-50 border-indigo-200; }
+chip { @apply inline-flex rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-700 bg-white; }
