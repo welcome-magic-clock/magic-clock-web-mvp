@@ -11,7 +11,6 @@ type Body = {
 /**
  * Endpoint PPV (Pay-Per-View)
  * - Ajoute l'id de contenu à la liste des contenus PPV débloqués dans le cookie.
- * - Retourne la décision canViewContent + contexte mis à jour.
  */
 export async function POST(req: Request) {
   const body = (await req.json()) as Body;
@@ -23,7 +22,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const viewer = addUnlockedPpv(body.contentId);
+  const viewer = await addUnlockedPpv(body.contentId);
 
   const content = {
     id: body.contentId,
