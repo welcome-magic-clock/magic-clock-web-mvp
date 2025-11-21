@@ -1,7 +1,16 @@
 import { FEED } from "@/features/amazing/feed";
 import { CREATORS } from "@/features/meet/creators";
 import type { Creator, FeedCard } from "./types";
-import { prisma } from "@/core/db/client";
+
+const PRISMA_ENABLED = process.env.PRISMA_ENABLED === "1";
+
+async function getPrisma() {
+  if (!PRISMA_ENABLED) {
+    throw new Error("Prisma not enabled");
+  }
+  const { prisma } = await import("@/core/db/client");
+  return prisma;
+}
 
 function mapCreatorFromDb(row: any): Creator {
   const langs =
@@ -30,7 +39,11 @@ export function listFeedByCreator(handle: string): FeedCard[] {
 }
 
 export async function listCreators(): Promise<Creator[]> {
+  if (!PRISMA_ENABLED) {
+    return CREATORS;
+  }
   try {
+    const prisma = await getPrisma();
     const rows = await prisma.creatorProfile.findMany();
     if (!rows.length) {
       return CREATORS;
@@ -43,7 +56,11 @@ export async function listCreators(): Promise<Creator[]> {
 }
 
 export async function findCreatorByHandle(handle: string): Promise<Creator | undefined> {
+  if (!PRISMA_ENABLED) {
+    return CREATORS.find((c) => c.handle === handle);
+  }
   try {
+    const prisma = await getPrisma();
     const row = await prisma.creatorProfile.findUnique({
       where: { handle },
     });
