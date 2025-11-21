@@ -1,3 +1,4 @@
+"use client";
 
 import React from "react";
 
@@ -16,7 +17,7 @@ type Props = {
  * Plus tard, cette vue sera entièrement pilotée par les vraies données
  * (faces, cercles, segments, arcs, aiguilles, etc.).
  */
-export function MagicDisplayViewer({ contentId }: Props) {
+export default function MagicDisplayViewer({ contentId }: Props) {
   const variant = contentId % 3; // 0,1,2 → 3 motifs différents
 
   const titleByVariant = [
