@@ -32,3 +32,9 @@ Déployer sur Vercel (Next.js auto-détecté).
   - Run `npx prisma generate`.
   - Run `npx prisma migrate dev --name init` to create `dev.db`.
 - Production (Vercel): switch provider to `postgresql` and set `DATABASE_URL` in Vercel env vars.
+
+
+## Accès contenus (canViewContent)
+
+La logique d'accès aux contenus (FREE / ABO / PPV) est centralisée dans `core/domain/access.ts` via la fonction `canViewContent(content, viewer)`.
+Le contexte utilisateur minimal est décrit par `ViewerAccessContext` (connexion, abonnements, contenus PPV débloqués).
