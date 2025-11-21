@@ -46,10 +46,14 @@ export default function MediaCard({ item }: Props) {
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm hover:shadow-md transition-shadow">
       {/* Canevas Magic Studio : Avant / Après */}
       <div className="relative overflow-hidden rounded-2xl bg-slate-100">
+        {/* 2 colonnes Avant / Après */}
         <div className="grid grid-cols-2">
           <MediaSlot src={beforeUrl} alt={`${item.title} - Avant`} />
           <MediaSlot src={afterUrl} alt={`${item.title} - Après`} />
         </div>
+
+        {/* Fine ligne blanche au centre, comme sur la maquette */}
+        <div className="pointer-events-none absolute inset-y-3 left-1/2 w-px -translate-x-1/2 bg-white/90" />
 
         {/* Avatar + handle au centre (clic → Meet me) */}
         <Link
