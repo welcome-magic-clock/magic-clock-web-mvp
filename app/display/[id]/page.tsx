@@ -1,3 +1,4 @@
+import MagicDisplayViewer from "../MagicDisplayViewer";
 import Link from "next/link";
 import { findContentById } from "@/core/domain/repository";
 import {
