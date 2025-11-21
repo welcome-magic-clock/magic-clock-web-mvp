@@ -11,12 +11,11 @@ type Body = {
 /**
  * Endpoint FREE
  * - Ne modifie pas le cookie : le contenu est gratuit.
- * - Retourne la décision canViewContent + contexte courant.
  */
 export async function POST(req: Request) {
   const body = (await req.json()) as Body;
 
-  const viewer = getViewerAccessContextFromCookie();
+  const viewer = await getViewerAccessContextFromCookie();
 
   const content = {
     id: body.contentId,
