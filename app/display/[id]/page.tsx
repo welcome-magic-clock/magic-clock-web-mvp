@@ -21,11 +21,8 @@ export default function DisplayDetailPage({ params }: Props) {
   // Contexte d'accès depuis le cookie (subs, unlocked)
   const viewer = getViewerAccessContextFromCookie();
 
-  // ✅ On passe seulement les propriétés attendues par ViewerAccessContext
-  const decision = canViewContent(content!, {
-    subs: viewer.subs,
-    unlocked: viewer.unlocked,
-  });
+    const viewer = getViewerAccessContextFromCookie();
+  const decision = canViewContent(content!, viewer);
 
   const canSee = decision.decision === "ALLOW";
 
