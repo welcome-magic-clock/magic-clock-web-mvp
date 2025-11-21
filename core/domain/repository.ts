@@ -51,3 +51,12 @@ export function listLibraryForViewer(viewerHandle: string): FeedCard[] {
   // En attendant : on simule une petite librairie
   return FEED.slice(0, 4);
 }
+
+/**
+ * Trouve un contenu par son id.
+ * Utile pour les pages détail (Magic Display, etc.).
+ */
+export function findContentById(id: string | number): FeedCard | undefined {
+  const target = String(id);
+  return FEED.find((item) => String(item.id) === target);
+}

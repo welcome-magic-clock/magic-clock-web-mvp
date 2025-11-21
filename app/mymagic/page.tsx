@@ -1,3 +1,4 @@
+import Link from "next/link";
 import MediaCard from "@/features/amazing/MediaCard";
 import { listFeed, listCreatedByCreator } from "@/core/domain/repository";
 import { getViewerAccessContextFromCookie } from "@/core/server/accessCookie";
@@ -81,7 +82,15 @@ export default async function MyMagicClockPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {created.map((item) => (
-              <MediaCard key={item.id} item={item} />
+              <div key={item.id} className="space-y-2">
+                <MediaCard item={item} />
+                <Link
+                  href={`/display/${item.id}`}
+                  className="block text-xs font-medium text-brand-600 hover:underline text-center"
+                >
+                  Ouvrir le Magic Display (MVP)
+                </Link>
+              </div>
             ))}
           </div>
         )}
@@ -99,7 +108,15 @@ export default async function MyMagicClockPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {acquired.map((item) => (
-              <MediaCard key={item.id} item={item} />
+              <div key={item.id} className="space-y-2">
+                <MediaCard item={item} />
+                <Link
+                  href={`/display/${item.id}`}
+                  className="block text-xs font-medium text-brand-600 hover:underline text-center"
+                >
+                  Ouvrir le Magic Display (MVP)
+                </Link>
+              </div>
             ))}
           </div>
         )}
