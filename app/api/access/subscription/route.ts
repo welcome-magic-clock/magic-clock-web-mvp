@@ -11,7 +11,6 @@ type Body = {
 /**
  * Endpoint ABONNEMENT (Abo)
  * - Ajoute le créateur à la liste des abonnements dans le cookie.
- * - Retourne la décision canViewContent (si contentId fourni) + contexte mis à jour.
  */
 export async function POST(req: Request) {
   const body = (await req.json()) as Body;
@@ -23,9 +22,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const viewer = addSubscription(body.creatorHandle);
+  const viewer = await addSubscription(body.creatorHandle);
 
-  let decision = null;
+  let decision: string | null = null;
   if (body.contentId != null) {
     const content = {
       id: body.contentId,
