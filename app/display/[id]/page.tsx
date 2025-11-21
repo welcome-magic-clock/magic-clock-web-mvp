@@ -1,4 +1,4 @@
-import { getAmazingFeed } from "@/core/domain/repository";
+import { findContentById } from "@/core/domain/repository";
 import {
   canViewContent,
   explainAccessDecision,
@@ -12,41 +12,37 @@ type DisplayPageProps = {
 export default async function DisplayPage({ params }: DisplayPageProps) {
   const rawId = params.id;
 
-  // 1) On récupère le faux flux Amazing
-  const feed = getAmazingFeed();
+  // On accepte soit un ID numérique, soit un ID string
+  const numericId = Number(rawId);
+  const lookupKey = Number.isNaN(numericId) ? rawId : numericId;
 
-  // 2) On cherche le contenu correspondant à l'id de l'URL
-  const fromFeed = feed.find((item: any) => String(item.id) === String(rawId));
+  // 1) On essaie de retrouver le contenu dans notre "fake DB"
+  const found = findContentById(lookupKey);
 
-  // 3) Fallback de sécurité si rien trouvé
-  const fallbackId = rawId ?? "demo";
-
-  const content: any =
-    fromFeed ??
-    {
-      id: fallbackId,
+  // 2) Fallback : si rien trouvé, on crée un contenu FREE de démo
+  const content =
+    found ??
+    ({
+      id: lookupKey,
       user: "demo",
       access: "FREE",
       likes: 0,
       views: 0,
       tags: ["demo"],
-    };
+    } as any);
 
-  // 4) Règles d’accès (FREE / Abo / PPV) avec le cookie viewer
+  // 3) Contexte d'accès (cookie + règles FREE / ABO / PPV)
   const viewer = await getViewerAccessContextFromCookie();
-  const decision = canViewContent(content, viewer);
+  const decision = canViewContent(content as any, viewer);
   const canSee = decision === "ALLOWED";
 
-  const displayIdLabel =
-    typeof content.id === "number" || typeof content.id === "string"
-      ? String(content.id)
-      : String(fallbackId);
+  const displayId = content.id ?? rawId;
 
   return (
     <div className="container py-8 space-y-6">
       <header className="space-y-1">
         <h1 className="text-xl font-semibold">
-          Magic Display — contenu #{displayIdLabel}
+          Magic Display — contenu #{String(displayId)}
         </h1>
         <p className="text-sm text-slate-600">
           Vue de démonstration du Magic Display pour ce Magic Clock.
@@ -56,18 +52,18 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       {/* Résumé accès */}
       <div className="rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700">
         <p className="font-medium">
-          Créateur :{" "}
-          <span className="font-semibold">@{content.user ?? "demo"}</span>
+          Créateur : <span className="font-semibold">@{content.user}</span>
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Statut d&apos;accès : {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
+          Statut d&apos;accès :{" "}
+          {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
         </p>
         <p className="text-xs text-slate-500">
           {explainAccessDecision(decision)}
         </p>
       </div>
 
-      {/* Zone Magic Display (MVP) */}
+      {/* Zone Magic Display */}
       {canSee ? (
         <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <p className="mb-2 text-sm text-slate-600">🎛️ Magic Display — MVP</p>
