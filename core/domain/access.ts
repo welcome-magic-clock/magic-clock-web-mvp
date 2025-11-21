@@ -19,7 +19,7 @@ export type ViewerAccessContext = {
 };
 
 type MinimalContent = {
-  id: string;
+  id: string | number;
   access: Access;
   user?: string; // handle créateur, si disponible
 };
@@ -73,7 +73,7 @@ export function canViewContent(
   }
 
   if (access === "PPV") {
-    if (unlocked.has((content as any).id)) {
+    if (unlocked.has(String((content as any).id))) {
       return "ALLOWED";
     }
     return "LOCKED_PPV";
