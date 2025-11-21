@@ -1,7 +1,7 @@
 export type Access = "FREE" | "ABO" | "PPV";
 
 export type Creator = {
-  id: number;
+  id: string;
   handle: string;
   name: string;
   city: string;
@@ -12,7 +12,7 @@ export type Creator = {
 };
 
 export type FeedCard = {
-  id: number;
+  id: string;
   title: string;
   user: string; // creator handle
   views: number;

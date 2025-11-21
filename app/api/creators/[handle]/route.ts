@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ handle: string }> }
 ) {
   const { handle } = await params;
-  const creator = findCreatorByHandle(handle);
+  const creator = await findCreatorByHandle(handle);
   if (!creator) {
     return new NextResponse("Not found", { status: 404 });
   }

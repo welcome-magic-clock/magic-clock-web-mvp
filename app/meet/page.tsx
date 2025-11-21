@@ -1,8 +1,8 @@
 import CreatorCard from "@/features/meet/CreatorCard";
 import { listCreators } from "@/core/domain/repository";
 
-export default function Page() {
-  const creators = listCreators();
+export default async function Page() {
+  const creators = await listCreators();
 
   return (
     <div className="container space-y-6">

@@ -2,7 +2,7 @@ import type { Creator } from "@/core/domain/types";
 
 export const CREATORS: Creator[] = [
   {
-    id: 1,
+    id: "1",
     handle: "aiko",
     name: "Aiko Tanaka",
     city: "Lausanne (CH)",
@@ -12,7 +12,7 @@ export const CREATORS: Creator[] = [
     access: ["FREE", "ABO", "PPV"],
   },
   {
-    id: 2,
+    id: "2",
     handle: "sofia",
     name: "Sofia Rivera",
     city: "Madrid (ES)",
@@ -22,7 +22,7 @@ export const CREATORS: Creator[] = [
     access: ["FREE", "PPV"],
   },
   {
-    id: 3,
+    id: "3",
     handle: "lena",
     name: "Lena Martin",
     city: "Lyon (FR)",
@@ -32,7 +32,7 @@ export const CREATORS: Creator[] = [
     access: ["FREE", "ABO"],
   },
   {
-    id: 4,
+    id: "4",
     handle: "maya",
     name: "Maya Flores",
     city: "Zurich (CH)",

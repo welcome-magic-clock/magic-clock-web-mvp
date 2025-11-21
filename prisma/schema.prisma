@@ -1,0 +1,180 @@
+/// Prisma schema for Magic Clock
+/// MVP: SQLite for local/dev. For production on Vercel, switch provider to `postgresql`
+/// and update `DATABASE_URL` accordingly.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A user account (fan or creator).
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?  // avatar URL
+  role      UserRole @default(FAN)
+  locale    String?  // e.g. "fr", "en"
+  country   String?  // e.g. "CH"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creatorProfile CreatorProfile?
+  subscriptions  Subscription[]
+  ppvPurchases   PpvPurchase[]
+  payments       Payment[]
+
+  @@index([email])
+}
+
+enum UserRole {
+  FAN
+  CREATOR
+  ADMIN
+}
+
+/// Public creator profile linked to a User
+model CreatorProfile {
+  id          String   @id @default(cuid())
+  handle      String   @unique
+  displayName String
+  city        String?
+  langs       String   // comma-separated list, e.g. "fr,en,jp"
+  avatar      String?
+  bio         String?
+
+  followersCount Int     @default(0)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  contents      Content[]
+  subscriptions Subscription[] @relation("CreatorSubscriptions")
+}
+
+/// A Magic Clock content (Studio + Display) published by a creator
+model Content {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  summary     String?
+  coverImage  String?
+  access      Access        @default(FREE)
+  priceAbo    Decimal?      // optional: specific price override
+  pricePpv    Decimal?      // optional: specific PPV price
+  status      ContentStatus @default(PUBLISHED)
+
+  views       Int           @default(0)
+  likes       Int           @default(0)
+
+  creator   CreatorProfile @relation(fields: [creatorId], references: [id])
+  creatorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ppvPurchases PpvPurchase[]
+}
+
+/// Subscription from a fan to a creator
+model Subscription {
+  id          String           @id @default(cuid())
+  user        User             @relation(fields: [userId], references: [id])
+  userId      String
+  creator     CreatorProfile   @relation("CreatorSubscriptions", fields: [creatorId], references: [id])
+  creatorId   String
+
+  status      SubscriptionStatus @default(ACTIVE)
+  plan        String?            // e.g. "standard", "premium"
+  price       Decimal
+  currency    String             // e.g. "CHF", "EUR"
+
+  startedAt   DateTime @default(now())
+  endsAt      DateTime?          // null if auto-renew
+  cancelledAt DateTime?
+
+  payments    Payment[]
+
+  @@unique([userId, creatorId])
+}
+
+/// Pay-per-view purchase for a single content
+model PpvPurchase {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  content   Content  @relation(fields: [contentId], references: [id])
+  contentId String
+
+  price     Decimal
+  currency  String
+
+  createdAt DateTime @default(now())
+
+  payment   Payment?
+
+  @@unique([userId, contentId])
+}
+
+/// Payment record (subscription or PPV)
+model Payment {
+  id              String        @id @default(cuid())
+  externalId      String?       @unique // PSP payment id (Adyen/Stripe/etc.)
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String
+
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscriptionId  String?
+
+  ppvPurchase     PpvPurchase?  @relation(fields: [ppvPurchaseId], references: [id])
+  ppvPurchaseId   String?
+
+  amount          Decimal
+  currency        String
+  kind            PaymentKind
+  status          PaymentStatus @default(SUCCEEDED)
+
+  createdAt       DateTime      @default(now())
+  raw             Json?
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([ppvPurchaseId])
+}
+
+enum Access {
+  FREE
+  ABO
+  PPV
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAUSED
+}
+
+enum PaymentKind {
+  SUBSCRIPTION
+  PPV
+  TIP
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}

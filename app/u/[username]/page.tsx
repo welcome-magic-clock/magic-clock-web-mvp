@@ -1,6 +1,6 @@
 import MediaCard from "@/features/amazing/MediaCard";
-import { findCreatorByHandle, listFeedByCreator, listCreators } from "@/core/domain/repository";
-
+import { listFeedByCreator, findCreatorByHandle } from "@/core/domain/repository";
+import { CREATORS } from "@/features/meet/creators";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -8,8 +8,8 @@ type Props = {
   params: { username: string };
 };
 
-export function generateMetadata({ params }: Props): Metadata {
-  const creator = findCreatorByHandle(params.username);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const creator = await findCreatorByHandle(params.username);
   if (!creator) {
     return {
       title: "@unknown · Magic Clock",
@@ -20,12 +20,13 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
+// Pour éviter de dépendre de la base au build, on utilise la liste statique pour pré-générer quelques profils.
 export function generateStaticParams() {
-  return listCreators().map((c) => ({ username: c.handle }));
+  return CREATORS.map((c) => ({ username: c.handle }));
 }
 
-export default function CreatorPage({ params }: Props) {
-  const creator = findCreatorByHandle(params.username);
+export default async function CreatorPage({ params }: Props) {
+  const creator = await findCreatorByHandle(params.username);
   if (!creator) {
     notFound();
   }

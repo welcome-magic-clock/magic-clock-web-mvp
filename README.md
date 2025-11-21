@@ -22,3 +22,13 @@ Déployer sur Vercel (Next.js auto-détecté).
 - Auth + rôles, paywall, i18n complet, thème persistant
 - Éditeurs Magic Studio/Display aboutis
 - Paiements Adyen réels, factures PDF & TVA
+
+
+## Prisma & Database (MVP)
+
+- Schema: `prisma/schema.prisma` (SQLite by default).
+- Local dev:
+  - Copy `.env.example` to `.env`.
+  - Run `npx prisma generate`.
+  - Run `npx prisma migrate dev --name init` to create `dev.db`.
+- Production (Vercel): switch provider to `postgresql` and set `DATABASE_URL` in Vercel env vars.
