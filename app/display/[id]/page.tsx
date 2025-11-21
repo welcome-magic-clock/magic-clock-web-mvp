@@ -1,100 +1,82 @@
-import MagicDisplayViewer from "../MagicDisplayViewer";
-import Link from "next/link";
 import { findContentById } from "@/core/domain/repository";
 import {
   canViewContent,
   explainAccessDecision,
-  type AccessDecision,
 } from "@/core/domain/access";
 import { getViewerAccessContextFromCookie } from "@/core/server/accessCookie";
 
-type Props = {
+type DisplayPageProps = {
   params: { id: string };
 };
 
-export default async function DisplayDetailPage({ params }: Props) {
-  const numericId = Number(params.id);
-  const content = findContentById(
-    Number.isNaN(numericId) ? params.id : numericId
-  );
+export default async function DisplayPage({ params }: DisplayPageProps) {
+  const rawId = params.id;
+  const numericId = Number(rawId);
+  const lookupKey = Number.isNaN(numericId) ? rawId : numericId;
 
-  // 🧩 Si le contenu est introuvable, on reste sur la page (plus de 404)
-  if (!content) {
-    return (
-      <div className="container py-8 space-y-4">
-        <h1 className="text-2xl font-semibold">Magic Display — contenu introuvable</h1>
-        <p className="text-sm text-slate-600">
-          Le Magic Display demandé n&apos;existe pas (ID : {params.id}).
-        </p>
-        <Link
-          href="/mymagic"
-          className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          ← Retour à My Magic Clock
-        </Link>
-      </div>
-    );
-  }
+  // 1) On essaie de retrouver le contenu dans notre "fake DB"
+  const found = findContentById(lookupKey);
 
-  // 👤 Contexte d’accès depuis le cookie (subs, unlocked)
+  // 2) Fallback : si rien trouvé, on crée un contenu FREE de démo
+  const content =
+    found ??
+    ({
+      id: lookupKey,
+      user: "demo",
+      access: "FREE",
+      likes: 0,
+      views: 0,
+      tags: ["demo"],
+    } as any);
+
+  // 3) Contexte d'accès (cookie + règles FREE / ABO / PPV)
   const viewer = await getViewerAccessContextFromCookie();
-  const decision: AccessDecision = canViewContent(content, viewer);
+  const decision = canViewContent(content, viewer);
   const canSee = decision === "ALLOWED";
 
   return (
     <div className="container py-8 space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">
-            Magic Display · #{content.id}
-          </h1>
-          <p className="text-sm text-slate-600">
-            Créateur : <span className="font-medium">@{content.user}</span>
-          </p>
-          <p className="text-xs text-slate-500">
-            Type d&apos;accès : <code>{content.access}</code>
-          </p>
-        </div>
+      <header className="space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight">
+          Magic Display — contenu #{String(content.id)}
+        </h1>
+        <p className="text-sm text-slate-600">
+          Vue de démonstration du Magic Display pour ce Magic Clock.
+        </p>
+      </header>
 
-        <Link
-          href="/mymagic"
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
-        >
-          ← Retour à My Magic Clock
-        </Link>
-      </div>
-
-      {/* Carte résumé Magic Studio (placeholder) */}
-      <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-        <p className="text-sm font-medium mb-1">{content.title}</p>
+      {/* Résumé accès */}
+      <div className="rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700">
+        <p className="font-medium">
+          Créateur :{" "}
+          <span className="font-semibold">@{content.user}</span>
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Statut d&apos;accès :{" "}
+          {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
+        </p>
         <p className="text-xs text-slate-500">
-          Ici, tu verras un rappel du Magic Studio (Avant / Après) lié à ce
-          Magic Display.
-        </p>
-      </div>
-
-      {/* État d’accès */}
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm space-y-1">
-        <p className="font-semibold">État d&apos;accès :</p>
-        <p>
-          Décision : <code>{decision}</code>
-        </p>
-        <p className="text-slate-600">
           {explainAccessDecision(decision)}
         </p>
       </div>
 
-      {/* Zone Magic Display (visible seulement si ALLOWED) */}
+      {/* Zone Magic Display */}
       {canSee ? (
-        <MagicDisplayViewer contentId={Number(content.id)} />
+        <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+          <p className="mb-2 text-sm text-slate-600">
+            🎛️ Magic Display — MVP
+          </p>
+          <p className="text-sm text-slate-500">
+            Ici s&apos;affichera le cube pédagogique 3D lié à ce contenu :
+            étapes, formules, paramètres techniques, etc.
+          </p>
+        </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4 text-sm text-slate-600">
-          Ce Magic Display est verrouillé. Débloque le contenu depuis le flux Amazing
-          ou My Magic Clock (FREE / Abo / PPV).
+          Ce Magic Display est verrouillé. Débloque le contenu depuis le flux
+          Amazing ou My Magic Clock (FREE / Abo / PPV).
         </div>
       )}
-
     </div>
   );
 }
