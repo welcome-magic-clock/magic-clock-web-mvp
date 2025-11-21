@@ -53,10 +53,14 @@ export function listLibraryForViewer(viewerHandle: string): FeedCard[] {
 }
 
 /**
- * Trouve un contenu par son id.
- * Utile pour les pages détail (Magic Display, etc.).
+ * Recherche d'un contenu par son id (pour Magic Display, détails, etc.)
  */
-export function findContentById(id: string | number): FeedCard | undefined {
-  const target = String(id);
-  return FEED.find((item) => String(item.id) === target);
+export function findContentById(id: number | string): FeedCard | undefined {
+  const numericId = Number(id);
+  if (!Number.isNaN(numericId)) {
+    const direct = FEED.find((item) => item.id === numericId);
+    if (direct) return direct;
+  }
+  // Fallback string-based
+  return FEED.find((item) => String(item.id) === String(id));
 }

@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findContentById } from "@/core/domain/repository";
@@ -8,123 +9,86 @@ type Props = {
   params: { id: string };
 };
 
-export async function generateMetadata({ params }: Props) {
-  const content = findContentById(params.id);
-  if (!content) {
-    return {
-      title: "Magic Display · Introuvable",
-    };
-  }
-  return {
-    title: `Magic Display · ${content.title}`,
-  };
-}
+export default function DisplayDetailPage({ params }: Props) {
+  const contentId = Number(params.id);
+  const content = findContentById(Number.isNaN(contentId) ? params.id : contentId);
 
-export default async function DisplayPage({ params }: Props) {
-  const content = findContentById(params.id);
   if (!content) {
     notFound();
   }
 
-  const viewer = await getViewerAccessContextFromCookie();
-  const decision = canViewContent(
-    {
-      id: content!.id,
-      access: content!.access,
-      user: content!.user,
-    },
-    viewer
-  );
+  const viewer = getViewerAccessContextFromCookie();
+  const decision = canViewContent({
+    content,
+    viewerId: viewer.viewerId,
+    subs: viewer.subs,
+    unlocked: viewer.unlocked,
+  });
 
-  const isAllowed = decision === "ALLOWED";
+  const canSee = decision.decision === "ALLOW";
 
   return (
-    <div className="container space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="container py-8 space-y-6">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Magic Display</h1>
+          <h1 className="text-2xl font-semibold">
+            Magic Display — {content.title}
+          </h1>
           <p className="text-sm text-slate-600">
-            MVP : page détail pour le cube pédagogique lié à ce Magic Clock.
+            MVP : page de détail pour le Magic Display lié au contenu #{content.id}.<br />
+            L&apos;accès est actuellement :{" "}
+            <span className={canSee ? "text-emerald-600" : "text-red-600"}>
+              {canSee ? "autorisé" : "bloqué"}
+            </span>
+            .
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/mymagic"
-            className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            ← Retour My Magic Clock
-          </Link>
-          <Link
-            href="/"
-            className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Amazing
-          </Link>
-        </div>
-      </header>
+        <Link
+          href="/mymagic"
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
+        >
+          ← Retour à My Magic Clock
+        </Link>
+      </div>
 
-      <section className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4">
-        <p className="text-xs uppercase tracking-wide text-slate-500">
-          Magic Clock #{String(content!.id)}
-        </p>
-        <h2 className="text-xl font-semibold">{content!.title}</h2>
-        <p className="text-sm text-slate-600">
-          Créateur : <span className="font-medium">@{content!.user}</span>
-        </p>
-        <p className="text-xs text-slate-500">
-          Accès : {content!.access === "FREE"
-            ? "FREE"
-            : content!.access === "ABO"
-            ? "Abonnement"
-            : content!.access === "PPV"
-            ? "PPV"
-            : "Autre"}
-          {" · "}Décision d&apos;accès : {decision}
-        </p>
+      {!canSee && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-semibold mb-1">
+            Vous n&apos;avez pas encore débloqué ce Magic Display.
+          </p>
+          <p>
+            Revenez sur la carte dans Amazing ou My Magic Clock et utilisez le
+            menu FREE / Abo / PPV pour le débloquer. Cette page affichera ensuite
+            le cube pédagogique interactif (Magic Display).
+          </p>
+        </div>
+      )}
+
+      {canSee && (
+        <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+          <p className="text-sm text-slate-600 mb-2">
+            🎛️ Placeholder Magic Display (MVP)
+          </p>
+          <p className="text-sm text-slate-500">
+            Ici s&apos;affichera le cube pédagogique 3D lié à ce contenu :
+            étapes, formules de couleur, paramètres techniques, etc.
+          </p>
+        </div>
+      )}
+
+      <section className="space-y-2 text-xs text-slate-500">
+        <p className="font-semibold">Debug accès (MVP) :</p>
+        <pre className="whitespace-pre-wrap rounded-2xl bg-slate-950/90 text-[11px] text-slate-100 p-3 overflow-x-auto">
+          {JSON.stringify(
+            {
+              viewer,
+              decision,
+            },
+            null,
+            2
+          )}
+        </pre>
       </section>
-
-      {!isAllowed && (
-        <section className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p>
-            Vous n&apos;avez pas encore accès au Magic Display pour ce contenu.
-          </p>
-          <p>
-            Débloquez-le depuis{" "}
-            <Link href="/" className="underline font-medium">
-              Amazing
-            </Link>{" "}
-            (FREE / Abo / PPV) ou depuis l&apos;interface créateur.
-          </p>
-        </section>
-      )}
-
-      {isAllowed && (
-        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4">
-          <h3 className="text-lg font-semibold">Cube pédagogique (placeholder MVP)</h3>
-          <p className="text-sm text-slate-600">
-            Ici s&apos;affichera le Magic Display : cube 3D interactif, faces configurables,
-            cercles / segments / aiguilles et médias. Cette page est déjà prête à être branchée
-            sur l&apos;éditeur réel.
-          </p>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="flex items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 aspect-square">
-              <span className="text-xs text-slate-500">
-                [Placeholder cube 3D — preview pédagogique]
-              </span>
-            </div>
-            <div className="space-y-2 text-sm text-slate-600">
-              <p>
-                MVP : cette colonne pourra détailler les étapes, formules, produits et paramètres
-                techniques utilisés pour obtenir l&apos;Avant/Après de ce Magic Clock.
-              </p>
-              <p>
-                Plus tard, chaque segment / anneau du Magic Display sera cliquable pour afficher
-                une fiche détaillée (dosage, temps de pose, techniques, vidéos, etc.).
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   );
 }
