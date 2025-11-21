@@ -8,8 +8,8 @@ type CookiePayload = {
   unlocked: string[];
 };
 
-function readAccessCookie(): CookiePayload {
-  const store = cookies();
+async function readAccessCookie(): Promise<CookiePayload> {
+  const store = await cookies();
   const raw = store.get(ACCESS_COOKIE_NAME)?.value;
   if (!raw) return { subs: [], unlocked: [] };
   try {
@@ -23,8 +23,8 @@ function readAccessCookie(): CookiePayload {
   }
 }
 
-function writeAccessCookie(payload: CookiePayload) {
-  const store = cookies();
+async function writeAccessCookie(payload: CookiePayload): Promise<void> {
+  const store = await cookies();
   store.set(ACCESS_COOKIE_NAME, JSON.stringify(payload), {
     httpOnly: true,
     sameSite: "lax",
@@ -35,11 +35,9 @@ function writeAccessCookie(payload: CookiePayload) {
 
 /**
  * Construit un ViewerAccessContext à partir du cookie.
- * Pour l'instant, on considère que si l'utilisateur manipule des accès,
- * il est "authentifié" (auth réelle viendra plus tard).
  */
-export function getViewerAccessContextFromCookie(): ViewerAccessContext {
-  const { subs, unlocked } = readAccessCookie();
+export async function getViewerAccessContextFromCookie(): Promise<ViewerAccessContext> {
+  const { subs, unlocked } = await readAccessCookie();
   return {
     isAuthenticated: true,
     subscriptions: subs,
@@ -48,14 +46,14 @@ export function getViewerAccessContextFromCookie(): ViewerAccessContext {
 }
 
 /**
- * Met à jour les subscriptions (ABO) et enregistre en cookie.
+ * Ajoute un abonnement (Abo) au cookie.
  */
-export function addSubscription(handle: string): ViewerAccessContext {
-  const payload = readAccessCookie();
+export async function addSubscription(handle: string): Promise<ViewerAccessContext> {
+  const payload = await readAccessCookie();
   if (!payload.subs.includes(handle)) {
     payload.subs.push(handle);
   }
-  writeAccessCookie(payload);
+  await writeAccessCookie(payload);
   return {
     isAuthenticated: true,
     subscriptions: payload.subs,
@@ -64,15 +62,17 @@ export function addSubscription(handle: string): ViewerAccessContext {
 }
 
 /**
- * Met à jour les contenus PPV débloqués et enregistre en cookie.
+ * Ajoute un contenu PPV débloqué au cookie.
  */
-export function addUnlockedPpv(contentId: string | number): ViewerAccessContext {
-  const payload = readAccessCookie();
+export async function addUnlockedPpv(
+  contentId: string | number
+): Promise<ViewerAccessContext> {
+  const payload = await readAccessCookie();
   const id = String(contentId);
   if (!payload.unlocked.includes(id)) {
     payload.unlocked.push(id);
   }
-  writeAccessCookie(payload);
+  await writeAccessCookie(payload);
   return {
     isAuthenticated: true,
     subscriptions: payload.subs,
