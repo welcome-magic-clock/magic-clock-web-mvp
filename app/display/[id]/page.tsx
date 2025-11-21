@@ -11,15 +11,13 @@ type DisplayPageProps = {
 
 export default async function DisplayPage({ params }: DisplayPageProps) {
   const rawId = params.id;
-
-  // On accepte soit un ID numérique, soit un ID string
   const numericId = Number(rawId);
   const lookupKey = Number.isNaN(numericId) ? rawId : numericId;
 
-  // 1) On essaie de retrouver le contenu dans notre "fake DB"
+  // 1) On essaie de retrouver le contenu dans notre “fake DB”
   const found = findContentById(lookupKey);
 
-  // 2) Fallback : si rien trouvé, on crée un contenu FREE de démo
+  // 2) Fallback démo si rien trouvé
   const content =
     found ??
     ({
@@ -31,18 +29,19 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       tags: ["demo"],
     } as any);
 
-  // 3) Contexte d'accès (cookie + règles FREE / ABO / PPV)
+  // 3) Règles d’accès (FREE / ABO / PPV)
   const viewer = await getViewerAccessContextFromCookie();
-  const decision = canViewContent(content as any, viewer);
+  const decision = canViewContent(content, viewer);
   const canSee = decision === "ALLOWED";
 
-  const displayId = content.id ?? rawId;
+  // Label pour le titre (toujours basé sur l’URL)
+  const displayLabel = Number.isNaN(numericId) ? rawId : numericId;
 
   return (
     <div className="container py-8 space-y-6">
       <header className="space-y-1">
         <h1 className="text-xl font-semibold">
-          Magic Display — contenu #{String(displayId)}
+          Magic Display — contenu #{displayLabel}
         </h1>
         <p className="text-sm text-slate-600">
           Vue de démonstration du Magic Display pour ce Magic Clock.
@@ -55,8 +54,7 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
           Créateur : <span className="font-semibold">@{content.user}</span>
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Statut d&apos;accès :{" "}
-          {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
+          Statut d&apos;accès : {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
         </p>
         <p className="text-xs text-slate-500">
           {explainAccessDecision(decision)}
