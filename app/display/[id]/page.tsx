@@ -86,19 +86,14 @@ export default async function DisplayDetailPage({ params }: Props) {
 
       {/* Zone Magic Display (visible seulement si ALLOWED) */}
       {canSee ? (
-        <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <p className="text-sm text-slate-600 mb-2">🎛️ Magic Display — MVP</p>
-          <p className="text-sm text-slate-500">
-            Ici s&apos;affichera le cube pédagogique 3D lié à ce contenu :
-            étapes, formules, paramètres techniques, etc.
-          </p>
-        </div>
+        <MagicDisplayViewer contentId={Number(content.id)} />
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4 text-sm text-slate-600">
           Ce Magic Display est verrouillé. Débloque le contenu depuis le flux Amazing
           ou My Magic Clock (FREE / Abo / PPV).
         </div>
       )}
+
     </div>
   );
 }
