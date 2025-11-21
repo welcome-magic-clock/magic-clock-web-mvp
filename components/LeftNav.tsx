@@ -6,7 +6,6 @@ import {
   Home,
   Users,
   UserCircle,
-  Camera,
   Sparkles,
   DollarSign,
   Mail,
@@ -14,12 +13,13 @@ import {
   Shield,
 } from 'lucide-react';
 
+// Menu latéral principal
+// Remarque : "Créer" est l'entrée unique pour le couple Magic Studio + Magic Display
 const items = [
   { href: '/', label: 'Amazing', icon: Home },
   { href: '/meet', label: 'Meet me', icon: Users },
   { href: '/mymagic', label: 'My Magic Clock', icon: UserCircle },
-  { href: '/studio', label: 'Magic Studio', icon: Camera },
-  { href: '/display', label: 'Magic Display', icon: Sparkles },
+  { href: '/studio', label: 'Créer', icon: Sparkles },
   { href: '/monet', label: 'Monétisation', icon: DollarSign },
   { href: '/messages', label: 'Messages', icon: Mail },
   { href: '/notifications', label: 'Notifications', icon: Bell },
