@@ -1,23 +1,24 @@
 import { findContentById } from "@/core/domain/repository";
-import {
-  canViewContent,
-  explainAccessDecision,
-} from "@/core/domain/access";
+import { canViewContent, explainAccessDecision } from "@/core/domain/access";
 import { getViewerAccessContextFromCookie } from "@/core/server/accessCookie";
 
 type DisplayPageProps = {
   params: { id: string };
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function DisplayPage({ params }: DisplayPageProps) {
   const rawId = params.id;
+
+  // On supporte à la fois des IDs "6" ou "lena-balayage"
   const numericId = Number(rawId);
   const lookupKey = Number.isNaN(numericId) ? rawId : numericId;
 
-  // 1) On essaie de retrouver le contenu dans notre “fake DB”
+  // 1) On essaie de retrouver le contenu dans notre "fake DB"
   const found = findContentById(lookupKey);
 
-  // 2) Fallback démo si rien trouvé
+  // 2) Fallback : si rien trouvé, on crée un contenu FREE de démo
   const content =
     found ??
     ({
@@ -29,19 +30,25 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       tags: ["demo"],
     } as any);
 
-  // 3) Règles d’accès (FREE / ABO / PPV)
+  // 3) Contexte d'accès (cookie + règles FREE / ABO / PPV)
   const viewer = await getViewerAccessContextFromCookie();
   const decision = canViewContent(content, viewer);
   const canSee = decision === "ALLOWED";
 
-  // Label pour le titre (toujours basé sur l’URL)
-  const displayLabel = Number.isNaN(numericId) ? rawId : numericId;
+  // 🔧 Correction : on calcule proprement le label après "#"
+  const displayIdLabel =
+    rawId && rawId !== "undefined" && rawId !== "null"
+      ? rawId
+      : (content as any)?.id != null
+      ? String((content as any).id)
+      : "";
 
   return (
     <div className="container py-8 space-y-6">
       <header className="space-y-1">
         <h1 className="text-xl font-semibold">
-          Magic Display — contenu #{displayLabel}
+          Magic Display — contenu
+          {displayIdLabel ? ` #${displayIdLabel}` : ""}
         </h1>
         <p className="text-sm text-slate-600">
           Vue de démonstration du Magic Display pour ce Magic Clock.
@@ -51,10 +58,12 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       {/* Résumé accès */}
       <div className="rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700">
         <p className="font-medium">
-          Créateur : <span className="font-semibold">@{content.user}</span>
+          Créateur :{" "}
+          <span className="font-semibold">@{(content as any).user}</span>
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Statut d&apos;accès : {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
+          Statut d&apos;accès :{" "}
+          {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
         </p>
         <p className="text-xs text-slate-500">
           {explainAccessDecision(decision)}
