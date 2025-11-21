@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findContentById } from "@/core/domain/repository";
@@ -10,16 +9,20 @@ type Props = {
 };
 
 export default function DisplayDetailPage({ params }: Props) {
-  const contentId = Number(params.id);
-  const content = findContentById(Number.isNaN(contentId) ? params.id : contentId);
+  const numericId = Number(params.id);
+  const content = findContentById(
+    Number.isNaN(numericId) ? params.id : numericId
+  );
 
   if (!content) {
     notFound();
   }
 
+  // Contexte d'accès depuis le cookie (viewerId, subs, unlocked)
   const viewer = getViewerAccessContextFromCookie();
-  const decision = canViewContent({
-    content,
+
+  // ✅ ICI : on passe bien 2 arguments à canViewContent
+  const decision = canViewContent(content!, {
     viewerId: viewer.viewerId,
     subs: viewer.subs,
     unlocked: viewer.unlocked,
@@ -32,11 +35,13 @@ export default function DisplayDetailPage({ params }: Props) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            Magic Display — {content.title}
+            Magic Display — {content!.title}
           </h1>
           <p className="text-sm text-slate-600">
-            MVP : page de détail pour le Magic Display lié au contenu #{content.id}.<br />
-            L&apos;accès est actuellement :{" "}
+            MVP : page de détail pour le Magic Display lié au contenu #
+            {content!.id}.
+            <br />
+            Accès actuel :{" "}
             <span className={canSee ? "text-emerald-600" : "text-red-600"}>
               {canSee ? "autorisé" : "bloqué"}
             </span>
@@ -58,20 +63,18 @@ export default function DisplayDetailPage({ params }: Props) {
           </p>
           <p>
             Revenez sur la carte dans Amazing ou My Magic Clock et utilisez le
-            menu FREE / Abo / PPV pour le débloquer. Cette page affichera ensuite
-            le cube pédagogique interactif (Magic Display).
+            menu FREE / Abo / PPV pour le débloquer. Cette page affichera
+            ensuite le cube pédagogique interactif (Magic Display).
           </p>
         </div>
       )}
 
       {canSee && (
         <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <p className="text-sm text-slate-600 mb-2">
-            🎛️ Placeholder Magic Display (MVP)
-          </p>
+          <p className="text-sm text-slate-600 mb-2">🎛️ Magic Display — MVP</p>
           <p className="text-sm text-slate-500">
             Ici s&apos;affichera le cube pédagogique 3D lié à ce contenu :
-            étapes, formules de couleur, paramètres techniques, etc.
+            étapes, formules, paramètres techniques, etc.
           </p>
         </div>
       )}
