@@ -107,4 +107,148 @@ export default function MonetisationPage() {
 
           {/* Taux de conversion */}
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y
+            <div className="space-y-1">
+              <label className="flex items-center justify-between text-xs text-slate-600">
+                <span>% de followers qui prennent un abonnement</span>
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                value={aboRate}
+                onChange={(e) => setAboRate(Number(e.target.value || 0))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center justify-between text-xs text-slate-600">
+                <span>% de followers qui achètent du PPV</span>
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                value={ppvRate}
+                onChange={(e) => setPpvRate(Number(e.target.value || 0))}
+              />
+            </div>
+          </div>
+
+          {/* Prix & fréquence */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label className="flex items-center justify-between text-xs text-slate-600">
+                <span>Prix moyen abonnement / mois</span>
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={0.1}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                value={aboPrice}
+                onChange={(e) => setAboPrice(Number(e.target.value || 0))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center justify-between text-xs text-slate-600">
+                <span>Prix moyen d&apos;un contenu PPV</span>
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={0.1}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                value={ppvPrice}
+                onChange={(e) => setPpvPrice(Number(e.target.value || 0))}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="flex items-center justify-between text-xs text-slate-600">
+              <span>
+                Nombre moyen de contenus PPV achetés par client / mois
+              </span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              value={ppvPerMonth}
+              onChange={(e) => setPpvPerMonth(Number(e.target.value || 0))}
+            />
+          </div>
+
+          <p className="pt-2 text-[11px] text-slate-500">
+            Tu peux ajuster librement ces paramètres pour tester différents
+            scénarios : lancement, croissance, campagnes spéciales, etc.
+          </p>
+        </div>
+
+        {/* Colonne droite : résultats détaillés */}
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-5 text-sm">
+          <h2 className="text-sm font-semibold">Résultats détaillés</h2>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-500">Clients abonnés</p>
+                <p className="text-sm font-medium">{aboClients}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-500">
+                  Revenu mensuel brut (abos)
+                </p>
+                <p className="text-sm font-semibold">
+                  {formatMoney(monthlyAboGross)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+              <div>
+                <p className="text-xs text-slate-500">Clients PPV actifs</p>
+                <p className="text-sm font-medium">{ppvClients}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-500">
+                  Revenu mensuel brut (PPV)
+                </p>
+                <p className="text-sm font-semibold">
+                  {formatMoney(monthlyPpvGross)}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">Total mensuel brut</p>
+                <p className="text-sm font-semibold">
+                  {formatMoney(monthlyTotalGross)}
+                </p>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>Part créateur (80 %)</span>
+                <span className="font-semibold text-slate-800">
+                  {formatMoney(creatorShare)}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
+                <span>Commission Magic Clock (20 %)</span>
+                <span>{formatMoney(platformShare)}</span>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-xl bg-slate-50/80 p-3 text-[11px] text-slate-600">
+              Ce simulateur est purement indicatif. Le but est de te montrer
+              qu&apos;avec une communauté engagée, quelques contenus bien
+              pensés peuvent déjà générer un revenu récurrent intéressant.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
