@@ -2,253 +2,193 @@
 
 import { useState } from "react";
 
-export default function MonetisationPage() {
-  // Paramètres de base du simulateur
+const PLATFORM_RATE = 0.2;   // 20 % Magic Clock
+const CREATOR_RATE = 0.8;    // 80 % créateur
+
+function formatMoney(value: number) {
+  if (!Number.isFinite(value)) return "0 CHF";
+  return new Intl.NumberFormat("fr-CH", {
+    style: "currency",
+    currency: "CHF",
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Math.round(value)));
+}
+
+export default function MonetPage() {
+  // Hypothèses de base
   const [followers, setFollowers] = useState(10000);
-  const [aboRate, setAboRate] = useState(2); // % des followers qui prennent un abo
-  const [ppvRate, setPpvRate] = useState(1); // % des followers qui achètent un PPV
-  const [aboPrice, setAboPrice] = useState(9.9); // prix moyen abo / mois
-  const [ppvPrice, setPpvPrice] = useState(14.9); // prix moyen PPV
-  const [ppvPerMonth, setPpvPerMonth] = useState(1); // PPV moyens achetés / mois / client
+  const [avgViewsPerPost, setAvgViewsPerPost] = useState(4000);
+  const [postsPerMonth, setPostsPerMonth] = useState(8);
+
+  // Monétisation PPV
+  const [ppvPrice, setPpvPrice] = useState(5);       // prix moyen PPV
+  const [conversionRate, setConversionRate] = useState(2); // % de followers qui achètent
 
   // Calculs
-  const safeFollowers = isNaN(followers) ? 0 : followers;
-  const safeAboRate = isNaN(aboRate) ? 0 : aboRate;
-  const safePpvRate = isNaN(ppvRate) ? 0 : ppvRate;
-  const safeAboPrice = isNaN(aboPrice) ? 0 : aboPrice;
-  const safePpvPrice = isNaN(ppvPrice) ? 0 : ppvPrice;
-  const safePpvPerMonth = isNaN(ppvPerMonth) ? 0 : ppvPerMonth;
-
-  const aboClients = Math.round(safeFollowers * (safeAboRate / 100));
-  const ppvClients = Math.round(safeFollowers * (safePpvRate / 100));
-
-  const monthlyAboGross = aboClients * safeAboPrice;
-  const monthlyPpvGross = ppvClients * safePpvPrice * safePpvPerMonth;
-  const monthlyTotalGross = monthlyAboGross + monthlyPpvGross;
-
-  const creatorShare = monthlyTotalGross * 0.8; // 80 % créateur
-  const platformShare = monthlyTotalGross * 0.2; // 20 % Magic Clock
-  const yearlyTotalGross = monthlyTotalGross * 12;
-  const yearlyCreatorShare = creatorShare * 12;
-
-  const formatMoney = (value: number) =>
-    new Intl.NumberFormat("fr-CH", {
-      style: "currency",
-      currency: "CHF",
-      maximumFractionDigits: 0,
-    }).format(Math.round(value || 0));
+  const estimatedBuyers = followers * (conversionRate / 100);
+  const monthlyPaidViews = estimatedBuyers * postsPerMonth;
+  const monthlyGross = monthlyPaidViews * ppvPrice; // revenu total généré
+  const monthlyCreatorShare = monthlyGross * CREATOR_RATE;
+  const monthlyPlatformShare = monthlyGross * PLATFORM_RATE;
 
   return (
-    <div className="container max-w-5xl py-8 space-y-8">
-      {/* Entête */}
-      <header className="space-y-2">
+    <div className="container py-8 space-y-8">
+      <header className="space-y-1">
         <h1 className="text-xl font-semibold">Monétisation — Cockpit</h1>
         <p className="text-sm text-slate-600">
-          Visualise l&apos;impact de ton audience et le potentiel financier de
-          tes contenus sur Magic Clock (abonnements + PPV).
+          Visualise l’impact de ton audience et simule ton potentiel financier sur Magic Clock.
         </p>
       </header>
 
-      {/* Synthèse rapide */}
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm">
-          <p className="text-xs text-slate-500">Revenu mensuel potentiel</p>
-          <p className="mt-1 text-lg font-semibold">
-            {formatMoney(monthlyCreatorShare)}
+      {/* Bloc 1 : Audience réelle */}
+      <section className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-800">
+            1. Ton audience actuelle
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Indique tes chiffres réels (ou estimés) sur les réseaux.
           </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Part créateur (80 %), après commission Magic Clock.
-          </p>
-        </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm">
-          <p className="text-xs text-slate-500">Revenu annuel potentiel</p>
-          <p className="mt-1 text-lg font-semibold">
-            {formatMoney(yearlyCreatorShare)}
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Si tu maintiens ce rythme sur 12 mois.
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm">
-          <p className="text-xs text-slate-500">Audience activée</p>
-          <p className="mt-1 text-lg font-semibold">
-            {aboClients + ppvClients}{" "}
-            <span className="text-xs font-normal text-slate-500">
-              clients / mois
-            </span>
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            {aboClients} en abonnements · {ppvClients} en PPV.
-          </p>
-        </div>
-      </section>
-
-      {/* Grille principale : paramètres + résultats détaillés */}
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        {/* Colonne gauche : paramètres / simulateur */}
-        <div className="space-y-5 rounded-2xl border border-slate-200 bg-white/80 p-5 text-sm">
-          <h2 className="text-sm font-semibold">Paramètres de ton audience</h2>
-
-          {/* Followers */}
-          <div className="space-y-1">
-            <label className="flex items-center justify-between text-xs text-slate-600">
-              <span>Followers actifs (toutes plateformes)</span>
+          <div className="mt-4 space-y-3 text-sm">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-slate-500">
+                Followers / abonnés
+              </span>
+              <input
+                type="number"
+                className="h-9 rounded-xl border border-slate-200 px-3 text-sm"
+                value={followers}
+                onChange={(e) => setFollowers(Number(e.target.value || 0))}
+                min={0}
+              />
             </label>
-            <input
-              type="number"
-              min={0}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              value={followers}
-              onChange={(e) => setFollowers(Number(e.target.value || 0))}
-            />
-          </div>
 
-          {/* Taux de conversion */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-xs text-slate-600">
-                <span>% de followers qui prennent un abonnement</span>
-              </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-slate-500">
+                Vues moyennes par contenu
+              </span>
               <input
                 type="number"
+                className="h-9 rounded-xl border border-slate-200 px-3 text-sm"
+                value={avgViewsPerPost}
+                onChange={(e) => setAvgViewsPerPost(Number(e.target.value || 0))}
                 min={0}
-                max={100}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                value={aboRate}
-                onChange={(e) => setAboRate(Number(e.target.value || 0))}
               />
-            </div>
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-xs text-slate-600">
-                <span>% de followers qui achètent du PPV</span>
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                value={ppvRate}
-                onChange={(e) => setPpvRate(Number(e.target.value || 0))}
-              />
-            </div>
-          </div>
+            </label>
 
-          {/* Prix & fréquence */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-xs text-slate-600">
-                <span>Prix moyen abonnement / mois</span>
-              </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-slate-500">
+                Contenus publiés / mois
+              </span>
               <input
                 type="number"
+                className="h-9 rounded-xl border border-slate-200 px-3 text-sm"
+                value={postsPerMonth}
+                onChange={(e) => setPostsPerMonth(Number(e.target.value || 0))}
                 min={0}
-                step={0.1}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                value={aboPrice}
-                onChange={(e) => setAboPrice(Number(e.target.value || 0))}
               />
-            </div>
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-xs text-slate-600">
-                <span>Prix moyen d&apos;un contenu PPV</span>
-              </label>
+            </label>
+          </div>
+        </div>
+
+        {/* Bloc 2 : Paramètres Magic Clock */}
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-800">
+            2. Paramètres Magic Clock (simulateur)
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Simule un mix de contenus PPV payants.
+          </p>
+
+          <div className="mt-4 space-y-3 text-sm">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-slate-500">
+                Prix moyen par contenu PPV (CHF)
+              </span>
               <input
                 type="number"
-                min={0}
-                step={0.1}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="h-9 rounded-xl border border-slate-200 px-3 text-sm"
                 value={ppvPrice}
                 onChange={(e) => setPpvPrice(Number(e.target.value || 0))}
+                min={0}
+                step={0.5}
               />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="flex items-center justify-between text-xs text-slate-600">
-              <span>
-                Nombre moyen de contenus PPV achetés par client / mois
-              </span>
             </label>
-            <input
-              type="number"
-              min={0}
-              step={0.5}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              value={ppvPerMonth}
-              onChange={(e) => setPpvPerMonth(Number(e.target.value || 0))}
-            />
-          </div>
 
-          <p className="pt-2 text-[11px] text-slate-500">
-            Tu peux ajuster librement ces paramètres pour tester différents
-            scénarios : lancement, croissance, campagnes spéciales, etc.
-          </p>
-        </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-slate-500">
+                Taux d&apos;achat parmi tes followers (%)
+              </span>
+              <input
+                type="number"
+                className="h-9 rounded-xl border border-slate-200 px-3 text-sm"
+                value={conversionRate}
+                onChange={(e) =>
+                  setConversionRate(Number(e.target.value || 0))
+                }
+                min={0}
+                max={100}
+                step={0.5}
+              />
+            </label>
 
-        {/* Colonne droite : résultats détaillés */}
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-5 text-sm">
-          <h2 className="text-sm font-semibold">Résultats détaillés</h2>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500">Clients abonnés</p>
-                <p className="text-sm font-medium">{aboClients}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-slate-500">
-                  Revenu mensuel brut (abos)
-                </p>
-                <p className="text-sm font-semibold">
-                  {formatMoney(monthlyAboGross)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-              <div>
-                <p className="text-xs text-slate-500">Clients PPV actifs</p>
-                <p className="text-sm font-medium">{ppvClients}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-slate-500">
-                  Revenu mensuel brut (PPV)
-                </p>
-                <p className="text-sm font-semibold">
-                  {formatMoney(monthlyPpvGross)}
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-500">Total mensuel brut</p>
-                <p className="text-sm font-semibold">
-                  {formatMoney(monthlyTotalGross)}
-                </p>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                <span>Part créateur (80 %)</span>
-                <span className="font-semibold text-slate-800">
-                  {formatMoney(creatorShare)}
+            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+              <p>
+                Acheteurs estimés / mois :{" "}
+                <span className="font-semibold">
+                  {Math.max(0, Math.round(estimatedBuyers))}
                 </span>
-              </div>
-              <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-                <span>Commission Magic Clock (20 %)</span>
-                <span>{formatMoney(platformShare)}</span>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-xl bg-slate-50/80 p-3 text-[11px] text-slate-600">
-              Ce simulateur est purement indicatif. Le but est de te montrer
-              qu&apos;avec une communauté engagée, quelques contenus bien
-              pensés peuvent déjà générer un revenu récurrent intéressant.
+              </p>
+              <p>
+                Contenus PPV vendus / mois :{" "}
+                <span className="font-semibold">
+                  {Math.max(0, Math.round(monthlyPaidViews))}
+                </span>
+              </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Bloc 3 : Résumé financier */}
+      <section className="grid gap-6 md:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-50 p-5 shadow-sm">
+          <p className="text-xs text-slate-400">Revenu total généré</p>
+          <p className="mt-2 text-2xl font-semibold">
+            {formatMoney(monthlyGross)}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-400">
+            Avant partage créateur / Magic Clock.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-emerald-50 p-5 shadow-sm">
+          <p className="text-xs text-emerald-700">Part créateur (80 %)</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-900">
+            {formatMoney(monthlyCreatorShare)}
+          </p>
+          <p className="mt-1 text-[11px] text-emerald-700">
+            Ce que tu touches chaque mois avec ce scénario.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-indigo-50 p-5 shadow-sm">
+          <p className="text-xs text-indigo-700">Part Magic Clock (20 %)</p>
+          <p className="mt-2 text-2xl font-semibold text-indigo-900">
+            {formatMoney(monthlyPlatformShare)}
+          </p>
+          <p className="mt-1 text-[11px] text-indigo-700">
+            Commission plateforme sur les ventes PPV.
+          </p>
+        </div>
+      </section>
+
+      <p className="text-[11px] text-slate-500">
+        Simulation indicative, hors TVA et frais de paiement. Les chiffres
+        réels dépendront de la qualité de tes contenus, de ton engagement et
+        de ta stratégie FREE / Abonnement / PPV.
+      </p>
     </div>
   );
 }
