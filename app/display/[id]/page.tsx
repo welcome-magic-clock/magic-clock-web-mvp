@@ -12,6 +12,8 @@ type DisplayPageProps = {
 export default async function DisplayPage({ params }: DisplayPageProps) {
   const rawId = params.id;
   const numericId = Number(rawId);
+
+  // ID utilisé pour la recherche + l'affichage (number si possible, sinon string)
   const lookupKey = Number.isNaN(numericId) ? rawId : numericId;
 
   // 1) On essaie de retrouver le contenu dans notre "fake DB"
@@ -37,8 +39,8 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
   return (
     <div className="container py-8 space-y-6">
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Magic Display — contenu #{String(content.id)}
+        <h1 className="text-xl font-semibold">
+          Magic Display — contenu #{String(lookupKey)}
         </h1>
         <p className="text-sm text-slate-600">
           Vue de démonstration du Magic Display pour ce Magic Clock.
@@ -63,9 +65,7 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       {/* Zone Magic Display */}
       {canSee ? (
         <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <p className="mb-2 text-sm text-slate-600">
-            🎛️ Magic Display — MVP
-          </p>
+          <p className="mb-2 text-sm text-slate-600">🎛️ Magic Display — MVP</p>
           <p className="text-sm text-slate-500">
             Ici s&apos;affichera le cube pédagogique 3D lié à ce contenu :
             étapes, formules, paramètres techniques, etc.
