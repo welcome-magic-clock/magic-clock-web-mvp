@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findCreatorByHandle } from "@/core/domain/repository";
 
-export function GET(
+export async function GET(
   _req: NextRequest,
-  { params }: { params: { handle: string } }
+  { params }: { params: Promise<{ handle: string }> }
 ) {
-  const creator = findCreatorByHandle(params.handle);
+  const { handle } = await params;
+  const creator = findCreatorByHandle(handle);
   if (!creator) {
     return new NextResponse("Not found", { status: 404 });
   }
