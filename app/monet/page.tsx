@@ -3,6 +3,34 @@
 import { useMemo, useState } from "react";
 import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 
+// ─────────────────────────────────────────────────────────────
+// TVA / Pays (MVP : pays fixe, non modifiable par l'utilisateur)
+// ─────────────────────────────────────────────────────────────
+
+type CountryVat = {
+  code: string;
+  label: string;
+  vatRate: number; // ex: 0.081 = 8.1 %
+};
+
+const COUNTRY_VAT_TABLE: CountryVat[] = [
+  { code: "CH", label: "Suisse", vatRate: 0.081 },
+  { code: "FR", label: "France", vatRate: 0.20 },
+  { code: "DE", label: "Allemagne", vatRate: 0.19 },
+  { code: "ES", label: "Espagne", vatRate: 0.21 },
+  { code: "IT", label: "Italie", vatRate: 0.22 },
+];
+
+// 🔒 Pour le MVP, on fixe le pays à la Suisse (plus tard : détection IP / profil)
+const CURRENT_COUNTRY_CODE = "CH";
+const CURRENT_COUNTRY =
+  COUNTRY_VAT_TABLE.find((c) => c.code === CURRENT_COUNTRY_CODE) ??
+  COUNTRY_VAT_TABLE[0];
+
+// ─────────────────────────────────────────────────────────────
+// Paliers commission (Bronze / Argent / Or)
+// ─────────────────────────────────────────────────────────────
+
 type TierId = "BRONZE" | "SILVER" | "GOLD";
 
 type Tier = {
@@ -41,6 +69,10 @@ function getTierFromLikes(likes: number): Tier {
   if (likes > 1000) return TIERS[1]; // Argent
   return TIERS[0]; // Bronze
 }
+
+// ─────────────────────────────────────────────────────────────
+// Helpers UI & maths
+// ─────────────────────────────────────────────────────────────
 
 type Trend = "up" | "down" | "flat";
 
@@ -87,16 +119,55 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Interprétation : les prix saisis (Abo / PPV) sont TTC.
+ * On retire la TVA pour obtenir la base HT, puis on applique la commission.
+ *
+ * @param grossTotal Montant TOTAL TTC (ce que payent les clients)
+ * @param tier       Palier de commission (Bronze / Argent / Or)
+ * @param vatRate    Taux de TVA (ex: 0.081)
+ */
+function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
+  if (grossTotal <= 0) {
+    return {
+      vatAmount: 0,
+      netBase: 0,
+      platformShareNet: 0,
+      creatorShareNet: 0,
+    };
+  }
+
+  // On considère grossTotal = HT * (1 + TVA)
+  const netBase = grossTotal / (1 + vatRate);
+  const vatAmount = grossTotal - netBase;
+
+  const platformShareNet = netBase * tier.rate;
+  const creatorShareNet = netBase - platformShareNet;
+
+  return {
+    vatAmount,
+    netBase,
+    platformShareNet,
+    creatorShareNet,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Page Monétisation
+// ─────────────────────────────────────────────────────────────
+
 export default function MonetPage() {
+  const vatRate = CURRENT_COUNTRY.vatRate;
+
   // 🔹 Partie "réalité" (cockpit actuel, en lecture seule / fake data)
   const realFollowers = 12450;
   const realFollowersDelta = 12.4;
 
-  const realAboPrice = 14.9;
+  const realAboPrice = 14.9; // TTC
   const realAboSubs = 480;
   const realAboDelta = 8.1;
 
-  const realPpvPrice = 19.9;
+  const realPpvPrice = 19.9; // TTC
   const realPpvBuyers = 120;
   const realPpvPerBuyer = 1.4;
   const realPpvDelta = 5.2;
@@ -108,8 +179,12 @@ export default function MonetPage() {
   const realGrossPpv = realPpvPrice * realPpvBuyers * realPpvPerBuyer;
   const realGrossTotal = realGrossAbos + realGrossPpv;
 
-  const realPlatformShare = realGrossTotal * realTier.rate;
-  const realCreatorShare = realGrossTotal - realPlatformShare;
+  const {
+    vatAmount: realVatAmount,
+    netBase: realNetBase,
+    platformShareNet: realPlatformShareNet,
+    creatorShareNet: realCreatorShareNet,
+  } = computeVatAndShares(realGrossTotal, realTier, vatRate);
 
   // 🔸 Partie "SIMULATEUR"
   const [simFollowers, setSimFollowers] = useState<number>(5000);
@@ -120,7 +195,6 @@ export default function MonetPage() {
   const [simPpvPerBuyer, setSimPpvPerBuyer] = useState<number>(1);
   const [simLikes, setSimLikes] = useState<number>(realLikes);
 
-  // Dérivés simulateur
   const simTier = getTierFromLikes(simLikes);
   const simAboSubs = (simFollowers * simAboConv) / 100;
   const simPpvBuyers = (simFollowers * simPpvConv) / 100;
@@ -129,8 +203,12 @@ export default function MonetPage() {
   const simGrossPpv = simPpvBuyers * simPpvPrice * simPpvPerBuyer;
   const simGrossTotal = simGrossAbos + simGrossPpv;
 
-  const simPlatformShare = simGrossTotal * simTier.rate;
-  const simCreatorShare = simGrossTotal - simPlatformShare;
+  const {
+    vatAmount: simVatAmount,
+    netBase: simNetBase,
+    platformShareNet: simPlatformShareNet,
+    creatorShareNet: simCreatorShareNet,
+  } = computeVatAndShares(simGrossTotal, simTier, vatRate);
 
   const simAboSharePct =
     simGrossTotal > 0 ? (simGrossAbos / simGrossTotal) * 100 : 0;
@@ -143,15 +221,15 @@ export default function MonetPage() {
     [simAboSharePct]
   );
 
-  // Mini "courbe" d’évolution simulée (7 périodes)
+  // Mini "courbe" d’évolution simulée (7 périodes) basée sur la part créateur NETTE (après TVA + commission)
   const historyPoints = useMemo(() => {
-    const base = simCreatorShare || 0;
+    const base = simCreatorShareNet || 0;
     const factors = [0.55, 0.7, 0.85, 1, 1.08, 1.15, 1.25];
     return factors.map((f, idx) => ({
       x: idx,
       y: Math.round(base * f),
     }));
-  }, [simCreatorShare]);
+  }, [simCreatorShareNet]);
 
   const linePoints = useMemo(() => {
     if (historyPoints.length === 0) return "";
@@ -175,15 +253,25 @@ export default function MonetPage() {
       <header className="space-y-2">
         <h1 className="text-xl font-semibold">Monétisation</h1>
         <p className="text-sm text-slate-600">
-          Comprends l&apos;impact de ton audience et simule ton potentiel avec Magic
-          Clock (abonnements + PPV). Partie haute = ton cockpit. Partie basse =
-          simulateur.
+          Comprends l&apos;impact de ton audience et simule ton potentiel avec
+          Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
+          basse = simulateur.
         </p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+          <Info className="h-3 w-3" />
+          <span>
+            Pays détecté (MVP) :{" "}
+            <strong>
+              {CURRENT_COUNTRY.label} · TVA {Math.round(vatRate * 1000) / 10}%
+            </strong>{" "}
+            — non modifiable par l&apos;utilisateur.
+          </span>
+        </div>
       </header>
 
       {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <span className="inline-flex h-6 items-center rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
               Réalité · compte Magic Clock
@@ -193,6 +281,10 @@ export default function MonetPage() {
               Données indicatives pour le MVP (non connectées au backend).
             </span>
           </div>
+          <p className="text-[11px] text-slate-500">
+            Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
+            la répartition plateforme / créateur.
+          </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -217,10 +309,10 @@ export default function MonetPage() {
               {realAboSubs.toLocaleString("fr-CH")} abonnés
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Prix moyen : {formatMoney(realAboPrice)} / mois.
+              Prix moyen : {formatMoney(realAboPrice)} / mois (TTC).
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Revenu brut Abo : {formatMoney(realGrossAbos)} / mois.
+              Revenu brut Abo : {formatMoney(realGrossAbos)} / mois (TTC).
             </p>
             <div className="mt-2">
               <TrendBadge value={realAboDelta} />
@@ -234,11 +326,11 @@ export default function MonetPage() {
               {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Prix moyen : {formatMoney(realPpvPrice)} ·{" "}
+              Prix moyen : {formatMoney(realPpvPrice)} (TTC) ·{" "}
               {realPpvPerBuyer.toFixed(1)} PPV / acheteur / mois.
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Revenu brut PPV : {formatMoney(realGrossPpv)} / mois.
+              Revenu brut PPV : {formatMoney(realGrossPpv)} / mois (TTC).
             </p>
             <div className="mt-2">
               <TrendBadge value={realPpvDelta} />
@@ -246,28 +338,53 @@ export default function MonetPage() {
           </div>
         </div>
 
-        {/* Résumé revenus + commission réelle */}
+        {/* Résumé revenus + TVA + commission réelle */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500">Revenu brut total</p>
-                <p className="mt-1 text-2xl font-semibold">
-                  {formatMoney(realGrossTotal)}
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Abonnements + PPV avant commission et taxes.
-                </p>
+            <div className="flex flex-col gap-2 text-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-500">Revenu brut total</p>
+                  <p className="mt-1 text-2xl font-semibold">
+                    {formatMoney(realGrossTotal)}
+                  </p>
+                </div>
+                <div className="text-right text-[11px] text-slate-500">
+                  <p>TVA estimée ({Math.round(vatRate * 1000) / 10}%)</p>
+                  <p className="mt-1 font-medium">
+                    {formatMoney(realVatAmount)}
+                  </p>
+                  <p className="mt-2">Base HT estimée</p>
+                  <p className="mt-1 font-semibold">
+                    {formatMoney(realNetBase)}
+                  </p>
+                </div>
               </div>
-              <div className="text-right text-xs text-slate-500">
-                <p>Part plateforme ({Math.round(realTier.rate * 100)}%)</p>
-                <p className="mt-1 font-semibold">
-                  {formatMoney(realPlatformShare)}
-                </p>
-                <p className="mt-2">Part créateur (≈{Math.round((1 - realTier.rate) * 100)}%)</p>
-                <p className="mt-1 font-semibold text-emerald-600">
-                  {formatMoney(realCreatorShare)}
-                </p>
+
+              <div className="mt-3 grid gap-3 text-xs md:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
+                  <p className="text-[11px] text-slate-500">
+                    Part plateforme (HT)
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-700">
+                    {formatMoney(realPlatformShareNet)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Palier {realTier.label} ·{" "}
+                    {Math.round(realTier.rate * 100)}% de la base HT.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
+                  <p className="text-[11px] text-slate-500">
+                    Part créateur estimée (HT)
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-600">
+                    {formatMoney(realCreatorShareNet)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Montant avant charges sociales / impôts côté créateur.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -364,7 +481,7 @@ export default function MonetPage() {
         </span>
       </div>
 
-      {/* 🔸 2. SIMULATEUR : réglages + logique complète */}
+      {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC → TVA → HT → parts) */}
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {/* Contrôles simulateur */}
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
@@ -372,9 +489,10 @@ export default function MonetPage() {
             Réglages simulateur
           </h2>
           <p className="text-xs text-slate-500">
-            Ajuste ton audience, tes prix et tes conversions pour voir l&apos;impact
-            sur tes revenus mensuels. Les paliers Bronze / Argent / Or restent
-            pilotés uniquement par les likes (comme dans la réalité).
+            Les prix saisis sont considérés comme TTC. Magic Clock retire
+            automatiquement la TVA ({Math.round(vatRate * 1000) / 10}%) selon le
+            pays, puis applique la commission Bronze / Argent / Or sur la base
+            HT.
           </p>
 
           {/* Followers */}
@@ -400,8 +518,7 @@ export default function MonetPage() {
             />
             <p className="text-[11px] text-slate-500">
               Glisse pour simuler ton audience. Le curseur va jusqu&apos;à 1
-              million pour rester lisible, mais en réalité il n&apos;y a pas de
-              limite.
+              million pour rester lisible, mais en réalité il n&apos;y a pas de limite.
             </p>
           </div>
 
@@ -428,7 +545,7 @@ export default function MonetPage() {
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Tarification Abo Magic Clock (0,99 → 999 CHF / mois).
+                Tarification Abo Magic Clock (0,99 → 999 CHF / mois, TTC).
               </p>
             </div>
 
@@ -481,7 +598,7 @@ export default function MonetPage() {
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Prix moyen d&apos;un contenu PPV (0,99 → 999 CHF).
+                Prix moyen d&apos;un contenu PPV (0,99 → 999 CHF, TTC).
               </p>
             </div>
 
@@ -593,7 +710,7 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Revenu brut Abo (avant commission)
+                Revenu brut Abo (TTC, avant TVA)
               </span>
               <span className="font-semibold">
                 {formatMoney(simGrossAbos)}
@@ -601,33 +718,46 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Revenu brut PPV (avant commission)
+                Revenu brut PPV (TTC, avant TVA)
               </span>
               <span className="font-semibold">
                 {formatMoney(simGrossPpv)}
               </span>
             </div>
             <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
-              <span className="text-slate-500">Revenu brut total</span>
+              <span className="text-slate-500">Revenu brut total (TTC)</span>
               <span className="text-base font-semibold">
                 {formatMoney(simGrossTotal)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Part plateforme ({Math.round(simTier.rate * 100)}%)
+                TVA estimée ({Math.round(vatRate * 1000) / 10}%)
               </span>
               <span className="font-semibold text-slate-600">
-                {formatMoney(simPlatformShare)}
+                {formatMoney(simVatAmount)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Base HT estimée</span>
+              <span className="font-semibold text-slate-700">
+                {formatMoney(simNetBase)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Part créateur estimée (
-                {Math.round((1 - simTier.rate) * 100)}%)
+                Part plateforme (HT, {Math.round(simTier.rate * 100)}%)
+              </span>
+              <span className="font-semibold text-slate-600">
+                {formatMoney(simPlatformShareNet)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Part créateur (HT, après TVA + commission)
               </span>
               <span className="font-semibold text-emerald-600">
-                {formatMoney(simCreatorShare)}
+                {formatMoney(simCreatorShareNet)}
               </span>
             </div>
           </div>
@@ -640,11 +770,12 @@ export default function MonetPage() {
                 style={donutStyle}
               >
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
-                  <span>{formatMoney(simCreatorShare)}</span>
+                  <span>{formatMoney(simCreatorShareNet)}</span>
                 </div>
               </div>
               <p className="text-[11px] text-slate-500">
-                Répartition Abo / PPV dans ton revenu total.
+                Répartition Abo / PPV dans ton revenu brut (TTC). Le montant au
+                centre est ta part créateur estimée (HT) après TVA + commission.
               </p>
               <div className="flex items-center gap-3 text-[11px]">
                 <div className="flex items-center gap-1">
@@ -661,7 +792,7 @@ export default function MonetPage() {
             {/* Courbe d'évolution */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
-                Projection d&apos;évolution (créateur)
+                Projection d&apos;évolution (part créateur HT)
               </p>
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                 <svg viewBox="0 0 100 100" className="h-24 w-full">
@@ -688,7 +819,7 @@ export default function MonetPage() {
                 </svg>
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
-                  semaines) basée sur ton revenu créateur simulé.
+                  semaines) basée sur ta part créateur nette (HT).
                 </p>
               </div>
             </div>
