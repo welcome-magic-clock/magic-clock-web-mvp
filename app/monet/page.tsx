@@ -1,642 +1,861 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus,
-  Info,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 
-// --- Helpers & constantes ---
+// ─────────────────────────────────────────────────────────────
+// TVA / Pays
+// ─────────────────────────────────────────────────────────────
 
-const VAT_RATES: Record<string, { label: string; rate: number }> = {
-  CH: { label: "Suisse", rate: 0.081 },
-  FR: { label: "France", rate: 0.2 },
-  DE: { label: "Allemagne", rate: 0.19 },
-  IT: { label: "Italie", rate: 0.22 },
-  ES: { label: "Espagne", rate: 0.21 },
-  EU: { label: "Autres pays UE", rate: 0.2 },
+type CountryVat = {
+  code: string;
+  label: string;
+  vatRate: number; // ex: 0.081 = 8.1 %
 };
 
-type CommissionTier = "BRONZE" | "SILVER" | "GOLD";
+const COUNTRY_VAT_TABLE: CountryVat[] = [
+  { code: "CH", label: "Suisse", vatRate: 0.081 },
+  { code: "FR", label: "France", vatRate: 0.2 },
+  { code: "DE", label: "Allemagne", vatRate: 0.19 },
+  { code: "ES", label: "Espagne", vatRate: 0.21 },
+  { code: "IT", label: "Italie", vatRate: 0.22 },
+  { code: "EU", label: "Autres pays UE", vatRate: 0.2 },
+];
 
-function formatMoney(amount: number, currency: "CHF" | "EUR" = "CHF") {
-  if (!Number.isFinite(amount)) return "-";
-  return amount.toLocaleString("fr-CH", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  });
+// 🔒 Pour la partie “réalité”, pays figé (ex: Suisse)
+const CURRENT_COUNTRY_CODE = "CH";
+const CURRENT_COUNTRY =
+  COUNTRY_VAT_TABLE.find((c) => c.code === CURRENT_COUNTRY_CODE) ??
+  COUNTRY_VAT_TABLE[0];
+
+// ─────────────────────────────────────────────────────────────
+// Paliers commission (Bronze / Argent / Or)
+// ─────────────────────────────────────────────────────────────
+
+type TierId = "BRONZE" | "SILVER" | "GOLD";
+
+type Tier = {
+  id: TierId;
+  label: string;
+  rate: number; // part plateforme, ex: 0.30 = 30 %
+  minLikes: number;
+  maxLikes?: number;
+};
+
+const TIERS: Tier[] = [
+  {
+    id: "BRONZE",
+    label: "Bronze",
+    rate: 0.3,
+    minLikes: 0,
+    maxLikes: 1000,
+  },
+  {
+    id: "SILVER",
+    label: "Argent",
+    rate: 0.25,
+    minLikes: 1001,
+    maxLikes: 10000,
+  },
+  {
+    id: "GOLD",
+    label: "Or",
+    rate: 0.2,
+    minLikes: 10001,
+  },
+];
+
+function getTierFromLikes(likes: number): Tier {
+  if (likes > 10000) return TIERS[2]; // Or
+  if (likes > 1000) return TIERS[1]; // Argent
+  return TIERS[0]; // Bronze
 }
 
+// ─────────────────────────────────────────────────────────────
+// Helpers UI & maths
+// ─────────────────────────────────────────────────────────────
+
+type Trend = "up" | "down" | "flat";
+
 function TrendBadge({ value }: { value: number }) {
-  if (value > 0) {
+  const trend: Trend = value > 0 ? "up" : value < 0 ? "down" : "flat";
+
+  if (trend === "flat") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-        <ArrowUpRight className="h-3 w-3" />
-        +{value.toFixed(1)}%
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
+        <span>0%</span>
       </span>
     );
   }
-  if (value < 0) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
-        <ArrowDownRight className="h-3 w-3" />
+
+  const Icon = trend === "up" ? ArrowUpRight : ArrowDownRight;
+  const color =
+    trend === "up"
+      ? "bg-emerald-50 text-emerald-600"
+      : "bg-rose-50 text-rose-600";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${color}`}
+    >
+      <Icon className="h-3 w-3" />
+      <span>
+        {value > 0 ? "+" : ""}
         {value.toFixed(1)}%
       </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-      <Minus className="h-3 w-3" />
-      0%
     </span>
   );
 }
 
-// --- Composant principal ---
+function formatMoney(amount: number, currency = "CHF") {
+  if (!Number.isFinite(amount)) return "-";
+  return new Intl.NumberFormat("fr-CH", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Interprétation : les prix saisis (Abo / PPV) sont TTC.
+ * On retire la TVA pour obtenir la base HT, puis on applique la commission.
+ *
+ * @param grossTotal Montant TOTAL TTC (ce que payent les clients)
+ * @param tier       Palier de commission (Bronze / Argent / Or)
+ * @param vatRate    Taux de TVA (ex: 0.081)
+ */
+function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
+  if (grossTotal <= 0) {
+    return {
+      vatAmount: 0,
+      netBase: 0,
+      platformShareNet: 0,
+      creatorShareNet: 0,
+    };
+  }
+
+  // On considère grossTotal = HT * (1 + TVA)
+  const netBase = grossTotal / (1 + vatRate);
+  const vatAmount = grossTotal - netBase;
+
+  const platformShareNet = netBase * tier.rate;
+  const creatorShareNet = netBase - platformShareNet;
+
+  return {
+    vatAmount,
+    netBase,
+    platformShareNet,
+    creatorShareNet,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Page Monétisation
+// ─────────────────────────────────────────────────────────────
 
 export default function MonetPage() {
-  // ⚙️ Réalité (mock, à brancher plus tard sur le backend)
-  const realFollowers = 12480;
-  const realFollowersPrev = 11800;
-  const realFollowersTrend =
-    ((realFollowers - realFollowersPrev) / realFollowersPrev) * 100;
+  // TVA “réalité” : pays figé (ex: Suisse)
+  const vatRateReal = CURRENT_COUNTRY.vatRate;
 
-  const realMonthlyCreator = 2300;
-  const realMonthlyCreatorPrev = 2100;
-  const realMonthlyTrend =
-    ((realMonthlyCreator - realMonthlyCreatorPrev) / realMonthlyCreatorPrev) *
-    100;
+  // 🔹 Partie "réalité" (cockpit actuel, en lecture seule / fake data)
+  const realFollowers = 12450;
+  const realFollowersDelta = 12.4;
 
-  const realLikes = 3250; // pour les paliers Bronze / Argent / Or
+  const realAboPrice = 14.9; // TTC
+  const realAboSubs = 480;
+  const realAboDelta = 8.1;
 
-  // 🧮 Simulateur – états utilisateur
-  const [currency, setCurrency] = useState<"CHF" | "EUR">("CHF");
-  const [followers, setFollowers] = useState<number>(15000);
-  const [subPrice, setSubPrice] = useState<number>(9.99);
-  const [subConversion, setSubConversion] = useState<number>(5); // % abonnés
-  const [ppvPrice, setPpvPrice] = useState<number>(19.99);
-  const [ppvConversion, setPpvConversion] = useState<number>(3); // % acheteurs PPV
-  const [ppvBuysPerBuyer, setPpvBuysPerBuyer] = useState<number>(1); // achats PPV / acheteur / mois
+  const realPpvPrice = 19.9; // TTC
+  const realPpvBuyers = 120;
+  const realPpvPerBuyer = 1.4;
+  const realPpvDelta = 5.2;
+
+  const realLikes = 3200;
+  const realTier = getTierFromLikes(realLikes);
+
+  const realGrossAbos = realAboPrice * realAboSubs;
+  const realGrossPpv = realPpvPrice * realPpvBuyers * realPpvPerBuyer;
+  const realGrossTotal = realGrossAbos + realGrossPpv;
+
+  const {
+    vatAmount: realVatAmount,
+    netBase: realNetBase,
+    platformShareNet: realPlatformShareNet,
+    creatorShareNet: realCreatorShareNet,
+  } = computeVatAndShares(realGrossTotal, realTier, vatRateReal);
+
+  // 🔸 Partie "SIMULATEUR"
+  const [simFollowers, setSimFollowers] = useState<number>(5000);
+  const [simAboPrice, setSimAboPrice] = useState<number>(9.99);
+  const [simAboConv, setSimAboConv] = useState<number>(3); // % followers → abo
+  const [simPpvPrice, setSimPpvPrice] = useState<number>(14.99);
+  const [simPpvConv, setSimPpvConv] = useState<number>(1.5); // % followers → acheteurs PPV
+  const [simPpvPerBuyer, setSimPpvPerBuyer] = useState<number>(1);
   const [simLikes, setSimLikes] = useState<number>(realLikes);
-  const [vatCountry, setVatCountry] = useState<keyof typeof VAT_RATES>("CH");
 
-  // 🔐 Commisson en fonction des likes
-  const commissionTier: CommissionTier = useMemo(() => {
-    if (simLikes > 10000) return "GOLD";
-    if (simLikes > 1000) return "SILVER";
-    return "BRONZE";
-  }, [simLikes]);
+  // 🧾 Pays TVA pour le simulateur (CH / FR / DE / ES / IT / EU)
+  const [simCountryCode, setSimCountryCode] = useState<string>(
+    CURRENT_COUNTRY.code
+  );
+  const simCountry =
+    COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ??
+    CURRENT_COUNTRY;
+  const vatRateSim = simCountry.vatRate;
 
-  const commissionRate = useMemo(() => {
-    switch (commissionTier) {
-      case "GOLD":
-        return 0.2;
-      case "SILVER":
-        return 0.25;
-      case "BRONZE":
-      default:
-        return 0.3;
-    }
-  }, [commissionTier]);
+  const simTier = getTierFromLikes(simLikes);
+  const simAboSubs = (simFollowers * simAboConv) / 100;
+  const simPpvBuyers = (simFollowers * simPpvConv) / 100;
 
-  // 📊 Calculs du simulateur
-  const subscribers = Math.round((followers * subConversion) / 100);
-  const ppvBuyers = Math.round((followers * ppvConversion) / 100);
+  const simGrossAbos = simAboSubs * simAboPrice;
+  const simGrossPpv = simPpvBuyers * simPpvPrice * simPpvPerBuyer;
+  const simGrossTotal = simGrossAbos + simGrossPpv;
 
-  const monthlySubGross = subscribers * subPrice;
-  const monthlyPpvGross = ppvBuyers * ppvPrice * ppvBuysPerBuyer;
-  const monthlyTotalGross = monthlySubGross + monthlyPpvGross;
+  const {
+    vatAmount: simVatAmount,
+    netBase: simNetBase,
+    platformShareNet: simPlatformShareNet,
+    creatorShareNet: simCreatorShareNet,
+  } = computeVatAndShares(simGrossTotal, simTier, vatRateSim);
 
-  const platformCommission = monthlyTotalGross * commissionRate;
-  const monthlyCreatorGross = monthlyTotalGross - platformCommission;
+  const simAboSharePct =
+    simGrossTotal > 0 ? (simGrossAbos / simGrossTotal) * 100 : 0;
+  const simPpvSharePct = simGrossTotal > 0 ? 100 - simAboSharePct : 0;
 
-  // Donut – part Abo / PPV
-  const subSharePct =
-    monthlyTotalGross > 0 ? (monthlySubGross / monthlyTotalGross) * 100 : 0;
+  const donutStyle = useMemo(
+    () => ({
+      backgroundImage: `conic-gradient(rgb(59,130,246) 0 ${simAboSharePct}%, rgb(16,185,129) ${simAboSharePct}% 100%)`,
+    }),
+    [simAboSharePct]
+  );
 
-  // TVA (simulation)
-  const vatConfig = VAT_RATES[vatCountry];
-  const vatAmount = monthlyCreatorGross * vatConfig.rate;
-  const monthlyCreatorTotalInclVat = monthlyCreatorGross + vatAmount;
+  // Mini "courbe" d’évolution simulée (7 périodes) basée sur la part créateur NETTE
+  const historyPoints = useMemo(() => {
+    const base = simCreatorShareNet || 0;
+    const factors = [0.55, 0.7, 0.85, 1, 1.08, 1.15, 1.25];
+    return factors.map((f, idx) => ({
+      x: idx,
+      y: Math.round(base * f),
+    }));
+  }, [simCreatorShareNet]);
 
-  // Baseline pour tendance simulateur
-  const baselineFollowers = 10000;
-  const baselineRevenue = 2000;
-  const simFollowersTrend =
-    ((followers - baselineFollowers) / baselineFollowers) * 100;
-  const simRevenueTrend =
-    ((monthlyCreatorGross - baselineRevenue) / baselineRevenue) * 100;
+  const linePoints = useMemo(() => {
+    if (historyPoints.length === 0) return "";
+    const ys = historyPoints.map((p) => p.y);
+    const maxY = Math.max(...ys, 1);
+    const minY = Math.min(...ys, 0);
+    const spanY = maxY - minY || 1;
+
+    return historyPoints
+      .map((p, idx) => {
+        const x = (idx / (historyPoints.length - 1 || 1)) * 100;
+        const normY = (p.y - minY) / spanY;
+        const y = 100 - normY * 80 - 10; // marge haut/bas
+        return `${x},${y}`;
+      })
+      .join(" ");
+  }, [historyPoints]);
 
   return (
-    <div className="container space-y-8 py-6">
-      {/* Titre + intro */}
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold">Monétisation Magic Clock</h1>
+    <div className="container py-8 space-y-8">
+      <header className="space-y-2">
+        <h1 className="text-xl font-semibold">Monétisation</h1>
         <p className="text-sm text-slate-600">
-          Comprends l&apos;impact de ton audience, de tes abonnements et de tes
-          PPV sur tes revenus. En haut : un cockpit “réalité” (mock). Plus bas
-          : un simulateur pour jouer avec les chiffres.
+          Comprends l&apos;impact de ton audience et simule ton potentiel avec
+          Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
+          basse = simulateur.
         </p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+          <Info className="h-3 w-3" />
+          <span>
+            Pays détecté (réalité, MVP) :{" "}
+            <strong>
+              {CURRENT_COUNTRY.label} · TVA{" "}
+              {Math.round(vatRateReal * 1000) / 10}%
+            </strong>{" "}
+            — non modifiable par l&apos;utilisateur.
+          </span>
+        </div>
       </header>
 
-      {/* =========================
-          1) COCKPIT RÉEL (mock)
-      ========================== */}
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Réalité (exemple de compte créateur)
-            </p>
-            <p className="text-xs text-slate-500">
-              Ces données seront plus tard alimentées par ton vrai compte
-              Magic&nbsp;Clock.
-            </p>
+      {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="inline-flex h-6 items-center rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
+              Réalité · compte Magic Clock
+            </span>
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <Info className="h-3 w-3" />
+              Données indicatives pour le MVP (non connectées au backend).
+            </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Info className="h-3.5 w-3.5" />
-            <span>Mock de démonstration</span>
-          </div>
+          <p className="text-[11px] text-slate-500">
+            Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
+            la répartition plateforme / créateur.
+          </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          {/* Followers actuels */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">Followers (réseau global)</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Followers */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+            <p className="text-xs text-slate-500">Followers (tous réseaux)</p>
             <p className="mt-1 text-xl font-semibold">
               {realFollowers.toLocaleString("fr-CH")}
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Basé sur l&apos;ensemble de tes réseaux sociaux.
+              Base estimée de ton audience activable avec Magic Clock.
             </p>
             <div className="mt-2">
-              <TrendBadge value={realFollowersTrend} />
+              <TrendBadge value={realFollowersDelta} />
             </div>
           </div>
 
-          {/* Revenus mensuels créateur */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">
-              Revenu mensuel Magic Clock (mock)
-            </p>
-            <p className="mt-1 text-xl font-semibold">
-              {formatMoney(realMonthlyCreator)}
+          {/* Abonnements */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+            <p className="text-xs text-slate-500">Abonnements (Abo)</p>
+            <p className="mt-1 text-lg font-semibold">
+              {realAboSubs.toLocaleString("fr-CH")} abonnés
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Après commission plateforme, hors TVA.
+              Prix moyen : {formatMoney(realAboPrice)} / mois (TTC).
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Revenu brut Abo : {formatMoney(realGrossAbos)} / mois (TTC).
             </p>
             <div className="mt-2">
-              <TrendBadge value={realMonthlyTrend} />
+              <TrendBadge value={realAboDelta} />
             </div>
           </div>
 
-          {/* Paliers Bronze / Argent / Or */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-slate-500">
-                Niveau de commission (likes reçus)
+          {/* PPV */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+            <p className="text-xs text-slate-500">Contenus PPV</p>
+            <p className="mt-1 text-lg font-semibold">
+              {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Prix moyen : {formatMoney(realPpvPrice)} (TTC) ·{" "}
+              {realPpvPerBuyer.toFixed(1)} PPV / acheteur / mois.
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Revenu brut PPV : {formatMoney(realGrossPpv)} / mois (TTC).
+            </p>
+            <div className="mt-2">
+              <TrendBadge value={realPpvDelta} />
+            </div>
+          </div>
+        </div>
+
+        {/* Résumé revenus + TVA + commission réelle */}
+        <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col justify-between">
+            <div className="flex flex-col gap-2 text-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-500">Revenu brut total</p>
+                  <p className="mt-1 text-2xl font-semibold">
+                    {formatMoney(realGrossTotal)}
+                  </p>
+                </div>
+                <div className="text-right text-[11px] text-slate-500">
+                  <p>TVA estimée ({Math.round(vatRateReal * 1000) / 10}%)</p>
+                  <p className="mt-1 font-medium">
+                    {formatMoney(realVatAmount)}
+                  </p>
+                  <p className="mt-2">Base HT estimée</p>
+                  <p className="mt-1 font-semibold">
+                    {formatMoney(realNetBase)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-3 text-xs md:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
+                  <p className="text-[11px] text-slate-500">
+                    Part plateforme (HT)
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-700">
+                    {formatMoney(realPlatformShareNet)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Palier {realTier.label} ·{" "}
+                    {Math.round(realTier.rate * 100)}% de la base HT.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
+                  <p className="text-[11px] text-slate-500">
+                    Part créateur estimée (HT)
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-600">
+                    {formatMoney(realCreatorShareNet)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Montant avant charges sociales / impôts côté créateur.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Paliers commission (réels, non modifiables) */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <p className="font-medium text-slate-700">
+                Paliers de commission Magic Clock
               </p>
-              <span className="text-[11px] text-slate-500">
-                {realLikes.toLocaleString("fr-CH")} likes
-              </span>
+              <p className="text-slate-500">
+                Likes ce mois-ci :{" "}
+                <span className="font-semibold">{realLikes}</span>
+              </p>
             </div>
 
-            {/* Barre linéaire likes */}
-            <div className="relative mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
-                style={{
-                  width: `${Math.min(realLikes / 100, 100)}%`,
-                }}
-              />
-            </div>
-            <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-              <span>0</span>
-              <span>1k</span>
-              <span>10k+</span>
+            <div className="flex flex-col gap-2 text-xs">
+              {TIERS.map((tier) => {
+                const isActive = tier.id === realTier.id;
+                const locked =
+                  tier.id === "SILVER" && realLikes <= 1000
+                    ? true
+                    : tier.id === "GOLD" && realLikes <= 10000
+                    ? true
+                    : false;
+
+                return (
+                  <div
+                    key={tier.id}
+                    className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                      isActive
+                        ? "border-emerald-500 bg-emerald-50/60"
+                        : "border-slate-200 bg-white/80"
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-semibold">
+                        {tier.label} · {Math.round(tier.rate * 100)}% plateforme
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {tier.id === "BRONZE" && "0 → 1 000 likes / mois"}
+                        {tier.id === "SILVER" &&
+                          "1 001 → 10 000 likes / mois (débloqué Argent)"}
+                        {tier.id === "GOLD" &&
+                          "+ de 10 000 likes / mois (débloqué Or)"}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {locked ? (
+                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
+                          🔒 Bloqué
+                        </span>
+                      ) : isActive ? (
+                        <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-white">
+                          Actif
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
+                          Inactif
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="mt-1 space-y-1 text-[11px]">
-              <p>
-                <span className="font-semibold">Bronze :</span> 30% commission
-                (0 → 1’000 likes) — <span className="text-emerald-600">actif</span>
-              </p>
-              <p>
-                <span className="font-semibold">Argent :</span> 25% commission
-                (1’001 → 10’000 likes) —{" "}
-                <span className="text-amber-600">débloqué avec la
-                  communauté</span>
-              </p>
-              <p>
-                <span className="font-semibold">Or :</span> 20% commission
-                (&gt; 10’001 likes) —{" "}
-                <span className="text-amber-700 font-semibold">
-                  objectif à atteindre
-                </span>
-              </p>
+            {/* Barre de progression likes */}
+            <div className="mt-1">
+              <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
+                <span>0</span>
+                <span>1 000</span>
+                <span>10 000+</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 via-sky-500 to-emerald-500"
+                  style={{
+                    width: `${Math.min(100, (realLikes / 10000) * 100)}%`,
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Séparateur Simulator */}
-      <div className="flex items-center gap-3 text-xs text-slate-500">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span>Simulator</span>
-        <div className="h-px flex-1 bg-slate-200" />
+      {/* Séparateur Réalité / Simulateur */}
+      <div className="relative my-4 flex items-center justify-center">
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+        <span className="absolute inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600 border border-slate-200">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Simulateur (projection)
+        </span>
       </div>
 
-      {/* =========================
-          2) SIMULATEUR COMPLET
-      ========================== */}
-      <section className="space-y-6">
-        {/* Ligne 1 : paramètres globaux */}
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)]">
-          {/* Paramètres de base (followers, abos, PPV) */}
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-800">
-                  Paramètres simulateur
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Ajuste les curseurs pour voir ton potentiel de revenus.
-                </p>
-              </div>
+      {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC → TVA → HT → parts) */}
+      <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        {/* Contrôles simulateur */}
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-800">
+              Réglages simulateur
+            </h2>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <span>Pays TVA (simulation)</span>
               <select
-                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs"
-                value={currency}
-                onChange={(e) =>
-                  setCurrency(e.target.value as "CHF" | "EUR")
-                }
+                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px]"
+                value={simCountryCode}
+                onChange={(e) => setSimCountryCode(e.target.value)}
               >
-                <option value="CHF">CHF</option>
-                <option value="EUR">EUR</option>
+                {COUNTRY_VAT_TABLE.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
               </select>
             </div>
+          </div>
 
-            {/* Followers */}
+          <p className="text-xs text-slate-500">
+            Les prix saisis sont considérés comme TTC. Magic Clock retire
+            automatiquement la TVA du pays sélectionné, puis applique la
+            commission Bronze / Argent / Or sur la base HT. En production, le
+            pays serait détecté automatiquement (IP / profil / Stripe Tax).
+          </p>
+
+          {/* Followers */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-slate-700">
+                Followers (tous réseaux)
+              </span>
+              <span className="text-slate-500">
+                {simFollowers.toLocaleString("fr-CH")}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1000000}
+              step={1000}
+              value={simFollowers}
+              onChange={(e) =>
+                setSimFollowers(clamp(Number(e.target.value), 0, 1000000))
+              }
+              className="w-full"
+            />
+            <p className="text-[11px] text-slate-500">
+              Glisse pour simuler ton audience. Le curseur va jusqu&apos;à 1
+              million pour rester lisible, mais en réalité il n&apos;y a pas
+              de limite.
+            </p>
+          </div>
+
+          {/* Abos */}
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
-                  Followers (tous réseaux)
+                  Prix abonnement (Abo)
                 </span>
                 <span className="text-slate-500">
-                  {followers.toLocaleString("fr-CH")}
+                  {simAboPrice.toFixed(2)} CHF / mois
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0.99}
+                max={999}
+                step={0.5}
+                value={simAboPrice}
+                onChange={(e) =>
+                  setSimAboPrice(clamp(Number(e.target.value), 0.99, 999))
+                }
+                className="w-full"
+              />
+              <p className="text-[11px] text-slate-500">
+                Tarification Abo Magic Clock (0,99 → 999 CHF / mois, TTC).
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-700">
+                  Conversion Abo
+                </span>
+                <span className="text-slate-500">
+                  {simAboConv.toFixed(1)}% followers
                 </span>
               </div>
               <input
                 type="range"
                 min={0}
-                max={1000000}
-                value={followers}
-                onChange={(e) => setFollowers(Number(e.target.value))}
+                max={100}
+                step={0.5}
+                value={simAboConv}
+                onChange={(e) =>
+                  setSimAboConv(clamp(Number(e.target.value), 0, 100))
+                }
                 className="w-full"
               />
-              <div className="flex justify-between text-[11px] text-slate-400">
-                <span>0</span>
-                <span>1M</span>
-              </div>
-              <TrendBadge value={simFollowersTrend} />
-            </div>
-
-            {/* Abonnements */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">
-                    Prix abonnement / mois
-                  </span>
-                  <span className="text-slate-500">
-                    {formatMoney(subPrice, currency)}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0.99}
-                  max={999}
-                  step={0.01}
-                  value={subPrice}
-                  onChange={(e) => setSubPrice(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>0.99</span>
-                  <span>999</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">
-                    Conversion abonnés
-                  </span>
-                  <span className="text-slate-500">
-                    {subConversion.toFixed(1)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={subConversion}
-                  onChange={(e) =>
-                    setSubConversion(Number(e.target.value))
-                  }
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>0%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* PPV */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">
-                    Prix PPV
-                  </span>
-                  <span className="text-slate-500">
-                    {formatMoney(ppvPrice, currency)}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0.99}
-                  max={999}
-                  step={0.01}
-                  value={ppvPrice}
-                  onChange={(e) => setPpvPrice(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>0.99</span>
-                  <span>999</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">
-                    Conversion PPV
-                  </span>
-                  <span className="text-slate-500">
-                    {ppvConversion.toFixed(1)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={ppvConversion}
-                  onChange={(e) =>
-                    setPpvConversion(Number(e.target.value))
-                  }
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>0%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">
-                    PPV / acheteur / mois
-                  </span>
-                  <span className="text-slate-500">
-                    {ppvBuysPerBuyer.toFixed(1)}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={20}
-                  step={0.5}
-                  value={ppvBuysPerBuyer}
-                  onChange={(e) =>
-                    setPpvBuysPerBuyer(Number(e.target.value))
-                  }
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>0</span>
-                  <span>20+</span>
-                </div>
-              </div>
+              <p className="text-[11px] text-slate-500">
+                Pourcentage de tes followers qui deviennent abonnés Magic Clock.
+              </p>
             </div>
           </div>
 
-          {/* Résumé revenus + commission + tendances */}
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-slate-800">
-                Résumé revenus (simulateur)
-              </h2>
-              <TrendBadge value={simRevenueTrend} />
+          {/* PPV */}
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-700">
+                  Prix PPV moyen
+                </span>
+                <span className="text-slate-500">
+                  {simPpvPrice.toFixed(2)} CHF
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0.99}
+                max={999}
+                step={0.5}
+                value={simPpvPrice}
+                onChange={(e) =>
+                  setSimPpvPrice(clamp(Number(e.target.value), 0.99, 999))
+                }
+                className="w-full"
+              />
+              <p className="text-[11px] text-slate-500">
+                Prix moyen d&apos;un contenu PPV (0,99 → 999 CHF, TTC).
+              </p>
             </div>
 
-            <div className="grid gap-3 text-sm sm:grid-cols-2">
-              <div className="space-y-1 rounded-xl bg-slate-50/80 p-3">
-                <p className="text-xs text-slate-500">
-                  Revenus bruts (Abo + PPV)
-                </p>
-                <p className="text-lg font-semibold">
-                  {formatMoney(monthlyTotalGross, currency)}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {formatMoney(monthlySubGross, currency)} via
-                  abonnements,{" "}
-                  {formatMoney(monthlyPpvGross, currency)} via PPV.
-                </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-700">
+                  Conversion PPV
+                </span>
+                <span className="text-slate-500">
+                  {simPpvConv.toFixed(1)}% followers
+                </span>
               </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={0.5}
+                value={simPpvConv}
+                onChange={(e) =>
+                  setSimPpvConv(clamp(Number(e.target.value), 0, 100))
+                }
+                className="w-full"
+              />
+              <p className="text-[11px] text-slate-500">
+                Part de tes followers qui achètent au moins un PPV ce mois-ci.
+              </p>
+            </div>
 
-              <div className="space-y-1 rounded-xl bg-slate-50/80 p-3">
-                <p className="text-xs text-slate-500">
-                  Part créateur (après commission)
-                </p>
-                <p className="text-lg font-semibold">
-                  {formatMoney(monthlyCreatorGross, currency)}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Commission Magic Clock : {(commissionRate * 100).toFixed(0)}
-                  % ({commissionTier === "BRONZE"
-                    ? "Bronze"
-                    : commissionTier === "SILVER"
-                    ? "Argent"
-                    : "Or"}
-                  ).
-                </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-700">
+                  PPV / acheteur / mois
+                </span>
+                <span className="text-slate-500">
+                  {simPpvPerBuyer.toFixed(1)}
+                </span>
+              </div>
+              <input
+                type="number"
+                min={0}
+                step={0.1}
+                value={simPpvPerBuyer}
+                onChange={(e) =>
+                  setSimPpvPerBuyer(
+                    clamp(Number(e.target.value) || 0, 0, 9999)
+                  )
+                }
+                className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+              />
+              <p className="text-[11px] text-slate-500">
+                Tu peux saisir n&apos;importe quelle valeur (0 → ∞). Le champ
+                n&apos;est pas limité par un slider.
+              </p>
+            </div>
+          </div>
+
+          {/* Likes → palier simulateur */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-slate-700">
+                Likes / mois (simulateur)
+              </span>
+              <span className="text-slate-500">
+                {simLikes.toLocaleString("fr-CH")} · palier{" "}
+                <span className="font-semibold">{simTier.label}</span>{" "}
+                ({Math.round(simTier.rate * 100)}% plateforme)
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={50000}
+              step={100}
+              value={simLikes}
+              onChange={(e) =>
+                setSimLikes(clamp(Number(e.target.value), 0, 50000))
+              }
+              className="w-full"
+            />
+            <p className="text-[11px] text-slate-500">
+              Le palier de commission est 100% automatique : plus de likes = plus
+              de part créateur (Or = 20% plateforme, 80% pour toi).
+            </p>
+          </div>
+        </div>
+
+        {/* Résultats simulateur */}
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-800">
+            Résultat simulateur (par mois)
+          </h2>
+
+          <div className="grid gap-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Abonnés estimés (Abo) · {simAboConv.toFixed(1)}%
+              </span>
+              <span className="font-semibold">
+                {Math.round(simAboSubs).toLocaleString("fr-CH")} abonnés
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Acheteurs PPV estimés · {simPpvConv.toFixed(1)}%
+              </span>
+              <span className="font-semibold">
+                {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Revenu brut Abo (TTC, avant TVA)
+              </span>
+              <span className="font-semibold">
+                {formatMoney(simGrossAbos)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Revenu brut PPV (TTC, avant TVA)
+              </span>
+              <span className="font-semibold">
+                {formatMoney(simGrossPpv)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
+              <span className="text-slate-500">Revenu brut total (TTC)</span>
+              <span className="text-base font-semibold">
+                {formatMoney(simGrossTotal)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                TVA estimée ({Math.round(vatRateSim * 1000) / 10}% ·{" "}
+                {simCountry.label})
+              </span>
+              <span className="font-semibold text-slate-600">
+                {formatMoney(simVatAmount)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Base HT estimée</span>
+              <span className="font-semibold text-slate-700">
+                {formatMoney(simNetBase)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Part plateforme (HT, {Math.round(simTier.rate * 100)}%)
+              </span>
+              <span className="font-semibold text-slate-600">
+                {formatMoney(simPlatformShareNet)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Part créateur (HT, après TVA + commission)
+              </span>
+              <span className="font-semibold text-emerald-600">
+                {formatMoney(simCreatorShareNet)}
+              </span>
+            </div>
+          </div>
+
+          {/* Donut + légende */}
+          <div className="mt-2 grid gap-4 items-center md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="flex h-32 w-32 items-center justify-center rounded-full"
+                style={donutStyle}
+              >
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
+                  <span>{formatMoney(simCreatorShareNet)}</span>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Répartition Abo / PPV dans ton revenu brut (TTC). Le montant au
+                centre est ta part créateur estimée (HT) après TVA + commission.
+              </p>
+              <div className="flex items-center gap-3 text-[11px]">
+                <div className="flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
+                  <span>Abo · {simAboSharePct.toFixed(1)}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[rgb(16,185,129)]" />
+                  <span>PPV · {simPpvSharePct.toFixed(1)}%</span>
+                </div>
               </div>
             </div>
 
-            {/* Donut + likes / paliers */}
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)]">
-              {/* Donut part Abo / PPV */}
-              <div className="flex items-center gap-4 rounded-xl bg-slate-50/80 p-3">
-                <div className="relative h-20 w-20 flex-shrink-0">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      backgroundImage: `conic-gradient(#0ea5e9 0 ${subSharePct}%, #22c55e ${subSharePct}% 100%)`,
-                    }}
+            {/* Courbe d'évolution */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-700">
+                Projection d&apos;évolution (part créateur HT)
+              </p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                <svg viewBox="0 0 100 100" className="h-24 w-full">
+                  <defs>
+                    <linearGradient
+                      id="mc-line"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="100%" stopColor="#22c55e" />
+                    </linearGradient>
+                  </defs>
+                  <polyline
+                    fill="none"
+                    stroke="url(#mc-line)"
+                    strokeWidth={1.6}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={linePoints}
                   />
-                  <div className="absolute inset-3 rounded-full bg-white" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[11px] font-semibold text-slate-700">
-                      {Math.round(subSharePct)}% Abo
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-1 text-xs">
-                  <p className="font-medium text-slate-700">
-                    Répartition Abo / PPV
-                  </p>
-                  <p className="text-slate-500">
-                    {formatMoney(monthlySubGross, currency)} via Abo (
-                    {Math.round(subSharePct)}%),{" "}
-                    {formatMoney(
-                      monthlyPpvGross,
-                      currency
-                    )} via PPV ({Math.round(100 - subSharePct)}%).
-                  </p>
-                </div>
-              </div>
-
-              {/* Curseur likes → paliers commission */}
-              <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">
-                    Paliers commission (likes simulateur)
-                  </span>
-                  <span className="text-slate-500">
-                    {simLikes.toLocaleString("fr-CH")} likes
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={20000}
-                  value={simLikes}
-                  onChange={(e) => setSimLikes(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>0</span>
-                  <span>1k</span>
-                  <span>10k</span>
-                  <span>20k+</span>
-                </div>
-                <div className="mt-1 space-y-1 text-[11px]">
-                  <p>
-                    <span className="font-semibold">Bronze :</span> 30% — 0 →
-                    1’000 likes{" "}
-                    {commissionTier === "BRONZE" && (
-                      <span className="ml-1 text-emerald-600">
-                        (niveau actuel simu)
-                      </span>
-                    )}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Argent :</span> 25% — 1’001
-                    → 10’000 likes{" "}
-                    {commissionTier === "SILVER" && (
-                      <span className="ml-1 text-emerald-600">
-                        (niveau actuel simu)
-                      </span>
-                    )}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Or :</span> 20% — &gt;
-                    10’001 likes{" "}
-                    {commissionTier === "GOLD" && (
-                      <span className="ml-1 text-emerald-600">
-                        (niveau actuel simu)
-                      </span>
-                    )}
-                  </p>
-                </div>
+                </svg>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Exemple de progression sur 7 périodes (par ex. jours ou
+                  semaines) basée sur ta part créateur nette (HT).
+                </p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* =========================
-            3) TVA (simulation)
-        ========================== */}
-        <section className="rounded-2xl border border-slate-200 bg-white/80 p-4 space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-800">
-                TVA (simulation simple)
-              </h2>
-              <p className="text-xs text-slate-500">
-                Estimation de la TVA sur ta part créateur. La version
-                production utilisera un service comme Stripe Tax.
-              </p>
-            </div>
-            <select
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs"
-              value={vatCountry}
-              onChange={(e) =>
-                setVatCountry(e.target.value as keyof typeof VAT_RATES)
-              }
-            >
-              {Object.entries(VAT_RATES).map(([code, cfg]) => (
-                <option key={code} value={code}>
-                  {cfg.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid gap-3 text-sm sm:grid-cols-3">
-            <div className="space-y-1 rounded-xl bg-slate-50/80 p-3">
-              <p className="text-xs text-slate-500">Revenus créateur (HT)</p>
-              <p className="text-lg font-semibold">
-                {formatMoney(monthlyCreatorGross, currency)}
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Après commission Magic Clock, avant TVA.
-              </p>
-            </div>
-
-            <div className="space-y-1 rounded-xl bg-slate-50/80 p-3">
-              <p className="text-xs text-slate-500">
-                TVA estimée ({Math.round(VAT_RATES[vatCountry].rate * 100)}%)
-              </p>
-              <p className="text-lg font-semibold">
-                {formatMoney(vatAmount, currency)}
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Calcul indicatif. La gestion réelle dépendra de ta situation
-                fiscale.
-              </p>
-            </div>
-
-            <div className="space-y-1 rounded-xl bg-slate-50/80 p-3">
-              <p className="text-xs text-slate-500">
-                Montant TTC payé par les fans
-              </p>
-              <p className="text-lg font-semibold">
-                {formatMoney(monthlyCreatorTotalInclVat, currency)}
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Cette valeur aide à visualiser ce que paie réellement ta
-                communauté.
-              </p>
-            </div>
-          </div>
-        </section>
       </section>
     </div>
   );
