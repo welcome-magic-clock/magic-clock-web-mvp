@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
   Users,
@@ -11,19 +11,17 @@ import {
   Mail,
   Bell,
   Shield,
-} from 'lucide-react';
+} from "lucide-react";
 
-// Menu latéral principal
-// Remarque : "Créer" est l'entrée unique pour le couple Magic Studio + Magic Display
 const items = [
-  { href: '/', label: 'Amazing', icon: Home },
-  { href: '/meet', label: 'Meet me', icon: Users },
-  { href: '/mymagic', label: 'My Magic Clock', icon: UserCircle },
-  { href: '/studio', label: 'Créer', icon: Sparkles },
-  { href: '/monet', label: 'Monétisation', icon: DollarSign },
-  { href: '/messages', label: 'Messages', icon: Mail },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
-  { href: '/legal', label: 'Légal', icon: Shield },
+  { href: "/", label: "Amazing", icon: Home },
+  { href: "/meet", label: "Meet me", icon: Users },
+  { href: "/mymagic", label: "My Magic Clock", icon: UserCircle },
+  { href: "/studio", label: "Créer", icon: Sparkles },
+  { href: "/monet", label: "Monétisation", icon: DollarSign },
+  { href: "/messages", label: "Messages", icon: Mail },
+  { href: "/notifications", label: "Notifications", icon: Bell },
+  { href: "/legal", label: "Légal", icon: Shield },
 ];
 
 export default function LeftNav() {
@@ -31,25 +29,34 @@ export default function LeftNav() {
 
   return (
     <aside className="hidden md:block w-64 shrink-0 p-4">
-      <div className="sticky top-4 space-y-2">
-        <div className="text-xl font-semibold mb-3">Magic Clock — Menu</div>
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + '/');
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2 border ${
-                active
-                  ? 'bg-indigo-50 border-brand-500 text-brand-600'
-                  : 'hover:bg-slate-100'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+      <div className="sticky top-4 space-y-3">
+        <div className="text-sm font-semibold text-slate-700">
+          Magic Clock — Menu
+        </div>
+
+        <nav className="space-y-1">
+          {items.map(({ href, label, icon: Icon }) => {
+            const active =
+              pathname === href ||
+              (href !== "/" && pathname.startsWith(href + "/"));
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm border transition
+                  ${
+                    active
+                      ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                      : "border-slate-200 text-slate-700 hover:bg-slate-100"
+                  }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </aside>
   );
