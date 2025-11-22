@@ -1,107 +1,130 @@
-"use client";
-
 import Link from "next/link";
-import { Eye, Heart } from "lucide-react";
+import { Eye, Heart, Play } from "lucide-react";
 
-type MediaCardProps = {
-  item: any;          // MVP : typé en any pour éviter les blocages TS
-  isFirst?: boolean;  // au cas où on veuille traiter la 1re carte différemment
+export type MediaCardProps = {
+  // On garde volontairement un type souple pour éviter les erreurs TS
+  item: any;
 };
 
-export default function MediaCard({ item, isFirst }: MediaCardProps) {
-  const title = item?.title ?? "Avant/Après couleur";
-  const username = item?.user ?? "sofia";
-  const views = item?.views ?? 1330;
-  const likes = item?.likes ?? 0;
-  const tags: string[] = item?.tags ?? ["balayage", "blond froid", "soin"];
-  const id = item?.id ?? "demo";
+export default function MediaCard({ item }: MediaCardProps) {
+  const title: string = item?.title ?? "Avant/Après couleur";
+  const creatorHandle: string = item?.creator?.handle ?? "@sofia";
+  const avatarInitials: string =
+    item?.creator?.avatarInitials ??
+    (creatorHandle.replace("@", "").charAt(0).toUpperCase() || "M");
+
+  const views: number = item?.stats?.views ?? 1000;
+  const likes: number = item?.stats?.likes ?? 0;
+
+  const tags: string[] = item?.tags ?? ["#balayage", "#blond froid", "#soin"];
+  const description: string =
+    item?.description ??
+    "Magic Clock · contenus pédagogiques. Swipe dans le flux pour découvrir d'autres créateurs.";
+
+  const displayUrl: string = item?.displayUrl ?? "#";
 
   return (
     <article
-      className={`
+      className="
         snap-start
-        rounded-3xl border border-slate-200 bg-slate-900 text-slate-50 shadow-sm
+        rounded-[32px]
+        border border-slate-800/60
+        bg-slate-950
+        text-slate-50
+        shadow-xl
         overflow-hidden
         flex flex-col
-        min-h-[70vh]
-        sm:min-h-[520px]
-      `}
+        min-h-[calc(100vh-160px)]
+        sm:min-h-[420px]
+        lg:min-h-[460px]
+      "
     >
-      {/* Zone "media" (fond dark pour l’instant) */}
-      <div className="relative flex-1 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.9),_rgba(15,23,42,1))]">
-        {/* Badge Magic Display */}
-        <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-[11px] font-medium text-slate-50 backdrop-blur">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-          Magic Display
-        </div>
+      {/* Zone média (placeholder gradient pour le MVP) */}
+      <div className="relative flex-1 bg-gradient-to-b from-slate-800/60 via-slate-900 to-slate-950">
+        {/* Badges top */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between px-4 pt-3 sm:px-6">
+          <span className="inline-flex items-center rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium">
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            Magic Display
+          </span>
 
-        {/* Placeholder média (image/vidéo à venir) */}
-        <div className="flex h-full items-center justify-center">
-          <span className="text-[11px] text-slate-400">
+          <span className="hidden text-[10px] text-slate-400 sm:inline">
             Média Magic Clock (avant / après, vidéo, etc.)
           </span>
         </div>
+
+        {/* Icône Play au centre (placeholder vidéo) */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur">
+            <Play className="h-6 w-6 text-slate-50" />
+          </div>
+        </div>
+
+        {/* Dégradé bas pour la jonction avec le bloc texte */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
       </div>
 
-      {/* Zone texte / méta */}
-      <div className="relative flex flex-col gap-3 bg-gradient-to-t from-slate-950 via-slate-950/95 to-slate-950/80 px-4 pb-4 pt-3 sm:px-6 sm:pb-5 sm:pt-4">
-        {/* Ligne auteur + stats */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold">
-              {String(username).charAt(0).toUpperCase()}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium">@{username}</span>
-              <span className="text-[11px] text-slate-400">
-                Magic Clock · contenus pédagogiques
-              </span>
-            </div>
+      {/* Bloc infos */}
+      <div className="relative z-10 border-t border-slate-800/60 bg-slate-950/95 px-4 pb-4 pt-3 sm:px-6 sm:pb-5 sm:pt-4">
+        {/* Ligne créateur */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold">
+            {avatarInitials}
           </div>
-
-          <div className="flex items-center gap-3 text-[11px] text-slate-300">
-            <span className="inline-flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              {views.toLocaleString("fr-CH")}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Heart className="h-3 w-3" />
-              {likes.toLocaleString("fr-CH")}
+          <div className="flex flex-col">
+            <span className="text-xs font-medium">{creatorHandle}</span>
+            <span className="text-[11px] text-slate-400">
+              Magic Clock · contenus pédagogiques
             </span>
           </div>
         </div>
 
         {/* Titre */}
-        <h2 className="text-base font-semibold leading-snug sm:text-lg">
-          {title}
+        <h2 className="mt-2 text-sm font-semibold leading-tight sm:text-base">
+          <span className="line-clamp-1">{title}</span>
         </h2>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-2">
-          {tags.slice(0, 4).map((tag) => (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-slate-800/80 px-2.5 py-1 text-[11px] text-slate-200"
+              className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] text-slate-200"
             >
-              #{tag}
+              {tag}
             </span>
           ))}
         </div>
 
         {/* Description courte */}
-        <p className="text-[11px] leading-snug text-slate-400 sm:text-xs">
-          Magic Clock · contenus pédagogiques. Swipe dans le flux pour
-          découvrir d&apos;autres créateurs.
+        <p className="mt-2 text-[11px] leading-snug text-slate-400 sm:text-xs">
+          {description}
         </p>
 
-        {/* Bouton Ouvrir Display */}
-        <div className="mt-1 flex justify-end">
+        {/* Stats + bouton */}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+            <div className="inline-flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>{views.toLocaleString("fr-CH")}</span>
+            </div>
+            <div className="inline-flex items-center gap-1">
+              <Heart className="h-3 w-3" />
+              <span>{likes.toLocaleString("fr-CH")}</span>
+            </div>
+          </div>
+
           <Link
-            href={`/display/${id}`}
-            className="inline-flex items-center justify-center rounded-full bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-900 shadow-sm hover:bg-slate-100"
+            href={displayUrl}
+            className="
+              inline-flex items-center justify-center
+              rounded-full bg-slate-50 px-4 py-1.5
+              text-xs font-semibold text-slate-900
+              hover:bg-slate-100
+            "
           >
             Ouvrir Display
-            <span className="ml-1 text-[13px]">↗︎</span>
+            <span className="ml-1 text-[11px]">↗︎</span>
           </Link>
         </div>
       </div>
