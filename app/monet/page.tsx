@@ -1,183 +1,123 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 
-// ----------------------
-// Helpers & types
-// ----------------------
-
-type Currency = "CHF" | "EUR" | "USD";
-
-type Params = {
-  followers: number;
-  aboPrice: number;
-  aboConv: number; // %
-  ppvPrice: number;
-  ppvConv: number; // %
-  ppvPerBuyer: number;
-  platformTierId: "bronze" | "silver" | "gold";
-  vatRate: number; // %
-};
-
-type Metrics = {
-  mrrAbo: number;
-  revPpv: number;
-  gross: number;
-  creatorNet: number;
-  mixAboPct: number;
-  mixPpvPct: number;
-};
-
-const CURRENCY: Currency = "CHF";
-
-// presets init (point de référence pour les flèches %)
-const DEFAULT_PARAMS: Params = {
-  followers: 12000,
-  aboPrice: 9.99,
-  aboConv: 5,
-  ppvPrice: 9.99,
-  ppvConv: 2,
-  ppvPerBuyer: 1,
-  platformTierId: "bronze",
-  vatRate: 8.1,
-};
-
-const PLATFORM_TIERS = [
-  // seuils théoriques (0–1000 / 1001–10000 / 10001+)
-  { id: "bronze" as const, label: "Bronze", rate: 0.3, minLikes: 0, maxLikes: 1000 },
-  {
-    id: "silver" as const,
-    label: "Argent",
-    rate: 0.25,
-    minLikes: 1001,
-    maxLikes: 10000,
-  },
-  { id: "gold" as const, label: "Or", rate: 0.2, minLikes: 10001, maxLikes: Infinity },
-];
-
-// Démo : likes reçus dans le flux Amazing
-const FAKE_LIKES_RECEIVED = 6200;
-
-// pour la barre de progression
-const BRONZE_MAX = 1000;
-const SILVER_MAX = 10000;
-const BAR_MAX = 15000;
-
-function formatMoney(value: number): string {
-  if (!Number.isFinite(value)) return "-";
-  return new Intl.NumberFormat("fr-CH", {
-    style: "currency",
-    currency: CURRENCY,
-    maximumFractionDigits: 2,
+function formatMoney(value: number) {
+  if (!Number.isFinite(value)) return "0.00 CHF";
+  return `${value.toLocaleString("fr-CH", {
     minimumFractionDigits: 2,
-  }).format(value);
+    maximumFractionDigits: 2,
+  })} CHF`;
 }
 
-function computeMetrics(p: Params): Metrics {
-  const aboSubscribers = (p.followers * p.aboConv) / 100;
-  const mrrAbo = aboSubscribers * p.aboPrice;
+type DeltaBadgeProps = {
+  value: number; // en %
+};
 
-  const ppvBuyers = (p.followers * p.ppvConv) / 100;
-  const ppvUnits = ppvBuyers * p.ppvPerBuyer;
-  const revPpv = ppvUnits * p.ppvPrice;
-
-  const gross = mrrAbo + revPpv;
-
-  const platformRate =
-    PLATFORM_TIERS.find((t) => t.id === p.platformTierId)?.rate ?? 0.3;
-  const platformFee = gross * platformRate;
-  const vat = gross * (p.vatRate / 100);
-
-  const creatorNet = gross - platformFee - vat;
-
-  const mixAboPct = gross > 0 ? (mrrAbo / gross) * 100 : 0;
-  const mixPpvPct = gross > 0 ? (revPpv / gross) * 100 : 0;
-
-  return {
-    mrrAbo,
-    revPpv,
-    gross,
-    creatorNet,
-    mixAboPct,
-    mixPpvPct,
-  };
-}
-
-function TrendPill({
-  base,
-  current,
-}: {
-  base: number;
-  current: number;
-}) {
-  if (!Number.isFinite(base) || base <= 0) {
-    return (
-      <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-        → 0.00 %
-      </span>
-    );
-  }
-
-  const deltaPct = ((current - base) / base) * 100;
-  const rounded = deltaPct.toFixed(2);
-  const sign = deltaPct > 0 ? "+" : "";
-  const isUp = deltaPct > 0.01;
-  const isDown = deltaPct < -0.01;
-
-  const colorClass = isUp
-    ? "bg-emerald-100 text-emerald-700"
-    : isDown
-    ? "bg-rose-100 text-rose-700"
-    : "bg-slate-100 text-slate-500";
-
-  const arrow = isUp ? "↑" : isDown ? "↓" : "→";
+function DeltaBadge({ value }: DeltaBadgeProps) {
+  const display = value.toFixed(2).replace(".", ",");
+  const isPositiveOrZero = value >= 0;
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${colorClass}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+        isPositiveOrZero
+          ? "bg-emerald-50 text-emerald-600"
+          : "bg-rose-50 text-rose-600"
+      }`}
     >
-      {arrow} {sign}
-      {rounded} %
+      <span className="inline-block text-[13px]">
+        {isPositiveOrZero ? "▲" : "▼"}
+      </span>
+      <span>{display} %</span>
     </span>
   );
 }
 
-// ----------------------
-// Page composant
-// ----------------------
-
 export default function MonetPage() {
-  const [params, setParams] = useState<Params>(DEFAULT_PARAMS);
+  // -----------------------------
+  // Etats du simulateur
+  // -----------------------------
+  const [followers, setFollowers] = useState<number>(0);
+  const [priceSub, setPriceSub] = useState<number>(9.99);
+  const [subConv, setSubConv] = useState<number>(5); // %
+  const [pricePpv, setPricePpv] = useState<number>(9.99);
+  const [ppvConv, setPpvConv] = useState<number>(5); // %
+  const [ppvPerBuyer, setPpvPerBuyer] = useState<number>(2);
+  const [likes, setLikes] = useState<number>(0);
 
-  const baseMetrics = useMemo(() => computeMetrics(DEFAULT_PARAMS), []);
-  const metrics = useMemo(() => computeMetrics(params), [params]);
+  // -----------------------------
+  // Tiers de commission (likes)
+  // -----------------------------
+  const commissionTier = useMemo(() => {
+    if (likes > 10000) {
+      return { label: "Or", rate: 20, min: 10001, max: Infinity };
+    }
+    if (likes >= 1001) {
+      return { label: "Argent", rate: 25, min: 1001, max: 10000 };
+    }
+    return { label: "Bronze", rate: 30, min: 0, max: 1000 };
+  }, [likes]);
 
-  const currentTier = PLATFORM_TIERS.find(
-    (t) => t.id === params.platformTierId
-  )!;
+  // -----------------------------
+  // Calculs principaux
+  // -----------------------------
+  const vatRate = 8.1; // TVA fictive
 
-  // Pour le moment : seul Bronze est vraiment débloqué
-  const unlockedTierIds: ("bronze" | "silver" | "gold")[] = ["bronze"];
+  const subSubscribers = (followers * subConv) / 100;
+  const ppvBuyers = (followers * ppvConv) / 100;
 
-  const handleParamChange = <K extends keyof Params>(
-    key: K,
-    value: Params[K]
-  ) => {
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+  const subRevenue = subSubscribers * priceSub;
+  const ppvRevenue = ppvBuyers * pricePpv * ppvPerBuyer;
+
+  const totalRevenue = subRevenue + ppvRevenue;
+
+  const platformCommission = (totalRevenue * commissionTier.rate) / 100;
+  const vatAmount = (totalRevenue * vatRate) / 100;
+  const creatorNet = totalRevenue - platformCommission - vatAmount;
+
+  // Part abo / PPV pour le donut
+  const [aboShare, ppvShare] = useMemo(() => {
+    if (totalRevenue <= 0) return [0, 0];
+    const a = (subRevenue / totalRevenue) * 100;
+    const p = 100 - a;
+    return [a, p];
+  }, [subRevenue, totalRevenue]);
+
+  // Petits % de variation "fictifs mais positifs"
+  const deltaFromValue = (value: number) => {
+    if (value <= 0) return 0;
+    // variation symbolique plafonnée à 150%
+    return Math.min(150, Math.sqrt(value) / 10);
   };
 
-  // Barre de progression likes
-  const likes = FAKE_LIKES_RECEIVED;
-  const progressPct = Math.min(likes / BAR_MAX, 1) * 100;
-  const bronzePct = (BRONZE_MAX / BAR_MAX) * 100;
-  const silverPct = (SILVER_MAX / BAR_MAX) * 100;
+  const deltaSub = deltaFromValue(subRevenue);
+  const deltaPpv = deltaFromValue(ppvRevenue);
+  const deltaGross = deltaFromValue(totalRevenue);
+  const deltaNet = deltaFromValue(creatorNet || 0);
 
+  // Donut SVG
+  const radius = 80;
+  const circumference = 2 * Math.PI * radius;
+  const aboStroke = (aboShare / 100) * circumference;
+
+  // Mini courbe d'évolution (sparkline)
+  const historyPoints = useMemo(() => {
+    const base = creatorNet <= 0 ? 1 : creatorNet;
+    return Array.from({ length: 8 }).map((_, i) => {
+      const factor = 0.6 + i * 0.06; // légère montée
+      return base * factor;
+    });
+  }, [creatorNet]);
+
+  const maxHistory = Math.max(...historyPoints, 1);
+
+  // -----------------------------
+  // Rendu
+  // -----------------------------
   return (
-    <div className="container py-8 space-y-6">
-      <header className="space-y-1">
+    <div className="px-4 pb-10 pt-6 space-y-6">
+      <header>
         <h1 className="text-xl font-semibold">Monétisation — Cockpit</h1>
         <p className="text-sm text-slate-600">
           Visualise le potentiel de revenus de tes Magic Clock en fonction de
@@ -185,432 +125,463 @@ export default function MonetPage() {
         </p>
       </header>
 
-      {/* Top cards */}
-      <section className="grid gap-4 md:grid-cols-4">
-        {/* MRR abonnements */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+      {/* Cartes KPI */}
+      <section className="grid gap-4 lg:grid-cols-4">
+        {/* Abonnements */}
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">
                 Revenus abonnements (MRR)
               </p>
               <p className="mt-1 text-xl font-semibold">
-                {formatMoney(metrics.mrrAbo)}
+                {formatMoney(subRevenue)}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
-                {params.followers.toLocaleString("fr-CH")} followers ·{" "}
-                {params.aboConv.toFixed(1)} % de conversion
+                {subSubscribers.toFixed(0)} abonnés · {subConv.toFixed(1)} % de
+                conversion
               </p>
             </div>
-            <TrendPill base={baseMetrics.mrrAbo} current={metrics.mrrAbo} />
+            <DeltaBadge value={deltaSub} />
           </div>
         </div>
 
-        {/* Revenus PPV */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+        {/* PPV */}
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">
                 Revenus PPV
               </p>
               <p className="mt-1 text-xl font-semibold">
-                {formatMoney(metrics.revPpv)}
+                {formatMoney(ppvRevenue)}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
-                {params.ppvConv.toFixed(1)} % achètent au moins un PPV ·{" "}
-                {params.ppvPerBuyer.toFixed(1)} PPV / acheteur / mois
+                {ppvBuyers.toFixed(0)} acheteurs · {ppvConv.toFixed(1)} % conv.{" "}
+                · {ppvPerBuyer.toFixed(1)} PPV / acheteur / mois
               </p>
             </div>
-            <TrendPill base={baseMetrics.revPpv} current={metrics.revPpv} />
+            <DeltaBadge value={deltaPpv} />
           </div>
         </div>
 
         {/* Chiffre d'affaires brut */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Chiffre d&apos;affaires (brut TTC)
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                Chiffre d&apos;affaires (BRUT TTC)
               </p>
               <p className="mt-1 text-xl font-semibold">
-                {formatMoney(metrics.gross)}
+                {formatMoney(totalRevenue)}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
-                Commission plateforme {Math.round(currentTier.rate * 100)} % ·
-                TVA {params.vatRate.toFixed(1)} %
+                Commission plateforme {commissionTier.rate.toFixed(1)} % · TVA{" "}
+                {vatRate.toFixed(1)} %
               </p>
             </div>
-            <TrendPill base={baseMetrics.gross} current={metrics.gross} />
+            <DeltaBadge value={deltaGross} />
           </div>
         </div>
 
         {/* Revenu net créateur */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">
                 Revenu net créateur (estimation)
               </p>
               <p className="mt-1 text-xl font-semibold">
-                {formatMoney(metrics.creatorNet)}
+                {formatMoney(Math.max(creatorNet, 0))}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
-                Après commission Magic Clock & TVA (approx.)
+                Après commission Magic Clock & TVA (approx.).
               </p>
             </div>
-            <TrendPill
-              base={baseMetrics.creatorNet}
-              current={metrics.creatorNet}
-            />
+            <DeltaBadge value={deltaNet} />
           </div>
         </div>
       </section>
 
-      {/* Bottom grid : mix + simulateur */}
+      {/* Corps principal : mix revenus + simulateur */}
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        {/* Mix revenus */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
-          <header className="mb-4 flex items-center justify-between gap-4">
+        {/* Mix revenus + graphe */}
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm space-y-5">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold">Mix revenus</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                Mix revenus
+              </p>
+              <p className="text-sm text-slate-600">
                 Répartition entre abonnements et contenus PPV.
               </p>
             </div>
-            <p className="text-xs text-slate-500">
-              Abos : {metrics.mixAboPct.toFixed(1)} % · PPV :{" "}
-              {metrics.mixPpvPct.toFixed(1)} %
+            <p className="text-[11px] text-slate-500">
+              Abos&nbsp;: {aboShare.toFixed(1)} % · PPV&nbsp;:{" "}
+              {ppvShare.toFixed(1)} %
             </p>
-          </header>
+          </div>
 
-          <div className="grid gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center">
-            {/* Donut simplifié */}
+          <div className="grid gap-6 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center">
+            {/* Donut */}
             <div className="flex items-center justify-center">
-              <div className="relative h-52 w-52">
-                <div
-                  className="absolute inset-0 rounded-full bg-[conic-gradient(theme(colors.indigo.400)_0%_var(--abo),theme(colors.sky.400)_var(--abo)_100%)]"
-                  style={
-                    {
-                      "--abo": `${metrics.mixAboPct}%`,
-                    } as React.CSSProperties
-                  }
-                />
-                <div className="absolute inset-8 rounded-full bg-white" />
-                <div className="absolute inset-14 flex flex-col items-center justify-center text-center">
-                  <p className="text-[11px] font-semibold text-slate-500">
+              <div className="relative h-56 w-56">
+                <svg
+                  viewBox="0 0 220 220"
+                  className="h-full w-full -rotate-90"
+                >
+                  {/* fond */}
+                  <circle
+                    cx="110"
+                    cy="110"
+                    r={radius}
+                    stroke="#e5e7eb"
+                    strokeWidth="18"
+                    fill="transparent"
+                  />
+                  {/* Abo */}
+                  <circle
+                    cx="110"
+                    cy="110"
+                    r={radius}
+                    stroke="#6366f1"
+                    strokeWidth="18"
+                    fill="transparent"
+                    strokeDasharray={`${aboStroke} ${circumference}`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">
                     Abo / PPV
                   </p>
-                  <p className="text-xs text-slate-400">Répartition</p>
+                  <p className="text-xs font-medium text-slate-700">
+                    Répartition
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Abos&nbsp;{aboShare.toFixed(1)} %<br />
+                    PPV&nbsp;{ppvShare.toFixed(1)} %
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Légende */}
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500" />
-                <div>
-                  <p className="font-medium">
-                    Abonnements récurrents · {metrics.mixAboPct.toFixed(1)} %
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Revenus mensuels stables liés à ton offre
-                    d&apos;abonnement.
-                  </p>
-                </div>
-              </div>
+            {/* Légende + courbe */}
+            <div className="space-y-4">
+              <ul className="space-y-2 text-xs">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500" />
+                  <div>
+                    <p className="font-medium text-slate-800">
+                      Abonnements récurrents · {aboShare.toFixed(1)} %
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Revenus mensuels stables liés à ton offre d&apos;abonnement.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-sky-400" />
+                  <div>
+                    <p className="font-medium text-slate-800">
+                      PPV (Pay-Per-View) · {ppvShare.toFixed(1)} %
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Revenus liés aux contenus premium débloqués à l&apos;achat.
+                    </p>
+                  </div>
+                </li>
+              </ul>
 
-              <div className="flex items-start gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-sky-400" />
-                <div>
-                  <p className="font-medium">
-                    PPV (Pay-Per-View) · {metrics.mixPpvPct.toFixed(1)} %
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Revenus liés aux contenus premium débloqués à l&apos;achat.
-                  </p>
+              {/* Courbe d'évolution */}
+              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                  <span>Évolution estimée du revenu net</span>
+                  <span>{formatMoney(Math.max(creatorNet, 0))} / mois</span>
                 </div>
+                <svg viewBox="0 0 160 50" className="w-full h-16">
+                  {/* fond */}
+                  <polyline
+                    points="0,40 160,40"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth={1}
+                  />
+                  {/* courbe */}
+                  <polyline
+                    fill="none"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    points={historyPoints
+                      .map((v, i) => {
+                        const x = (i / (historyPoints.length - 1)) * 160;
+                        const y = 40 - (v / maxHistory) * 30;
+                        return `${x},${y}`;
+                      })
+                      .join(" ")}
+                  />
+                </svg>
+                <p className="mt-1 text-[10px] text-slate-500">
+                  Illustration dynamique : plus tes paramètres montent, plus la
+                  courbe se projette vers le haut.
+                </p>
               </div>
-
-              <p className="text-[11px] text-slate-500">
-                Dans la version complète, ce graphique sera directement relié à
-                tes Magic Clock (performances réelles par contenu).
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Paramètres simulateur */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
-          <header className="mb-4">
-            <p className="text-sm font-semibold">Paramètres simulateur</p>
-            <p className="text-xs text-slate-500">
-              Ajuste tes chiffres pour visualiser ton potentiel.
+        {/* Colonne simulateur */}
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm space-y-5">
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">
+              Paramètres simulateur
             </p>
-          </header>
+            <p className="text-sm text-slate-600">
+              Ajuste les chiffres pour visualiser ton potentiel.
+            </p>
+          </div>
 
-          <div className="space-y-4 text-sm">
-            {/* Followers */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>Followers</p>
-                <p className="text-slate-500">
-                  {params.followers.toLocaleString("fr-CH")}
+          {/* Followers */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>Followers</span>
+              <span>{followers.toLocaleString("fr-CH")}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1_000_000}
+              value={Math.min(followers, 1_000_000)}
+              onChange={(e) => setFollowers(Number(e.target.value))}
+              className="w-full"
+            />
+            <input
+              type="number"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
+              value={followers}
+              onChange={(e) => {
+                const v = Number(e.target.value || 0);
+                setFollowers(Math.max(0, v));
+              }}
+            />
+            <p className="text-[11px] text-slate-500">
+              Aucune limite technique : saisis simplement la taille de ton
+              audience. Le slider va jusqu&apos;à 1M, au-delà utilise le champ
+              numérique.
+            </p>
+          </div>
+
+          {/* Prix abo */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>Prix abo / mois (CHF)</span>
+              <span>{priceSub.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min={0.99}
+              max={999}
+              step={0.01}
+              value={priceSub}
+              onChange={(e) => setPriceSub(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Conversion abo */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>Conversion abonnements (%)</span>
+              <span>{subConv.toFixed(1)} %</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={0.1}
+              value={subConv}
+              onChange={(e) => setSubConv(Number(e.target.value))}
+              className="w-full"
+            />
+            <p className="text-[11px] text-slate-500">
+              Part de tes followers qui prennent un abonnement.
+            </p>
+          </div>
+
+          {/* Prix PPV */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>Prix PPV (CHF)</span>
+              <span>{pricePpv.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min={0.99}
+              max={999}
+              step={0.01}
+              value={pricePpv}
+              onChange={(e) => setPricePpv(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Conversion PPV */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>Conversion PPV (%)</span>
+              <span>{ppvConv.toFixed(1)} %</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={0.1}
+              value={ppvConv}
+              onChange={(e) => setPpvConv(Number(e.target.value))}
+              className="w-full"
+            />
+            <p className="text-[11px] text-slate-500">
+              Part de tes followers qui achètent au moins un PPV.
+            </p>
+          </div>
+
+          {/* PPV par acheteur / mois */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>PPV / acheteur / mois</span>
+              <span>{ppvPerBuyer.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={0.1}
+              value={Math.min(ppvPerBuyer, 50)}
+              onChange={(e) => setPpvPerBuyer(Number(e.target.value))}
+              className="w-full"
+            />
+            <input
+              type="number"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
+              value={ppvPerBuyer}
+              onChange={(e) =>
+                setPpvPerBuyer(Math.max(0, Number(e.target.value || 0)))
+              }
+            />
+            <p className="text-[11px] text-slate-500">
+              Nombre moyen de contenus PPV achetés par client chaque mois. Tu
+              peux saisir n&apos;importe quelle valeur.
+            </p>
+          </div>
+
+          {/* Likes & tiers commission */}
+          <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                  Likes reçus (Amazing)
+                </p>
+                <p className="text-xs text-slate-600">
+                  Débloque de meilleurs paliers de commission.
                 </p>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={1_000_000}
-                value={Math.min(params.followers, 1_000_000)}
-                onChange={(e) =>
-                  handleParamChange("followers", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
-              <input
-                type="number"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
-                value={params.followers}
-                min={0}
-                onChange={(e) =>
-                  handleParamChange(
-                    "followers",
-                    Math.max(0, Number(e.target.value) || 0)
-                  )
-                }
-              />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Aucune limite technique : saisis simplement la taille de ton
-                audience (slider jusqu&apos;à 1M, au-delà utilise le champ
-                numérique).
+              <p className="text-xs font-semibold text-slate-700">
+                {likes.toLocaleString("fr-CH")} likes
               </p>
             </div>
+            <input
+              type="range"
+              min={0}
+              max={20_000}
+              value={Math.min(likes, 20_000)}
+              onChange={(e) => setLikes(Number(e.target.value))}
+              className="w-full"
+            />
 
-            {/* Prix abo */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>Prix abo / mois ({CURRENCY})</p>
-                <p className="text-slate-500">
-                  {params.aboPrice.toFixed(2)} {CURRENCY}
-                </p>
+            {/* Barre linéaire Bronze / Argent / Or */}
+            <div className="mt-1 space-y-1">
+              <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div className="absolute inset-y-0 left-0 w-1/3 bg-amber-300/80" />
+                <div className="absolute inset-y-0 left-1/3 w-1/3 bg-slate-300/80" />
+                <div className="absolute inset-y-0 left-2/3 w-1/3 bg-yellow-400/80" />
+                {/* Curseur */}
+                <div
+                  className="absolute top-1/2 h-3 w-3 -translate-y-1/2 -translate-x-1/2 rounded-full border border-white bg-indigo-500 shadow"
+                  style={{
+                    left: `${Math.min(likes, 20000) / 20000 * 100}%`,
+                  }}
+                />
               </div>
-              <input
-                type="range"
-                min={0.99}
-                max={999}
-                step={0.01}
-                value={params.aboPrice}
-                onChange={(e) =>
-                  handleParamChange("aboPrice", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>0</span>
+                <span>1k</span>
+                <span>10k</span>
+                <span>20k+</span>
+              </div>
             </div>
 
-            {/* Conversion abonnements */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>Conversion abonnements (%)</p>
-                <p className="text-slate-500">
-                  {params.aboConv.toFixed(1)} %
+            {/* Tiers détail */}
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div
+                className={`rounded-xl border p-2 ${
+                  commissionTier.label === "Bronze"
+                    ? "border-amber-400 bg-amber-50/60"
+                    : "border-slate-200 bg-slate-50"
+                }`}
+              >
+                <p className="font-semibold">Bronze</p>
+                <p className="text-[10px] text-slate-600">
+                  30 % de commission.
+                  <br />
+                  0–1&nbsp;000 likes.
+                </p>
+                <p className="mt-1 text-[10px] text-emerald-600 font-medium">
+                  Débloqué
                 </p>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.5}
-                value={params.aboConv}
-                onChange={(e) =>
-                  handleParamChange("aboConv", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Part de tes followers qui prennent un abonnement.
-              </p>
-            </div>
-
-            {/* Prix PPV */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>Prix PPV ({CURRENCY})</p>
-                <p className="text-slate-500">
-                  {params.ppvPrice.toFixed(2)} {CURRENCY}
+              <div
+                className={`rounded-xl border p-2 ${
+                  commissionTier.label === "Argent"
+                    ? "border-slate-400 bg-slate-50"
+                    : "border-slate-200 bg-slate-50/40 opacity-70"
+                }`}
+              >
+                <p className="font-semibold">Argent</p>
+                <p className="text-[10px] text-slate-600">
+                  25 % de commission.
+                  <br />
+                  1&nbsp;001–10&nbsp;000 likes.
+                </p>
+                <p className="mt-1 text-[10px] font-medium">
+                  {likes >= 1001 ? (
+                    <span className="text-emerald-600">Débloqué</span>
+                  ) : (
+                    <span className="text-slate-400">Verrouillé</span>
+                  )}
                 </p>
               </div>
-              <input
-                type="range"
-                min={0.99}
-                max={999}
-                step={0.01}
-                value={params.ppvPrice}
-                onChange={(e) =>
-                  handleParamChange("ppvPrice", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
-            </div>
-
-            {/* Conversion PPV */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>Conversion PPV (%)</p>
-                <p className="text-slate-500">
-                  {params.ppvConv.toFixed(1)} %
+              <div
+                className={`rounded-xl border p-2 ${
+                  commissionTier.label === "Or"
+                    ? "border-yellow-500 bg-yellow-50"
+                    : "border-slate-200 bg-slate-50/40 opacity-70"
+                }`}
+              >
+                <p className="font-semibold">Or</p>
+                <p className="text-[10px] text-slate-600">
+                  20 % de commission.
+                  <br />
+                  10&nbsp;001+ likes.
+                </p>
+                <p className="mt-1 text-[10px] font-medium">
+                  {likes > 10000 ? (
+                    <span className="text-emerald-600">Débloqué</span>
+                  ) : (
+                    <span className="text-slate-400">Verrouillé</span>
+                  )}
                 </p>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.5}
-                value={params.ppvConv}
-                onChange={(e) =>
-                  handleParamChange("ppvConv", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Part de tes followers qui achètent au moins un PPV.
-              </p>
-            </div>
-
-            {/* PPV / acheteur / mois (sans vraie limite) */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>PPV / acheteur / mois</p>
-                <p className="text-slate-500">
-                  {params.ppvPerBuyer.toFixed(1)}
-                </p>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={20}
-                step={0.1}
-                value={Math.min(params.ppvPerBuyer, 20)}
-                onChange={(e) =>
-                  handleParamChange("ppvPerBuyer", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
-              <input
-                type="number"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
-                min={0}
-                value={params.ppvPerBuyer}
-                onChange={(e) =>
-                  handleParamChange(
-                    "ppvPerBuyer",
-                    Math.max(0, Number(e.target.value) || 0)
-                  )
-                }
-              />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Saisis librement, aucune limite. Le slider te donne un repère
-                confortable (0 → 20).
-              </p>
-            </div>
-
-            {/* Commission plateforme : paliers Bronze / Argent / Or */}
-            <div>
-              <p className="text-xs mb-1">Commission plateforme (%)</p>
-              <div className="flex gap-2">
-                {PLATFORM_TIERS.map((tier) => {
-                  const unlocked = unlockedTierIds.includes(tier.id);
-                  const selected = params.platformTierId === tier.id;
-
-                  return (
-                    <button
-                      key={tier.id}
-                      type="button"
-                      disabled={!unlocked}
-                      onClick={() =>
-                        unlocked && handleParamChange("platformTierId", tier.id)
-                      }
-                      className={[
-                        "flex-1 rounded-lg border px-2 py-1.5 text-xs flex flex-col items-center gap-0.5",
-                        selected
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                          : "border-slate-200 bg-slate-50 text-slate-600",
-                        !unlocked && "opacity-50 cursor-not-allowed",
-                      ].join(" ")}
-                    >
-                      <span className="font-semibold">
-                        {Math.round(tier.rate * 100)} %
-                      </span>
-                      <span>
-                        {tier.label}
-                        {!unlocked && " 🔒"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Barre de progression likes / paliers */}
-              <div className="mt-3">
-                <div className="relative h-2 rounded-full bg-slate-100">
-                  {/* Progress */}
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-indigo-400"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                  {/* Repère Bronze max (1000) */}
-                  <div
-                    className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-slate-300"
-                    style={{ left: `${bronzePct}%` }}
-                  />
-                  {/* Repère Silver max (10000) */}
-                  <div
-                    className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-slate-300"
-                    style={{ left: `${silverPct}%` }}
-                  />
-                  {/* Curseur */}
-                  <div
-                    className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-white bg-indigo-500 shadow-sm"
-                    style={{ left: `${progressPct}%`, transform: "translate(-50%, -50%)" }}
-                  />
-                </div>
-                <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-                  <span>0–1 000 : Bronze</span>
-                  <span>1 001–10 000 : Argent</span>
-                  <span>10 001+ : Or</span>
-                </div>
-              </div>
-
-              <p className="mt-1 text-[11px] text-slate-500">
-                Bronze (30 %) est actif par défaut. Argent (25 %) et Or (20 %)
-                se débloqueront plus tard en fonction des likes reçus dans le
-                flux Amazing.
-              </p>
-              <p className="mt-0.5 text-[11px] text-slate-400">
-                Likes reçus (démo) :{" "}
-                {FAKE_LIKES_RECEIVED.toLocaleString("fr-CH")}
-              </p>
-            </div>
-
-            {/* TVA */}
-            <div>
-              <div className="flex items-center justify-between text-xs">
-                <p>TVA (%)</p>
-                <p className="text-slate-500">
-                  {params.vatRate.toFixed(1)} %
-                </p>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={25}
-                step={0.1}
-                value={params.vatRate}
-                onChange={(e) =>
-                  handleParamChange("vatRate", Number(e.target.value))
-                }
-                className="mt-1 w-full"
-              />
             </div>
           </div>
         </div>
