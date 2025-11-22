@@ -19,7 +19,7 @@ function formatPercent(value: number): string {
 }
 
 export default function MonetisationPage() {
-  // 🔧 Réglages de base (valeurs par défaut réalistes mais motivantes)
+  // 🔧 Réglages de base
   const [followers, setFollowers] = useState<number>(10_000);
   const [avgViewsPerClock, setAvgViewsPerClock] = useState<number>(2_000);
 
@@ -35,8 +35,6 @@ export default function MonetisationPage() {
   const monthlySubGross = monthlySubs * subPrice;
 
   // 📊 Calculs PPV
-  // Hypothèse simple : pour chaque Magic Clock PPV publié ce mois,
-  // on part de la vue moyenne, et on applique un % de conversion en achat.
   const ppvBuyersPerClock = Math.max(
     0,
     Math.round((avgViewsPerClock * ppvRate) / 100)
@@ -162,10 +160,17 @@ export default function MonetisationPage() {
                 <input
                   type="range"
                   min={1000}
-                  max={200_000}
+                  max={1_000_000_000}
                   step={1000}
                   value={followers}
-                  onChange={(e) => setFollowers(Number(e.target.value))}
+                  onChange={(e) =>
+                    setFollowers(
+                      Math.min(
+                        1_000_000_000,
+                        Math.max(1000, Number(e.target.value) || 0)
+                      )
+                    )
+                  }
                   className="mt-1 w-full"
                 />
               </div>
@@ -181,7 +186,11 @@ export default function MonetisationPage() {
                   max={50_000}
                   step={200}
                   value={avgViewsPerClock}
-                  onChange={(e) => setAvgViewsPerClock(Number(e.target.value))}
+                  onChange={(e) =>
+                    setAvgViewsPerClock(
+                      Math.min(50_000, Math.max(200, Number(e.target.value) || 0))
+                    )
+                  }
                   className="mt-1 w-full"
                 />
               </div>
@@ -214,14 +223,20 @@ export default function MonetisationPage() {
                 <div className="flex items-center gap-1">
                   <input
                     type="number"
-                    min={1}
-                    max={99}
-                    step={0.5}
+                    min={0.99}
+                    max={999}
+                    step={0.01}
                     value={subPrice}
-                    onChange={(e) => setSubPrice(Number(e.target.value))}
-                    className="h-7 w-20 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
+                    onChange={(e) =>
+                      setSubPrice(
+                        Math.min(999, Math.max(0.99, Number(e.target.value) || 0))
+                      )
+                    }
+                    className="h-7 w-24 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
                   />
-                  <span className="text-[11px] text-slate-500">CHF / mois</span>
+                  <span className="text-[11px] text-slate-500">
+                    CHF / mois
+                  </span>
                 </div>
               </div>
             </div>
@@ -254,12 +269,16 @@ export default function MonetisationPage() {
                 <div className="flex items-center gap-1">
                   <input
                     type="number"
-                    min={1}
-                    max={199}
-                    step={0.5}
+                    min={0.99}
+                    max={999}
+                    step={0.01}
                     value={ppvPrice}
-                    onChange={(e) => setPpvPrice(Number(e.target.value))}
-                    className="h-7 w-20 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
+                    onChange={(e) =>
+                      setPpvPrice(
+                        Math.min(999, Math.max(0.99, Number(e.target.value) || 0))
+                      )
+                    }
+                    className="h-7 w-24 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
                   />
                   <span className="text-[11px] text-slate-500">CHF</span>
                 </div>
@@ -275,7 +294,11 @@ export default function MonetisationPage() {
                   max={30}
                   step={1}
                   value={ppvPerMonth}
-                  onChange={(e) => setPpvPerMonth(Number(e.target.value))}
+                  onChange={(e) =>
+                    setPpvPerMonth(
+                      Math.min(30, Math.max(0, Number(e.target.value) || 0))
+                    )
+                  }
                   className="h-7 w-20 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
                 />
               </div>
@@ -300,7 +323,7 @@ export default function MonetisationPage() {
           </li>
           <li>
             Les chiffres sont indicatifs : le but est de t&apos;aider à te
-            projeter et à fixer tes prix.
+            projeter et à fixer tes prix (de 0.99 à 999 dans ta devise).
           </li>
         </ul>
       </section>
