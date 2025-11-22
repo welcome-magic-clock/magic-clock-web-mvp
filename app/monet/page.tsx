@@ -43,13 +43,25 @@ const DEFAULT_PARAMS: Params = {
 };
 
 const PLATFORM_TIERS = [
-  { id: "bronze" as const, label: "Bronze", rate: 0.3, minLikes: 0 },
-  { id: "silver" as const, label: "Argent", rate: 0.25, minLikes: 5000 },
-  { id: "gold" as const, label: "Or", rate: 0.2, minLikes: 20000 },
+  // seuils théoriques (0–1000 / 1001–10000 / 10001+)
+  { id: "bronze" as const, label: "Bronze", rate: 0.3, minLikes: 0, maxLikes: 1000 },
+  {
+    id: "silver" as const,
+    label: "Argent",
+    rate: 0.25,
+    minLikes: 1001,
+    maxLikes: 10000,
+  },
+  { id: "gold" as const, label: "Or", rate: 0.2, minLikes: 10001, maxLikes: Infinity },
 ];
 
-// fake : likes donnés par le créateur à la communauté
-const FAKE_LIKES_GIVEN = 6200; // pour démo : Bronze + Argent débloqués, Or verrouillé
+// Démo : likes reçus dans le flux Amazing
+const FAKE_LIKES_RECEIVED = 6200;
+
+// pour la barre de progression
+const BRONZE_MAX = 1000;
+const SILVER_MAX = 10000;
+const BAR_MAX = 15000;
 
 function formatMoney(value: number): string {
   if (!Number.isFinite(value)) return "-";
@@ -143,9 +155,9 @@ export default function MonetPage() {
   const currentTier = PLATFORM_TIERS.find(
     (t) => t.id === params.platformTierId
   )!;
-  const unlockedTierIds = PLATFORM_TIERS.filter(
-    (t) => FAKE_LIKES_GIVEN >= t.minLikes
-  ).map((t) => t.id);
+
+  // Pour le moment : seul Bronze est vraiment débloqué
+  const unlockedTierIds: ("bronze" | "silver" | "gold")[] = ["bronze"];
 
   const handleParamChange = <K extends keyof Params>(
     key: K,
@@ -156,6 +168,12 @@ export default function MonetPage() {
       [key]: value,
     }));
   };
+
+  // Barre de progression likes
+  const likes = FAKE_LIKES_RECEIVED;
+  const progressPct = Math.min(likes / BAR_MAX, 1) * 100;
+  const bronzePct = (BRONZE_MAX / BAR_MAX) * 100;
+  const silverPct = (SILVER_MAX / BAR_MAX) * 100;
 
   return (
     <div className="container py-8 space-y-6">
@@ -269,7 +287,8 @@ export default function MonetPage() {
             {/* Donut simplifié */}
             <div className="flex items-center justify-center">
               <div className="relative h-52 w-52">
-                <div className="absolute inset-0 rounded-full bg-[conic-gradient(theme(colors.indigo.400)_0%_var(--abo),theme(colors.sky.400)_var(--abo)_100%)]"
+                <div
+                  className="absolute inset-0 rounded-full bg-[conic-gradient(theme(colors.indigo.400)_0%_var(--abo),theme(colors.sky.400)_var(--abo)_100%)]"
                   style={
                     {
                       "--abo": `${metrics.mixAboPct}%`,
@@ -295,7 +314,8 @@ export default function MonetPage() {
                     Abonnements récurrents · {metrics.mixAboPct.toFixed(1)} %
                   </p>
                   <p className="text-xs text-slate-500">
-                    Revenus mensuels stables liés à ton offre d&apos;abonnement.
+                    Revenus mensuels stables liés à ton offre
+                    d&apos;abonnement.
                   </p>
                 </div>
               </div>
@@ -354,7 +374,10 @@ export default function MonetPage() {
                 value={params.followers}
                 min={0}
                 onChange={(e) =>
-                  handleParamChange("followers", Math.max(0, Number(e.target.value) || 0))
+                  handleParamChange(
+                    "followers",
+                    Math.max(0, Number(e.target.value) || 0)
+                  )
                 }
               />
               <p className="mt-1 text-[11px] text-slate-500">
@@ -526,12 +549,46 @@ export default function MonetPage() {
                   );
                 })}
               </div>
+
+              {/* Barre de progression likes / paliers */}
+              <div className="mt-3">
+                <div className="relative h-2 rounded-full bg-slate-100">
+                  {/* Progress */}
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full bg-indigo-400"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                  {/* Repère Bronze max (1000) */}
+                  <div
+                    className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-slate-300"
+                    style={{ left: `${bronzePct}%` }}
+                  />
+                  {/* Repère Silver max (10000) */}
+                  <div
+                    className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-slate-300"
+                    style={{ left: `${silverPct}%` }}
+                  />
+                  {/* Curseur */}
+                  <div
+                    className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-white bg-indigo-500 shadow-sm"
+                    style={{ left: `${progressPct}%`, transform: "translate(-50%, -50%)" }}
+                  />
+                </div>
+                <div className="mt-1 flex justify-between text-[10px] text-slate-500">
+                  <span>0–1 000 : Bronze</span>
+                  <span>1 001–10 000 : Argent</span>
+                  <span>10 001+ : Or</span>
+                </div>
+              </div>
+
               <p className="mt-1 text-[11px] text-slate-500">
-                Bronze (30 %) par défaut. Argent (25 %) et Or (20 %) se
-                débloquent selon les likes que tu distribues à la communauté.
+                Bronze (30 %) est actif par défaut. Argent (25 %) et Or (20 %)
+                se débloqueront plus tard en fonction des likes reçus dans le
+                flux Amazing.
               </p>
               <p className="mt-0.5 text-[11px] text-slate-400">
-                Likes donnés (démo) : {FAKE_LIKES_GIVEN.toLocaleString("fr-CH")}
+                Likes reçus (démo) :{" "}
+                {FAKE_LIKES_RECEIVED.toLocaleString("fr-CH")}
               </p>
             </div>
 
