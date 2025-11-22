@@ -1,130 +1,145 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { Play, ExternalLink, Heart, Eye } from "lucide-react";
+import { Play, ArrowUpRight, Eye, Heart } from "lucide-react";
 
-export type MediaCardProps = {
-  content: any; // MVP : on accepte tout, on lit seulement les champs utiles
+type MediaCardProps = {
+  item: {
+    id: number | string;
+    title: string;
+    user: string;
+    avatarInitials?: string;
+    tags?: string[];
+    views?: number;
+    likes?: number;
+    type?: "VIDEO" | "PHOTO";
+    access?: "FREE" | "PPV" | "SUB";
+    language?: string;
+    description?: string;
+  };
 };
 
-export default function MediaCard({ content }: MediaCardProps) {
-  const id = content?.id ?? 0;
-  const title = content?.title ?? "Avant/Après couleur";
-  const user = content?.user ?? "sofia";
-  const avatarUrl = content?.avatarUrl as string | undefined;
-  const thumbnailUrl = content?.thumbnailUrl as string | undefined;
-  const tags: string[] = content?.tags ?? [
-    "#balayage",
-    "#blond froid",
-    "#soin",
-  ];
-  const views = content?.views ?? 1000;
-  const likes = content?.likes ?? 0;
+function formatCount(n?: number) {
+  if (!n || n <= 0) return "0";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)} K`;
+  return n.toString();
+}
+
+export default function MediaCard({ item }: MediaCardProps) {
+  const {
+    id,
+    title,
+    user,
+    avatarInitials = user?.[0]?.toUpperCase?.() ?? "M",
+    tags = ["balayage", "blond froid", "soin"],
+    views = 1330,
+    likes = 0,
+    description = "Magic Clock · contenus pédagogiques. Swipe dans le flux pour découvrir d'autres créateurs.",
+  } = item ?? {};
+
+  const hrefDisplay = `/display/${id}`;
 
   return (
-    <article className="w-full max-w-[480px] mx-auto">
-      <div className="relative w-full overflow-hidden rounded-3xl bg-slate-900 text-white shadow-lg">
-        {/* Zone média verticale */}
-        <div className="relative h-[520px] w-full bg-slate-900">
-          {thumbnailUrl ? (
-            <Image
-              src={thumbnailUrl}
-              alt={title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, 480px"
-            />
-          ) : (
-            // Fallback visuel Magic Clock (dégradé)
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,#1f2937,#020617)]" />
-          )}
+    <article
+      className="
+        snap-start
+        rounded-[32px]
+        bg-slate-950
+        text-slate-50
+        shadow-[0_18px_40px_rgba(15,23,42,0.65)]
+        overflow-hidden
+        flex flex-col
+        min-h-[70vh]
+        sm:min-h-[420px]
+      "
+    >
+      {/* Zone média (plein écran vertical sur mobile) */}
+      <div className="relative flex-1 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950">
+        {/* Faux média : halo au centre pour rappeler la future vidéo / image */}
+        <div className="absolute inset-0">
+          <div className="h-full w-full bg-[radial-gradient(circle_at_50%_30%,rgba(148,163,184,0.35),transparent_60%),radial-gradient(circle_at_50%_80%,rgba(56,189,248,0.25),transparent_65%)]" />
+        </div>
 
-          {/* Badge Magic Display */}
-          <div className="absolute left-4 top-3 sm:top-4 z-20">
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-3 py-1 text-[11px] font-medium shadow-sm">
-              <Play className="h-3 w-3 fill-slate-100 text-slate-100" />
-              <span>Magic Display</span>
+        {/* Badge Magic Display */}
+        <div className="pointer-events-none absolute left-4 top-4 z-10">
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-50 shadow-lg">
+            <Play className="h-3 w-3" />
+            Magic Display
+          </span>
+        </div>
+
+        {/* Dégradé en bas pour lire le texte */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-transparent" />
+
+        {/* Bandeau bas : avatar + auteur + bouton Display */}
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4">
+          <div className="flex items-end justify-between gap-3">
+            {/* Avatar + @user + titre */}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold">
+                  {avatarInitials}
+                </div>
+                <span className="text-xs text-slate-300">@{user}</span>
+              </div>
+              <h2 className="max-w-xs text-base font-semibold leading-snug text-slate-50">
+                {title}
+              </h2>
+            </div>
+
+            {/* Bouton Ouvrir Display */}
+            <Link
+              href={hrefDisplay}
+              className="
+                inline-flex items-center gap-1.5 rounded-full
+                bg-slate-50 px-4 py-2 text-[11px] font-semibold
+                text-slate-900 shadow-lg
+                hover:bg-slate-100 active:bg-slate-200
+                transition-colors
+              "
+            >
+              Ouvrir Display
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Zone texte / stats (sous la zone média) */}
+      <div className="space-y-3 px-4 pb-4 pt-3">
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Description courte */}
+        <p className="text-[12px] leading-snug text-slate-300">
+          {description}
+        </p>
+
+        {/* Stats vues / likes */}
+        <div className="flex items-center justify-between text-[11px] text-slate-400">
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1">
+              <Eye className="h-3.5 w-3.5" />
+              {formatCount(views)}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Heart className="h-3.5 w-3.5" />
+              {formatCount(likes)}
             </span>
           </div>
-
-          {/* Overlay gradient bas */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/95 via-slate-900/70 to-transparent" />
-
-          {/* Infos créateur + titre + CTA */}
-          <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-4 pt-16">
-            {/* Créateur */}
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-800/80 ring-2 ring-slate-900/80">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt={user}
-                    width={28}
-                    height={28}
-                    className="h-7 w-7 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-[11px] font-semibold uppercase text-slate-100">
-                    {user?.[0] ?? "S"}
-                  </span>
-                )}
-              </div>
-              <span className="rounded-full bg-slate-900/70 px-2 py-1 text-[11px] text-slate-100">
-                @{user}
-              </span>
-            </div>
-
-            {/* Titre */}
-            <div className="mt-2 space-y-1.5">
-              <p className="text-sm font-semibold leading-snug text-white line-clamp-2">
-                {title}
-              </p>
-            </div>
-
-            {/* Hashtags */}
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-100/90">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-slate-900/80 px-2 py-1"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* Description + CTA + stats */}
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-[60%] text-[11px] text-slate-200 line-clamp-2">
-                Magic Clock · contenus pédagogiques. Swipe dans le flux pour
-                découvrir d&apos;autres créateurs.
-              </p>
-
-              <div className="flex items-center justify-between gap-3 sm:justify-end">
-                {/* Stats vues / likes */}
-                <div className="flex items-center gap-3 text-[11px] text-slate-200">
-                  <span className="inline-flex items-center gap-1">
-                    <Eye className="h-3 w-3" />
-                    {views.toLocaleString("fr-CH")}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Heart className="h-3 w-3" />
-                    {likes.toLocaleString("fr-CH")}
-                  </span>
-                </div>
-
-                {/* CTA Ouvrir Display */}
-                <Link
-                  href={`/display/${id}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-900 shadow-sm hover:bg-white hover:shadow-md transition"
-                >
-                  <span>Ouvrir Display</span>
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            </div>
-          </div>
+          <span className="text-[10px] text-slate-500">
+            Swipe pour voir d&apos;autres Magic Clock
+          </span>
         </div>
       </div>
     </article>
