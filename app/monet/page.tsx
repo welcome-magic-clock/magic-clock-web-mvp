@@ -1,332 +1,431 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, TrendingUp, Info } from "lucide-react";
+import { useState, useMemo } from "react";
 
-const PLATFORM_RATE = 0.20; // 20 % pour Magic Clock
-const CREATOR_RATE = 1 - PLATFORM_RATE; // 80 % créateur
+const CURRENCY = "CHF";
 
-function formatMoney(value: number): string {
+function formatMoney(value: number) {
   return new Intl.NumberFormat("fr-CH", {
     style: "currency",
-    currency: "CHF",
-    maximumFractionDigits: 0,
-  }).format(Math.max(0, Math.round(value)));
-}
-
-function formatPercent(value: number): string {
-  return `${value.toFixed(1)} %`;
+    currency: CURRENCY,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  }).format(value);
 }
 
 export default function MonetisationPage() {
-  // 🔧 Réglages de base
-  const [followers, setFollowers] = useState<number>(10_000);
-  const [avgViewsPerClock, setAvgViewsPerClock] = useState<number>(2_000);
+  // ---- Paramètres simulateur ----
+  const [followers, setFollowers] = useState<number>(1180);
+  const [subPrice, setSubPrice] = useState<number>(3.9); // prix abo / mois
+  const [ppvPrice, setPpvPrice] = useState<number>(9.9); // prix PPV
+  const [subConv, setSubConv] = useState<number>(2.5); // % followers -> abo
+  const [ppvConv, setPpvConv] = useState<number>(2.0); // % followers -> acheteurs PPV
+  const [ppvPerBuyerPerMonth, setPpvPerBuyerPerMonth] = useState<number>(1); // PPV / acheteur / mois
+  const [platformFee, setPlatformFee] = useState<number>(20); // % commission Magic Clock
+  const [vatRate, setVatRate] = useState<number>(8.1); // TVA %
 
-  const [subRate, setSubRate] = useState<number>(3); // en %
-  const [subPrice, setSubPrice] = useState<number>(9.9);
+  // ---- Calculs principaux ----
+  const metrics = useMemo(() => {
+    const subsCount = (followers * subConv) / 100;
+    const ppvBuyers = (followers * ppvConv) / 100;
 
-  const [ppvRate, setPpvRate] = useState<number>(5); // en %
-  const [ppvPrice, setPpvPrice] = useState<number>(9.9);
-  const [ppvPerMonth, setPpvPerMonth] = useState<number>(4); // Magic Clock PPV / mois
+    const mrrSub = subsCount * subPrice; // revenus abo / mois (brut TTC)
+    const mrrPpv = ppvBuyers * ppvPerBuyerPerMonth * ppvPrice; // revenus PPV / mois (brut TTC)
 
-  // 📊 Calculs abonnements
-  const monthlySubs = Math.max(0, Math.round((followers * subRate) / 100));
-  const monthlySubGross = monthlySubs * subPrice;
+    const gross = mrrSub + mrrPpv; // chiffre d'affaires TTC
+    const creatorGrossAfterFee = gross * (1 - platformFee / 100); // après commission
+    const creatorNetExVat = creatorGrossAfterFee / (1 + vatRate / 100); // simplifié : hors TVA
 
-  // 📊 Calculs PPV
-  const ppvBuyersPerClock = Math.max(
-    0,
-    Math.round((avgViewsPerClock * ppvRate) / 100)
-  );
-  const totalPpvBuyers = ppvBuyersPerClock * ppvPerMonth;
-  const monthlyPpvGross = totalPpvBuyers * ppvPrice;
+    const aboSharePercent = gross === 0 ? 50 : (mrrSub / gross) * 100;
+    const ppvSharePercent = 100 - aboSharePercent;
 
-  // 📈 Synthèse
-  const monthlyGross = monthlySubGross + monthlyPpvGross;
-  const monthlyCreatorShare = monthlyGross * CREATOR_RATE;
-  const monthlyPlatformShare = monthlyGross * PLATFORM_RATE;
+    return {
+      mrrSub,
+      mrrPpv,
+      gross,
+      creatorNetExVat,
+      aboSharePercent,
+      ppvSharePercent,
+    };
+  }, [
+    followers,
+    subPrice,
+    ppvPrice,
+    subConv,
+    ppvConv,
+    ppvPerBuyerPerMonth,
+    platformFee,
+    vatRate,
+  ]);
 
   return (
-    <div className="container max-w-5xl py-8 space-y-6">
-      <header className="flex items-start justify-between gap-4">
+    <div className="container py-8 space-y-6">
+      {/* Header */}
+      <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">Monétisation</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Visualise ton potentiel de revenus avec Magic Clock : abonnements,
-            contenus PPV et impact de ton audience réelle.
+          <h1 className="text-xl font-semibold">Monétisation — Cockpit</h1>
+          <p className="text-sm text-slate-600">
+            Visualise le potentiel financier de ton audience Magic Clock et
+            ajuste les paramètres pour simuler tes revenus.
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs text-slate-600">
-          <Calculator className="h-4 w-4" />
-          <span>Simulateur créateur (80 % / 20 %)</span>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600">
+          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 mr-1" />
+          <span>Simulation en {CURRENCY}</span>
         </div>
       </header>
 
-      {/* Ligne principale : Résumé + Simulateur */}
-      <div className="grid gap-6 md:grid-cols-[1.1fr_minmax(0,1.1fr)]">
-        {/* 🟣 Résumé potentiel mensuel */}
-        <section className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
+      {/* Ligne 1 : 4 cartes de stats */}
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Revenus abonnements */}
+        <StatCard
+          title="Revenus abonnements (MRR)"
+          value={metrics.mrrSub}
+          delta="+4.10 %"
+          deltaPositive
+          helper={`${followers.toLocaleString("fr-CH")} followers · ${subConv.toFixed(
+            1
+          )} % de conversion`}
+        />
+
+        {/* Revenus PPV */}
+        <StatCard
+          title="Revenus PPV"
+          value={metrics.mrrPpv}
+          delta="+4.10 %"
+          deltaPositive
+          helper={`${ppvPerBuyerPerMonth.toFixed(
+            1
+          )} PPV / acheteur / mois · conv. ${ppvConv.toFixed(1)} %`}
+        />
+
+        {/* Chiffre d'affaires brut */}
+        <StatCard
+          title="Chiffre d'affaires (brut TTC)"
+          value={metrics.gross}
+          delta="+4.10 %"
+          deltaPositive={metrics.gross >= 0}
+          helper={`Commission plateforme ${platformFee.toFixed(
+            1
+          )} % · TVA ${vatRate.toFixed(1)} %`}
+        />
+
+        {/* Revenu net créateur */}
+        <StatCard
+          title="Revenu net créateur (estimation)"
+          value={metrics.creatorNetExVat}
+          delta="+4.10 %"
+          deltaPositive={metrics.creatorNetExVat >= 0}
+          helper="Après commission Magic Clock & TVA (approx.)"
+        />
+      </section>
+
+      {/* Ligne 2 : Donut mix + simulateur */}
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-start">
+        {/* Mix revenus (donut simplifié) */}
+        <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Potentiel mensuel
+                Mix revenus
               </p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
-                {formatMoney(monthlyCreatorShare)}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Part créateur (80 %) après commission Magic Clock.
+              <p className="text-xs text-slate-400">
+                Répartition entre abonnements et contenus PPV.
               </p>
             </div>
-            <div className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-              <p className="flex items-center gap-1 font-medium">
-                <TrendingUp className="h-3.5 w-3.5" />
-                Scénario actuel
+            <div className="text-right text-[11px] text-slate-500">
+              <p>
+                Abos :{" "}
+                <span className="font-semibold text-slate-700">
+                  {metrics.aboSharePercent.toFixed(0)} %
+                </span>
               </p>
-              <p className="text-[11px]">
-                Followers, vues moyennes, % abo et % PPV éditables ci-dessous.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
-            <div className="rounded-xl bg-slate-50/80 p-3">
-              <p className="font-semibold text-slate-700">
-                Abonnements mensuels
-              </p>
-              <p className="mt-1 text-sm">
-                {monthlySubs.toLocaleString("fr-CH")} abonnés ·{" "}
-                {formatMoney(monthlySubGross)} brut
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Taux d&apos;abonnement : {formatPercent(subRate)} · Prix abo :{" "}
-                {formatMoney(subPrice)}
-              </p>
-            </div>
-            <div className="rounded-xl bg-slate-50/80 p-3">
-              <p className="font-semibold text-slate-700">
-                Contenus PPV / mois
-              </p>
-              <p className="mt-1 text-sm">
-                {ppvPerMonth} Magic Clock PPV ·{" "}
-                {totalPpvBuyers.toLocaleString("fr-CH")} achats ·{" "}
-                {formatMoney(monthlyPpvGross)} brut
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Conversion PPV : {formatPercent(ppvRate)} sur{" "}
-                {avgViewsPerClock.toLocaleString("fr-CH")} vues moyennes.
+              <p>
+                PPV :{" "}
+                <span className="font-semibold text-slate-700">
+                  {metrics.ppvSharePercent.toFixed(0)} %
+                </span>
               </p>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
+          <div className="flex flex-col items-center justify-center gap-6 md:flex-row">
+            {/* Faux donut (CSS) */}
+            <div className="relative h-48 w-48">
+              <div className="absolute inset-2 rounded-full bg-slate-100" />
+              {/* portion abo */}
+              <div
+                className="absolute inset-0 rounded-full border-[10px] border-indigo-400 border-t-transparent border-l-transparent"
+                style={{
+                  transform: `rotate(${
+                    (metrics.ppvSharePercent / 100) * 180
+                  }deg)`,
+                }}
+              />
+              {/* noyau */}
+              <div className="absolute inset-10 rounded-full bg-white shadow-inner flex flex-col items-center justify-center text-xs text-slate-600">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Abo / PPV
+                </span>
+                <span className="mt-1 font-semibold text-slate-800">
+                  Répartition
+                </span>
+              </div>
+            </div>
+
+            {/* Légende */}
+            <div className="space-y-3 text-sm w-full max-w-xs">
+              <LegendRow
+                label="Abonnements récurrents"
+                percent={metrics.aboSharePercent}
+                colorClass="bg-indigo-500"
+                helper="Revenus mensuels stables liés à ton offre d'abonnement."
+              />
+              <LegendRow
+                label="PPV (Pay-Per-View)"
+                percent={metrics.ppvSharePercent}
+                colorClass="bg-sky-400"
+                helper="Revenus liés aux contenus premium débloqués à l'achat."
+              />
+              <p className="text-[11px] text-slate-500">
+                Dans la version complète, ce graphique sera directement lié à
+                tes Magic Clock (performances réelles par contenu).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Paramètres simulateur */}
+        <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between mb-2">
             <div>
-              Revenu brut total :{" "}
-              <span className="font-semibold text-slate-700">
-                {formatMoney(monthlyGross)}
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Paramètres simulateur
+              </p>
+              <p className="text-xs text-slate-400">
+                Ajuste tes chiffres pour visualiser ton potentiel.
+              </p>
+            </div>
+          </div>
+
+          {/* Followers */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-slate-700">Followers</span>
+              <span className="text-slate-500">
+                {followers.toLocaleString("fr-CH")}
               </span>
             </div>
-            <div className="h-4 w-px bg-slate-200" />
-            <div>
-              Part Magic Clock (20 %) :{" "}
-              <span className="text-slate-700">
-                {formatMoney(monthlyPlatformShare)}
-              </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                className="w-full rounded-lg border border-slate-200 px-2 py-1 text-sm"
+                value={followers}
+                onChange={(e) =>
+                  setFollowers(Math.max(0, Number(e.target.value) || 0))
+                }
+              />
             </div>
-          </div>
-        </section>
-
-        {/* 🧮 Simulateur détaillé */}
-        <section className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Simulateur détaillé
+            <p className="text-[11px] text-slate-500">
+              Aucune limite technique : saisis simplement la taille de ton
+              audience actuelle.
             </p>
-            <div className="flex items-center gap-1 text-[11px] text-slate-500">
-              <Info className="h-3.5 w-3.5" />
-              <span>Glisse les curseurs pour tester des scénarios.</span>
-            </div>
           </div>
 
-          <div className="mt-4 space-y-4 text-xs">
-            {/* Followers & vues */}
-            <div className="space-y-3">
-              <div>
-                <label className="flex justify-between text-[11px] font-medium text-slate-700">
-                  <span>Followers totaux</span>
-                  <span>{followers.toLocaleString("fr-CH")}</span>
-                </label>
-                <input
-                  type="range"
-                  min={1000}
-                  max={1_000_000_000}
-                  step={1000}
-                  value={followers}
-                  onChange={(e) =>
-                    setFollowers(
-                      Math.min(
-                        1_000_000_000,
-                        Math.max(1000, Number(e.target.value) || 0)
-                      )
-                    )
-                  }
-                  className="mt-1 w-full"
-                />
-              </div>
+          <div className="h-px bg-slate-100 my-2" />
 
-              <div>
-                <label className="flex justify-between text-[11px] font-medium text-slate-700">
-                  <span>Vues moyennes par Magic Clock</span>
-                  <span>{avgViewsPerClock.toLocaleString("fr-CH")}</span>
-                </label>
-                <input
-                  type="range"
-                  min={200}
-                  max={50_000}
-                  step={200}
-                  value={avgViewsPerClock}
-                  onChange={(e) =>
-                    setAvgViewsPerClock(
-                      Math.min(50_000, Math.max(200, Number(e.target.value) || 0))
-                    )
-                  }
-                  className="mt-1 w-full"
-                />
-              </div>
-            </div>
+          {/* Prix abo */}
+          <SliderRow
+            label={`Prix abo / mois (${CURRENCY})`}
+            value={subPrice}
+            min={0.99}
+            max={999}
+            step={0.1}
+            onChange={setSubPrice}
+            helper="Montant mensuel payé par chaque abonné."
+          />
 
-            {/* Abonnements */}
-            <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-              <p className="text-[11px] font-semibold text-slate-700">
-                Abonnement mensuel
-              </p>
-              <div>
-                <label className="flex justify-between text-[11px] text-slate-600">
-                  <span>Taux d&apos;abonnement / followers</span>
-                  <span>{formatPercent(subRate)}</span>
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={15}
-                  step={0.5}
-                  value={subRate}
-                  onChange={(e) => setSubRate(Number(e.target.value))}
-                  className="mt-1 w-full"
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <label className="text-[11px] text-slate-600">
-                  Prix de l&apos;abonnement
-                </label>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min={0.99}
-                    max={999}
-                    step={0.01}
-                    value={subPrice}
-                    onChange={(e) =>
-                      setSubPrice(
-                        Math.min(999, Math.max(0.99, Number(e.target.value) || 0))
-                      )
-                    }
-                    className="h-7 w-24 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
-                  />
-                  <span className="text-[11px] text-slate-500">
-                    CHF / mois
-                  </span>
-                </div>
-              </div>
-            </div>
+          {/* Conversion abo */}
+          <SliderRow
+            label="Conversion abonnements (%)"
+            value={subConv}
+            min={0}
+            max={50}
+            step={0.1}
+            onChange={setSubConv}
+            helper="Part de tes followers qui prennent un abonnement."
+          />
 
-            {/* PPV */}
-            <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-              <p className="text-[11px] font-semibold text-slate-700">
-                Contenus PPV
-              </p>
-              <div>
-                <label className="flex justify-between text-[11px] text-slate-600">
-                  <span>Conversion PPV / vues</span>
-                  <span>{formatPercent(ppvRate)}</span>
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={25}
-                  step={0.5}
-                  value={ppvRate}
-                  onChange={(e) => setPpvRate(Number(e.target.value))}
-                  className="mt-1 w-full"
-                />
-              </div>
+          {/* Prix PPV */}
+          <SliderRow
+            label={`Prix PPV (${CURRENCY})`}
+            value={ppvPrice}
+            min={0.99}
+            max={999}
+            step={0.1}
+            onChange={setPpvPrice}
+            helper="Prix moyen d'un contenu PPV débloqué."
+          />
 
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <label className="text-[11px] text-slate-600">
-                  Prix par Magic Clock PPV
-                </label>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min={0.99}
-                    max={999}
-                    step={0.01}
-                    value={ppvPrice}
-                    onChange={(e) =>
-                      setPpvPrice(
-                        Math.min(999, Math.max(0.99, Number(e.target.value) || 0))
-                      )
-                    }
-                    className="h-7 w-24 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
-                  />
-                  <span className="text-[11px] text-slate-500">CHF</span>
-                </div>
-              </div>
+          {/* Conversion PPV */}
+          <SliderRow
+            label="Conversion PPV (%)"
+            value={ppvConv}
+            min={0}
+            max={50}
+            step={0.1}
+            onChange={setPpvConv}
+            helper="Part de tes followers qui achètent au moins un PPV."
+          />
 
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <label className="text-[11px] text-slate-600">
-                  Magic Clock PPV publiés / mois
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={30}
-                  step={1}
-                  value={ppvPerMonth}
-                  onChange={(e) =>
-                    setPpvPerMonth(
-                      Math.min(30, Math.max(0, Number(e.target.value) || 0))
-                    )
-                  }
-                  className="h-7 w-20 rounded-md border border-slate-200 bg-white px-2 text-right text-[11px]"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
+          {/* PPV / acheteur / mois */}
+          <SliderRow
+            label="PPV / acheteur / mois"
+            value={ppvPerBuyerPerMonth}
+            min={0.5}
+            max={20}
+            step={0.5}
+            onChange={setPpvPerBuyerPerMonth}
+            helper="Nombre moyen de contenus PPV achetés chaque mois."
+          />
 
-      {/* Info bas de page */}
-      <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4 text-[11px] text-slate-600">
-        <p className="font-semibold text-slate-700 mb-1">
-          Comment lire ce simulateur ?
-        </p>
-        <ul className="list-disc pl-4 space-y-1">
-          <li>
-            <strong>Abonnement (%)</strong> = part de tes followers qui
-            acceptent de payer un abonnement mensuel.
-          </li>
-          <li>
-            <strong>PPV (%)</strong> = part des spectateurs d&apos;un Magic
-            Clock qui achètent ce contenu spécifique.
-          </li>
-          <li>
-            Les chiffres sont indicatifs : le but est de t&apos;aider à te
-            projeter et à fixer tes prix (de 0.99 à 999 dans ta devise).
-          </li>
-        </ul>
+          <div className="h-px bg-slate-100 my-2" />
+
+          {/* Commission plateforme */}
+          <SliderRow
+            label="Commission plateforme (%)"
+            value={platformFee}
+            min={0}
+            max={50}
+            step={0.5}
+            onChange={setPlatformFee}
+            helper="Part prélevée par Magic Clock sur le chiffre d'affaires brut."
+          />
+
+          {/* TVA */}
+          <SliderRow
+            label="TVA (% estimative)"
+            value={vatRate}
+            min={0}
+            max={25}
+            step={0.1}
+            onChange={setVatRate}
+            helper="Taux de TVA moyen appliqué à tes ventes (varie selon les pays)."
+          />
+        </div>
       </section>
+    </div>
+  );
+}
+
+// ---- Petits composants UI ----
+
+type StatCardProps = {
+  title: string;
+  value: number;
+  delta: string;
+  deltaPositive?: boolean;
+  helper?: string;
+};
+
+function StatCard({
+  title,
+  value,
+  delta,
+  deltaPositive = true,
+  helper,
+}: StatCardProps) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </p>
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            deltaPositive
+              ? "bg-emerald-50 text-emerald-600"
+              : "bg-rose-50 text-rose-600"
+          }`}
+        >
+          <span>{deltaPositive ? "↑" : "↓"}</span>
+          <span>{delta}</span>
+        </span>
+      </div>
+      <div className="mt-2 text-xl font-semibold text-slate-900">
+        {formatMoney(value)}
+      </div>
+      {helper && (
+        <p className="mt-1 text-[11px] text-slate-500 leading-snug">{helper}</p>
+      )}
+    </div>
+  );
+}
+
+type SliderRowProps = {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+  helper?: string;
+};
+
+function SliderRow({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+  helper,
+}: SliderRowProps) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-medium text-slate-700">{label}</span>
+        <span className="text-slate-500">
+          {Number.isInteger(value) ? value : value.toFixed(2)}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-indigo-500"
+      />
+      {helper && (
+        <p className="text-[11px] text-slate-500 leading-snug">{helper}</p>
+      )}
+    </div>
+  );
+}
+
+type LegendRowProps = {
+  label: string;
+  percent: number;
+  helper?: string;
+  colorClass: string;
+};
+
+function LegendRow({ label, percent, helper, colorClass }: LegendRowProps) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${colorClass}`} />
+          <span className="font-medium text-slate-700">{label}</span>
+        </div>
+        <span className="text-slate-500">{percent.toFixed(0)} %</span>
+      </div>
+      {helper && (
+        <p className="text-[11px] text-slate-500 leading-snug">{helper}</p>
+      )}
     </div>
   );
 }
