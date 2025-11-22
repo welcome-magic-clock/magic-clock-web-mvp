@@ -36,7 +36,7 @@ function DeltaBadge({ value }: DeltaBadgeProps) {
 
 export default function MonetPage() {
   // -----------------------------
-  // Etats du simulateur
+  // États du simulateur
   // -----------------------------
   const [followers, setFollowers] = useState<number>(0);
   const [priceSub, setPriceSub] = useState<number>(9.99);
@@ -84,10 +84,9 @@ export default function MonetPage() {
     return [a, p];
   }, [subRevenue, totalRevenue]);
 
-  // Petits % de variation "fictifs mais positifs"
+  // Petits % de variation toujours positifs (illustration)
   const deltaFromValue = (value: number) => {
     if (value <= 0) return 0;
-    // variation symbolique plafonnée à 150%
     return Math.min(150, Math.sqrt(value) / 10);
   };
 
@@ -101,11 +100,11 @@ export default function MonetPage() {
   const circumference = 2 * Math.PI * radius;
   const aboStroke = (aboShare / 100) * circumference;
 
-  // Mini courbe d'évolution (sparkline)
+  // Mini courbe d’évolution
   const historyPoints = useMemo(() => {
     const base = creatorNet <= 0 ? 1 : creatorNet;
     return Array.from({ length: 8 }).map((_, i) => {
-      const factor = 0.6 + i * 0.06; // légère montée
+      const factor = 0.6 + i * 0.06;
       return base * factor;
     });
   }, [creatorNet]);
@@ -123,89 +122,104 @@ export default function MonetPage() {
           Visualise le potentiel de revenus de tes Magic Clock en fonction de
           ton audience et de tes réglages.
         </p>
+        <p className="mt-1 text-[11px] text-slate-500">
+          Bloc du haut ={" "}
+          <span className="font-medium">vue actuelle (MVP)</span>. Bloc du bas
+          = <span className="font-medium">simulateur</span> pour tester des
+          scénarios.
+        </p>
       </header>
 
-      {/* Cartes KPI */}
-      <section className="grid gap-4 lg:grid-cols-4">
-        {/* Abonnements */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                Revenus abonnements (MRR)
-              </p>
-              <p className="mt-1 text-xl font-semibold">
-                {formatMoney(subRevenue)}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                {subSubscribers.toFixed(0)} abonnés · {subConv.toFixed(1)} % de
-                conversion
-              </p>
+      {/* ==================== VUE ACTUELLE ==================== */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500">
+            Vue actuelle — estimation
+          </p>
+          <p className="text-[11px] text-slate-400">
+            Dans la version complète, ces chiffres viendront de ton compte réel.
+          </p>
+        </div>
+
+        {/* Cartes KPI */}
+        <div className="grid gap-4 lg:grid-cols-4">
+          {/* Abonnements */}
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                  Revenus abonnements (MRR)
+                </p>
+                <p className="mt-1 text-xl font-semibold">
+                  {formatMoney(subRevenue)}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {subSubscribers.toFixed(0)} abonnés · {subConv.toFixed(1)} % de
+                  conversion
+                </p>
+              </div>
+              <DeltaBadge value={deltaSub} />
             </div>
-            <DeltaBadge value={deltaSub} />
+          </div>
+
+          {/* PPV */}
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                  Revenus PPV
+                </p>
+                <p className="mt-1 text-xl font-semibold">
+                  {formatMoney(ppvRevenue)}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {ppvBuyers.toFixed(0)} acheteurs · {ppvConv.toFixed(1)} % conv.{" "}
+                  · {ppvPerBuyer.toFixed(1)} PPV / acheteur / mois
+                </p>
+              </div>
+              <DeltaBadge value={deltaPpv} />
+            </div>
+          </div>
+
+          {/* Chiffre d'affaires brut */}
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                  Chiffre d&apos;affaires (BRUT TTC)
+                </p>
+                <p className="mt-1 text-xl font-semibold">
+                  {formatMoney(totalRevenue)}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Commission plateforme {commissionTier.rate.toFixed(1)} % · TVA{" "}
+                  {vatRate.toFixed(1)} %
+                </p>
+              </div>
+              <DeltaBadge value={deltaGross} />
+            </div>
+          </div>
+
+          {/* Revenu net créateur */}
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                  Revenu net créateur (estimation)
+                </p>
+                <p className="mt-1 text-xl font-semibold">
+                  {formatMoney(Math.max(creatorNet, 0))}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Après commission Magic Clock & TVA (approx.).
+                </p>
+              </div>
+              <DeltaBadge value={deltaNet} />
+            </div>
           </div>
         </div>
 
-        {/* PPV */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                Revenus PPV
-              </p>
-              <p className="mt-1 text-xl font-semibold">
-                {formatMoney(ppvRevenue)}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                {ppvBuyers.toFixed(0)} acheteurs · {ppvConv.toFixed(1)} % conv.{" "}
-                · {ppvPerBuyer.toFixed(1)} PPV / acheteur / mois
-              </p>
-            </div>
-            <DeltaBadge value={deltaPpv} />
-          </div>
-        </div>
-
-        {/* Chiffre d'affaires brut */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                Chiffre d&apos;affaires (BRUT TTC)
-              </p>
-              <p className="mt-1 text-xl font-semibold">
-                {formatMoney(totalRevenue)}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Commission plateforme {commissionTier.rate.toFixed(1)} % · TVA{" "}
-                {vatRate.toFixed(1)} %
-              </p>
-            </div>
-            <DeltaBadge value={deltaGross} />
-          </div>
-        </div>
-
-        {/* Revenu net créateur */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm flex flex-col justify-between">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                Revenu net créateur (estimation)
-              </p>
-              <p className="mt-1 text-xl font-semibold">
-                {formatMoney(Math.max(creatorNet, 0))}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Après commission Magic Clock & TVA (approx.).
-              </p>
-            </div>
-            <DeltaBadge value={deltaNet} />
-          </div>
-        </div>
-      </section>
-
-      {/* Corps principal : mix revenus + simulateur */}
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        {/* Mix revenus + graphe */}
+        {/* Mix revenus + courbe */}
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm space-y-5">
           <div className="flex items-center justify-between">
             <div>
@@ -293,21 +307,18 @@ export default function MonetPage() {
                 </li>
               </ul>
 
-              {/* Courbe d'évolution */}
               <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
                 <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
                   <span>Évolution estimée du revenu net</span>
                   <span>{formatMoney(Math.max(creatorNet, 0))} / mois</span>
                 </div>
                 <svg viewBox="0 0 160 50" className="w-full h-16">
-                  {/* fond */}
                   <polyline
                     points="0,40 160,40"
                     fill="none"
                     stroke="#e5e7eb"
                     strokeWidth={1}
                   />
-                  {/* courbe */}
                   <polyline
                     fill="none"
                     stroke="#6366f1"
@@ -330,262 +341,91 @@ export default function MonetPage() {
             </div>
           </div>
         </div>
-
-        {/* Colonne simulateur */}
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm space-y-5">
-          <div>
-            <p className="text-[11px] uppercase tracking-wide text-slate-500">
-              Paramètres simulateur
-            </p>
-            <p className="text-sm text-slate-600">
-              Ajuste les chiffres pour visualiser ton potentiel.
-            </p>
-          </div>
-
-          {/* Followers */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>Followers</span>
-              <span>{followers.toLocaleString("fr-CH")}</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={1_000_000}
-              value={Math.min(followers, 1_000_000)}
-              onChange={(e) => setFollowers(Number(e.target.value))}
-              className="w-full"
-            />
-            <input
-              type="number"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
-              value={followers}
-              onChange={(e) => {
-                const v = Number(e.target.value || 0);
-                setFollowers(Math.max(0, v));
-              }}
-            />
-            <p className="text-[11px] text-slate-500">
-              Aucune limite technique : saisis simplement la taille de ton
-              audience. Le slider va jusqu&apos;à 1M, au-delà utilise le champ
-              numérique.
-            </p>
-          </div>
-
-          {/* Prix abo */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>Prix abo / mois (CHF)</span>
-              <span>{priceSub.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min={0.99}
-              max={999}
-              step={0.01}
-              value={priceSub}
-              onChange={(e) => setPriceSub(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          {/* Conversion abo */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>Conversion abonnements (%)</span>
-              <span>{subConv.toFixed(1)} %</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              value={subConv}
-              onChange={(e) => setSubConv(Number(e.target.value))}
-              className="w-full"
-            />
-            <p className="text-[11px] text-slate-500">
-              Part de tes followers qui prennent un abonnement.
-            </p>
-          </div>
-
-          {/* Prix PPV */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>Prix PPV (CHF)</span>
-              <span>{pricePpv.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min={0.99}
-              max={999}
-              step={0.01}
-              value={pricePpv}
-              onChange={(e) => setPricePpv(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          {/* Conversion PPV */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>Conversion PPV (%)</span>
-              <span>{ppvConv.toFixed(1)} %</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              value={ppvConv}
-              onChange={(e) => setPpvConv(Number(e.target.value))}
-              className="w-full"
-            />
-            <p className="text-[11px] text-slate-500">
-              Part de tes followers qui achètent au moins un PPV.
-            </p>
-          </div>
-
-          {/* PPV par acheteur / mois */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>PPV / acheteur / mois</span>
-              <span>{ppvPerBuyer.toFixed(1)}</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={50}
-              step={0.1}
-              value={Math.min(ppvPerBuyer, 50)}
-              onChange={(e) => setPpvPerBuyer(Number(e.target.value))}
-              className="w-full"
-            />
-            <input
-              type="number"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
-              value={ppvPerBuyer}
-              onChange={(e) =>
-                setPpvPerBuyer(Math.max(0, Number(e.target.value || 0)))
-              }
-            />
-            <p className="text-[11px] text-slate-500">
-              Nombre moyen de contenus PPV achetés par client chaque mois. Tu
-              peux saisir n&apos;importe quelle valeur.
-            </p>
-          </div>
-
-          {/* Likes & tiers commission */}
-          <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                  Likes reçus (Amazing)
-                </p>
-                <p className="text-xs text-slate-600">
-                  Débloque de meilleurs paliers de commission.
-                </p>
-              </div>
-              <p className="text-xs font-semibold text-slate-700">
-                {likes.toLocaleString("fr-CH")} likes
-              </p>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={20_000}
-              value={Math.min(likes, 20_000)}
-              onChange={(e) => setLikes(Number(e.target.value))}
-              className="w-full"
-            />
-
-            {/* Barre linéaire Bronze / Argent / Or */}
-            <div className="mt-1 space-y-1">
-              <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                <div className="absolute inset-y-0 left-0 w-1/3 bg-amber-300/80" />
-                <div className="absolute inset-y-0 left-1/3 w-1/3 bg-slate-300/80" />
-                <div className="absolute inset-y-0 left-2/3 w-1/3 bg-yellow-400/80" />
-                {/* Curseur */}
-                <div
-                  className="absolute top-1/2 h-3 w-3 -translate-y-1/2 -translate-x-1/2 rounded-full border border-white bg-indigo-500 shadow"
-                  style={{
-                    left: `${Math.min(likes, 20000) / 20000 * 100}%`,
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-500">
-                <span>0</span>
-                <span>1k</span>
-                <span>10k</span>
-                <span>20k+</span>
-              </div>
-            </div>
-
-            {/* Tiers détail */}
-            <div className="grid grid-cols-3 gap-2 text-[11px]">
-              <div
-                className={`rounded-xl border p-2 ${
-                  commissionTier.label === "Bronze"
-                    ? "border-amber-400 bg-amber-50/60"
-                    : "border-slate-200 bg-slate-50"
-                }`}
-              >
-                <p className="font-semibold">Bronze</p>
-                <p className="text-[10px] text-slate-600">
-                  30 % de commission.
-                  <br />
-                  0–1&nbsp;000 likes.
-                </p>
-                <p className="mt-1 text-[10px] text-emerald-600 font-medium">
-                  Débloqué
-                </p>
-              </div>
-              <div
-                className={`rounded-xl border p-2 ${
-                  commissionTier.label === "Argent"
-                    ? "border-slate-400 bg-slate-50"
-                    : "border-slate-200 bg-slate-50/40 opacity-70"
-                }`}
-              >
-                <p className="font-semibold">Argent</p>
-                <p className="text-[10px] text-slate-600">
-                  25 % de commission.
-                  <br />
-                  1&nbsp;001–10&nbsp;000 likes.
-                </p>
-                <p className="mt-1 text-[10px] font-medium">
-                  {likes >= 1001 ? (
-                    <span className="text-emerald-600">Débloqué</span>
-                  ) : (
-                    <span className="text-slate-400">Verrouillé</span>
-                  )}
-                </p>
-              </div>
-              <div
-                className={`rounded-xl border p-2 ${
-                  commissionTier.label === "Or"
-                    ? "border-yellow-500 bg-yellow-50"
-                    : "border-slate-200 bg-slate-50/40 opacity-70"
-                }`}
-              >
-                <p className="font-semibold">Or</p>
-                <p className="text-[10px] text-slate-600">
-                  20 % de commission.
-                  <br />
-                  10&nbsp;001+ likes.
-                </p>
-                <p className="mt-1 text-[10px] font-medium">
-                  {likes > 10000 ? (
-                    <span className="text-emerald-600">Débloqué</span>
-                  ) : (
-                    <span className="text-slate-400">Verrouillé</span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
-    </div>
-  );
-}
+
+      {/* ==================== SÉPARATEUR SIMULATEUR ==================== */}
+      <div className="flex items-center gap-3 pt-4">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-[11px] uppercase tracking-wide text-slate-500">
+          Simulateur
+        </span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      {/* ==================== ZONE SIMULATEUR ==================== */}
+      <section className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm space-y-5">
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-slate-500">
+            Simulateur — paramètres
+          </p>
+          <p className="text-sm text-slate-600">
+            Cette zone est un{" "}
+            <span className="font-medium">simulateur</span> : les curseurs ne
+            modifient pas encore ton compte réel, mais te permettent de tester
+            des scénarios.
+          </p>
+        </div>
+
+        {/* Followers */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <span>Followers</span>
+            <span>{followers.toLocaleString("fr-CH")}</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1_000_000}
+            value={Math.min(followers, 1_000_000)}
+            onChange={(e) => setFollowers(Number(e.target.value))}
+            className="w-full"
+          />
+          <input
+            type="number"
+            className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-xs"
+            value={followers}
+            onChange={(e) => {
+              const v = Number(e.target.value || 0);
+              setFollowers(Math.max(0, v));
+            }}
+          />
+          <p className="text-[11px] text-slate-500">
+            Aucune limite technique : saisis simplement la taille de ton
+            audience. Le slider va jusqu&apos;à 1M, au-delà utilise le champ
+            numérique.
+          </p>
+        </div>
+
+        {/* Prix abo */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <span>Prix abo / mois (CHF)</span>
+            <span>{priceSub.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min={0.99}
+            max={999}
+            step={0.01}
+            value={priceSub}
+            onChange={(e) => setPriceSub(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Conversion abo */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <span>Conversion abonnements (%)</span>
+            <span>{subConv.toFixed(1)} %</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={0.1}
+            value={subConv}
+            onChange={(e) => setSubConv(Number(e.target.value))}
+            className="w-full"
+          />
+          <p className="text-[11px] text-s
