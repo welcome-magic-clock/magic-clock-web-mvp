@@ -14,6 +14,7 @@ export type Creator = {
   followers: number;
   avatar: string;
   access: Access[];
+  specialties?: string[]; // 👈 on ajoute ça
 };
 
 export type FeedCard = {
