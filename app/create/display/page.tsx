@@ -10,71 +10,68 @@ export default function MagicDisplayEditorPage() {
       </h1>
       <p className="mt-2 text-sm text-slate-600">
         Ici tu prépares l&apos;affichage final de ton Magic Clock : avant/après,
-        overlay du profil créateur et niveau d&apos;accès (FREE / Abonnement /
-        PPV). Pour l&apos;instant, tout est visuel, sans sauvegarde.
+        overlay du profil créateur et niveau d&apos;accès (FREE / Abonnement / PPV).
+        Pour l&apos;instant, tout est visuel, sans sauvegarde.
       </p>
 
-      {/* APERÇU MAGIC DISPLAY */}
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6">
         <h2 className="text-sm font-semibold tracking-wide text-slate-500">
           APERÇU MAGIC DISPLAY
         </h2>
 
-        <div className="mt-4 rounded-3xl bg-slate-50 p-3 sm:p-4">
-          <p className="text-sm font-medium text-slate-600">
+        <div className="mt-3 rounded-3xl bg-slate-50 p-3 sm:p-4">
+          <h3 className="text-sm font-medium text-slate-700">
             Aperçu avant / après
-          </p>
+          </h3>
 
-          <div className="mt-3">
-            <article className="mx-auto max-w-md overflow-hidden rounded-3xl bg-white shadow-sm">
-              {/* Image avant / après */}
-              <div className="relative w-full aspect-[3/4] bg-slate-100">
+          <div className="mt-3 rounded-3xl bg-slate-100 p-3">
+            {/* Carte Magic Display */}
+            <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-3xl bg-slate-200">
+              <div className="relative aspect-[3/4] w-full">
                 <Image
-                  src="/pictures/mp-1.jpg"
-                  alt="Exemple Magic Display - balayage caramel lumineux"
+                  src="/mp-1.png"
+                  alt="Balayage caramel lumineux - avant/après"
                   fill
                   className="object-cover"
-                  sizes="(min-width: 768px) 400px, 100vw"
+                  sizes="(max-width: 640px) 100vw, 400px"
+                  priority
                 />
 
-                {/* Overlay gradient + bandeau créateur */}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                {/* Gradient bas + barre d'infos créateur */}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 to-transparent" />
 
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-4 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90">
-                      <span className="text-xs font-semibold text-slate-900">
-                        S
-                      </span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100/90 text-sm font-semibold">
+                      S
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-white">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-white">
                         Sofia Rivera
-                      </p>
-                      <p className="text-[11px] text-slate-200">
-                        @sofia_rivera · 12 400 vues
-                      </p>
+                      </span>
+                      <span className="text-[11px] text-slate-200">
+                        @sofia_rivera · 12&nbsp;400 vues
+                      </span>
                     </div>
                   </div>
 
-                  <span className="rounded-full border border-white/70 bg-black/30 px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full border border-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
                     FREE
                   </span>
                 </div>
               </div>
+            </div>
 
-              {/* Texte sous l’image */}
-              <div className="space-y-1 px-4 py-3">
-                <h3 className="text-sm font-semibold">
-                  Balayage caramel lumineux
-                </h3>
-                <p className="pb-2 text-xs text-slate-500">
-                  MVP : l&apos;image est fixe. Plus tard, elle viendra
-                  directement de ton Magic Studio (avant / après choisi pour ce
-                  Magic Clock).
-                </p>
-              </div>
-            </article>
+            {/* Légende sous la carte */}
+            <div className="mt-4 space-y-1">
+              <p className="text-sm font-semibold text-slate-900">
+                Balayage caramel lumineux
+              </p>
+              <p className="text-xs text-slate-600">
+                MVP : l&apos;image est fixe. Plus tard, elle viendra directement de
+                ton Magic Studio (avant / après choisi pour ce Magic Clock).
+              </p>
+            </div>
           </div>
         </div>
       </section>
