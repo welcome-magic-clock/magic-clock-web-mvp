@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
-import { findContentById } from "@/core/domain/repository";
+import { FEED } from "@/features/amazing/feed";
 import CREATORS from "@/features/meet/creators";
 
 type PageProps = {
@@ -12,12 +11,11 @@ type PageProps = {
 };
 
 export default function DisplayPage({ params }: PageProps) {
-  const item = findContentById(params.id);
+  // On cherche dans FEED l'item qui correspond à l'id de l'URL
+  const item =
+    FEED.find((i) => String(i.id) === String(params.id)) ?? FEED[0];
 
-  if (!item) {
-    return notFound();
-  }
-
+  // On retrouve le créateur à partir de son handle (@sofia_rivera, etc.)
   const creator = CREATORS.find((c) => c.handle === item.user);
 
   return (
