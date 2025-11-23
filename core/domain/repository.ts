@@ -64,3 +64,16 @@ export function findContentById(id: number | string): FeedCard | undefined {
   // Fallback string-based
   return FEED.find((item) => String(item.id) === String(id));
 }
+
+/**
+ * Retourne la carte + le créateur pour un id donné (pour /display/[id])
+ */
+export function getDisplayCardById(id: number | string) {
+  const card = findContentById(id);
+  if (!card) return undefined;
+
+  const creator =
+    CREATORS.find((c) => c.handle === card.user) ?? CREATORS[0];
+
+  return { card, creator };
+}
