@@ -1,5 +1,6 @@
 // app/mymagic/page.tsx
 
+import Link from "next/link";
 import MediaCard from "@/features/amazing/MediaCard";
 import { listFeed, listCreators } from "@/core/domain/repository";
 
@@ -47,6 +48,15 @@ export default function MyMagicClockPage() {
             <p className="text-xs text-slate-500">
               {followerLabel} followers · {created.length} Magic Clock créés ·{" "}
               {purchased.length} Magic Clock débloqués (MVP)
+            </p>
+            <p className="text-[11px] text-slate-500">
+              Vue publique :{" "}
+              <Link
+                href={`/u/${currentCreator.handle}`}
+                className="font-medium text-brand-600 hover:underline"
+              >
+                voir mon profil créateur
+              </Link>
             </p>
           </div>
         </div>
