@@ -5,6 +5,9 @@ export default async function HomePage() {
   // Récupération du flux Amazing (fake DB / dépôt de domaine)
   const feed = await listFeed();
 
+  // Faux infini : on répète le flux plusieurs fois pour donner une vraie profondeur de scroll
+  const extendedFeed = [...feed, ...feed, ...feed];
+
   return (
     <main className="mx-auto flex max-w-5xl flex-col px-4 pb-24 pt-6 sm:px-6 sm:pt-8">
       <header className="mb-4 sm:mb-6">
@@ -16,10 +19,10 @@ export default async function HomePage() {
         </p>
       </header>
 
-      {/* Flux principal : cartes en colonne sur mobile, snap comme un feed de Reels */}
+      {/* Flux principal : cartes en colonne sur mobile, grille sur desktop */}
       <section className="flex flex-col gap-6 sm:gap-8 snap-y snap-mandatory">
-        {feed.map((item: any) => (
-          <MediaCard key={item.id} item={item} />
+        {extendedFeed.map((item: any, index: number) => (
+          <MediaCard key={`${item.id}-${index}`} item={item} />
         ))}
       </section>
     </main>
