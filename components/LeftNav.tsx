@@ -11,7 +11,13 @@ import {
   Bell,
   ShieldCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react"; // ajoute cette ligne
 
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/",
