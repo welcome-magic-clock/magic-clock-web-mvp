@@ -1,27 +1,21 @@
+// components/MobileTabs.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  Users,
-  Sparkles,
-  DollarSign,
-  Bell,
-  ShieldCheck,
-  MessageCircle,
-  Menu,
-  type LucideIcon,
-} from "lucide-react";
+import { Home, Users, Sparkles, DollarSign } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-type Tab = {
+import { listCreators } from "@/core/domain/repository";
+
+type TabItem = {
   href: string;
   label: string;
   icon?: LucideIcon;
-  avatarSrc?: string;
+  isProfile?: boolean;
 };
 
-const tabs: Tab[] = [
+const TABS: TabItem[] = [
   {
     href: "/",
     label: "Amazing",
@@ -45,128 +39,56 @@ const tabs: Tab[] = [
   {
     href: "/mymagic",
     label: "My Magic Clock",
-    icon: Users, // fallback si l’avatar ne charge pas
-    avatarSrc: "/creators/aiko-tanaka.jpeg",
-  },
-  {
-    href: "/messages",
-    label: "Messages",
-    icon: MessageCircle,
-  },
-  {
-    href: "/notifications",
-    label: "Notifications",
-    icon: Bell,
-  },
-  {
-    href: "/legal",
-    label: "Légal",
-    icon: ShieldCheck,
+    isProfile: true, // 👉 onglet profil avec avatar
   },
 ];
 
 export default function MobileTabs() {
   const pathname = usePathname();
 
+  // On réutilise Aiko Tanaka comme créatrice actuelle
+  const creators = listCreators();
+  const currentCreator =
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+  const avatar = currentCreator.avatar;
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-md items-center justify-between gap-1">
-        {tabs.map((tab) => {
-          const { href, label, icon: Icon, avatarSrc } = tab;
-          const active =
-            href === "/" ? pathname === href : pathname.startsWith(href);
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden">
+      <div className="mx-auto flex max-w-xl items-center justify-between gap-1">
+        {TABS.map((tab) => {
+          const isActive =
+            tab.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(tab.href);
 
-          // Onglet central "Créer"
-          if (href === "/create") {
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="relative flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/40"
-              >
-                <Sparkles className="h-5 w-5" />
-              </Link>
-            );
-          }
-
-          // Onglet "My Magic Clock" avec avatar Aiko
-          if (href === "/mymagic") {
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-1 flex-col items-center justify-center gap-0.5"
-              >
-                <span className="relative flex h-9 w-9 items-center justify-center">
-                  <span
-                    className={`absolute inset-0 rounded-full border-2 ${
-                      active
-                        ? "border-indigo-500 shadow-[0_0_0_2px_rgba(129,140,248,0.2)]"
-                        : "border-slate-200"
-                    }`}
-                  />
-                  <span className="relative block h-7 w-7 overflow-hidden rounded-full bg-slate-200">
-                    {avatarSrc ? (
-                      <img
-                        src={avatarSrc}
-                        alt={label}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      Icon && (
-                        <Icon
-                          className={`h-4 w-4 ${
-                            active ? "text-indigo-600" : "text-slate-400"
-                          }`}
-                        />
-                      )
-                    )}
-                  </span>
-                </span>
-                <span
-                  className={`text-[11px] ${
-                    active ? "text-indigo-600 font-medium" : "text-slate-500"
-                  }`}
-                >
-                  {label}
-                </span>
-              </Link>
-            );
-          }
-
-          // Autres onglets
           return (
             <Link
-              key={href}
-              href={href}
-              className="flex flex-1 flex-col items-center justify-center gap-0.5"
+              key={tab.href}
+              href={tab.href}
+              className={`flex flex-1 flex-col items-center justify-center rounded-2xl px-2 py-1 text-[11px] ${
+                isActive
+                  ? "bg-brand-50 text-brand-600"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
             >
-              {Icon && (
-                <Icon
-                  className={`h-5 w-5 ${
-                    active ? "text-indigo-600" : "text-slate-500"
-                  }`}
-                />
+              {tab.isProfile ? (
+                <span className="mb-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100">
+                  <img
+                    src={avatar}
+                    alt={currentCreator.name}
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
+                </span>
+              ) : (
+                tab.icon && (
+                  <tab.icon className="mb-0.5 h-5 w-5" aria-hidden="true" />
+                )
               )}
-              <span
-                className={`text-[11px] ${
-                  active ? "text-indigo-600 font-medium" : "text-slate-500"
-                }`}
-              >
-                {label}
-              </span>
+              <span className="leading-tight text-[10px]">{tab.label}</span>
             </Link>
           );
         })}
-
-        {/* Bouton "plus" / menu secondaire (placeholder) */}
-        <button
-          type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white"
-        >
-          <Menu className="h-4 w-4 text-slate-500" />
-        </button>
       </div>
-    </div>
+    </nav>
   );
 }
