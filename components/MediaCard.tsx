@@ -25,7 +25,7 @@ export default function MediaCard({ item }: MediaCardProps) {
 
   return (
     <article
-      className="
+  className="
         snap-start
         rounded-[32px]
         border border-slate-800/60
@@ -34,10 +34,11 @@ export default function MediaCard({ item }: MediaCardProps) {
         shadow-xl
         overflow-hidden
         flex flex-col
-        min-h-[calc(100vh-160px)]
+        min-h-[65vh]
         sm:min-h-[420px]
         lg:min-h-[460px]
       "
+>
     >
       {/* Zone média (placeholder gradient pour le MVP) */}
       <div className="relative flex-1 bg-gradient-to-b from-slate-800/60 via-slate-900 to-slate-950">
