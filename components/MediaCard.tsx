@@ -2,21 +2,28 @@ import Link from "next/link";
 import { Eye, Heart, Play } from "lucide-react";
 
 export type MediaCardProps = {
-  // On garde volontairement un type souple pour éviter les erreurs TS
+  // On garde volontairement un type souple pour le MVP
   item: any;
 };
 
 export default function MediaCard({ item }: MediaCardProps) {
   const title: string = item?.title ?? "Avant/Après couleur";
-  const creatorHandle: string = item?.creator?.handle ?? "@sofia";
-  const avatarInitials: string =
-    item?.creator?.avatarInitials ??
-    (creatorHandle.replace("@", "").charAt(0).toUpperCase() || "M");
 
-  const views: number = item?.stats?.views ?? 1000;
-  const likes: number = item?.stats?.likes ?? 0;
+  // Dans notre FEED actuel, on n’a que "user" en string,
+  // donc on dérive un handle propre et des initiales.
+  const rawUser: string = item?.user ?? "sofia";
+  const creatorHandle = `@${rawUser}`;
+  const avatarInitials =
+    rawUser.charAt(0).toUpperCase() || "M";
 
-  const tags: string[] = item?.tags ?? ["#balayage", "#blond froid", "#soin"];
+  const views: number =
+    typeof item?.views === "number" ? item.views : 1000;
+  const likes: number =
+    typeof item?.likes === "number" ? item.likes : 0;
+
+  const tags: string[] =
+    item?.tags ?? ["#balayage", "#blond froid", "#soin"];
+
   const description: string =
     item?.description ??
     "Magic Clock · contenus pédagogiques. Swipe dans le flux pour découvrir d'autres créateurs.";
@@ -25,20 +32,20 @@ export default function MediaCard({ item }: MediaCardProps) {
 
   return (
     <article
-  className="
+      className="
+        group
         snap-start
+        flex flex-col
+        overflow-hidden
         rounded-[32px]
         border border-slate-800/60
         bg-slate-950
         text-slate-50
         shadow-xl
-        overflow-hidden
-        flex flex-col
-        min-h-[65vh]
+        min-h-[calc(100vh-160px)]
         sm:min-h-[420px]
         lg:min-h-[460px]
       "
->
     >
       {/* Zone média (placeholder gradient pour le MVP) */}
       <div className="relative flex-1 bg-gradient-to-b from-slate-800/60 via-slate-900 to-slate-950">
