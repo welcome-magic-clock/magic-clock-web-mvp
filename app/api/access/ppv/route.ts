@@ -1,41 +1,25 @@
 import { NextResponse } from "next/server";
-import type { Access } from "@/core/domain/types";
 import { canViewContent } from "@/core/domain/access";
 import { addUnlockedPpv } from "@/core/server/accessCookie";
 
-type Body = {
-  contentId: string | number;
-  creatorHandle?: string;
-};
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
 
-/**
- * Endpoint PPV (Pay-Per-View)
- * - Ajoute l'id de contenu à la liste des contenus PPV débloqués dans le cookie.
- */
-export async function POST(req: Request) {
-  const body = (await req.json()) as Body;
+    // Décision d’accès (même logique qu’avant, mais sans typage Access)
+    const decision = canViewContent(body);
 
-  if (body.contentId == null) {
+    // Si l’accès PPV est autorisé, on mémorise le contenu comme “débloqué”
+    if (decision?.allowed && body?.contentId) {
+      addUnlockedPpv(body.contentId);
+    }
+
+    return NextResponse.json(decision);
+  } catch (error) {
+    console.error("[access/ppv] error:", error);
     return NextResponse.json(
-      { ok: false, error: "contentId manquant" },
-      { status: 400 }
+      { allowed: false, reason: "SERVER_ERROR" },
+      { status: 500 }
     );
   }
-
-  const viewer = await addUnlockedPpv(body.contentId);
-
-  const content = {
-    id: body.contentId,
-    access: "PPV" as Access,
-    user: body.creatorHandle,
-  };
-
-  const decision = canViewContent(content, viewer);
-
-  return NextResponse.json({
-    ok: true,
-    access: "PPV",
-    decision,
-    context: viewer,
-  });
 }
