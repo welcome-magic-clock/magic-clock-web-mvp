@@ -1,18 +1,24 @@
 // app/mymagic/page.tsx
 
 import MediaCard from "@/features/amazing/MediaCard";
-import { listFeed, listCreators } from "@/core/domain/repository";
+import {
+  listFeed,
+  listCreators,
+  listFeedByCreator,
+} from "@/core/domain/repository";
 
 export default function MyMagicClockPage() {
-  // On récupère tout le feed pour remplir les sections "créés" et "débloqués"
-  const all = listFeed();
-  const created = all.slice(0, 4);
-  const purchased = all.slice(4, 8);
-
   // On choisit Aiko Tanaka comme créatrice "courante"
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+
+  // On récupère tout le feed + on sépare :
+  // - créés par Aiko
+  // - débloqués (les autres)
+  const all = listFeed();
+  const created = listFeedByCreator(currentCreator.handle);
+  const purchased = all.filter((item) => item.user !== currentCreator.handle);
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
@@ -48,17 +54,6 @@ export default function MyMagicClockPage() {
               {followerLabel} followers · {created.length} Magic Clock créés ·{" "}
               {purchased.length} Magic Clock débloqués (MVP)
             </p>
-
-            {/* ✅ Lien vers la vue publique (pour l'instant : Meet me) */}
-            <p className="text-xs text-slate-500">
-              Vue publique :{" "}
-              <a
-                href="/meet"
-                className="font-medium text-brand-600 hover:underline"
-              >
-                voir mon profil créateur
-              </a>
-            </p>
           </div>
         </div>
       </header>
@@ -84,13 +79,13 @@ export default function MyMagicClockPage() {
         </div>
       </section>
 
-      {/* MES MAGIC CLOCK CRÉÉS */}
+      {/* MES MAGIC CLOCK CRÉÉS (uniquement ceux d'Aiko) */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
         <p className="text-sm text-slate-600">
-          Pour l&apos;instant, nous réutilisons une sélection de contenus du
-          flux Amazing comme aperçu. Plus tard, seuls tes propres Magic Clock
-          (Studio + Display) apparaîtront ici.
+          Ici apparaissent uniquement tes propres Magic Clock (Studio + Display).
+          Pour le MVP, nous réutilisons les contenus du flux Amazing créés par
+          ton profil.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {created.map((item) => (
@@ -99,7 +94,7 @@ export default function MyMagicClockPage() {
         </div>
       </section>
 
-      {/* MAGIC CLOCK DÉBLOQUÉS */}
+      {/* MAGIC CLOCK DÉBLOQUÉS (les autres créateurs) */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">
           Magic Clock débloqués (Abonnements &amp; PPV)
@@ -107,7 +102,7 @@ export default function MyMagicClockPage() {
         <p className="text-sm text-slate-600">
           Section bibliothèque de l&apos;utilisateur : contenus accessibles
           grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
-          une autre sélection du flux Amazing.
+          ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {purchased.map((item) => (
