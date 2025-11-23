@@ -17,13 +17,16 @@ export default function CreatorCard({ c }: Props) {
         flex flex-col
       "
     >
-      {/* Grande image de profil */}
-      <div className="relative h-56 w-full overflow-hidden bg-slate-100">
+      {/* Grande image de profil avec ratio portrait */}
+      <div
+        className="relative w-full overflow-hidden bg-slate-100"
+        style={{ aspectRatio: "4 / 5" }}
+      >
         <Image
           src={c.avatar}
           alt={c.name}
           fill
-          className="object-cover"
+          className="object-cover object-top"
           sizes="(max-width: 640px) 100vw, 320px"
         />
       </div>
