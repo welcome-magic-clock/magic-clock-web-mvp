@@ -1,90 +1,95 @@
-import { findContentById } from "@/core/domain/repository";
-import { canViewContent, explainAccessDecision } from "@/core/domain/access";
-import { getViewerAccessContextFromCookie } from "@/core/server/accessCookie";
+// app/display/[id]/page.tsx
 
-type DisplayPageProps = {
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { findContentById } from "@/core/domain/repository";
+import CREATORS from "@/features/meet/creators";
+
+type PageProps = {
   params: { id: string };
 };
 
-export const dynamic = "force-dynamic";
+export default function DisplayPage({ params }: PageProps) {
+  const item = findContentById(params.id);
 
-export default async function DisplayPage({ params }: DisplayPageProps) {
-  const rawId = params.id;
+  if (!item) {
+    return notFound();
+  }
 
-  // On supporte à la fois des IDs "6" ou "lena-balayage"
-  const numericId = Number(rawId);
-  const lookupKey = Number.isNaN(numericId) ? rawId : numericId;
-
-  // 1) On essaie de retrouver le contenu dans notre "fake DB"
-  const found = findContentById(lookupKey);
-
-  // 2) Fallback : si rien trouvé, on crée un contenu FREE de démo
-  const content =
-    found ??
-    ({
-      id: lookupKey,
-      user: "demo",
-      access: "FREE",
-      likes: 0,
-      views: 0,
-      tags: ["demo"],
-    } as any);
-
-  // 3) Contexte d'accès (cookie + règles FREE / ABO / PPV)
-  const viewer = await getViewerAccessContextFromCookie();
-  const decision = canViewContent(content, viewer);
-  const canSee = decision === "ALLOWED";
-
-  // 🔧 Correction : on calcule proprement le label après "#"
-  const displayIdLabel =
-    rawId && rawId !== "undefined" && rawId !== "null"
-      ? rawId
-      : (content as any)?.id != null
-      ? String((content as any).id)
-      : "";
+  const creator = CREATORS.find((c) => c.handle === item.user);
 
   return (
-    <div className="container py-8 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold">
-          Magic Display — contenu
-          {displayIdLabel ? ` #${displayIdLabel}` : ""}
-        </h1>
-        <p className="text-sm text-slate-600">
-          Vue de démonstration du Magic Display pour ce Magic Clock.
-        </p>
-      </header>
+    <main className="mx-auto max-w-3xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      <Link
+        href="/"
+        className="text-sm text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
+      >
+        ← Retour au flux Amazing
+      </Link>
 
-      {/* Résumé accès */}
-      <div className="rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700">
-        <p className="font-medium">
-          Créateur :{" "}
-          <span className="font-semibold">@{(content as any).user}</span>
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Statut d&apos;accès :{" "}
-          {decision === "ALLOWED" ? "Débloqué" : "Verrouillé"}
-        </p>
-        <p className="text-xs text-slate-500">
-          {explainAccessDecision(decision)}
-        </p>
-      </div>
+      <article className="mt-4 overflow-hidden rounded-[32px] bg-white shadow-xl border border-slate-200">
+        {/* Image avant/après en grand */}
+        <div className="relative w-full aspect-[3/4] sm:aspect-[16/9] bg-slate-100">
+          <Image
+            src={item.image}
+            alt={item.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 768px"
+          />
 
-      {/* Zone Magic Display */}
-      {canSee ? (
-        <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <p className="mb-2 text-sm text-slate-600">🎛️ Magic Display — MVP</p>
-          <p className="text-sm text-slate-500">
-            Ici s&apos;affichera le cube pédagogique 3D lié à ce contenu :
-            étapes, formules, paramètres techniques, etc.
+          {/* Overlay créateur en bas de l'image */}
+          {creator && (
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-10 w-10 rounded-full overflow-hidden bg-slate-300">
+                    <Image
+                      src={creator.avatar}
+                      alt={creator.name}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {creator.name}
+                    </p>
+                    <p className="text-xs text-slate-200">
+                      {creator.handle} ·{" "}
+                      {item.views.toLocaleString("fr-CH")} vues
+                    </p>
+                  </div>
+                </div>
+
+                <span className="rounded-full border border-white/70 px-3 py-1 text-[11px] font-semibold text-white">
+                  {item.access}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Détails sous l'image */}
+        <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
+          <h1 className="text-lg font-semibold sm:text-xl">{item.title}</h1>
+
+          {creator && (
+            <p className="mt-1 text-sm text-slate-600">
+              Par {creator.name} ({creator.city}) · Langues :{" "}
+              {creator.langs.join(", ")}
+            </p>
+          )}
+
+          <p className="mt-2 text-xs text-slate-500">
+            MVP : cette page affichera plus tard la fiche complète du Magic
+            Display (formules, temps de pose, produits utilisés, étapes, etc.).
           </p>
         </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4 text-sm text-slate-600">
-          Ce Magic Display est verrouillé. Débloque le contenu depuis le flux
-          Amazing ou My Magic Clock (FREE / Abo / PPV).
-        </div>
-      )}
-    </div>
+      </article>
+    </main>
   );
 }
