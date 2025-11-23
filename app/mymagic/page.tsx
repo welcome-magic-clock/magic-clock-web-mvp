@@ -6,7 +6,7 @@ import type { FeedCard } from "@/core/domain/types";
 
 export default function MyMagicClockPage() {
   // On force le type du feed sur FeedCard[] pour être aligné avec MediaCard
-  const all = listFeed() as FeedCard[];
+  const all = listFeed() as unknown as FeedCard[];
   const created = all.slice(0, 4);
   const purchased = all.slice(4, 8);
 
