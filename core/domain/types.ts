@@ -1,4 +1,23 @@
+// core/domain/types.ts
 
-export type Access = "FREE"|"ABO"|"PPV";
-export type Creator = { id:number; handle:string; name:string; city:string; langs:string[]; followers:number; avatar:string; access:Access[] };
-export type FeedCard = { id:number; title:string; user:string; views:number; image:string; access:Access };
+export type AccessKind = "FREE" | "ABO" | "PPV";
+
+export type Creator = {
+  id: number;            // identifiant numérique interne
+  name: string;          // ex. "Aiko Tanaka"
+  handle: string;        // ex. "@aiko_tanaka"
+  city: string;          // ex. "Lausanne (CH)"
+  langs: string[];       // ex. ["FR", "EN", "JP"]
+  followers: number;     // ex. 12400
+  avatar: string;        // chemin de l'image de profil
+  access: AccessKind[];  // ex. ["FREE", "ABO", "PPV"]
+};
+
+export type FeedCard = {
+  id: number;
+  title: string;
+  user: string;       // handle ou identifiant du créateur
+  views: number;
+  image: string;      // chemin de la vignette
+  access: AccessKind;
+};
