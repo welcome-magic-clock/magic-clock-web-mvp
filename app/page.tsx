@@ -3,7 +3,9 @@
 import { FEED } from "@/features/amazing/feed";
 import FeedCard from "@/features/amazing/FeedCard";
 
-export default function HomePage() {
+const REPEAT_COUNT = 10; // on répète 10x pour simuler un scroll infini
+
+export default function AmazingPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       <header className="mb-4 sm:mb-6">
@@ -17,14 +19,19 @@ export default function HomePage() {
         </p>
       </header>
 
-      <section className="flex flex-col gap-6 sm:gap-8">
-        <p className="text-sm text-slate-500">
-          {FEED.length} transformations trouvées.
-        </p>
+      <p className="mb-4 text-sm text-slate-500">
+        {FEED.length} transformations trouvées.
+      </p>
 
-        {FEED.map((item) => (
-          <FeedCard key={item.id} item={item} />
-        ))}
+      <section className="flex flex-col gap-6 sm:gap-8 snap-y snap-mandatory">
+        {Array.from({ length: REPEAT_COUNT }).map((_, idx) =>
+          FEED.map((item) => (
+            <FeedCard
+              key={`${item.id}-repeat-${idx}`}
+              item={item}
+            />
+          ))
+        )}
       </section>
     </main>
   );
