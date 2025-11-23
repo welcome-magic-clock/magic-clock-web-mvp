@@ -12,7 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: NavItem[] = [
   {
     href: "/",
     label: "Amazing",
@@ -24,12 +24,17 @@ const NAV_ITEMS = [
     icon: Users,
   },
   {
-    href: "/create", // 👈 au lieu de "/studio"
+    href: "/mymagic",
+    label: "My Magic Clock",
+    icon: UserCircle2,
+  },
+  {
+    href: "/create",
     label: "Créer",
     icon: Sparkles,
   },
   {
-    href: "/monetisation",
+    href: "/monet",
     label: "Monétisation",
     icon: DollarSign,
   },
@@ -49,7 +54,6 @@ const NAV_ITEMS = [
     icon: ShieldCheck,
   },
 ];
-
 export default function LeftNav() {
   const pathname = usePathname();
 
