@@ -1,8 +1,55 @@
+// features/meet/creators.ts
 
-import type { Creator } from "@/core/domain/types";
+export type Creator = {
+  id: string;
+  name: string;
+  handle: string;
+  city: string;
+  langs: string[];
+  followers: number;
+  access: string[];
+  avatar: string; // chemin vers l’image de profil
+};
+
 export const CREATORS: Creator[] = [
-  { id:1, handle:'aiko', name:'Aiko Tanaka', city:'Lausanne (CH)', langs:['FR','EN','JP'], followers:12400, avatar:'/images/sample1.jpg', access:['FREE','ABO','PPV'] },
-  { id:2, handle:'sofia', name:'Sofia Rivera', city:'Madrid (ES)', langs:['ES','EN','FR'], followers:9800, avatar:'/images/sample2.jpg', access:['FREE','PPV'] },
-  { id:3, handle:'lena', name:'Lena Martin', city:'Lyon (FR)', langs:['FR','EN'], followers:15100, avatar:'/images/sample3.jpg', access:['FREE','ABO'] },
-  { id:4, handle:'maya', name:'Maya Flores', city:'Zurich (CH)', langs:['DE','EN','FR'], followers:20100, avatar:'/images/sample4.jpg', access:['FREE','ABO','PPV'] }
+  {
+    id: "sofia-colorist",
+    name: "Sofia Rivera",
+    handle: "sofia_colorist",
+    city: "Lausanne (CH) · Langues: FR, EN",
+    langs: ["FR", "EN"],
+    followers: 12400,
+    access: ["FREE", "ABO", "PPV"],
+    avatar: "/images/creator1.png",
+  },
+  {
+    id: "aiko-tanaka",
+    name: "Aiko Tanaka",
+    handle: "aiko_tanaka",
+    city: "Tokyo (JP) · Langues: EN, JP",
+    langs: ["EN", "JP"],
+    followers: 9800,
+    access: ["FREE", "PPV"],
+    avatar: "/images/creator2.png",
+  },
+  {
+    id: "lena-muller",
+    name: "Lena Müller",
+    handle: "lena_muller",
+    city: "Zurich (CH) · Langues: DE, EN",
+    langs: ["DE", "EN"],
+    followers: 15300,
+    access: ["ABO", "PPV"],
+    avatar: "/images/creator3.png",
+  },
+  {
+    id: "carlos-fernandez",
+    name: "Carlos Fernandez",
+    handle: "carlos_fernandez",
+    city: "Barcelone (ES) · Langues: ES, EN",
+    langs: ["ES", "EN"],
+    followers: 11200,
+    access: ["FREE", "ABO"],
+    avatar: "/images/creator4.png",
+  },
 ];
