@@ -17,7 +17,7 @@ const items = [
   { href: "/", label: "Amazing", icon: Home },
   { href: "/meet", label: "Meet me", icon: Users },
   { href: "/mymagic", label: "My Magic Clock", icon: UserCircle },
-  { href: "/studio", label: "Créer", icon: Sparkles },
+ { href: "/create", label: "Créer", icon: Sparkles },
   { href: "/monet", label: "Monétisation", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: Mail },
   { href: "/notifications", label: "Notifications", icon: Bell },
