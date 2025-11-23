@@ -2,6 +2,9 @@
 
 export type AccessKind = "FREE" | "ABO" | "PPV";
 
+// Alias pour compatibilité avec le reste du code (access.ts, routes…)
+export type Access = AccessKind;
+
 export type Creator = {
   id: number;            // identifiant numérique interne
   name: string;          // ex. "Aiko Tanaka"
