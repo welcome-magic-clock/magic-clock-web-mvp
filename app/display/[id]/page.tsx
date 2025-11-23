@@ -2,28 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-
-import { findContentById } from "@/core/domain/repository";
-import CREATORS from "@/features/meet/creators";
+import { getDisplayCardById } from "@/core/domain/repository";
 
 type PageProps = {
-  params: {
-    id: string;
-  };
+  params: { id: string };
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
-  const item = findContentById(params.id);
+  const data = getDisplayCardById(params.id);
 
-  if (!item) {
+  if (!data) {
     return (
-      <main className="container max-w-3xl py-8 space-y-4">
-        <p className="text-sm text-slate-600">
+      <main className="mx-auto max-w-3xl px-4 pb-24 pt-8">
+        <p className="mb-4 text-sm text-slate-500">
           Ce Magic Clock n&apos;existe pas ou plus.
         </p>
         <Link
           href="/"
-          className="inline-flex items-center text-sm font-medium text-brand-600 hover:underline"
+          className="text-sm font-medium text-brand-600 hover:underline"
         >
           ← Retour au flux Amazing
         </Link>
@@ -31,84 +27,62 @@ export default function MagicDisplayPage({ params }: PageProps) {
     );
   }
 
-  // ✅ On récupère le bon créateur à partir de item.user
-  const creator = CREATORS.find((c) => c.handle === item.user);
-
-  const creatorName = creator?.name ?? "Créateur inconnu";
-  const creatorHandle = creator?.handle ?? item.user;
-  const creatorCity = creator?.city;
-  const creatorLangs = creator?.langs?.join(", ");
-  const creatorAvatar = creator?.avatar ?? "/images/sample1.jpg";
-
-  const accessLabel =
-    item.access === "FREE"
-      ? "FREE"
-      : item.access === "ABO"
-      ? "Abonnement"
-      : "PPV";
+  const { card, creator } = data;
 
   return (
-    <main className="container max-w-3xl py-6 pb-24 space-y-4">
+    <main className="mx-auto max-w-3xl px-4 pb-24 pt-8">
       <Link
         href="/"
-        className="inline-flex items-center text-sm text-slate-500 hover:text-slate-700"
+        className="text-sm font-medium text-brand-600 hover:underline"
       >
         ← Retour au flux Amazing
       </Link>
 
-      <article className="overflow-hidden rounded-3xl bg-white shadow-sm">
-        {/* Image principale */}
-        <div className="relative aspect-[3/4] w-full bg-slate-100">
+      <section className="mt-4 overflow-hidden rounded-3xl bg-white shadow-sm">
+        {/* Image avant / après */}
+        <div className="relative aspect-[3/4] w-full">
           <Image
-            src={item.image}
-            alt={item.title}
+            src={card.image}
+            alt={card.title}
             fill
             className="object-cover"
+            sizes="(min-width: 768px) 768px, 100vw"
+            priority
           />
         </div>
 
-        <div className="p-5 sm:p-6 space-y-4">
-          {/* Ligne créateur + badge d’accès */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="h-11 w-11 overflow-hidden rounded-full bg-slate-200">
-                <Image
-                  src={creatorAvatar}
-                  alt={creatorName}
-                  width={44}
-                  height={44}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">{creatorName}</div>
-                <div className="text-[11px] text-slate-500">
-                  {creatorHandle}
-                  {creatorCity ? ` · ${creatorCity}` : ""}
-                  {creatorLangs ? ` · Langues : ${creatorLangs}` : ""}
-                </div>
-              </div>
+        {/* Bandeau créateur + badge FREE/PPV/ABO */}
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
+              <Image
+                src={creator.avatar}
+                alt={creator.name}
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+              />
             </div>
-
-            <div className="rounded-full border border-white/40 bg-black/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-              {accessLabel}
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{creator.name}</span>
+              <span className="text-xs text-slate-500">
+                @{creator.handle} ·{" "}
+                {card.views.toLocaleString("fr-FR")} vues
+              </span>
             </div>
+            <span className="ml-auto rounded-full border border-white/80 bg-black/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+              {card.access}
+            </span>
           </div>
 
-          {/* Titre */}
-          <h1 className="text-lg font-semibold sm:text-xl">
-            {item.title}
-          </h1>
-
-          {/* Texte MVP (placeholder) */}
-          <p className="text-sm text-slate-600">
+          {/* Titre + texte MVP */}
+          <h1 className="mt-4 text-lg font-semibold">{card.title}</h1>
+          <p className="mt-2 text-sm text-slate-600">
             MVP : cette page affichera plus tard la fiche complète du Magic
-            Display pour ce Magic Clock (formules, temps de pose, produits,
-            étapes, etc.). Pour l&apos;instant, elle sert de page de détail
-            liée au créateur correct.
+            Display (formules, temps de pose, produits utilisés, étapes, etc.).
           </p>
         </div>
-      </article>
+      </section>
     </main>
   );
 }
