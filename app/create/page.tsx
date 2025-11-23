@@ -1,3 +1,4 @@
+// app/create/page.tsx
 import Link from "next/link";
 
 export default function CreatePage() {
@@ -13,7 +14,9 @@ export default function CreatePage() {
         </p>
       </header>
 
+      {/* Cartes principales : Studio + Display */}
       <section className="grid gap-6 md:grid-cols-2">
+        {/* Carte Magic Studio */}
         <Link
           href="/studio"
           className="rounded-2xl border border-slate-200 bg-white/80 p-5 flex flex-col gap-2 hover:border-brand-500 hover:shadow-sm transition"
@@ -31,7 +34,7 @@ export default function CreatePage() {
           </span>
         </Link>
 
-        {/* 👇 seule vraie modification : le href pointe maintenant vers /create/display */}
+        {/* Carte Magic Display → éditeur (MVP) */}
         <Link
           href="/create/display"
           className="rounded-2xl border border-slate-200 bg-white/80 p-5 flex flex-col gap-2 hover:border-brand-500 hover:shadow-sm transition"
