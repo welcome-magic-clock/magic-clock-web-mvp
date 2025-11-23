@@ -2,23 +2,25 @@
 
 export type AccessKind = "FREE" | "ABO" | "PPV";
 
+// alias pour rester compatible avec le reste du code
+export type Access = AccessKind;
+
 export type Creator = {
-  id: number;            // identifiant numérique interne
-  name: string;          // ex. "Aiko Tanaka"
-  handle: string;        // ex. "@aiko_tanaka"
-  city: string;          // ex. "Lausanne (CH)"
-  langs: string[];       // ex. ["FR", "EN", "JP"]
-  followers: number;     // ex. 12400
-  specialties?: string[]; // ex. ["Balayage", "Blond froid"]
-  avatar: string;        // chemin de l'image de profil
-  access: AccessKind[];  // ex. ["FREE", "ABO", "PPV"]
+  id: number;
+  name: string;
+  handle: string;
+  city: string;
+  langs: string[];
+  followers: number;
+  avatar: string;
+  access: Access[];
 };
 
 export type FeedCard = {
   id: number;
   title: string;
-  user: string;       // handle ou identifiant du créateur
+  user: string;
   views: number;
-  image: string;      // chemin de la vignette
-  access: AccessKind;
+  image: string;
+  access: Access;
 };
