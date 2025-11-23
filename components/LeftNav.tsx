@@ -11,13 +11,14 @@ import {
   Bell,
   ShieldCheck,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react"; // ajoute cette ligne
+import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
 };
+
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/",
@@ -32,7 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     href: "/mymagic",
     label: "My Magic Clock",
-    icon: UserCircle2,
+    icon: Sparkles,
   },
   {
     href: "/create",
@@ -60,6 +61,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: ShieldCheck,
   },
 ];
+
 export default function LeftNav() {
   const pathname = usePathname();
 
