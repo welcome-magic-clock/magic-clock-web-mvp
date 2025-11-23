@@ -1,4 +1,5 @@
 // features/meet/creators.ts
+
 import type { Creator } from "@/core/domain/types";
 
 export const CREATORS: Creator[] = [
@@ -9,17 +10,19 @@ export const CREATORS: Creator[] = [
     city: "Lausanne (CH)",
     langs: ["FR", "EN", "JP"],
     followers: 12400,
-    avatar: "/creators/aiko-tanaka.jpg",
+    specialties: ["Balayage", "Blond froid", "Soin"],
+    avatar: "/creators/aiko-tanaka.jpeg",
     access: ["FREE", "ABO", "PPV"],
   },
   {
     id: 2,
     name: "Sofia Rivera",
-    handle: "@sofia_colorist",
+    handle: "@sofia_rivera",
     city: "Madrid (ES)",
     langs: ["ES", "FR", "EN"],
     followers: 9800,
-    avatar: "/creators/sofia-rivera.jpg",
+    specialties: ["Balayage", "Soin"],
+    avatar: "/creators/sofia-rivera.jpeg",
     access: ["FREE", "PPV"],
   },
   {
@@ -28,8 +31,9 @@ export const CREATORS: Creator[] = [
     handle: "@lena_martin",
     city: "Lyon (FR)",
     langs: ["FR", "EN"],
-    followers: 11800,
-    avatar: "/creators/lena-martin.jpg",
+    followers: 18100,
+    specialties: ["Blond froid", "Coupe"],
+    avatar: "/creators/lena-martin.jpeg",
     access: ["FREE", "ABO"],
   },
   {
@@ -39,7 +43,10 @@ export const CREATORS: Creator[] = [
     city: "Zurich (CH)",
     langs: ["DE", "EN", "FR"],
     followers: 7800,
-    avatar: "/creators/maya-flores.jpg",
+    specialties: ["Coloriste & vidéo"],
+    avatar: "/creators/maya-flores.jpeg",
     access: ["FREE", "PPV"],
   },
 ];
+
+export default CREATORS;
