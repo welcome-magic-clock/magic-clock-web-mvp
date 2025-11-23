@@ -1,43 +1,29 @@
 import { NextResponse } from "next/server";
-import type { Access } from "@/core/domain/types";
-import { canViewContent } from "@/core/domain/access";
-import { addSubscription } from "@/core/server/accessCookie";
 
-type Body = {
-  creatorHandle: string;
-  contentId?: string | number;
-};
-
-/**
- * Endpoint ABONNEMENT (Abo)
- * - Ajoute le créateur à la liste des abonnements dans le cookie.
- */
+// MVP : route simplifiée pour l'accès par abonnement
 export async function POST(req: Request) {
-  const body = (await req.json()) as Body;
+  // On récupère le body en évitant les crash si ce n'est pas du JSON
+  const body = await req.json().catch(() => ({} as any));
+  const contentId = body?.contentId;
 
-  if (!body.creatorHandle) {
+  // Petit garde-fou : si pas de contentId, on renvoie une erreur propre
+  if (!contentId) {
     return NextResponse.json(
-      { ok: false, error: "creatorHandle manquant" },
+      {
+        ok: false,
+        error: "contentId manquant",
+      },
       { status: 400 }
     );
   }
 
-  const viewer = await addSubscription(body.creatorHandle);
-
-  let decision: string | null = null;
-  if (body.contentId != null) {
-    const content = {
-      id: body.contentId,
-      access: "ABO" as Access,
-      user: body.creatorHandle,
-    };
-    decision = canViewContent(content, viewer);
-  }
-
-  return NextResponse.json({
-    ok: true,
-    access: "ABO",
-    decision,
-    context: viewer,
-  });
+  // ✅ MVP : on considère que l’accès par abonnement est toujours autorisé
+  return NextResponse.json(
+    {
+      ok: true,
+      access: "SUBSCRIPTION",
+      contentId,
+    },
+    { status: 200 }
+  );
 }
