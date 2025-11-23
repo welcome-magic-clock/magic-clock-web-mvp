@@ -1,12 +1,9 @@
 // core/domain/repository.ts
 // Repository "en mémoire" pour le MVP (sans Prisma / base de données)
 
-import type { Creator } from "@/core/domain/types";
+import type { Creator, FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 import { FEED } from "@/features/amazing/feed";
-
-// On déduit le type réel des items du feed à partir de FEED
-type FeedItem = (typeof FEED)[number];
 
 /**
  * Retourne tous les créateurs (utilisé par Meet me, etc.)
@@ -25,14 +22,14 @@ export function findCreatorByHandle(handle: string): Creator | undefined {
 /**
  * Retourne tout le feed global (Amazing).
  */
-export function listFeed(): FeedItem[] {
+export function listFeed(): FeedCard[] {
   return FEED;
 }
 
 /**
  * Retourne les contenus d’un créateur donné.
  */
-export function listFeedByCreator(handle: string): FeedItem[] {
+export function listFeedByCreator(handle: string): FeedCard[] {
   return FEED.filter((item) => item.user === handle);
 }
 
@@ -41,7 +38,7 @@ export function listFeedByCreator(handle: string): FeedItem[] {
  * Pour l’instant, on dit simplement :
  * - les contenus où item.user === handle sont ses créations.
  */
-export function listCreatedByCreator(handle: string): FeedItem[] {
+export function listCreatedByCreator(handle: string): FeedCard[] {
   return FEED.filter((item) => item.user === handle);
 }
 
@@ -50,7 +47,7 @@ export function listCreatedByCreator(handle: string): FeedItem[] {
  * Pour l’instant, on renvoie un sous-ensemble fixe du feed.
  * Plus tard : branché sur Prisma + paiements.
  */
-export function listLibraryForViewer(viewerHandle: string): FeedItem[] {
+export function listLibraryForViewer(viewerHandle: string): FeedCard[] {
   // En attendant : on simule une petite librairie
   return FEED.slice(0, 4);
 }
@@ -58,7 +55,7 @@ export function listLibraryForViewer(viewerHandle: string): FeedItem[] {
 /**
  * Recherche d'un contenu par son id (pour Magic Display, détails, etc.)
  */
-export function findContentById(id: number | string): FeedItem | undefined {
+export function findContentById(id: number | string): FeedCard | undefined {
   const numericId = Number(id);
   if (!Number.isNaN(numericId)) {
     const direct = FEED.find((item) => item.id === numericId);
