@@ -28,9 +28,7 @@ export default function MagicStudioPage() {
     if (!file) return;
 
     const url = URL.createObjectURL(file);
-    const kind: MediaKind = file.type.startsWith("video")
-      ? "video"
-      : "image";
+    const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
     const state: MediaState = { kind, url };
 
@@ -62,8 +60,8 @@ export default function MagicStudioPage() {
               className="relative aspect-[3/4] w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={() => beforeInputRef.current?.click()}
             >
-              <span className="absolute left-3 top-3 z-10 rounded-full bg-black/70 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                Avant
+              <span className="absolute left-3 top-3 z-10 rounded-full bg-black/70 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                AVANT
               </span>
               {before.url ? (
                 before.kind === "video" ? (
@@ -103,8 +101,8 @@ export default function MagicStudioPage() {
               className="relative aspect-[3/4] w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={() => afterInputRef.current?.click()}
             >
-              <span className="absolute left-3 top-3 z-10 rounded-full bg-black/70 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                Après
+              <span className="absolute right-3 top-3 z-10 rounded-full bg-black/70 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                APRÈS
               </span>
               {after.url ? (
                 after.kind === "video" ? (
@@ -177,8 +175,9 @@ export default function MagicStudioPage() {
 
       <section className="space-y-1">
         <p className="text-[11px] text-slate-500">
-          MVP : le bouton de publication (FREE / Abonnement / PPV) sera ajouté ici
-          pour envoyer ce Magic Studio dans Amazing et le lier à un Magic Display.
+          MVP : le bouton de publication (FREE / Abonnement / PPV) sera ajouté
+          ici pour envoyer ce Magic Studio dans Amazing et le lier à un Magic
+          Display.
         </p>
       </section>
     </main>
