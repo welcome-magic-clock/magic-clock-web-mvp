@@ -144,26 +144,25 @@ export default function MediaCard({ item }: Props) {
           </div>
         </Link>
 
-        {/* Flèche + menu FREE / Abo / PPV (ultra épuré) */}
-        <div className="absolute right-3 top-3 z-10">
+                {/* Flèche + menu FREE / Abo / PPV */}
+        <div className="absolute right-2 top-2 text-right text-[11px] text-white">
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center text-white drop-shadow-md"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow"
             onClick={(e) => {
               e.stopPropagation();
               setMenuOpen((v) => !v);
             }}
-            aria-label="Options d’accès"
           >
-            <ArrowUpRight className="h-5 w-5" />
+            <ArrowUpRight className="h-4 w-4 text-slate-700" />
           </button>
 
           {menuOpen && (
-            <div className="mt-2 w-48 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 text-xs shadow-lg">
+            <div className="mt-2 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
               {/* Meet me */}
               <button
                 type="button"
-                className="block w-full px-3 py-2 text-left hover:bg-slate-50"
+                className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
                 onClick={() => {
                   setMenuOpen(false);
                   window.location.href = "/meet";
@@ -176,20 +175,42 @@ export default function MediaCard({ item }: Props) {
               {item.access === "FREE" && (
                 <button
                   type="button"
-                  className="block w-full px-3 py-2 text-left hover:bg-slate-50"
+                  className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
                   onClick={() => handleAccess("FREE")}
                   disabled={isLoading === "FREE"}
                 >
-                  {isLoading === "FREE" ? (
-                    <span className="flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span>Vérification FREE…</span>
-                    </span>
-                  ) : (
-                    "Débloquer (FREE)"
-                  )}
+                  {isLoading === "FREE"
+                    ? "Vérification FREE…"
+                    : "Débloquer (FREE)"}
                 </button>
               )}
+
+              {/* Abo */}
+              <button
+                type="button"
+                className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
+                onClick={() => handleAccess("ABO")}
+                disabled={isLoading === "ABO"}
+              >
+                {isLoading === "ABO"
+                  ? "Activation Abo…"
+                  : "Activer l’abonnement créateur"}
+              </button>
+
+              {/* PPV */}
+              <button
+                type="button"
+                className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
+                onClick={() => handleAccess("PPV")}
+                disabled={isLoading === "PPV"}
+              >
+                {isLoading === "PPV"
+                  ? "Déblocage PPV…"
+                  : "Débloquer ce contenu en PPV"}
+              </button>
+            </div>
+          )}
+        </div>
 
               {/* Abo */}
               <button
