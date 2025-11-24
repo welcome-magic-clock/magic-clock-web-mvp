@@ -7,8 +7,12 @@ export const FEED: FeedCard[] = [
     title: "Balayage caramel lumineux",
     user: "@sofia_rivera",
     views: 12400,
-    image: "/mp-1.png", // 👈 sans /pictures
+    image: "/mp-1.png",
     access: "FREE",
+    // Pour l’instant on pointe sur la même image.
+    // Plus tard : tu mettras ici tes vrais fichiers AVANT / APRÈS.
+    beforeUrl: "/mp-1.png",
+    afterUrl: "/mp-1.png",
   },
   {
     id: 2,
@@ -17,6 +21,8 @@ export const FEED: FeedCard[] = [
     views: 18100,
     image: "/mp-2.png",
     access: "ABO",
+    beforeUrl: "/mp-2.png",
+    afterUrl: "/mp-2.png",
   },
   {
     id: 3,
@@ -25,6 +31,8 @@ export const FEED: FeedCard[] = [
     views: 9800,
     image: "/mp-3.png",
     access: "PPV",
+    beforeUrl: "/mp-3.png",
+    afterUrl: "/mp-3.png",
   },
   {
     id: 4,
@@ -33,6 +41,8 @@ export const FEED: FeedCard[] = [
     views: 7800,
     image: "/mp-4.png",
     access: "FREE",
+    beforeUrl: "/mp-4.png",
+    afterUrl: "/mp-4.png",
   },
 ];
 
