@@ -3,6 +3,7 @@
 
 import { useState, useRef } from "react";
 import { Upload, Hash, ArrowUpRight } from "lucide-react";
+import { listCreators } from "@/core/domain/repository";
 
 type MediaKind = "image" | "video";
 
@@ -11,18 +12,26 @@ type MediaState = {
   url: string | null;
 };
 
-type PublishMode = "FREE" | "SUB" | "PPV";
+const PUBLISH_MODES = ["FREE", "Abonnement", "PPV"] as const;
+type PublishMode = (typeof PUBLISH_MODES)[number];
 
 export default function MagicStudioPage() {
   const [before, setBefore] = useState<MediaState>({ kind: null, url: null });
   const [after, setAfter] = useState<MediaState>({ kind: null, url: null });
   const [title, setTitle] = useState("");
   const [hashtags, setHashtags] = useState("");
-  const [mode, setMode] = useState<PublishMode>("FREE");
-  const [ppvPrice, setPpvPrice] = useState<number>(9.99);
+  const [publishModeIndex, setPublishModeIndex] = useState<number>(1); // 0=FREE, 1=Abonnement, 2=PPV
 
   const beforeInputRef = useRef<HTMLInputElement | null>(null);
   const afterInputRef = useRef<HTMLInputElement | null>(null);
+
+  // On réutilise Aiko Tanaka comme créatrice actuelle (avatar au centre du canevas)
+  const creators = listCreators();
+  const currentCreator =
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+  const avatar = currentCreator?.avatar ?? "/images/sample1.jpg";
+
+  const currentMode: PublishMode = PUBLISH_MODES[publishModeIndex];
 
   function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -43,16 +52,9 @@ export default function MagicStudioPage() {
     }
   }
 
-  function cycleMode() {
-    setMode((prev) => {
-      if (prev === "FREE") return "SUB";
-      if (prev === "SUB") return "PPV";
-      return "FREE";
-    });
+  function cyclePublishMode() {
+    setPublishModeIndex((prev) => (prev + 1) % PUBLISH_MODES.length);
   }
-
-  const modeLabel =
-    mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "PPV";
 
   return (
     <main className="container max-w-4xl py-8 space-y-6">
@@ -68,23 +70,23 @@ export default function MagicStudioPage() {
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
         {/* CANEVAS AVANT / APRÈS */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          {/* Bouton flèche (mode de publication) */}
+          {/* Bouton mode de publication (flèche simple) */}
           <button
             type="button"
-            onClick={cycleMode}
-            className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-            aria-label="Changer le mode de publication (FREE / Abonnement / PPV)"
+            onClick={cyclePublishMode}
+            className="absolute right-4 top-4 z-20 p-1 text-white shadow-[0_0_8px_rgba(0,0,0,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            aria-label="Changer le mode de publication"
           >
             <ArrowUpRight className="h-4 w-4" />
           </button>
 
-          {/* Avatar au centre de la ligne de séparation */}
-          <div className="pointer-events-none absolute inset-y-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-md">
+          {/* Avatar au centre de la ligne verticale (fait partie du canevas) */}
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="h-16 w-16 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-lg">
               <img
-                src="/images/aiko_tanaka.jpg"
-                alt="Aiko Tanaka"
-                className="h-14 w-14 rounded-full object-cover"
+                src={avatar}
+                alt={currentCreator.name}
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
@@ -93,7 +95,7 @@ export default function MagicStudioPage() {
             {/* AVANT */}
             <button
               type="button"
-              className="relative aspect-[3/4] w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="relative w-full aspect-[4/5] sm:aspect-[3/4] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={() => beforeInputRef.current?.click()}
             >
               {before.url ? (
@@ -114,8 +116,8 @@ export default function MagicStudioPage() {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                   <Upload className="h-6 w-6" />
                   <span>Importer photo / vidéo</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                    Avant
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wide">
+                    AVANT
                   </span>
                 </div>
               )}
@@ -131,7 +133,7 @@ export default function MagicStudioPage() {
             {/* APRÈS */}
             <button
               type="button"
-              className="relative aspect-[3/4] w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="relative w-full aspect-[4/5] sm:aspect-[3/4] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={() => afterInputRef.current?.click()}
             >
               {after.url ? (
@@ -152,8 +154,8 @@ export default function MagicStudioPage() {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                   <Upload className="h-6 w-6" />
                   <span>Importer photo / vidéo</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                    Après
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wide">
+                    APRÈS
                   </span>
                 </div>
               )}
@@ -169,7 +171,7 @@ export default function MagicStudioPage() {
         </div>
 
         {/* TITRE & HASHTAGS SOUS LE CANEVAS */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700">
               Titre du Magic Clock
@@ -200,54 +202,34 @@ export default function MagicStudioPage() {
               Amazing (MVP).
             </p>
           </div>
+        </div>
 
-          {/* Mode de publication + prix PPV */}
-          <div className="space-y-2 text-[11px] text-slate-600">
-            <p>
-              Mode de publication actuel :{" "}
-              <strong>{modeLabel}</strong> (appuie sur la flèche du canevas
-              pour changer entre FREE / Abonnement / PPV).
-            </p>
-            {mode === "PPV" && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate-600">Prix PPV</span>
-                <input
-                  type="number"
-                  min={0.99}
-                  max={999}
-                  step={0.5}
-                  value={ppvPrice}
-                  onChange={(e) =>
-                    setPpvPrice(
-                      Math.min(
-                        999,
-                        Math.max(0.99, Number(e.target.value) || 0.99)
-                      )
-                    )
-                  }
-                  className="w-28 rounded-full border border-slate-200 px-3 py-1 text-xs shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-                <span className="text-slate-500">CHF / accès</span>
-              </div>
-            )}
-          </div>
+        {/* INFO MODE PUBLICATION */}
+        <div className="space-y-1 pt-1">
+          <p className="text-[11px] text-slate-500">
+            Mode de publication actuel :{" "}
+            <span className="font-semibold">{currentMode}</span> (appuie sur la
+            flèche du canevas pour changer entre FREE / Abonnement / PPV).
+          </p>
         </div>
       </section>
 
-      {/* BOUTON DE PUBLICATION (MVP) */}
-      <section className="space-y-2">
+      <section className="space-y-3">
         <button
           type="button"
-          className="inline-flex w-full items-center justify-center rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="w-full rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           Publier ce Magic Clock (MVP)
         </button>
         <p className="text-[11px] text-slate-500">
           MVP : ce bouton simulera la publication. À terme, ton Magic Studio
-          sera envoyé dans le flux <strong>Amazing</strong> et apparaîtra aussi
-          dans <strong>My Magic Clock → Mes Magic Clock créés</strong>. Le
-          routing et la sauvegarde réelle seront branchés quand le backend sera
-          prêt.
+          sera envoyé dans le flux <span className="font-semibold">Amazing</span>{" "}
+          et apparaîtra aussi dans{" "}
+          <span className="font-semibold">
+            My Magic Clock → Mes Magic Clock créés
+          </span>
+          . Le routing et la sauvegarde réelle seront branchés quand le backend
+          sera prêt.
         </p>
       </section>
     </main>
