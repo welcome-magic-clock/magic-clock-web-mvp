@@ -37,6 +37,7 @@ export default function MagicStudioPage() {
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+  const avatar = currentCreator.avatar;
 
   function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -166,13 +167,12 @@ export default function MagicStudioPage() {
             </div>
 
             {/* Avatar centre */}
-<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-  <img
-    src={avatar}
-    alt={currentCreator.name}
-    className="h-[72px] w-[72px] rounded-full object-cover"
-  />
-</div>
+            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+              <img
+                src={avatar}
+                alt={currentCreator.name}
+                className="h-[72px] w-[72px] rounded-full object-cover"
+              />
             </div>
 
             {/* Flèche pour changer FREE / Abonnement / PPV */}
