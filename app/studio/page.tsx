@@ -11,16 +11,29 @@ type MediaKind = "image" | "video";
 type MediaState = {
   kind: MediaKind | null;
   url: string | null;
+  duration?: number | null;
+  coverTime?: number | null; // temps choisi pour la couverture vidéo (en secondes)
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
+type Side = "before" | "after";
 
 export default function MagicStudioPage() {
   const router = useRouter();
 
   // Import médias
-  const [before, setBefore] = useState<MediaState>({ kind: null, url: null });
-  const [after, setAfter] = useState<MediaState>({ kind: null, url: null });
+  const [before, setBefore] = useState<MediaState>({
+    kind: null,
+    url: null,
+    duration: null,
+    coverTime: null,
+  });
+  const [after, setAfter] = useState<MediaState>({
+    kind: null,
+    url: null,
+    duration: null,
+    coverTime: null,
+  });
 
   // Titre & hashtags
   const [title, setTitle] = useState("");
@@ -30,8 +43,14 @@ export default function MagicStudioPage() {
   const [mode, setMode] = useState<PublishMode>("FREE");
   const [ppvPrice, setPpvPrice] = useState<number>(9); // prix indicatif pour PPV
 
+  // Sélection couverture vidéo
+  const [selectingCoverFor, setSelectingCoverFor] = useState<Side | null>(null);
+
   const beforeInputRef = useRef<HTMLInputElement | null>(null);
   const afterInputRef = useRef<HTMLInputElement | null>(null);
+
+  const beforeVideoRef = useRef<HTMLVideoElement | null>(null);
+  const afterVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Avatar créateur (Aiko)
   const creators = listCreators();
@@ -39,9 +58,17 @@ export default function MagicStudioPage() {
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const avatar = currentCreator.avatar;
 
+  function updateMedia(side: Side, updater: (prev: MediaState) => MediaState) {
+    if (side === "before") {
+      setBefore((prev) => updater(prev));
+    } else {
+      setAfter((prev) => updater(prev));
+    }
+  }
+
   function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
-    side: "before" | "after"
+    side: Side
   ) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -49,13 +76,20 @@ export default function MagicStudioPage() {
     const url = URL.createObjectURL(file);
     const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
-    const state: MediaState = { kind, url };
-
+    const state: MediaState = { kind, url, duration: null, coverTime: null };
     if (side === "before") {
       setBefore(state);
     } else {
       setAfter(state);
     }
+  }
+
+  function handleLoadedMetadata(
+    side: Side,
+    event: React.SyntheticEvent<HTMLVideoElement, Event>
+  ) {
+    const duration = event.currentTarget.duration || 0;
+    updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
   function cycleMode() {
@@ -75,6 +109,50 @@ export default function MagicStudioPage() {
       : mode === "SUB"
       ? "Abonnement"
       : "Pay Per View (PPV)";
+
+  // === Couverture vidéo façon TikTok (MVP) ==========================
+
+  function openCoverSelection(side: Side, event?: React.MouseEvent) {
+    if (event) event.stopPropagation();
+    const media = side === "before" ? before : after;
+    if (media.kind !== "video" || !media.url) return;
+    setSelectingCoverFor(side);
+  }
+
+  function currentMediaForCover(): {
+    media: MediaState | null;
+    videoRef: React.RefObject<HTMLVideoElement>;
+  } {
+    if (selectingCoverFor === "before") {
+      return { media: before, videoRef: beforeVideoRef };
+    }
+    if (selectingCoverFor === "after") {
+      return { media: after, videoRef: afterVideoRef };
+    }
+    return { media: null, videoRef: beforeVideoRef };
+  }
+
+  function handleCoverSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
+    if (!selectingCoverFor) return;
+    const percent = Number(event.target.value); // 0 → 100
+    const { media, videoRef } = currentMediaForCover();
+    if (!media || media.kind !== "video" || !media.duration || !videoRef.current)
+      return;
+
+    const time = (media.duration * percent) / 100;
+    videoRef.current.currentTime = time;
+
+    updateMedia(selectingCoverFor, (prev) => ({ ...prev, coverTime: time }));
+  }
+
+  const coverSliderValue = (() => {
+    if (!selectingCoverFor) return 0;
+    const { media } = currentMediaForCover();
+    if (!media || !media.duration || !media.coverTime) return 0;
+    return (media.coverTime / media.duration) * 100;
+  })();
+
+  // =================================================================
 
   return (
     <main className="container max-w-4xl py-8 space-y-6">
@@ -102,9 +180,13 @@ export default function MagicStudioPage() {
                 {before.url ? (
                   before.kind === "video" ? (
                     <video
+                      ref={beforeVideoRef}
                       src={before.url}
                       className="h-full w-full object-cover"
                       controls
+                      onLoadedMetadata={(e) =>
+                        handleLoadedMetadata("before", e)
+                      }
                     />
                   ) : (
                     <img
@@ -127,6 +209,17 @@ export default function MagicStudioPage() {
                   className="hidden"
                   onChange={(event) => handleFileChange(event, "before")}
                 />
+
+                {/* Bouton choisir couverture pour la vidéo AVANT */}
+                {before.kind === "video" && before.url && (
+                  <button
+                    type="button"
+                    onClick={(e) => openCoverSelection("before", e)}
+                    className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm"
+                  >
+                    Couverture
+                  </button>
+                )}
               </button>
 
               {/* APRÈS */}
@@ -138,9 +231,13 @@ export default function MagicStudioPage() {
                 {after.url ? (
                   after.kind === "video" ? (
                     <video
+                      ref={afterVideoRef}
                       src={after.url}
                       className="h-full w-full object-cover"
                       controls
+                      onLoadedMetadata={(e) =>
+                        handleLoadedMetadata("after", e)
+                      }
                     />
                   ) : (
                     <img
@@ -163,6 +260,17 @@ export default function MagicStudioPage() {
                   className="hidden"
                   onChange={(event) => handleFileChange(event, "after")}
                 />
+
+                {/* Bouton choisir couverture pour la vidéo APRÈS */}
+                {after.kind === "video" && after.url && (
+                  <button
+                    type="button"
+                    onClick={(e) => openCoverSelection("after", e)}
+                    className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm"
+                  >
+                    Couverture
+                  </button>
+                )}
               </button>
             </div>
 
@@ -186,6 +294,40 @@ export default function MagicStudioPage() {
             </button>
           </div>
         </div>
+
+        {/* Panneau choix couverture vidéo (MVP) */}
+        {selectingCoverFor && (
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-600">
+            <p className="font-medium text-slate-700">
+              Choisir la couverture vidéo ({selectingCoverFor === "before"
+                ? "Avant"
+                : "Après"}
+              )
+            </p>
+            <p>
+              Fais glisser le curseur pour choisir l&apos;image qui servira de
+              couverture dans le flux Amazing (MVP).
+            </p>
+            <div className="mt-1 flex items-center gap-3">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={coverSliderValue}
+                onChange={handleCoverSliderChange}
+                className="flex-1 accent-brand-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectingCoverFor(null)}
+              className="mt-2 inline-flex rounded-full bg-slate-800 px-3 py-1 text-[11px] font-semibold text-white"
+            >
+              Terminer le choix de couverture
+            </button>
+          </div>
+        )}
 
         {/* TITRE & HASHTAGS SOUS LE CANEVAS */}
         <div className="space-y-3">
@@ -271,7 +413,9 @@ export default function MagicStudioPage() {
           MVP : ce bouton simule la publication. À terme, ton Magic Studio sera
           envoyé dans le flux <span className="font-semibold">Amazing</span> et
           apparaîtra aussi dans{" "}
-          <span className="font-semibold">My Magic Clock → Mes Magic Clock</span>{" "}
+          <span className="font-semibold">
+            My Magic Clock → Mes Magic Clock
+          </span>{" "}
           créés. Le routing et la sauvegarde réelle seront branchés quand le
           backend sera prêt.
         </p>
