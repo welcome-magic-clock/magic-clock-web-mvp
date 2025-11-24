@@ -129,25 +129,17 @@ export default function MediaCard({ item }: Props) {
           </div>
         )}
 
-        {/* Avatar + handle au centre (clic → Meet me) */}
-        <Link
-          href="/meet"
-          className="absolute inset-0 flex items-center justify-center"
-        >
-          <div className="flex flex-col items-center gap-1 rounded-full bg-white/95 px-4 py-2 shadow">
-            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-slate-200">
-              <Image
-                src={avatar}
-                alt={creator?.name ?? item.user}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <span className="text-xs font-medium text-slate-800">
-              @{item.user}
-            </span>
+        {/* Avatar au centre du canevas (comme dans Magic Studio) */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/95 bg-white/60 shadow-sm backdrop-blur-sm">
+          <div className="relative h-[58px] w-[58px] overflow-hidden rounded-full">
+            <Image
+              src={avatar}
+              alt={creator?.name ?? item.user}
+              fill
+              className="object-cover"
+            />
           </div>
-        </Link>
+        </div>
 
         {/* Flèche + menu FREE / Abo / PPV */}
         <div className="absolute right-2 top-2">
