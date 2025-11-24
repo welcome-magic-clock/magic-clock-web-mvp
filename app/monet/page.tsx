@@ -363,7 +363,7 @@ export default function MonetPage() {
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col justify-between">
             <div className="flex flex-col gap-2 text-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify_between">
                 <div>
                   <p className="text-xs text-slate-500">Revenu brut total</p>
                   <p className="mt-1 text-2xl font-semibold">
@@ -417,8 +417,10 @@ export default function MonetPage() {
                 Paliers de commission Magic Clock
               </p>
               <p className="text-slate-500">
-                Likes ce mois-ci :{" "}
-                <span className="font-semibold">{realLikes}</span>
+                Likes cumulés (toutes tes créations) :{" "}
+                <span className="font-semibold">
+                  {realLikes.toLocaleString("fr-CH")}
+                </span>
               </p>
             </div>
 
@@ -446,11 +448,11 @@ export default function MonetPage() {
                         {tier.label} · {Math.round(tier.rate * 100)}% plateforme
                       </span>
                       <span className="text-[11px] text-slate-500">
-                        {tier.id === "BRONZE" && "0 → 1 000 likes / mois"}
+                        {tier.id === "BRONZE" && "0 → 1 000 likes cumulés"}
                         {tier.id === "SILVER" &&
-                          "1 001 → 10 000 likes / mois (débloqué Argent)"}
+                          "1 001 → 10 000 likes cumulés (débloqué Argent)"}
                         {tier.id === "GOLD" &&
-                          "+ de 10 000 likes / mois (débloqué Or)"}
+                          "+ de 10 000 likes cumulés (débloqué Or)"}
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-500">
@@ -473,7 +475,7 @@ export default function MonetPage() {
               })}
             </div>
 
-            {/* Barre de progression likes */}
+            {/* Barre de progression likes (cumulés) */}
             <div className="mt-1">
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                 <span>0</span>
@@ -488,6 +490,46 @@ export default function MonetPage() {
                   }}
                 />
               </div>
+
+              {(() => {
+                const nextTier =
+                  realTier.id === "BRONZE"
+                    ? TIERS[1]
+                    : realTier.id === "SILVER"
+                    ? TIERS[2]
+                    : null;
+
+                const remainingLikes =
+                  nextTier && nextTier.minLikes > realLikes
+                    ? nextTier.minLikes - realLikes
+                    : 0;
+
+                if (!nextTier) {
+                  return (
+                    <p className="mt-2 text-[11px] text-slate-500">
+                      Tu as atteint le niveau{" "}
+                      <span className="font-semibold">
+                        {realTier.label}
+                      </span>{" "}
+                      (palier maximum) grâce à tes likes cumulés sur toutes tes
+                      créations Magic Clock.
+                    </p>
+                  );
+                }
+
+                return (
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Niveau{" "}
+                    <span className="font-semibold">{realTier.label}</span> ·
+                    basé sur tes likes cumulés sur l&apos;ensemble de tes Magic
+                    Clock. Encore{" "}
+                    <span className="font-semibold">
+                      {remainingLikes.toLocaleString("fr-CH")} likes
+                    </span>{" "}
+                    pour atteindre le niveau {nextTier.label}.
+                  </p>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -564,7 +606,7 @@ export default function MonetPage() {
           {/* Abos */}
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items_center justify-between text-xs">
                 <span className="font-medium text-slate-700">
                   Prix abonnement (Abo)
                 </span>
@@ -667,7 +709,7 @@ export default function MonetPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify_between text-xs">
                 <span className="font-medium text-slate-700">
                   PPV / acheteur / mois
                 </span>
@@ -747,7 +789,7 @@ export default function MonetPage() {
                 {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
               </span>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items_center justify-between">
               <span className="text-slate-500">
                 Revenu brut Abo (TTC, avant TVA)
               </span>
