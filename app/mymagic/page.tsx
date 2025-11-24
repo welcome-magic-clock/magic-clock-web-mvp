@@ -60,15 +60,22 @@ export default function MyMagicClockPage() {
       </header>
 
       {/* PROFIL + COCKPIT RÉSUMÉ */}
-<section className="grid gap-6 lg:grid-cols-3">
-  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2 space-y-2">
-    <h2 className="text-lg font-semibold">Profil</h2>
-    <p className="text-sm text-slate-600">
-      MVP : cette section accueillera tes informations de compte
-      (bio créateur, liens externes, spécialités, certifications,
-      langues, etc.). Pour l&apos;instant, elle illustre simplement
-      l&apos;espace profil associé à ton compte Magic Clock.
-    </p>
+<div className="rounded-2xl border border-slate-200 bg-white/80 p-4 space-y-3">
+  <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
+
+  <Cockpit
+    mode="compact"
+    followers={currentCreator.followers}
+  />
+
+  <a
+    href="/monet"
+    className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
+  >
+    Ouvrir le cockpit complet
+    <span aria-hidden>↗</span>
+  </a>
+
   </div>
   <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 space-y-3">
     <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
