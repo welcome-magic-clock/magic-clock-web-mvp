@@ -37,13 +37,23 @@ function MediaSlot({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function MediaCard({ item }: Props) {
-  // Avatar depuis Meet me
-  const creator = CREATORS.find((c) => c.handle === item.user);
+  // Avatar depuis Meet me (on ignore la présence ou non du @)
+  const cleanUserHandle =
+    item.user.startsWith("@") ? item.user.slice(1) : item.user;
+
+  const creator =
+    CREATORS.find((c) => {
+      const cleanCreatorHandle = c.handle.startsWith("@")
+        ? c.handle.slice(1)
+        : c.handle;
+      return cleanCreatorHandle === cleanUserHandle;
+    }) ?? null;
+
   const avatar = creator?.avatar ?? item.image;
 
-  // Pour plus tard : Magic Studio fournira vraiment beforeUrl / afterUrl
-  const beforeUrl = (item as any).beforeUrl ?? item.image;
-  const afterUrl = (item as any).afterUrl ?? item.image;
+  // Avant / Après réels fournis par le feed (avec fallback)
+  const beforeUrl = item.beforeUrl ?? item.image;
+  const afterUrl = item.afterUrl ?? item.image;
 
   // État d’accès local (simulation UI)
   const [menuOpen, setMenuOpen] = useState(false);
