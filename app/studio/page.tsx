@@ -2,9 +2,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Upload, Hash } from "lucide-react";
-import { listCreators } from "@/core/domain/repository";
+import { Upload, Hash, ArrowUpRight } from "lucide-react";
 
 type MediaKind = "image" | "video";
 
@@ -13,28 +11,18 @@ type MediaState = {
   url: string | null;
 };
 
-type AccessMode = "MEET" | "FREE" | "SUB" | "PPV";
-
-const ABO_PRICE_MVP = 14.9; // 💡 En vrai : viendra du cockpit Monétisation
+type PublishMode = "FREE" | "SUB" | "PPV";
 
 export default function MagicStudioPage() {
-  const router = useRouter();
-
   const [before, setBefore] = useState<MediaState>({ kind: null, url: null });
   const [after, setAfter] = useState<MediaState>({ kind: null, url: null });
   const [title, setTitle] = useState("");
   const [hashtags, setHashtags] = useState("");
-  const [accessMode, setAccessMode] = useState<AccessMode>("FREE");
-  const [ppvPrice, setPpvPrice] = useState<string>("9.99");
+  const [mode, setMode] = useState<PublishMode>("FREE");
+  const [ppvPrice, setPpvPrice] = useState<number>(9.99);
 
   const beforeInputRef = useRef<HTMLInputElement | null>(null);
   const afterInputRef = useRef<HTMLInputElement | null>(null);
-
-  // On réutilise Aiko Tanaka comme créatrice par défaut
-  const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
-  const avatar = currentCreator?.avatar;
 
   function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -55,20 +43,16 @@ export default function MagicStudioPage() {
     }
   }
 
-  function handlePublish() {
-    // 🔮 MVP : pas encore de backend → on simule juste la suite
-    console.log("Publier Magic Clock", {
-      title,
-      hashtags,
-      accessMode,
-      ppvPrice,
-      before,
-      after,
+  function cycleMode() {
+    setMode((prev) => {
+      if (prev === "FREE") return "SUB";
+      if (prev === "SUB") return "PPV";
+      return "FREE";
     });
-
-    // Redirection MVP vers My Magic Clock
-    router.push("/mymagic");
   }
+
+  const modeLabel =
+    mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "PPV";
 
   return (
     <main className="container max-w-4xl py-8 space-y-6">
@@ -84,40 +68,26 @@ export default function MagicStudioPage() {
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
         {/* CANEVAS AVANT / APRÈS */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          {/* Sélecteur d'accès en haut à droite */}
-          <div className="absolute right-3 top-3 z-10">
-            <label htmlFor="accessMode" className="sr-only">
-              Type d&apos;accès
-            </label>
-            <div className="rounded-full bg-black/70 px-2 py-0.5 text-[10px] text-white">
-              <select
-                id="accessMode"
-                value={accessMode}
-                onChange={(e) =>
-                  setAccessMode(e.target.value as AccessMode)
-                }
-                className="bg-transparent text-[10px] font-medium focus:outline-none"
-              >
-                <option value="MEET">Meet me</option>
-                <option value="FREE">FREE</option>
-                <option value="SUB">Abonnement</option>
-                <option value="PPV">Pay Per View</option>
-              </select>
-            </div>
-          </div>
+          {/* Bouton flèche (mode de publication) */}
+          <button
+            type="button"
+            onClick={cycleMode}
+            className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            aria-label="Changer le mode de publication (FREE / Abonnement / PPV)"
+          >
+            <ArrowUpRight className="h-4 w-4" />
+          </button>
 
           {/* Avatar au centre de la ligne de séparation */}
-          {avatar && (
-            <div className="pointer-events-none absolute inset-y-0 left-1/2 flex items-center justify-center">
-              <div className="h-14 w-14 rounded-full bg-white shadow-md flex items-center justify-center">
-                <img
-                  src={avatar}
-                  alt={currentCreator.name}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
-              </div>
+          <div className="pointer-events-none absolute inset-y-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-md">
+              <img
+                src="/images/aiko_tanaka.jpg"
+                alt="Aiko Tanaka"
+                className="h-14 w-14 rounded-full object-cover"
+              />
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-2 divide-x divide-slate-200">
             {/* AVANT */}
@@ -144,8 +114,8 @@ export default function MagicStudioPage() {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                   <Upload className="h-6 w-6" />
                   <span>Importer photo / vidéo</span>
-                  <span className="text-[10px] text-slate-400">
-                    Appuie pour choisir un fichier
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Avant
                   </span>
                 </div>
               )}
@@ -182,8 +152,8 @@ export default function MagicStudioPage() {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                   <Upload className="h-6 w-6" />
                   <span>Importer photo / vidéo</span>
-                  <span className="text-[10px] text-slate-400">
-                    Appuie pour choisir un fichier
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Après
                   </span>
                 </div>
               )}
@@ -198,8 +168,8 @@ export default function MagicStudioPage() {
           </div>
         </div>
 
-        {/* TITRE / HASHTAGS / TARIFICATION */}
-        <div className="space-y-3">
+        {/* TITRE & HASHTAGS SOUS LE CANEVAS */}
+        <div className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700">
               Titre du Magic Clock
@@ -231,46 +201,44 @@ export default function MagicStudioPage() {
             </p>
           </div>
 
-          {/* Tarification selon le mode d'accès */}
-          {accessMode === "PPV" && (
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                Prix du Pay Per View (TTC)
-              </label>
-              <input
-                type="number"
-                min={0.99}
-                max={999}
-                step={0.5}
-                value={ppvPrice}
-                onChange={(e) => setPpvPrice(e.target.value)}
-                className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-              <p className="text-[11px] text-slate-500">
-                Ce prix sera appliqué à ce Magic Clock lorsqu&apos;il sera
-                débloqué en PPV.
-              </p>
-            </div>
-          )}
-
-          {accessMode === "SUB" && (
-            <p className="text-[11px] text-slate-500">
-              Abonnement : prix actuel estimé{" "}
-              <span className="font-semibold">
-                CHF {ABO_PRICE_MVP.toFixed(2)} / mois
-              </span>{" "}
-              (réglé dans ton cockpit Monétisation).
+          {/* Mode de publication + prix PPV */}
+          <div className="space-y-2 text-[11px] text-slate-600">
+            <p>
+              Mode de publication actuel :{" "}
+              <strong>{modeLabel}</strong> (appuie sur la flèche du canevas
+              pour changer entre FREE / Abonnement / PPV).
             </p>
-          )}
+            {mode === "PPV" && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-slate-600">Prix PPV</span>
+                <input
+                  type="number"
+                  min={0.99}
+                  max={999}
+                  step={0.5}
+                  value={ppvPrice}
+                  onChange={(e) =>
+                    setPpvPrice(
+                      Math.min(
+                        999,
+                        Math.max(0.99, Number(e.target.value) || 0.99)
+                      )
+                    )
+                  }
+                  className="w-28 rounded-full border border-slate-200 px-3 py-1 text-xs shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+                <span className="text-slate-500">CHF / accès</span>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* PUBLICATION */}
-      <section className="space-y-3">
+      {/* BOUTON DE PUBLICATION (MVP) */}
+      <section className="space-y-2">
         <button
           type="button"
-          onClick={handlePublish}
-          className="inline-flex items-center justify-center rounded-full bg-brand-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+          className="inline-flex w-full items-center justify-center rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           Publier ce Magic Clock (MVP)
         </button>
