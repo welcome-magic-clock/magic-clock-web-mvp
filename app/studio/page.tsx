@@ -1,8 +1,9 @@
 // app/studio/page.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, type ChangeEvent } from "react";
 import { Upload, Hash, ArrowUpRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { listCreators } from "@/core/domain/repository";
 
 type MediaKind = "image" | "video";
@@ -12,29 +13,29 @@ type MediaState = {
   url: string | null;
 };
 
-const PUBLISH_MODES = ["FREE", "Abonnement", "PPV"] as const;
-type PublishMode = (typeof PUBLISH_MODES)[number];
+type PublishMode = "FREE" | "SUB" | "PPV";
 
 export default function MagicStudioPage() {
-  const [before, setBefore] = useState<MediaState>({ kind: null, url: null });
-  const [after, setAfter] = useState<MediaState>({ kind: null, url: null });
-  const [title, setTitle] = useState("");
-  const [hashtags, setHashtags] = useState("");
-  const [publishModeIndex, setPublishModeIndex] = useState<number>(1); // 0=FREE, 1=Abonnement, 2=PPV
+  const router = useRouter();
 
-  const beforeInputRef = useRef<HTMLInputElement | null>(null);
-  const afterInputRef = useRef<HTMLInputElement | null>(null);
-
-  // On réutilise Aiko Tanaka comme créatrice actuelle (avatar au centre du canevas)
+  // Créateur courant (Aiko Tanaka si dispo)
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const avatar = currentCreator?.avatar ?? "/images/sample1.jpg";
 
-  const currentMode: PublishMode = PUBLISH_MODES[publishModeIndex];
+  const [before, setBefore] = useState<MediaState>({ kind: null, url: null });
+  const [after, setAfter] = useState<MediaState>({ kind: null, url: null });
+  const [title, setTitle] = useState("");
+  const [hashtags, setHashtags] = useState("");
+  const [mode, setMode] = useState<PublishMode>("FREE");
+  const [ppvPrice, setPpvPrice] = useState<number>(9.99);
+
+  const beforeInputRef = useRef<HTMLInputElement | null>(null);
+  const afterInputRef = useRef<HTMLInputElement | null>(null);
 
   function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>,
     side: "before" | "after"
   ) {
     const file = event.target.files?.[0];
@@ -42,7 +43,6 @@ export default function MagicStudioPage() {
 
     const url = URL.createObjectURL(file);
     const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
-
     const state: MediaState = { kind, url };
 
     if (side === "before") {
@@ -52,8 +52,28 @@ export default function MagicStudioPage() {
     }
   }
 
-  function cyclePublishMode() {
-    setPublishModeIndex((prev) => (prev + 1) % PUBLISH_MODES.length);
+  function cycleMode() {
+    setMode((prev) =>
+      prev === "FREE" ? "SUB" : prev === "SUB" ? "PPV" : "FREE"
+    );
+  }
+
+  const modeLabel =
+    mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "PPV";
+
+  function handlePublish() {
+    // MVP : on simule la publication + redirection vers Amazing
+    console.log("Magic Studio publish (MVP)", {
+      before,
+      after,
+      title,
+      hashtags,
+      mode,
+      ppvPrice,
+    });
+
+    // plus tard : enregistrement + ajout dans My Magic Clock (Mes Magic Clock créés)
+    router.push("/");
   }
 
   return (
@@ -70,23 +90,23 @@ export default function MagicStudioPage() {
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
         {/* CANEVAS AVANT / APRÈS */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          {/* Bouton mode de publication (flèche simple) */}
+          {/* Flèche mode publication (FREE / Abonnement / PPV) */}
           <button
             type="button"
-            onClick={cyclePublishMode}
-            className="absolute right-4 top-4 z-20 p-1 text-white shadow-[0_0_8px_rgba(0,0,0,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            onClick={cycleMode}
+            className="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white bg-black/70 text-white shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             aria-label="Changer le mode de publication"
           >
             <ArrowUpRight className="h-4 w-4" />
           </button>
 
-          {/* Avatar au centre de la ligne verticale (fait partie du canevas) */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-            <div className="h-16 w-16 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-lg">
+          {/* Avatar créateur au centre du canevas */}
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-white shadow-lg">
               <img
                 src={avatar}
-                alt={currentCreator.name}
-                className="h-full w-full object-cover"
+                alt={currentCreator?.name ?? "Créateur Magic Clock"}
+                className="h-full w-full rounded-full object-cover"
               />
             </div>
           </div>
@@ -95,7 +115,7 @@ export default function MagicStudioPage() {
             {/* AVANT */}
             <button
               type="button"
-              className="relative w-full aspect-[4/5] sm:aspect-[3/4] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="relative aspect-[4/5] w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={() => beforeInputRef.current?.click()}
             >
               {before.url ? (
@@ -116,8 +136,8 @@ export default function MagicStudioPage() {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                   <Upload className="h-6 w-6" />
                   <span>Importer photo / vidéo</span>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wide">
-                    AVANT
+                  <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Avant
                   </span>
                 </div>
               )}
@@ -133,7 +153,7 @@ export default function MagicStudioPage() {
             {/* APRÈS */}
             <button
               type="button"
-              className="relative w-full aspect-[4/5] sm:aspect-[3/4] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="relative aspect-[4/5] w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={() => afterInputRef.current?.click()}
             >
               {after.url ? (
@@ -154,8 +174,8 @@ export default function MagicStudioPage() {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                   <Upload className="h-6 w-6" />
                   <span>Importer photo / vidéo</span>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wide">
-                    APRÈS
+                  <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Après
                   </span>
                 </div>
               )}
@@ -202,29 +222,56 @@ export default function MagicStudioPage() {
               Amazing (MVP).
             </p>
           </div>
-        </div>
 
-        {/* INFO MODE PUBLICATION */}
-        <div className="space-y-1 pt-1">
-          <p className="text-[11px] text-slate-500">
-            Mode de publication actuel :{" "}
-            <span className="font-semibold">{currentMode}</span> (appuie sur la
-            flèche du canevas pour changer entre FREE / Abonnement / PPV).
-          </p>
+          {/* Sélecteur de prix PPV quand le mode est PPV */}
+          {mode === "PPV" && (
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">
+                Prix PPV (par achat)
+              </label>
+              <input
+                type="range"
+                min={0.99}
+                max={999}
+                step={0.5}
+                value={ppvPrice}
+                onChange={(e) => setPpvPrice(Number(e.target.value))}
+                className="w-full"
+              />
+              <p className="text-[11px] text-slate-500">
+                Prix actuel&nbsp;:{" "}
+                <span className="font-semibold">
+                  {ppvPrice.toFixed(2)} CHF
+                </span>
+                . En production, ce prix sera envoyé au cockpit Monétisation.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
+      {/* Mode de publication courant */}
+      <section className="space-y-1">
+        <p className="text-[11px] text-slate-500">
+          Mode de publication actuel :{" "}
+          <span className="font-semibold">{modeLabel}</span> (appuie sur la
+          flèche du canevas pour changer entre FREE / Abonnement / PPV).
+        </p>
+      </section>
+
+      {/* Bouton Publier */}
       <section className="space-y-3">
         <button
           type="button"
-          className="w-full rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          onClick={handlePublish}
+          className="w-full rounded-full bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           Publier ce Magic Clock (MVP)
         </button>
         <p className="text-[11px] text-slate-500">
-          MVP : ce bouton simulera la publication. À terme, ton Magic Studio
-          sera envoyé dans le flux <span className="font-semibold">Amazing</span>{" "}
-          et apparaîtra aussi dans{" "}
+          MVP : ce bouton simule la publication. À terme, ton Magic Studio sera
+          envoyé dans le flux <span className="font-semibold">Amazing</span> et
+          apparaîtra aussi dans{" "}
           <span className="font-semibold">
             My Magic Clock → Mes Magic Clock créés
           </span>
