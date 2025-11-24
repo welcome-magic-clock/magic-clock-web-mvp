@@ -6,6 +6,7 @@ import {
   listCreators,
   listFeedByCreator,
 } from "@/core/domain/repository";
+import Cockpit from "@/features/monet/Cockpit";
 
 export default function MyMagicClockPage() {
   // On choisit Aiko Tanaka comme créatrice "courante"
@@ -59,25 +60,33 @@ export default function MyMagicClockPage() {
       </header>
 
       {/* PROFIL + COCKPIT RÉSUMÉ */}
-      <section className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2 space-y-2">
-          <h2 className="text-lg font-semibold">Profil</h2>
-          <p className="text-sm text-slate-600">
-            MVP : cette section accueillera tes informations de compte
-            (bio créateur, liens externes, spécialités, certifications,
-            langues, etc.). Pour l&apos;instant, elle illustre simplement
-            l&apos;espace profil associé à ton compte Magic Clock.
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 space-y-2">
-          <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
-          <p className="text-sm text-slate-600">
-            MVP visuel : ici s&apos;afficheront un extrait de tes revenus
-            estimés (Abo + PPV), abonnements actifs et achats PPV, synchronisés
-            avec le module Monétisation.
-          </p>
-        </div>
-      </section>
+<section className="grid gap-6 lg:grid-cols-3">
+  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2 space-y-2">
+    <h2 className="text-lg font-semibold">Profil</h2>
+    <p className="text-sm text-slate-600">
+      MVP : cette section accueillera tes informations de compte
+      (bio créateur, liens externes, spécialités, certifications,
+      langues, etc.). Pour l&apos;instant, elle illustre simplement
+      l&apos;espace profil associé à ton compte Magic Clock.
+    </p>
+  </div>
+  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 space-y-3">
+    <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
+
+    <Cockpit
+      mode="compact"
+      followers={currentCreator.followers}
+    />
+
+    <a
+      href="/monet"
+      className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
+    >
+      Ouvrir le cockpit complet
+      <span aria-hidden>↗</span>
+    </a>
+  </div>
+</section>
 
       {/* MES MAGIC CLOCK CRÉÉS (uniquement ceux d'Aiko) */}
       <section className="space-y-3">
