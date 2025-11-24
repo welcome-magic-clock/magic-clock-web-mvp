@@ -165,15 +165,14 @@ export default function MagicStudioPage() {
               </button>
             </div>
 
-            {/* Avatar au centre du canevas */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-white shadow-lg">
-                <img
-                  src={currentCreator.avatar}
-                  alt={currentCreator.name}
-                  className="h-16 w-16 rounded-full object-cover"
-                />
-              </div>
+            {/* Avatar centre */}
+<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+  <img
+    src={avatar}
+    alt={currentCreator.name}
+    className="h-[72px] w-[72px] rounded-full object-cover"
+  />
+</div>
             </div>
 
             {/* Flèche pour changer FREE / Abonnement / PPV */}
