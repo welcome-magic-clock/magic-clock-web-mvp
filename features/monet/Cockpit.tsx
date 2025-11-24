@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
-import { COMMISSION_RATE } from "@/core/config/constants";
+import React from "react";
+
+// ─────────────────────────────────────────────────────────────
+// Types & helpers
+// ─────────────────────────────────────────────────────────────
 
 export type CockpitMode = "full" | "compact";
 
@@ -9,6 +12,45 @@ type CockpitProps = {
   mode?: CockpitMode;
   followers?: number;
 };
+
+type TierId = "BRONZE" | "SILVER" | "GOLD";
+
+type Tier = {
+  id: TierId;
+  label: string;
+  rate: number; // part plateforme, ex: 0.30 = 30 %
+  minLikes: number;
+  maxLikes?: number;
+};
+
+const TIERS: Tier[] = [
+  {
+    id: "BRONZE",
+    label: "Bronze",
+    rate: 0.3,
+    minLikes: 0,
+    maxLikes: 1000,
+  },
+  {
+    id: "SILVER",
+    label: "Argent",
+    rate: 0.25,
+    minLikes: 1001,
+    maxLikes: 10000,
+  },
+  {
+    id: "GOLD",
+    label: "Or",
+    rate: 0.2,
+    minLikes: 10001,
+  },
+];
+
+function getTierFromLikes(likes: number): Tier {
+  if (likes > 10000) return TIERS[2]; // Or
+  if (likes > 1000) return TIERS[1]; // Argent
+  return TIERS[0]; // Bronze
+}
 
 function formatMoney(amount: number, currency = "CHF") {
   if (!Number.isFinite(amount)) return "-";
@@ -19,301 +61,162 @@ function formatMoney(amount: number, currency = "CHF") {
   }).format(amount);
 }
 
-type TierKey = "bronze" | "silver" | "gold";
-
-type TierInfo = {
-  key: TierKey;
-  label: string;
-  colorClass: string;
-  nextLabel?: string;
-  missingToNext?: number;
-};
-
-function computeTier(creatorShare: number): TierInfo {
-  if (!Number.isFinite(creatorShare) || creatorShare <= 0) {
-    return {
-      key: "bronze",
-      label: "Niveau Bronze (départ)",
-      colorClass:
-        "bg-amber-50 text-amber-700 border border-amber-200",
-      nextLabel: "Argent",
-      missingToNext: 1000,
-    };
-  }
-
-  if (creatorShare < 1000) {
-    return {
-      key: "bronze",
-      label: "Niveau Bronze",
-      colorClass:
-        "bg-amber-50 text-amber-700 border border-amber-200",
-      nextLabel: "Argent",
-      missingToNext: 1000 - creatorShare,
-    };
-  }
-
-  if (creatorShare < 5000) {
-    return {
-      key: "silver",
-      label: "Niveau Argent",
-      colorClass:
-        "bg-slate-50 text-slate-800 border border-slate-200",
-      nextLabel: "Or",
-      missingToNext: 5000 - creatorShare,
-    };
-  }
-
-  return {
-    key: "gold",
-    label: "Niveau Or",
-    colorClass:
-      "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  };
-}
+// ─────────────────────────────────────────────────────────────
+// Cockpit
+// ─────────────────────────────────────────────────────────────
 
 export default function Cockpit({
   mode = "compact",
-  followers = 12400,
+  followers,
 }: CockpitProps) {
-  // Hypothèses standard Magic Clock (MVP)
-  const aboConvPct = 2.5;
-  const ppvConvPct = 4.0;
-  const aboPrice = 6.9; // CHF / mois
-  const ppvPrice = 2.9; // CHF
-  const ppvPerBuyer = 1.2;
-  const vatRate = 0.09; // 9% TVA (exemple)
+  // valeur de secours si la prop n'est pas fournie
+  const effectiveFollowers = followers ?? 12400;
 
-  const {
-    aboSubs,
-    ppvBuyers,
-    mrr,
-    ppv,
-    gross,
-    vatAmount,
-    netBase,
-    platformShare,
-    creatorShare,
-    aboSharePct,
-    ppvSharePct,
-  } = useMemo(() => {
-    const aboSubsCalc = (followers * aboConvPct) / 100;
-    const ppvBuyersCalc = (followers * ppvConvPct) / 100;
+  // Hypothèses MVP (les mêmes que dans le texte du cockpit)
+  const aboConvPct = 2.5; // 2.5 % Abo
+  const ppvConvPct = 4.0; // 4.0 % PPV
 
-    const mrrCalc = aboSubsCalc * aboPrice;
-    const ppvCalc = ppvBuyersCalc * ppvPrice * ppvPerBuyer;
-    const grossCalc = mrrCalc + ppvCalc;
+  const aboPriceTtc = 6.9; // CHF / mois (exemple)
+  const ppvPriceTtc = 7.25; // CHF (exemple)
+  const ppvPerBuyer = 1.0;
 
-    const vatAmountCalc = grossCalc * vatRate;
-    const netBaseCalc = grossCalc - vatAmountCalc;
+  const aboSubs = Math.round((effectiveFollowers * aboConvPct) / 100);
+  const ppvBuyers = Math.round((effectiveFollowers * ppvConvPct) / 100);
 
-    const platformShareCalc = netBaseCalc * COMMISSION_RATE;
-    const creatorShareCalc = netBaseCalc - platformShareCalc;
+  const grossAbos = aboSubs * aboPriceTtc;
+  const grossPpv = ppvBuyers * ppvPriceTtc * ppvPerBuyer;
+  const grossTotal = grossAbos + grossPpv;
 
-    const aboSharePctCalc =
-      grossCalc > 0 ? (mrrCalc / grossCalc) * 100 : 0;
-    const ppvSharePctCalc =
-      grossCalc > 0 ? 100 - aboSharePctCalc : 0;
+  // TVA ~9% (comme sur la carte Monétisation)
+  const vatRate = 0.099;
+  const netBase = grossTotal / (1 + vatRate);
+  const vatAmount = grossTotal - netBase;
 
-    return {
-      aboSubs: aboSubsCalc,
-      ppvBuyers: ppvBuyersCalc,
-      mrr: mrrCalc,
-      ppv: ppvCalc,
-      gross: grossCalc,
-      vatAmount: vatAmountCalc,
-      netBase: netBaseCalc,
-      platformShare: platformShareCalc,
-      creatorShare: creatorShareCalc,
-      aboSharePct: aboSharePctCalc,
-      ppvSharePct: ppvSharePctCalc,
-    };
-  }, [followers]);
+  // Méritocratie : paliers basés sur les likes cumulés
+  const likesCumulés = 3200; // MVP : fake data (plus tard = somme de tous les likes du compte)
+  const tier = getTierFromLikes(likesCumulés);
+  const platformShareNet = netBase * tier.rate;
+  const creatorShareNet = netBase - platformShareNet;
 
-  const tier = computeTier(creatorShare);
+  const aboSharePct =
+    grossTotal > 0 ? Math.round((grossAbos / grossTotal) * 100) : 0;
+  const ppvSharePct = grossTotal > 0 ? 100 - aboSharePct : 0;
 
-  // ─────────────────────────────────────────────────────────────
-  // MODE COMPACT : pour My Magic Clock (résumé + mini-graph + médaille)
-  // ─────────────────────────────────────────────────────────────
-  if (mode === "compact") {
-    return (
-      <div className="space-y-3 text-sm">
-        <p className="text-[11px] text-slate-500">
-          Hypothèses :{" "}
-          {followers.toLocaleString("fr-CH")} followers ·{" "}
-          {aboConvPct.toFixed(1)}% Abo ·{" "}
-          {ppvConvPct.toFixed(1)}% PPV (MVP simulé).
-        </p>
+  // Ligne de méritocratie : likes cumulés → prochain palier
+  const nextTier =
+    tier.id === "BRONZE"
+      ? TIERS[1]
+      : tier.id === "SILVER"
+      ? TIERS[2]
+      : null;
 
-        <div className="grid gap-2">
-          <div className="flex items-baseline justify-between rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-            <span className="text-[11px] text-slate-500">
-              Revenu brut estimé (Abo + PPV)
-            </span>
-            <span className="text-base font-semibold">
-              {formatMoney(gross)}
-            </span>
-          </div>
+  const remainingLikes =
+    nextTier && nextTier.minLikes > likesCumulés
+      ? nextTier.minLikes - likesCumulés
+      : 0;
 
-          <div className="flex items-baseline justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2">
-            <span className="text-[11px] text-slate-500">
-              TVA estimée (~9%)
-            </span>
-            <span className="text-sm">
-              {formatMoney(vatAmount)}
-            </span>
-          </div>
+  const isCompact = mode === "compact";
 
-          <div className="flex items-baseline justify-between rounded-xl border border-slate-200 bg-emerald-50/80 px-3 py-2">
-            <span className="text-[11px] text-slate-600">
-              Part créateur (HT, après commission)
-            </span>
-            <span className="text-base font-semibold text-emerald-600">
-              {formatMoney(creatorShare)}
-            </span>
-          </div>
-        </div>
-
-        {/* Mini-graph Abo / PPV */}
-        <div className="mt-1 rounded-lg border border-slate-100 bg-slate-50/80 p-3 space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-slate-500">
-            <span>Répartition Abo / PPV</span>
-            <span>
-              {aboSharePct.toFixed(0)}% Abo ·{" "}
-              {ppvSharePct.toFixed(0)}% PPV
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white">
-            <div
-              className="h-full bg-slate-900"
-              style={{ width: `${aboSharePct}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Détail textes + pastille Bronze/Argent/Or */}
-        <div className="space-y-2 text-[11px] text-slate-500">
-          <p>
-            Abonnements :{" "}
-            {aboSubs.toLocaleString("fr-CH")} Abo ·{" "}
-            {formatMoney(mrr)}/mois (TTC).
-          </p>
-          <p>
-            PPV :{" "}
-            {ppvBuyers.toLocaleString("fr-CH")} acheteurs/mois ·{" "}
-            {formatMoney(ppv)}/mois (TTC).
-          </p>
-
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tier.colorClass}`}
-              >
-                ● {tier.label}
-              </span>
-              <span>
-                Niveau estimé basé sur ta part créateur (HT).
-              </span>
-            </div>
-            {tier.missingToNext && tier.nextLabel && (
-              <span className="text-right sm:text-left">
-                Encore{" "}
-                <strong>
-                  {formatMoney(tier.missingToNext)}
-                </strong>{" "}
-                pour atteindre le niveau {tier.nextLabel}.
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // MODE FULL : pour la page Monétisation
-  // ─────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-          <p className="text-xs text-slate-500">
-            Revenu brut total (TTC)
-          </p>
-          <p className="mt-1 text-2xl font-semibold">
-            {formatMoney(gross)}
-          </p>
-          <p className="mt-2 text-[11px] text-slate-500">
-            Abo + PPV, montants simulés à partir des followers.
-          </p>
+    <div className="space-y-3">
+      {/* Hypothèses */}
+      <p className="text-[11px] text-slate-500">
+        Hypothèses :{" "}
+        {effectiveFollowers.toLocaleString("fr-CH")} followers ·{" "}
+        {aboConvPct}% Abo · {ppvConvPct}% PPV (MVP simulé).
+      </p>
+
+      {/* 3 lignes principales */}
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+          <span className="text-slate-600">
+            Revenu brut estimé (Abo + PPV)
+          </span>
+          <span className="text-sm font-semibold text-slate-900">
+            {formatMoney(grossTotal)}
+          </span>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
-          <p className="text-xs text-slate-500">
-            TVA estimée & base HT
-          </p>
-          <p className="mt-1 text-sm">
-            TVA :{" "}
-            <strong>{formatMoney(vatAmount)}</strong>
-          </p>
-          <p className="mt-1 text-sm">
-            Base HT :{" "}
-            <strong>{formatMoney(netBase)}</strong>
-          </p>
-          <p className="mt-2 text-[11px] text-slate-500">
-            TVA simulée à {Math.round(vatRate * 1000) / 10}%.
-          </p>
+        <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+          <span className="text-slate-600">TVA estimée (~9%)</span>
+          <span className="text-sm font-semibold text-slate-700">
+            {formatMoney(vatAmount)}
+          </span>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-emerald-50/80 p-4">
-          <p className="text-xs text-slate-600">
-            Part créateur / plateforme (HT)
-          </p>
-          <p className="mt-1 text-sm">
-            Créateur :{" "}
-            <span className="font-semibold text-emerald-700">
-              {formatMoney(creatorShare)}
-            </span>
-          </p>
-          <p className="mt-1 text-sm">
-            Plateforme ({Math.round(COMMISSION_RATE * 100)}%) :{" "}
-            <span className="font-medium text-slate-700">
-              {formatMoney(platformShare)}
-            </span>
-          </p>
-          <p className="mt-2 text-[11px] text-slate-500">
-            Avant charges sociales / impôts côté créateur (MVP).
-          </p>
+        <div className="flex items-center justify-between rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs">
+          <span className="text-slate-700">
+            Part créateur (HT, après commission)
+          </span>
+          <span className="text-sm font-semibold text-emerald-600">
+            {formatMoney(creatorShareNet)}
+          </span>
         </div>
       </div>
 
-      <div className="grid gap-3 text-[11px] text-slate-500 sm:grid-cols-2">
-        <div className="space-y-1">
-          <p>
+      {/* Répartition Abo / PPV */}
+      <div className="space-y-1">
+        <p className="text-[11px] font-medium text-slate-600">
+          Répartition Abo / PPV
+        </p>
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className="h-full bg-slate-900"
+            style={{
+              width: `${Math.min(100, Math.max(0, aboSharePct))}%`,
+            }}
+          />
+        </div>
+        <p className="text-[11px] text-slate-500">
+          {aboSharePct}% Abo · {ppvSharePct}% PPV
+        </p>
+      </div>
+
+      {/* Détail Abo / PPV (mode full seulement) */}
+      {!isCompact && (
+        <>
+          <p className="text-[11px] text-slate-500">
             Abonnements :{" "}
-            {aboSubs.toLocaleString("fr-CH")} Abo ·{" "}
-            {formatMoney(mrr)}/mois (TTC).
+            <span className="font-semibold">
+              {aboSubs.toLocaleString("fr-CH")} Abo
+            </span>{" "}
+            · {formatMoney(grossAbos)} / mois (TTC).
           </p>
-          <p>
+          <p className="text-[11px] text-slate-500">
             PPV :{" "}
-            {ppvBuyers.toLocaleString("fr-CH")} acheteurs/mois ·{" "}
-            {formatMoney(ppv)}/mois (TTC).
+            <span className="font-semibold">
+              {ppvBuyers.toLocaleString("fr-CH")} acheteurs/mois
+            </span>{" "}
+            · {formatMoney(grossPpv)} / mois (TTC).
           </p>
+        </>
+      )}
+
+      {/* Ligne méritocratie basée sur les likes cumulés */}
+      <div className="mt-1 flex flex-col gap-1 text-[11px] text-slate-500">
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span>
+            Niveau{" "}
+            <span className="font-semibold">{tier.label}</span> · basé sur tes
+            likes cumulés sur l&apos;ensemble de tes Magic Clock.
+          </span>
         </div>
-        <div className="space-y-1">
+
+        {nextTier ? (
           <p>
-            Répartition brut :{" "}
-            {aboSharePct.toFixed(0)}% Abo ·{" "}
-            {ppvSharePct.toFixed(0)}% PPV.
+            Encore{" "}
+            <span className="font-semibold">
+              {remainingLikes.toLocaleString("fr-CH")} likes
+            </span>{" "}
+            pour atteindre le niveau {nextTier.label}.
           </p>
+        ) : (
           <p>
-            Niveau :{" "}
-            <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${tier.colorClass}`}
-            >
-              ● {tier.label}
-            </span>
+            Tu as atteint le palier maximum grâce à tes likes cumulés sur toutes
+            tes créations Magic Clock.
           </p>
-        </div>
+        )}
       </div>
     </div>
   );
