@@ -37,21 +37,11 @@ function MediaSlot({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function MediaCard({ item }: Props) {
-  // Avatar depuis Meet me (on ignore la présence ou non du @)
-  const cleanUserHandle =
-    item.user.startsWith("@") ? item.user.slice(1) : item.user;
-
-  const creator =
-    CREATORS.find((c) => {
-      const cleanCreatorHandle = c.handle.startsWith("@")
-        ? c.handle.slice(1)
-        : c.handle;
-      return cleanCreatorHandle === cleanUserHandle;
-    }) ?? null;
-
+  // Avatar depuis Meet me
+  const creator = CREATORS.find((c) => c.handle === item.user);
   const avatar = creator?.avatar ?? item.image;
 
-  // Avant / Après réels fournis par le feed (avec fallback)
+  // Avant / Après (maintenant vraiment branché sur beforeUrl / afterUrl)
   const beforeUrl = item.beforeUrl ?? item.image;
   const afterUrl = item.afterUrl ?? item.image;
 
@@ -155,7 +145,7 @@ export default function MediaCard({ item }: Props) {
             </div>
           </Link>
 
-          {/* Flèche + menu FREE / Abo / PPV (texte overlay) */}
+          {/* Flèche + menu FREE / Abo / PPV (texte overlay ultra épuré) */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
             <button
               type="button"
@@ -170,7 +160,7 @@ export default function MediaCard({ item }: Props) {
             </button>
 
             {menuOpen && (
-              <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+              <div className="mt-1 space-y-0.5 leading-tight [text-shadow:0_0_6px_rgba(0,0,0,0.8)]">
                 {/* Meet me */}
                 <button
                   type="button"
@@ -180,7 +170,7 @@ export default function MediaCard({ item }: Props) {
                     window.location.href = "/meet";
                   }}
                 >
-                  Meet me (profil créateur)
+                  Voir le profil créateur
                 </button>
 
                 {/* FREE */}
@@ -193,7 +183,7 @@ export default function MediaCard({ item }: Props) {
                   >
                     {isLoading === "FREE"
                       ? "Vérification FREE…"
-                      : "Débloquer (FREE)"}
+                      : "Débloquer gratuitement"}
                   </button>
                 )}
 
@@ -205,8 +195,8 @@ export default function MediaCard({ item }: Props) {
                   disabled={isLoading === "ABO"}
                 >
                   {isLoading === "ABO"
-                    ? "Activation Abo…"
-                    : "Activer l’abonnement créateur"}
+                    ? "Activation de l’abonnement…"
+                    : "S’abonner à ce créateur"}
                 </button>
 
                 {/* PPV */}
@@ -218,7 +208,7 @@ export default function MediaCard({ item }: Props) {
                 >
                   {isLoading === "PPV"
                     ? "Déblocage PPV…"
-                    : "Débloquer ce contenu en PPV"}
+                    : "Débloquer en PPV"}
                 </button>
               </div>
             )}
@@ -235,21 +225,25 @@ export default function MediaCard({ item }: Props) {
           </span>
           <span className="text-slate-400">@{item.user}</span>
 
-          <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
+          <span className="text-slate-300">·</span>
 
-          <span>
+          <span className="text-slate-500">
             <span className="font-medium">
               {item.views.toLocaleString()}
             </span>{" "}
             vues
           </span>
 
-          <span className="flex items-center gap-1">
+          <span className="text-slate-300">·</span>
+
+          <span className="flex items-center gap-1 text-slate-500">
             <Heart className="h-3 w-3" />
             <span>60</span>
           </span>
 
-          <span className="flex items-center gap-1">
+          <span className="text-slate-300">·</span>
+
+          <span className="flex items-center gap-1 text-slate-500">
             {isLocked ? (
               <Lock className="h-3 w-3" />
             ) : (
