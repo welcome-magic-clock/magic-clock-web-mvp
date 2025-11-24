@@ -144,25 +144,26 @@ export default function MediaCard({ item }: Props) {
           </div>
         </Link>
 
-                {/* Flèche + menu FREE / Abo / PPV */}
-        <div className="absolute right-2 top-2 text-right text-[11px] text-white">
+        {/* Flèche + menu FREE / Abo / PPV (ultra épuré) */}
+        <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
           <button
             type="button"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow"
+            className="flex h-8 w-8 items-center justify-center drop-shadow-md"
             onClick={(e) => {
               e.stopPropagation();
               setMenuOpen((v) => !v);
             }}
+            aria-label="Options d’accès"
           >
-            <ArrowUpRight className="h-4 w-4 text-slate-700" />
+            <ArrowUpRight className="h-5 w-5" />
           </button>
 
           {menuOpen && (
-            <div className="mt-2 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+            <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
               {/* Meet me */}
               <button
                 type="button"
-                className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
+                className="block w-full bg-transparent px-0 py-0 hover:underline"
                 onClick={() => {
                   setMenuOpen(false);
                   window.location.href = "/meet";
@@ -175,7 +176,7 @@ export default function MediaCard({ item }: Props) {
               {item.access === "FREE" && (
                 <button
                   type="button"
-                  className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
+                  className="block w-full bg-transparent px-0 py-0 hover:underline"
                   onClick={() => handleAccess("FREE")}
                   disabled={isLoading === "FREE"}
                 >
@@ -188,7 +189,7 @@ export default function MediaCard({ item }: Props) {
               {/* Abo */}
               <button
                 type="button"
-                className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
+                className="block w-full bg-transparent px-0 py-0 hover:underline"
                 onClick={() => handleAccess("ABO")}
                 disabled={isLoading === "ABO"}
               >
@@ -200,50 +201,13 @@ export default function MediaCard({ item }: Props) {
               {/* PPV */}
               <button
                 type="button"
-                className="block w-full bg-transparent px-0 py-0 text-right hover:underline"
+                className="block w-full bg-transparent px-0 py-0 hover:underline"
                 onClick={() => handleAccess("PPV")}
                 disabled={isLoading === "PPV"}
               >
                 {isLoading === "PPV"
                   ? "Déblocage PPV…"
                   : "Débloquer ce contenu en PPV"}
-              </button>
-            </div>
-          )}
-        </div>
-
-              {/* Abo */}
-              <button
-                type="button"
-                className="block w-full px-3 py-2 text-left hover:bg-slate-50"
-                onClick={() => handleAccess("ABO")}
-                disabled={isLoading === "ABO"}
-              >
-                {isLoading === "ABO" ? (
-                  <span className="flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Activation Abo…</span>
-                  </span>
-                ) : (
-                  "Activer l’abonnement créateur"
-                )}
-              </button>
-
-              {/* PPV */}
-              <button
-                type="button"
-                className="block w-full px-3 py-2 text-left hover:bg-slate-50"
-                onClick={() => handleAccess("PPV")}
-                disabled={isLoading === "PPV"}
-              >
-                {isLoading === "PPV" ? (
-                  <span className="flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Déblocage PPV…</span>
-                  </span>
-                ) : (
-                  "Débloquer ce contenu en PPV"
-                )}
               </button>
             </div>
           )}
