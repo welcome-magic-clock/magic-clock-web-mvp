@@ -1,5 +1,3 @@
-// core/domain/types.ts
-
 // Types d'accès possibles à un contenu
 export type AccessKind = "FREE" | "ABO" | "PPV";
 
@@ -25,6 +23,10 @@ export type FeedCard = {
   title: string;
   user: string;      // handle du créateur (ex. "@sofia_rivera")
   views: number;
-  image: string;     // chemin image, ex. "/pictures/mp-1.png"
+  image: string;     // image de couverture (souvent l'APRÈS)
   access: Access;    // "FREE" | "ABO" | "PPV"
+
+  // 👇 nouveaux champs optionnels pour vrais AVANT / APRÈS
+  beforeUrl?: string; // chemin image AVANT, ex. "/mp-1-before.png"
+  afterUrl?: string;  // chemin image APRÈS, ex. "/mp-1-after.png"
 };
