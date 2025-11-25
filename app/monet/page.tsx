@@ -1038,6 +1038,7 @@ export default function MonetPage() {
           </div>
         </div>
       </section>
-    </div>
+     </div>
+</main>
   );
 }
