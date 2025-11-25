@@ -285,32 +285,35 @@ export default function MonetPage() {
   // ─────────────────────────────────────────────────────────
 
   return (
-    <div className="container py-8 space-y-8">
-      {/* HEADER AVEC AVATAR CRÉATEUR */}
-      <header className="space-y-4">
-        {/* Ligne avatar + nom + handle */}
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
-            {currentCreator?.avatar && (
-              <img
-                src={currentCreator.avatar}
-                alt={currentCreator.name}
-                className="h-full w-full object-cover"
-              />
-            )}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[11px] text-slate-500">
-              Cockpit monétisation
-            </span>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">
-                {currentCreator?.name ?? "Créateur Magic Clock"}
-              </h1>
-              <span className="text-xs text-slate-500">{displayHandle}</span>
+    <main className="min-h-screen bg-slate-50 pb-24 overflow-x-hidden">
+      <div className="mx-auto flex w-full max-w-5xl flex-col space-y-8 px-4 pt-8">
+        {/* HEADER AVEC AVATAR CRÉATEUR */}
+        <header className="space-y-4">
+          {/* Ligne avatar + nom + handle */}
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
+              {currentCreator?.avatar && (
+                <img
+                  src={currentCreator.avatar}
+                  alt={currentCreator.name}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] text-slate-500">
+                Cockpit monétisation
+              </span>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-semibold">
+                  {currentCreator?.name ?? "Créateur Magic Clock"}
+                </h1>
+                <span className="text-xs text-slate-500">
+                  {displayHandle}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Titre + description + chip pays/TVA */}
         <div className="space-y-2">
