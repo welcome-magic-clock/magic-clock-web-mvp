@@ -15,30 +15,36 @@ const HASHTAG_GROUPS: HashtagGroupDef[] = [
     slug: "magicclockpro",
     hashtag: "#MagicClockPro",
     description: "Créateurs très actifs sur Magic Clock.",
-    // Tout le monde
     filter: () => true,
   },
   {
     slug: "balayagecaramel",
     hashtag: "#BalayageCaramel",
     description: "Balayages, blonds chauds et jeux de lumière.",
-filter: (c) =>
-  (c.specialties?.includes("Balayage") ?? false) ||
-  (c.specialties?.includes("Blond froid") ?? false),
-},
+    filter: (c) =>
+      (c.specialties?.includes("Balayage") ?? false) ||
+      (c.specialties?.includes("Blond froid") ?? false),
+  },
   {
     slug: "curlylovers",
     hashtag: "#CurlyLovers",
     description: "Spécialistes des boucles et textures naturelles.",
-    filter: (c) => c.specialties.some((s) => s.toLowerCase().includes("curly")),
+    filter: (c) =>
+      (c.specialties ?? []).some((s) =>
+        s.toLowerCase().includes("curly")
+      ),
   },
   {
     slug: "videopro",
     hashtag: "#VideoPro",
     description: "Créateurs très à l’aise avec la vidéo et le storytelling.",
-    filter: (c) =>
-      c.specialties.some((s) => s.toLowerCase().includes("vidéo")) ||
-      c.specialties.some((s) => s.toLowerCase().includes("video")),
+    filter: (c) => {
+      const specialties = c.specialties ?? [];
+      return (
+        specialties.some((s) => s.toLowerCase().includes("vidéo")) ||
+        specialties.some((s) => s.toLowerCase().includes("video"))
+      );
+    },
   },
 ];
 
@@ -59,9 +65,7 @@ export default function MeetPage() {
           </p>
         </header>
 
-        {/* Bloc recherche + filtres (statique pour le MVP) */}
         <section className="mt-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-4 sm:p-5">
-          {/* Barre de recherche */}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
             <Search className="h-4 w-4 text-slate-400" />
             <input
@@ -73,7 +77,6 @@ export default function MeetPage() {
           </div>
 
           <div className="mt-3 grid gap-3 text-xs sm:mt-4 sm:text-[13px]">
-            {/* Langues */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex h-7 items-center rounded-full bg-slate-100 px-2.5 text-[11px] text-slate-500">
                 <Globe2 className="mr-1 h-3 w-3" />
@@ -89,7 +92,6 @@ export default function MeetPage() {
               ))}
             </div>
 
-            {/* Followers (placeholder slider) */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <span className="inline-flex items-center gap-1">
@@ -103,7 +105,6 @@ export default function MeetPage() {
               </div>
             </div>
 
-            {/* Spécialités */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex h-7 items-center rounded-full bg-slate-900 px-3 text-[11px] font-medium text-white">
                 <Star className="mr-1 h-3 w-3" />
@@ -129,7 +130,6 @@ export default function MeetPage() {
         </section>
       </div>
 
-      {/* Résultats + lignes de créateurs */}
       <section className="mt-4 space-y-8 sm:mt-6">
         <p className="text-xs text-slate-500">
           {totalCreators} créateurs trouvés.
@@ -148,7 +148,6 @@ export default function MeetPage() {
                 <p className="text-xs text-slate-500">{group.description}</p>
               </div>
 
-              {/* Ligne horizontale scrollable façon TikTok */}
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {creatorsForGroup.map((creator) => (
                   <div
