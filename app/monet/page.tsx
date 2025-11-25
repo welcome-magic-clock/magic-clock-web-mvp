@@ -220,7 +220,7 @@ export default function MonetPage() {
 
   // 🧾 Pays TVA pour le simulateur (CH / FR / DE / ES / IT / EU)
   const [simCountryCode, setSimCountryCode] = useState<string>(
-    CURRENT_COUNTRY.code
+    CURRENT_COUNTRY.code,
   );
   const simCountry =
     COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ??
@@ -250,7 +250,7 @@ export default function MonetPage() {
     () => ({
       backgroundImage: `conic-gradient(rgb(59,130,246) 0 ${simAboSharePct}%, rgb(16,185,129) ${simAboSharePct}% 100%)`,
     }),
-    [simAboSharePct]
+    [simAboSharePct],
   );
 
   // Mini "courbe" d’évolution simulée (7 périodes)
@@ -280,7 +280,11 @@ export default function MonetPage() {
       .join(" ");
   }, [historyPoints]);
 
-      return (
+  // ─────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────
+
+  return (
     <div className="container py-8 space-y-8">
       {/* HEADER AVEC AVATAR CRÉATEUR */}
       <header className="space-y-4">
@@ -335,8 +339,8 @@ export default function MonetPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <span className="inline-flex h-6 items-center whitespace-nowrap rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
-  Réalité · compte Magic Clock
-</span>
+              Réalité · compte Magic Clock
+            </span>
             <span className="flex items-center gap-1 text-xs text-slate-500">
               <Info className="h-3 w-3" />
               Données indicatives pour le MVP (non connectées au backend).
@@ -506,11 +510,8 @@ export default function MonetPage() {
               {TIERS.map((tier) => {
                 const isActive = tier.id === realTier.id;
                 const locked =
-                  tier.id === "SILVER" && realLikes <= 1000
-                    ? true
-                    : tier.id === "GOLD" && realLikes <= 10000
-                    ? true
-                    : false;
+                  (tier.id === "SILVER" && realLikes <= 1000) ||
+                  (tier.id === "GOLD" && realLikes <= 10000);
 
                 return (
                   <div
@@ -677,7 +678,7 @@ export default function MonetPage() {
 
           {/* Followers */}
           <div className="space-y-1">
-            <div className="flex items_center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-700">
                 Followers (tous réseaux)
               </span>
@@ -760,7 +761,7 @@ export default function MonetPage() {
           {/* PPV */}
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1">
-              <div className="flex items-center justify_between text-xs">
+              <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
                   Prix PPV moyen
                 </span>
@@ -785,7 +786,7 @@ export default function MonetPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify_between text-xs">
+              <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
                   Conversion PPV
                 </span>
@@ -810,7 +811,7 @@ export default function MonetPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify_between text-xs">
+              <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
                   PPV / acheteur / mois
                 </span>
@@ -825,7 +826,7 @@ export default function MonetPage() {
                 value={simPpvPerBuyer}
                 onChange={(e) =>
                   setSimPpvPerBuyer(
-                    clamp(Number(e.target.value) || 0, 0, 9999)
+                    clamp(Number(e.target.value) || 0, 0, 9999),
                   )
                 }
                 className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
@@ -839,7 +840,7 @@ export default function MonetPage() {
 
           {/* Likes → palier simulateur */}
           <div className="space-y-1">
-            <div className="flex items-center justify_between text-xs">
+            <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-700">
                 Likes / mois (simulateur)
               </span>
@@ -1031,7 +1032,7 @@ export default function MonetPage() {
                 </p>
               </div>
             </div>
-                    </div>
+          </div>
         </div>
       </section>
     </div>
