@@ -167,11 +167,11 @@ export default function MonetPage() {
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
   const displayHandle =
-    currentCreator && typeof currentCreator.handle === "string"
+    currentCreator && currentCreator.handle
       ? currentCreator.handle.startsWith("@")
         ? currentCreator.handle
         : `@${currentCreator.handle}`
-      : "@magic_clock_creator";
+      : "@magic_clock";
 
   // TVA “réalité” : pays figé (ex: Suisse)
   const vatRateReal = CURRENT_COUNTRY.vatRate;
@@ -180,11 +180,11 @@ export default function MonetPage() {
   const realFollowers = currentCreator?.followers ?? 12450;
   const realFollowersDelta = 12.4;
 
-  const realAboPrice = 14.9; // TTC
+  const [realAboPrice, setRealAboPrice] = useState<number>(15); // TTC
   const realAboSubs = 480;
   const realAboDelta = 8.1;
 
-  const realPpvPrice = 19.9; // TTC
+  const realPpvPrice = 20; // TTC (exemple)
   const realPpvBuyers = 120;
   const realPpvPerBuyer = 1.4;
   const realPpvDelta = 5.2;
@@ -247,7 +247,7 @@ export default function MonetPage() {
     [simAboSharePct]
   );
 
-  // Mini "courbe" d’évolution simulée (7 périodes) basée sur la part créateur NETTE
+  // Mini "courbe" d’évolution simulée (7 périodes)
   const historyPoints = useMemo(() => {
     const base = simCreatorShareNet || 0;
     const factors = [0.55, 0.7, 0.85, 1, 1.08, 1.15, 1.25];
@@ -275,17 +275,19 @@ export default function MonetPage() {
   }, [historyPoints]);
 
   return (
-    <div className="container py-8 space-y-8">
-      {/* HEADER AVEC AVATAR + HANDLE SANS DOUBLE @ */}
+    <div className="container space-y-8 py-8">
+      {/* HEADER AVEC AVATAR CRÉATEUR */}
       <header className="space-y-4">
         {/* Ligne avatar + nom + handle */}
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
-            <img
-              src={currentCreator?.avatar}
-              alt={currentCreator?.name}
-              className="h-full w-full object-cover"
-            />
+            {currentCreator?.avatar && (
+              <img
+                src={currentCreator.avatar}
+                alt={currentCreator.name}
+                className="h-full w-full object-cover"
+              />
+            )}
           </div>
           <div className="flex flex-col">
             <span className="text-[11px] text-slate-500">
@@ -295,9 +297,7 @@ export default function MonetPage() {
               <h1 className="text-lg font-semibold">
                 {currentCreator?.name ?? "Créateur Magic Clock"}
               </h1>
-              <span className="text-xs text-slate-500">
-                {displayHandle}
-              </span>
+              <span className="text-xs text-slate-500">{displayHandle}</span>
             </div>
           </div>
         </div>
@@ -372,11 +372,31 @@ export default function MonetPage() {
               {realAboSubs.toLocaleString("fr-CH")} abonnés
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Prix moyen : {formatMoney(realAboPrice)} / mois (TTC).
+              Prix moyen : {realAboPrice.toFixed(2)} CHF / mois (TTC).
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
               Revenu brut Abo : {formatMoney(realGrossAbos)} / mois (TTC).
             </p>
+
+            {/* Slider de réglage du prix Abo dans le cockpit réel */}
+            <div className="mt-2">
+              <input
+                type="range"
+                min={0.99}
+                max={999}
+                step={0.5}
+                value={realAboPrice}
+                onChange={(e) =>
+                  setRealAboPrice(clamp(Number(e.target.value), 0.99, 999))
+                }
+                className="w-full"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Ajuste le prix de ton abonnement Magic Clock pour voir
+                l&apos;impact sur ton revenu Abo estimé (TTC).
+              </p>
+            </div>
+
             <div className="mt-2">
               <TrendBadge value={realAboDelta} />
             </div>
@@ -517,7 +537,7 @@ export default function MonetPage() {
               })}
             </div>
 
-            {/* Barre de progression likes + méritocratie */}
+            {/* Barre de progression likes + explication méritocratie */}
             <div className="mt-1">
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                 <span>0</span>
@@ -572,6 +592,30 @@ export default function MonetPage() {
               })()}
             </div>
           </div>
+        </div>
+
+        {/* Mini-canevas PPV : aperçu visuel des contenus (RÉALITÉ) */}
+        <div className="mt-4 flex gap-2 overflow-x-auto text-[11px]">
+          {[1, 2, 3].map((idx) => (
+            <div
+              key={idx}
+              className="min-w-[130px] flex-1 rounded-lg border border-slate-200 bg-slate-50/80 p-2"
+            >
+              <p className="truncate font-medium text-slate-700">
+                Magic Clock #{idx}
+              </p>
+              <p className="mt-1 text-slate-500">
+                PPV estimé :{" "}
+                <span className="font-semibold">
+                  {formatMoney(realGrossPpv / 3)}
+                </span>
+              </p>
+              <p className="mt-1 text-[10px] text-slate-400">
+                Exemple visuel : chaque mini-canevas représente environ 1/3 de
+                ton revenu PPV estimé.
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -885,7 +929,7 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Mini-canevas PPV : aperçu visuel des contenus */}
+          {/* Mini-canevas PPV : aperçu visuel des contenus (SIMULATEUR) */}
           <div className="mt-3 flex gap-2 overflow-x-auto text-[11px]">
             {[1, 2, 3].map((idx) => (
               <div
@@ -902,14 +946,14 @@ export default function MonetPage() {
                   </span>
                 </p>
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Exemple visuel : chaque mini-canevas représente environ 1/3
-                  de ton revenu PPV estimé.
+                  Exemple visuel : chaque mini-canevas représente environ 1/3 de
+                  ton revenu PPV estimé.
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Donut + légende + courbe */}
+          {/* Donut + légende */}
           <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="flex flex-col items-center gap-2">
               <div
@@ -937,6 +981,7 @@ export default function MonetPage() {
               </div>
             </div>
 
+            {/* Courbe d'évolution */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (part créateur HT)
