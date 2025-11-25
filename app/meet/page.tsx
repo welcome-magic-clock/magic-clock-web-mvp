@@ -22,10 +22,10 @@ const HASHTAG_GROUPS: HashtagGroupDef[] = [
     slug: "balayagecaramel",
     hashtag: "#BalayageCaramel",
     description: "Balayages, blonds chauds et jeux de lumière.",
-    filter: (c) =>
-      c.specialties.includes("Balayage") ||
-      c.specialties.includes("Blond froid"),
-  },
+filter: (c) =>
+  (c.specialties?.includes("Balayage") ?? false) ||
+  (c.specialties?.includes("Blond froid") ?? false),
+},
   {
     slug: "curlylovers",
     hashtag: "#CurlyLovers",
