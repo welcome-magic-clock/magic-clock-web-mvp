@@ -342,14 +342,6 @@ export default function MonetPage() {
           </p>
         </div>
 
-        {/* ✅ Cockpit réutilisable en mode "full" */}
-        <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">
-            Résumé rapide (cockpit Magic Clock)
-          </h2>
-          <Cockpit mode="full" followers={realFollowers} />
-        </div>
-
         <div className="grid gap-4 md:grid-cols-3">
           {/* Followers */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
