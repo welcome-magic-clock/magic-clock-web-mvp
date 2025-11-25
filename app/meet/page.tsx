@@ -1,9 +1,10 @@
-import { Search, Globe2, Users, Star } from "lucide-react";
+import { Search } from "lucide-react";
 import { CREATORS } from "@/features/meet/creators";
 
 const REPEAT_COUNT = 6; // on répète la liste pour remplir plusieurs lignes
 const CARDS_PER_ROW = 10;
 
+// On ne garde que 2 lignes : MagicClockPro + BalayageCaramel
 const TRENDING_ROWS = [
   {
     id: "magic-pro",
@@ -14,21 +15,6 @@ const TRENDING_ROWS = [
     id: "balayage",
     label: "#BalayageCaramel",
     description: "Balayages, blonds chauds et jeux de lumière.",
-  },
-  {
-    id: "blond-froid",
-    label: "#BlondFroid",
-    description: "Spécialistes du blond froid et polaire.",
-  },
-  {
-    id: "curly-care",
-    label: "#CurlyCare",
-    description: "Boucles, wavy et méthodes curly.",
-  },
-  {
-    id: "advanced",
-    label: "#TechniquesAvancées",
-    description: "Colorimétrie avancée, corrections, transformations.",
   },
 ];
 
@@ -81,9 +67,9 @@ export default function MeetPage() {
   ).flat();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 overflow-x-hidden">
-      {/* HEADER + FILTRES STICKY */}
-      <div className="sticky top-0 z-20 mb-4 border-b border-slate-200/70 bg-slate-50/95 px-4 pb-4 pt-1 backdrop-blur sm:px-6">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      {/* HEADER + BARRE DE RECHERCHE STICKY (sans filtres) */}
+      <div className="sticky top-0 z-20 mb-4 border-b border-slate-200/70 bg-slate-50/95 pb-4 pt-1 backdrop-blur sm:pb-5">
         {/* Header texte */}
         <header className="mb-3 space-y-2 sm:mb-4">
           <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
@@ -94,72 +80,16 @@ export default function MeetPage() {
           </p>
         </header>
 
-        {/* Bloc recherche + filtres (statique pour le MVP) */}
+        {/* Bloc recherche uniquement */}
         <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          {/* Barre de recherche */}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
             <Search className="h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Rechercher un créateur, une ville, une technique..."
+              placeholder="Rechercher un créateur, une ville, une technique, un hashtag ou @creator..."
               className="h-8 w-full bg-transparent text-xs outline-none placeholder:text-slate-400 sm:text-sm"
               disabled
             />
-          </div>
-
-          <div className="mt-3 grid gap-3 text-xs sm:mt-4 sm:text-[13px]">
-            {/* Langues */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex h-7 items-center rounded-full bg-slate-100 px-2.5 text-[11px] text-slate-500">
-                <Globe2 className="mr-1 h-3 w-3" />
-                Toutes les langues
-              </span>
-              {["FR", "EN", "ES", "IT", "DE"].map((code) => (
-                <span
-                  key={code}
-                  className="inline-flex h-7 items-center rounded-full border border-slate-200 px-3"
-                >
-                  {code}
-                </span>
-              ))}
-            </div>
-
-            {/* Followers (placeholder slider) */}
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <span className="inline-flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  Min. followers
-                </span>
-                <span>Aucune limite</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-slate-100">
-                <div className="h-full w-1/3 rounded-full bg-slate-400" />
-              </div>
-            </div>
-
-            {/* Spécialités */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex h-7 items-center rounded-full bg-slate-900 px-3 text-[11px] font-medium text-white">
-                <Star className="mr-1 h-3 w-3" />
-                Toutes les spécialités
-              </span>
-              {[
-                "Balayage",
-                "Blond froid",
-                "Coupe",
-                "Soin",
-                "Curly",
-                "Techniques avancées",
-              ].map((label) => (
-                <span
-                  key={label}
-                  className="inline-flex h-7 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-[11px] text-slate-700"
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
           </div>
         </section>
       </div>
@@ -169,7 +99,7 @@ export default function MeetPage() {
         {baseCreators.length} créateurs trouvés.
       </p>
 
-      {/* LIGNES TYPE TIKTOK DISCOVER */}
+      {/* LIGNES TYPE TIKTOK DISCOVER (seulement 2 groupes) */}
       <section className="space-y-6 sm:space-y-8">
         {TRENDING_ROWS.map((row, rowIndex) => {
           const start = rowIndex * CARDS_PER_ROW;
@@ -197,7 +127,7 @@ export default function MeetPage() {
                 </button>
               </div>
 
-              {/* CONTAINER sans marges négatives */}
+              {/* CONTAINER sans marges négatives, scroll horizontal local */}
               <div className="flex gap-3 overflow-x-auto pb-1 sm:pb-2">
                 {rowCreators.map((creator: any) => (
                   <MiniCreatorCard
