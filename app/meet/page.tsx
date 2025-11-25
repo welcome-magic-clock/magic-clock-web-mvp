@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import { CREATORS } from "@/features/meet/creators";
 
-const REPEAT_COUNT = 4; // on répète la liste pour remplir les lignes
+const REPEAT_COUNT = 6; // on répète la liste pour remplir plusieurs lignes
 const CARDS_PER_ROW = 10;
 
 const TRENDING_ROWS = [
@@ -56,7 +56,9 @@ function MiniCreatorCard({ creator }: { creator: any }) {
 
 export default function MeetPage() {
   const baseCreators = CREATORS;
+  const totalCreators = baseCreators.length;
 
+  // On étend un peu la liste pour remplir plusieurs rangées
   const extendedCreators = Array.from({ length: REPEAT_COUNT }, (_, idx) =>
     baseCreators.map((creator: any) => ({
       ...creator,
@@ -65,31 +67,29 @@ export default function MeetPage() {
   ).flat();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* HEADER + BARRE DE RECHERCHE MINIMALISTE (STICKY) */}
-      <div className="sticky top-0 z-20 -mx-4 mb-4 bg-slate-50/95 px-4 pb-3 pt-2 backdrop-blur sm:-mx-6 sm:px-6">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 overflow-x-hidden">
+      {/* HEADER + BARRE DE RECHERCHE STICKY (sans marges négatives) */}
+      <div className="sticky top-0 z-20 mb-3 border-b border-slate-200/70 bg-slate-50/95 pb-3 pt-2 backdrop-blur sm:mb-4 sm:pb-4">
         <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
 
-        <div className="mt-3">
-          <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-500">
+        {/* Barre de recherche façon Instagram (très minimaliste) */}
+        <section className="mt-3">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 shadow-sm">
             <Search className="h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Rechercher"
-              className="h-8 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+              placeholder=""
+              className="h-7 w-full bg-transparent text-xs outline-none placeholder:text-slate-400 sm:text-sm"
               disabled
             />
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* COMPTEUR */}
-      <p className="mb-3 text-xs text-slate-500">
-        {baseCreators.length} créateurs trouvés.
-      </p>
-
-      {/* LIGNES AVEC HASHTAGS */}
+      {/* Résultats + lignes de créateurs */}
       <section className="space-y-6 sm:space-y-8">
+        <p className="text-xs text-slate-500">{totalCreators} créateurs trouvés.</p>
+
         {TRENDING_ROWS.map((row, rowIndex) => {
           const start = rowIndex * CARDS_PER_ROW;
           const rowCreators = extendedCreators.slice(
@@ -108,12 +108,6 @@ export default function MeetPage() {
                     {row.description}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="text-[11px] font-medium text-brand-600"
-                >
-                  Voir tout
-                </button>
               </div>
 
               {/* Lignes scrollables façon TikTok */}
