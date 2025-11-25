@@ -81,9 +81,9 @@ export default function MeetPage() {
   ).flat();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 overflow-x-hidden">
       {/* HEADER + FILTRES STICKY */}
-      <div className="sticky top-0 z-20 -mx-4 mb-4 border-b border-slate-200/70 bg-slate-50/95 px-4 pb-4 pt-1 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky top-0 z-20 mb-4 border-b border-slate-200/70 bg-slate-50/95 px-4 pb-4 pt-1 backdrop-blur sm:px-6">
         {/* Header texte */}
         <header className="mb-3 space-y-2 sm:mb-4">
           <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
@@ -197,7 +197,8 @@ export default function MeetPage() {
                 </button>
               </div>
 
-              <div className="-mx-4 flex gap-3 overflow-x-auto pb-1 pl-4 pr-4 sm:-mx-6 sm:pl-6 sm:pr-6 sm:pb-2">
+              {/* CONTAINER sans marges négatives */}
+              <div className="flex gap-3 overflow-x-auto pb-1 sm:pb-2">
                 {rowCreators.map((creator: any) => (
                   <MiniCreatorCard
                     key={creator._fakeId ?? creator.id}
