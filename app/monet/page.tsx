@@ -1,8 +1,10 @@
+// app/monet/page.tsx
 "use client";
 
 import { useMemo, useState } from "react";
 import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 import Cockpit from "@/features/monet/Cockpit";
+import { listCreators } from "@/core/domain/repository";
 
 // ─────────────────────────────────────────────────────────────
 // TVA / Pays
@@ -159,11 +161,16 @@ function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
 // ─────────────────────────────────────────────────────────────
 
 export default function MonetPage() {
+  // Créateur courant (même logique que My Magic Clock)
+  const creators = listCreators();
+  const currentCreator =
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+
   // TVA “réalité” : pays figé (ex: Suisse)
   const vatRateReal = CURRENT_COUNTRY.vatRate;
 
   // 🔹 Partie "réalité" (cockpit actuel, en lecture seule / fake data)
-  const realFollowers = 12450;
+  const realFollowers = currentCreator?.followers ?? 12450;
   const realFollowersDelta = 12.4;
 
   const realAboPrice = 14.9; // TTC
@@ -262,13 +269,36 @@ export default function MonetPage() {
 
   return (
     <div className="container py-8 space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-xl font-semibold">Monétisation</h1>
-        <p className="text-sm text-slate-600">
-          Comprends l&apos;impact de ton audience et simule ton potentiel avec
-          Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
-          basse = simulateur.
-        </p>
+      {/* HEADER AVEC AVATAR CRÉATEUR */}
+      <header className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 overflow-hidden rounded-full bg-slate-200">
+            <img
+              src={currentCreator.avatar}
+              alt={currentCreator.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Cockpit monétisation</p>
+            <p className="text-sm font-medium text-slate-800">
+              {currentCreator.name}{" "}
+              <span className="text-xs font-normal text-slate-500">
+                · @{currentCreator.handle}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h1 className="text-xl font-semibold">Monétisation</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Comprends l&apos;impact de ton audience et simule ton potentiel avec
+            Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
+            basse = simulateur.
+          </p>
+        </div>
+
         <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
           <Info className="h-3 w-3" />
           <span>
@@ -361,9 +391,9 @@ export default function MonetPage() {
 
         {/* Résumé revenus + TVA + commission réelle */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col justify-between">
+          <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex flex-col gap-2 text-sm">
-              <div className="flex items-center justify_between">
+              <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-500">Revenu brut total</p>
                   <p className="mt-1 text-2xl font-semibold">
@@ -411,7 +441,7 @@ export default function MonetPage() {
           </div>
 
           {/* Paliers commission (réels, non modifiables) */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center justify-between text-xs">
               <p className="font-medium text-slate-700">
                 Paliers de commission Magic Clock
@@ -475,7 +505,7 @@ export default function MonetPage() {
               })}
             </div>
 
-            {/* Barre de progression likes (cumulés) */}
+            {/* Barre de progression likes + explication méritocratie */}
             <div className="mt-1">
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                 <span>0</span>
@@ -508,9 +538,7 @@ export default function MonetPage() {
                   return (
                     <p className="mt-2 text-[11px] text-slate-500">
                       Tu as atteint le niveau{" "}
-                      <span className="font-semibold">
-                        {realTier.label}
-                      </span>{" "}
+                      <span className="font-semibold">{realTier.label}</span>{" "}
                       (palier maximum) grâce à tes likes cumulés sur toutes tes
                       créations Magic Clock.
                     </p>
@@ -598,17 +626,17 @@ export default function MonetPage() {
             />
             <p className="text-[11px] text-slate-500">
               Glisse pour simuler ton audience. Le curseur va jusqu&apos;à 1
-              million pour rester lisible, mais en réalité il n&apos;y a pas
-              de limite.
+              million pour rester lisible, mais en réalité il n&apos;y a pas de
+              limite.
             </p>
           </div>
 
           {/* Abos */}
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
-              <div className="flex items_center justify-between text-xs">
+              <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
-                  Prix abonnement (Abo)
+                  Prix abonnement (Abo) — réglage
                 </span>
                 <span className="text-slate-500">
                   {simAboPrice.toFixed(2)} CHF / mois
@@ -626,7 +654,8 @@ export default function MonetPage() {
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Tarification Abo Magic Clock (0,99 → 999 CHF / mois, TTC).
+                Réglage du prix d&apos;abonnement Magic Clock (0,99 → 999 CHF /
+                mois, TTC).
               </p>
             </div>
 
@@ -709,7 +738,7 @@ export default function MonetPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify_between text-xs">
+              <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
                   PPV / acheteur / mois
                 </span>
@@ -760,8 +789,8 @@ export default function MonetPage() {
               className="w-full"
             />
             <p className="text-[11px] text-slate-500">
-              Le palier de commission est 100% automatique : plus de likes = plus
-              de part créateur (Or = 20% plateforme, 80% pour toi).
+              Le palier de commission est 100% automatique : plus de likes =
+              plus de part créateur (Or = 20% plateforme, 80% pour toi).
             </p>
           </div>
         </div>
@@ -789,7 +818,7 @@ export default function MonetPage() {
                 {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
               </span>
             </div>
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 Revenu brut Abo (TTC, avant TVA)
               </span>
@@ -844,8 +873,39 @@ export default function MonetPage() {
             </div>
           </div>
 
+          {/* Mini-canevas PPV */}
+          <div className="mt-2 space-y-1">
+            <p className="text-[11px] font-medium text-slate-600">
+              Mini-récap PPV par Magic Clock (exemple)
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {["MC-01", "MC-02", "MC-03"].map((label, idx) => {
+                const share = simGrossPpv / 3 || 0;
+                return (
+                  <div
+                    key={label}
+                    className="min-w-[90px] rounded-lg border border-slate-200 bg-slate-50/80 px-2 py-1.5"
+                  >
+                    <p className="text-[10px] font-semibold text-slate-700">
+                      {label}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-500">PPV</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-slate-900">
+                      {formatMoney(share)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-slate-500">
+              Illustration MVP : chaque mini-canevas représente une création
+              PPV. En production, ces montants seraient calculés pour chacune de
+              tes œuvres Magic Clock.
+            </p>
+          </div>
+
           {/* Donut + légende */}
-          <div className="mt-2 grid gap-4 items-center md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="flex flex-col items-center gap-2">
               <div
                 className="flex h-32 w-32 items-center justify-center rounded-full"
@@ -857,7 +917,8 @@ export default function MonetPage() {
               </div>
               <p className="text-[11px] text-slate-500">
                 Répartition Abo / PPV dans ton revenu brut (TTC). Le montant au
-                centre est ta part créateur estimée (HT) après TVA + commission.
+                centre est ta part créateur estimée (HT) après TVA +
+                commission.
               </p>
               <div className="flex items-center gap-3 text-[11px]">
                 <div className="flex items-center gap-1">
