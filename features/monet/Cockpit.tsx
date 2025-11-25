@@ -1,3 +1,4 @@
+// features/monet/Cockpit.tsx
 "use client";
 
 import React from "react";
@@ -15,15 +16,15 @@ type CockpitProps = {
   followers: number;
 
   // 🔹 Overrides optionnels (réalité Abo/PPV ou autre scénario)
-  aboConvPct?: number;    // % followers → abonnés
-  ppvConvPct?: number;    // % followers → acheteurs PPV
+  aboConvPct?: number; // % followers → abonnés
+  ppvConvPct?: number; // % followers → acheteurs PPV
 
-  aboPriceTtc?: number;   // Prix abo TTC / mois
-  ppvPriceTtc?: number;   // Prix PPV TTC
-  ppvPerBuyer?: number;   // PPV par acheteur / mois
+  aboPriceTtc?: number; // Prix abo TTC / mois
+  ppvPriceTtc?: number; // Prix PPV TTC
+  ppvPerBuyer?: number; // PPV par acheteur / mois
 
-  vatRate?: number;       // Taux de TVA (ex: 0.081)
-  likes?: number;         // Likes cumulés pour le palier Bronze/Argent/Or
+  vatRate?: number; // Taux de TVA (ex: 0.081)
+  likes?: number; // Likes cumulés pour le palier Bronze/Argent/Or
 };
 
 type TierId = "BRONZE" | "SILVER" | "GOLD";
@@ -61,8 +62,8 @@ const TIERS: Tier[] = [
 
 function getTierFromLikes(likes: number): Tier {
   if (likes > 10000) return TIERS[2]; // Or
-  if (likes > 1000) return TIERS[1];  // Argent
-  return TIERS[0];                    // Bronze
+  if (likes > 1000) return TIERS[1]; // Argent
+  return TIERS[0]; // Bronze
 }
 
 function formatMoney(amount: number, currency = "CHF") {
@@ -90,14 +91,14 @@ export default function Cockpit({
   likes: likesOverride,
 }: CockpitProps) {
   // 🔹 Defaults Magic Clock (MVP) quand on n’a pas de données réelles
-  const aboConvPct = aboConvPctOverride ?? 2.5;  // 2.5 % Abo
-  const ppvConvPct = ppvConvPctOverride ?? 4.0;  // 4.0 % PPV
+  const aboConvPct = aboConvPctOverride ?? 2.5; // 2.5 % Abo
+  const ppvConvPct = ppvConvPctOverride ?? 4.0; // 4.0 % PPV
 
-  const aboPriceTtc = aboPriceTtcOverride ?? 6.9;   // CHF / mois
-  const ppvPriceTtc = ppvPriceTtcOverride ?? 7.25;  // CHF
+  const aboPriceTtc = aboPriceTtcOverride ?? 6.9; // CHF / mois
+  const ppvPriceTtc = ppvPriceTtcOverride ?? 7.25; // CHF
   const ppvPerBuyer = ppvPerBuyerOverride ?? 1.0;
 
-  const vatRate = vatRateOverride ?? 0.099;  // ≈ 9 % par défaut (simu)
+  const vatRate = vatRateOverride ?? 0.099; // ≈ 9 % par défaut (simu)
   const likes = likesOverride ?? 3200;
 
   const safeFollowers = Math.max(0, followers);
@@ -128,20 +129,17 @@ export default function Cockpit({
       : null;
 
   const remainingLikes =
-    nextTier && nextTier.minLikes > likes
-      ? nextTier.minLikes - likes
-      : 0;
+    nextTier && nextTier.minLikes > likes ? nextTier.minLikes - likes : 0;
 
   const isCompact = mode === "compact";
 
   return (
-    <div className="space-y-4">
+    // ✅ On verrouille la largeur et l'overflow horizontal du cockpit lui-même
+    <div className="space-y-4 w-full overflow-x-hidden">
       {/* 3 lignes principales */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-          <p className="text-xs text-slate-500">
-            Revenu brut total (TTC)
-          </p>
+          <p className="text-xs text-slate-500">Revenu brut total (TTC)</p>
           <p className="mt-1 text-2xl font-semibold">
             {formatMoney(grossTotal)}
           </p>
@@ -151,16 +149,12 @@ export default function Cockpit({
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
-          <p className="text-xs text-slate-500">
-            TVA estimée &amp; base HT
+          <p className="text-xs text-slate-500">TVA estimée &amp; base HT</p>
+          <p className="mt-1 text-sm">
+            TVA : <strong>{formatMoney(vatAmount)}</strong>
           </p>
           <p className="mt-1 text-sm">
-            TVA :{" "}
-            <strong>{formatMoney(vatAmount)}</strong>
-          </p>
-          <p className="mt-1 text-sm">
-            Base HT :{" "}
-            <strong>{formatMoney(netBase)}</strong>
+            Base HT : <strong>{formatMoney(netBase)}</strong>
           </p>
           <p className="mt-2 text-[11px] text-slate-500">
             TVA simulée à {Math.round(vatRate * 1000) / 10}%.
@@ -168,9 +162,7 @@ export default function Cockpit({
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-emerald-50/80 p-4">
-          <p className="text-xs text-slate-600">
-            Part créateur / plateforme (HT)
-          </p>
+          <p className="text-xs text-slate-600">Part créateur / plateforme (HT)</p>
           <p className="mt-1 text-sm">
             Créateur :{" "}
             <span className="font-semibold text-emerald-700">
@@ -217,10 +209,8 @@ export default function Cockpit({
 
         <div className="space-y-1">
           <p>
-            Niveau{" "}
-            <span className="font-semibold">{tier.label}</span> · basé
-            sur tes likes cumulés sur l&apos;ensemble de tes Magic
-            Clock.
+            Niveau <span className="font-semibold">{tier.label}</span> · basé sur
+            tes likes cumulés sur l&apos;ensemble de tes Magic Clock.
           </p>
           {nextTier ? (
             <p>
@@ -232,8 +222,8 @@ export default function Cockpit({
             </p>
           ) : (
             <p>
-              Tu as atteint le palier maximum grâce à tes likes cumulés
-              sur toutes tes créations Magic Clock.
+              Tu as atteint le palier maximum grâce à tes likes cumulés sur toutes
+              tes créations Magic Clock.
             </p>
           )}
         </div>
