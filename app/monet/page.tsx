@@ -126,10 +126,6 @@ function clamp(value: number, min: number, max: number) {
 /**
  * Interprétation : les prix saisis (Abo / PPV) sont TTC.
  * On retire la TVA pour obtenir la base HT, puis on applique la commission.
- *
- * @param grossTotal Montant TOTAL TTC (ce que payent les clients)
- * @param tier       Palier de commission (Bronze / Argent / Or)
- * @param vatRate    Taux de TVA (ex: 0.081)
  */
 function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
   if (grossTotal <= 0) {
@@ -212,9 +208,9 @@ export default function MonetPage() {
   // 🔸 Partie "SIMULATEUR"
   const [simFollowers, setSimFollowers] = useState<number>(5000);
   const [simAboPrice, setSimAboPrice] = useState<number>(9.99);
-  const [simAboConv, setSimAboConv] = useState<number>(3); // % followers → abo
+  const [simAboConv, setSimAboConv] = useState<number>(3);
   const [simPpvPrice, setSimPpvPrice] = useState<number>(14.99);
-  const [simPpvConv, setSimPpvConv] = useState<number>(1.5); // % followers → acheteurs PPV
+  const [simPpvConv, setSimPpvConv] = useState<number>(1.5);
   const [simPpvPerBuyer, setSimPpvPerBuyer] = useState<number>(1);
   const [simLikes, setSimLikes] = useState<number>(realLikes);
 
@@ -285,8 +281,9 @@ export default function MonetPage() {
   // ─────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-24 overflow-x-hidden">
-      <div className="mx-auto flex w-full max-w-5xl flex-col space-y-8 px-4 pt-8">
+    <main className="min-h-screen bg-slate-50 pb-24">
+      {/* WRAPPER GLOBAL : coupe tout débordement horizontal */}
+      <div className="mx-auto flex w-full max-w-5xl flex-col space-y-8 px-4 pt-8 overflow-x-hidden">
         {/* HEADER AVEC AVATAR CRÉATEUR */}
         <header className="space-y-4">
           {/* Ligne avatar + nom + handle */}
@@ -320,8 +317,8 @@ export default function MonetPage() {
             <h2 className="text-xl font-semibold">Monétisation</h2>
             <p className="text-sm text-slate-600">
               Comprends l&apos;impact de ton audience et simule ton potentiel
-              avec Magic Clock (abonnements + PPV). Partie haute = ton
-              cockpit. Partie basse = simulateur.
+              avec Magic Clock (abonnements + PPV). Partie haute = ton cockpit.
+              Partie basse = simulateur.
             </p>
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
               <Info className="h-3 w-3" />
@@ -338,7 +335,7 @@ export default function MonetPage() {
         </header>
 
         {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+        <section className="w-full space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm overflow-x-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <span className="inline-flex h-6 items-center whitespace-nowrap rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
@@ -355,7 +352,7 @@ export default function MonetPage() {
             </p>
           </div>
 
-          {/* ✅ Cockpit réutilisable en mode "full", nourri par les vraies données */}
+          {/* ✅ Cockpit réutilisable en mode "full" */}
           <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <h2 className="mb-2 text-sm font-semibold text-slate-700">
               Résumé rapide (cockpit Magic Clock)
@@ -373,7 +370,7 @@ export default function MonetPage() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid w-full gap-4 md:grid-cols-3">
             {/* Followers */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
               <p className="text-xs text-slate-500">
@@ -403,7 +400,7 @@ export default function MonetPage() {
                 Revenu brut Abo : {formatMoney(realGrossAbos)} / mois (TTC).
               </p>
 
-              {/* Slider de réglage du prix Abo dans le cockpit réel */}
+              {/* Slider prix Abo */}
               <div className="mt-2">
                 <input
                   type="range"
@@ -447,7 +444,7 @@ export default function MonetPage() {
           </div>
 
           {/* Résumé revenus + TVA + commission réelle */}
-          <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <div className="mt-2 grid w-full gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-4">
               <div className="flex flex-col gap-2 text-sm">
                 <div className="flex items-center justify-between">
@@ -460,7 +457,9 @@ export default function MonetPage() {
                     </p>
                   </div>
                   <div className="text-right text-[11px] text-slate-500">
-                    <p>TVA estimée ({Math.round(vatRateReal * 1000) / 10}%)</p>
+                    <p>
+                      TVA estimée ({Math.round(vatRateReal * 1000) / 10}%)
+                    </p>
                     <p className="mt-1 font-medium">
                       {formatMoney(realVatAmount)}
                     </p>
@@ -499,7 +498,7 @@ export default function MonetPage() {
               </div>
             </div>
 
-            {/* Paliers commission (réels, non modifiables) */}
+            {/* Paliers commission */}
             <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
               <div className="flex items-center justify-between text-xs">
                 <p className="font-medium text-slate-700">
@@ -532,7 +531,7 @@ export default function MonetPage() {
                       <div className="flex flex-col">
                         <span className="font-semibold">
                           {tier.label} · {Math.round(tier.rate * 100)}%
-                          {" "}plateforme
+                          plateforme
                         </span>
                         <span className="text-[11px] text-slate-500">
                           {tier.id === "BRONZE" &&
@@ -563,7 +562,7 @@ export default function MonetPage() {
                 })}
               </div>
 
-              {/* Barre de progression likes + explication méritocratie */}
+              {/* Barre de progression likes */}
               <div className="mt-1">
                 <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                   <span>0</span>
@@ -627,12 +626,12 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Mini-canevas PPV : aperçu visuel des contenus (RÉALITÉ) */}
-          <div className="mt-4 flex w-full gap-2 overflow-x-auto text-[11px]">
+          {/* Mini-canevas PPV (RÉALITÉ) */}
+          <div className="mt-4 flex max-w-full gap-2 overflow-x-auto text-[11px]">
             {[1, 2, 3].map((idx) => (
               <div
                 key={idx}
-                className="w-[160px] flex-shrink-0 rounded-lg border border-slate-200 bg-slate-50/80 p-2"
+                className="min-w-[130px] flex-none rounded-lg border border-slate-200 bg-slate-50/80 p-2"
               >
                 <p className="truncate font-medium text-slate-700">
                   Magic Clock #{idx}
@@ -661,8 +660,8 @@ export default function MonetPage() {
           </span>
         </div>
 
-        {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC → TVA → HT → parts) */}
-        <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        {/* 🔸 2. SIMULATEUR */}
+        <section className="grid w-full gap-6 overflow-x-hidden md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           {/* Contrôles simulateur */}
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
@@ -689,8 +688,7 @@ export default function MonetPage() {
               Les prix saisis sont considérés comme TTC. Magic Clock
               retire automatiquement la TVA du pays sélectionné, puis
               applique la commission Bronze / Argent / Or sur la base
-              HT. En production, le pays serait détecté automatiquement
-              (IP / profil / Stripe Tax).
+              HT.
             </p>
 
             {/* Followers */}
@@ -717,9 +715,8 @@ export default function MonetPage() {
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Glisse pour simuler ton audience. Le curseur va
-                jusqu&apos;à 1 million pour rester lisible, mais en
-                réalité il n&apos;y a pas de limite.
+                Glisse pour simuler ton audience (jusqu&apos;à 1
+                million pour le MVP).
               </p>
             </div>
 
@@ -863,7 +860,6 @@ export default function MonetPage() {
                 />
                 <p className="text-[11px] text-slate-500">
                   Tu peux saisir n&apos;importe quelle valeur (0 → ∞).
-                  Le champ n&apos;est pas limité par un slider.
                 </p>
               </div>
             </div>
@@ -876,7 +872,9 @@ export default function MonetPage() {
                 </span>
                 <span className="text-slate-500">
                   {simLikes.toLocaleString("fr-CH")} · palier{" "}
-                  <span className="font-semibold">{simTier.label}</span>{" "}
+                  <span className="font-semibold">
+                    {simTier.label}
+                  </span>{" "}
                   ({Math.round(simTier.rate * 100)}% plateforme)
                 </span>
               </div>
@@ -892,9 +890,8 @@ export default function MonetPage() {
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Le palier de commission est 100% automatique : plus de
-                likes = plus de part créateur (Or = 20% plateforme, 80%
-                pour toi).
+                Plus de likes = plus de part créateur (Or = 20%
+                plateforme, 80% pour toi).
               </p>
             </div>
           </div>
@@ -979,12 +976,12 @@ export default function MonetPage() {
               </div>
             </div>
 
-            {/* Mini-canevas PPV : aperçu visuel des contenus (SIMULATEUR) */}
-            <div className="mt-3 flex w-full gap-2 overflow-x-auto text-[11px]">
+            {/* Mini-canevas PPV (SIMULATEUR) */}
+            <div className="mt-3 flex max-w-full gap-2 overflow-x-auto text-[11px]">
               {[1, 2, 3].map((idx) => (
                 <div
                   key={idx}
-                  className="w-[160px] flex-shrink-0 rounded-lg border border-slate-200 bg-slate-50/80 p-2"
+                  className="min-w-[130px] flex-none rounded-lg border border-slate-200 bg-slate-50/80 p-2"
                 >
                   <p className="truncate font-medium text-slate-700">
                     Magic Clock #{idx}
@@ -1010,6 +1007,7 @@ export default function MonetPage() {
                   className="flex h-32 w-32 items-center justify-center rounded-full"
                   style={donutStyle}
                 >
+                  {/* 👉 Ce div ne casse pas le layout, il reste petit */}
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
                     <span>{formatMoney(simCreatorShareNet)}</span>
                   </div>
@@ -1060,8 +1058,8 @@ export default function MonetPage() {
                     />
                   </svg>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Exemple de progression sur 7 périodes (par ex. jours
-                    ou semaines) basée sur ta part créateur nette (HT).
+                    Exemple de progression sur 7 périodes basée sur ta
+                    part créateur nette (HT).
                   </p>
                 </div>
               </div>
