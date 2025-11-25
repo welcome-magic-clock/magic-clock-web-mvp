@@ -166,6 +166,13 @@ export default function MonetPage() {
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
+  const displayHandle =
+    currentCreator && typeof currentCreator.handle === "string"
+      ? currentCreator.handle.startsWith("@")
+        ? currentCreator.handle
+        : `@${currentCreator.handle}`
+      : "@magic_clock_creator";
+
   // TVA “réalité” : pays figé (ex: Suisse)
   const vatRateReal = CURRENT_COUNTRY.vatRate;
 
@@ -269,46 +276,51 @@ export default function MonetPage() {
 
   return (
     <div className="container py-8 space-y-8">
-      {/* HEADER AVEC AVATAR CRÉATEUR */}
-      <header className="space-y-3">
+      {/* HEADER AVEC AVATAR + HANDLE SANS DOUBLE @ */}
+      <header className="space-y-4">
+        {/* Ligne avatar + nom + handle */}
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
             <img
-              src={currentCreator.avatar}
-              alt={currentCreator.name}
+              src={currentCreator?.avatar}
+              alt={currentCreator?.name}
               className="h-full w-full object-cover"
             />
           </div>
-          <div>
-            <p className="text-xs text-slate-500">Cockpit monétisation</p>
-            <p className="text-sm font-medium text-slate-800">
-              {currentCreator.name}{" "}
-              <span className="text-xs font-normal text-slate-500">
-                · @{currentCreator.handle}
+          <div className="flex flex-col">
+            <span className="text-[11px] text-slate-500">
+              Cockpit monétisation
+            </span>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">
+                {currentCreator?.name ?? "Créateur Magic Clock"}
+              </h1>
+              <span className="text-xs text-slate-500">
+                {displayHandle}
               </span>
-            </p>
+            </div>
           </div>
         </div>
 
-        <div>
-          <h1 className="text-xl font-semibold">Monétisation</h1>
-          <p className="mt-1 text-sm text-slate-600">
+        {/* Titre + description + chip pays/TVA */}
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Monétisation</h2>
+          <p className="text-sm text-slate-600">
             Comprends l&apos;impact de ton audience et simule ton potentiel avec
             Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
             basse = simulateur.
           </p>
-        </div>
-
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
-          <Info className="h-3 w-3" />
-          <span>
-            Pays détecté (réalité, MVP) :{" "}
-            <strong>
-              {CURRENT_COUNTRY.label} · TVA{" "}
-              {Math.round(vatRateReal * 1000) / 10}%
-            </strong>{" "}
-            — non modifiable par l&apos;utilisateur.
-          </span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+            <Info className="h-3 w-3" />
+            <span>
+              Pays détecté (réalité, MVP) :{" "}
+              <strong>
+                {CURRENT_COUNTRY.label} · TVA{" "}
+                {Math.round(vatRateReal * 1000) / 10}%
+              </strong>{" "}
+              — non modifiable par l&apos;utilisateur.
+            </span>
+          </div>
         </div>
       </header>
 
@@ -505,7 +517,7 @@ export default function MonetPage() {
               })}
             </div>
 
-            {/* Barre de progression likes + explication méritocratie */}
+            {/* Barre de progression likes + méritocratie */}
             <div className="mt-1">
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                 <span>0</span>
@@ -566,7 +578,7 @@ export default function MonetPage() {
       {/* Séparateur Réalité / Simulateur */}
       <div className="relative my-4 flex items-center justify-center">
         <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-        <span className="absolute inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600 border border-slate-200">
+        <span className="absolute inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
           Simulateur (projection)
         </span>
@@ -873,38 +885,31 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Mini-canevas PPV */}
-          <div className="mt-2 space-y-1">
-            <p className="text-[11px] font-medium text-slate-600">
-              Mini-récap PPV par Magic Clock (exemple)
-            </p>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {["MC-01", "MC-02", "MC-03"].map((label, idx) => {
-                const share = simGrossPpv / 3 || 0;
-                return (
-                  <div
-                    key={label}
-                    className="min-w-[90px] rounded-lg border border-slate-200 bg-slate-50/80 px-2 py-1.5"
-                  >
-                    <p className="text-[10px] font-semibold text-slate-700">
-                      {label}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-slate-500">PPV</p>
-                    <p className="mt-0.5 text-[11px] font-semibold text-slate-900">
-                      {formatMoney(share)}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-[10px] text-slate-500">
-              Illustration MVP : chaque mini-canevas représente une création
-              PPV. En production, ces montants seraient calculés pour chacune de
-              tes œuvres Magic Clock.
-            </p>
+          {/* Mini-canevas PPV : aperçu visuel des contenus */}
+          <div className="mt-3 flex gap-2 overflow-x-auto text-[11px]">
+            {[1, 2, 3].map((idx) => (
+              <div
+                key={idx}
+                className="min-w-[130px] flex-1 rounded-lg border border-slate-200 bg-slate-50/80 p-2"
+              >
+                <p className="truncate font-medium text-slate-700">
+                  Magic Clock #{idx}
+                </p>
+                <p className="mt-1 text-slate-500">
+                  PPV estimé :{" "}
+                  <span className="font-semibold">
+                    {formatMoney(simGrossPpv / 3)}
+                  </span>
+                </p>
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Exemple visuel : chaque mini-canevas représente environ 1/3
+                  de ton revenu PPV estimé.
+                </p>
+              </div>
+            ))}
           </div>
 
-          {/* Donut + légende */}
+          {/* Donut + légende + courbe */}
           <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="flex flex-col items-center gap-2">
               <div
@@ -932,7 +937,6 @@ export default function MonetPage() {
               </div>
             </div>
 
-            {/* Courbe d'évolution */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (part créateur HT)
