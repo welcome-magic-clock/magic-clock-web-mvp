@@ -282,7 +282,7 @@ export default function MonetPage() {
 
     return (
     <main className="min-h-screen bg-slate-50 pb-24">
-      <div className="container max-w-5xl mx-auto space-y-8 px-4 pt-6">
+      <div className="container space-y-8">
       {/* HEADER AVEC AVATAR CRÉATEUR */}
       <header className="space-y-4">
         {/* Ligne avatar + nom + handle */}
