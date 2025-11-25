@@ -280,8 +280,9 @@ export default function MonetPage() {
       .join(" ");
   }, [historyPoints]);
 
-  return (
-   <div className="container space-y-8 pt-8 pb-24">
+    return (
+    <main className="min-h-screen bg-slate-50 pb-24">
+      <div className="container max-w-5xl mx-auto space-y-8 px-4 pt-6">
       {/* HEADER AVEC AVATAR CRÉATEUR */}
       <header className="space-y-4">
         {/* Ligne avatar + nom + handle */}
@@ -1033,7 +1034,8 @@ export default function MonetPage() {
             </div>
           </div>
         </div>
-      </section>
-    </div>
+           </section>
+      </div>
+    </main>
   );
 }
