@@ -1,7 +1,9 @@
+// app/monet/page.tsx
 "use client";
 
 import { useMemo, useState } from "react";
 import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
+import { listCreators } from "@/core/domain/repository";
 
 // ─────────────────────────────────────────────────────────────
 // TVA / Pays
@@ -154,15 +156,39 @@ function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Types créateur (profil Aiko)
+// ─────────────────────────────────────────────────────────────
+
+type CreatorLight = {
+  name?: string;
+  handle?: string;
+  avatar?: string;
+  followers?: number;
+  likes?: number;
+};
+
+// ─────────────────────────────────────────────────────────────
 // Page Monétisation
 // ─────────────────────────────────────────────────────────────
 
 export default function MonetPage() {
+  // ── Profil créateur : Aiko Tanaka depuis le repository
+  const creators = listCreators() as CreatorLight[];
+  const currentCreator =
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+
+  const displayHandle =
+    currentCreator && currentCreator.handle
+      ? currentCreator.handle.startsWith("@")
+        ? currentCreator.handle
+        : `@${currentCreator.handle}`
+      : "@magic_clock";
+
   // TVA “réalité” : pays figé (ex: Suisse)
   const vatRateReal = CURRENT_COUNTRY.vatRate;
 
-  // 🔹 Partie "réalité" (cockpit actuel, en lecture seule / fake data)
-  const realFollowers = 12450;
+  // 🔹 Partie "réalité" (cockpit actuel, en lecture seule)
+  const realFollowers = currentCreator?.followers ?? 12450;
   const realFollowersDelta = 12.4;
 
   const realAboPrice = 14.9; // TTC
@@ -174,7 +200,7 @@ export default function MonetPage() {
   const realPpvPerBuyer = 1.4;
   const realPpvDelta = 5.2;
 
-  const realLikes = 3200;
+  const realLikes = currentCreator?.likes ?? 3200;
   const realTier = getTierFromLikes(realLikes);
 
   const realGrossAbos = realAboPrice * realAboSubs;
@@ -189,7 +215,9 @@ export default function MonetPage() {
   } = computeVatAndShares(realGrossTotal, realTier, vatRateReal);
 
   // 🔸 Partie "SIMULATEUR"
-  const [simFollowers, setSimFollowers] = useState<number>(5000);
+  const [simFollowers, setSimFollowers] = useState<number>(
+    realFollowers || 5000,
+  );
   const [simAboPrice, setSimAboPrice] = useState<number>(9.99);
   const [simAboConv, setSimAboConv] = useState<number>(3); // % followers → abo
   const [simPpvPrice, setSimPpvPrice] = useState<number>(14.99);
@@ -199,7 +227,7 @@ export default function MonetPage() {
 
   // 🧾 Pays TVA pour le simulateur (CH / FR / DE / ES / IT / EU)
   const [simCountryCode, setSimCountryCode] = useState<string>(
-    CURRENT_COUNTRY.code
+    CURRENT_COUNTRY.code,
   );
   const simCountry =
     COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ??
@@ -229,7 +257,7 @@ export default function MonetPage() {
     () => ({
       backgroundImage: `conic-gradient(rgb(59,130,246) 0 ${simAboSharePct}%, rgb(16,185,129) ${simAboSharePct}% 100%)`,
     }),
-    [simAboSharePct]
+    [simAboSharePct],
   );
 
   // Mini "courbe" d’évolution simulée (7 périodes) basée sur la part créateur NETTE
@@ -261,23 +289,50 @@ export default function MonetPage() {
 
   return (
     <div className="container py-8 space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-xl font-semibold">Monétisation</h1>
-        <p className="text-sm text-slate-600">
-          Comprends l&apos;impact de ton audience et simule ton potentiel avec
-          Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
-          basse = simulateur.
-        </p>
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
-          <Info className="h-3 w-3" />
-          <span>
-            Pays détecté (réalité, MVP) :{" "}
-            <strong>
-              {CURRENT_COUNTRY.label} · TVA{" "}
-              {Math.round(vatRateReal * 1000) / 10}%
-            </strong>{" "}
-            — non modifiable par l&apos;utilisateur.
-          </span>
+      {/* HEADER AVEC AVATAR AIKO */}
+      <header className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
+            {currentCreator?.avatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={currentCreator.avatar}
+                alt={currentCreator.name ?? "Créateur Magic Clock"}
+                className="h-full w-full object-cover"
+              />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[11px] text-slate-500">
+              Cockpit monétisation
+            </span>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">
+                {currentCreator?.name ?? "Créateur Magic Clock"}
+              </h1>
+              <span className="text-xs text-slate-500">{displayHandle}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Monétisation</h2>
+          <p className="text-sm text-slate-600">
+            Comprends l&apos;impact de ton audience et simule ton potentiel avec
+            Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
+            basse = simulateur.
+          </p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+            <Info className="h-3 w-3" />
+            <span>
+              Pays détecté (réalité, MVP) :{" "}
+              <strong>
+                {CURRENT_COUNTRY.label} · TVA{" "}
+                {Math.round(vatRateReal * 1000) / 10}%
+              </strong>{" "}
+              — non modifiable par l&apos;utilisateur.
+            </span>
+          </div>
         </div>
       </header>
 
@@ -409,7 +464,9 @@ export default function MonetPage() {
               </p>
               <p className="text-slate-500">
                 Likes ce mois-ci :{" "}
-                <span className="font-semibold">{realLikes}</span>
+                <span className="font-semibold">
+                  {realLikes.toLocaleString("fr-CH")}
+                </span>
               </p>
             </div>
 
@@ -417,11 +474,8 @@ export default function MonetPage() {
               {TIERS.map((tier) => {
                 const isActive = tier.id === realTier.id;
                 const locked =
-                  tier.id === "SILVER" && realLikes <= 1000
-                    ? true
-                    : tier.id === "GOLD" && realLikes <= 10000
-                    ? true
-                    : false;
+                  (tier.id === "SILVER" && realLikes <= 1000) ||
+                  (tier.id === "GOLD" && realLikes <= 10000);
 
                 return (
                   <div
@@ -673,7 +727,7 @@ export default function MonetPage() {
                 value={simPpvPerBuyer}
                 onChange={(e) =>
                   setSimPpvPerBuyer(
-                    clamp(Number(e.target.value) || 0, 0, 9999)
+                    clamp(Number(e.target.value) || 0, 0, 9999),
                   )
                 }
                 className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
@@ -709,8 +763,8 @@ export default function MonetPage() {
               className="w-full"
             />
             <p className="text-[11px] text-slate-500">
-              Le palier de commission est 100% automatique : plus de likes = plus
-              de part créateur (Or = 20% plateforme, 80% pour toi).
+              Le palier de commission est 100% automatique : plus de likes =
+              plus de part créateur (Or = 20% plateforme, 80% pour toi).
             </p>
           </div>
         </div>
