@@ -1,62 +1,91 @@
 import { Search, Globe2, Users, Star } from "lucide-react";
-import CreatorCard from "@/features/meet/CreatorCard";
 import { CREATORS } from "@/features/meet/creators";
-import type { Creator } from "@/core/domain/types";
 
-type HashtagGroupDef = {
-  slug: string;
-  hashtag: string;
-  description: string;
-  filter: (c: Creator) => boolean;
-};
+const REPEAT_COUNT = 6; // on répète la liste pour remplir plusieurs lignes
+const CARDS_PER_ROW = 10;
 
-const HASHTAG_GROUPS: HashtagGroupDef[] = [
+const TRENDING_ROWS = [
   {
-    slug: "magicclockpro",
-    hashtag: "#MagicClockPro",
+    id: "magic-pro",
+    label: "#MagicClockPro",
     description: "Créateurs très actifs sur Magic Clock.",
-    filter: () => true,
   },
   {
-    slug: "balayagecaramel",
-    hashtag: "#BalayageCaramel",
+    id: "balayage",
+    label: "#BalayageCaramel",
     description: "Balayages, blonds chauds et jeux de lumière.",
-    filter: (c) =>
-      (c.specialties?.includes("Balayage") ?? false) ||
-      (c.specialties?.includes("Blond froid") ?? false),
   },
   {
-    slug: "curlylovers",
-    hashtag: "#CurlyLovers",
-    description: "Spécialistes des boucles et textures naturelles.",
-    filter: (c) =>
-      (c.specialties ?? []).some((s) =>
-        s.toLowerCase().includes("curly")
-      ),
+    id: "blond-froid",
+    label: "#BlondFroid",
+    description: "Spécialistes du blond froid et polaire.",
   },
   {
-    slug: "videopro",
-    hashtag: "#VideoPro",
-    description: "Créateurs très à l’aise avec la vidéo et le storytelling.",
-    filter: (c) => {
-      const specialties = c.specialties ?? [];
-      return (
-        specialties.some((s) => s.toLowerCase().includes("vidéo")) ||
-        specialties.some((s) => s.toLowerCase().includes("video"))
-      );
-    },
+    id: "curly-care",
+    label: "#CurlyCare",
+    description: "Boucles, wavy et méthodes curly.",
+  },
+  {
+    id: "advanced",
+    label: "#TechniquesAvancées",
+    description: "Colorimétrie avancée, corrections, transformations.",
   },
 ];
 
+function MiniCreatorCard({ creator }: { creator: any }) {
+  return (
+    <button
+      className="w-40 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-brand-500/60"
+      type="button"
+    >
+      <div className="relative h-44 w-full overflow-hidden">
+        <img
+          src={creator.avatar}
+          alt={creator.name}
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <div className="p-2.5">
+        <p className="truncate text-xs font-semibold text-slate-900">
+          {creator.name}
+        </p>
+        <p className="truncate text-[11px] text-slate-500">
+          @{creator.handle}
+        </p>
+        {typeof creator.followers === "number" && (
+          <p className="mt-1 text-[11px] text-slate-500">
+            {creator.followers.toLocaleString("fr-CH")} followers
+          </p>
+        )}
+        {(creator.city || creator.country) && (
+          <p className="mt-1 text-[11px] text-slate-400">
+            {creator.city}
+            {creator.city && creator.country ? " · " : ""}
+            {creator.country}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
 export default function MeetPage() {
   const baseCreators = CREATORS;
-  const totalCreators = baseCreators.length;
+
+  // On étend un peu la liste pour remplir plusieurs rangées
+  const extendedCreators = Array.from({ length: REPEAT_COUNT }, (_, idx) =>
+    baseCreators.map((creator: any) => ({
+      ...creator,
+      _fakeId: `${creator.id}-repeat-${idx}`,
+    }))
+  ).flat();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 overflow-x-hidden">
-      {/* Header + zone recherche/filtres (collée en haut sur mobile) */}
-      <div className="sticky top-0 z-20 border-b border-slate-100 bg-slate-50/95 pb-3 pt-1 backdrop-blur sm:static sm:border-none sm:bg-transparent sm:pb-5">
-        <header className="space-y-2 sm:space-y-3">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      {/* HEADER + FILTRES STICKY */}
+      <div className="sticky top-0 z-20 -mx-4 mb-4 border-b border-slate-200/70 bg-slate-50/95 px-4 pb-4 pt-1 backdrop-blur sm:-mx-6 sm:px-6">
+        {/* Header texte */}
+        <header className="mb-3 space-y-2 sm:mb-4">
           <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
           <p className="text-sm text-slate-600">
             Trouve des créateurs Magic Clock près de toi ou dans le monde
@@ -65,7 +94,9 @@ export default function MeetPage() {
           </p>
         </header>
 
-        <section className="mt-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-4 sm:p-5">
+        {/* Bloc recherche + filtres (statique pour le MVP) */}
+        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          {/* Barre de recherche */}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
             <Search className="h-4 w-4 text-slate-400" />
             <input
@@ -77,6 +108,7 @@ export default function MeetPage() {
           </div>
 
           <div className="mt-3 grid gap-3 text-xs sm:mt-4 sm:text-[13px]">
+            {/* Langues */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex h-7 items-center rounded-full bg-slate-100 px-2.5 text-[11px] text-slate-500">
                 <Globe2 className="mr-1 h-3 w-3" />
@@ -92,6 +124,7 @@ export default function MeetPage() {
               ))}
             </div>
 
+            {/* Followers (placeholder slider) */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <span className="inline-flex items-center gap-1">
@@ -105,6 +138,7 @@ export default function MeetPage() {
               </div>
             </div>
 
+            {/* Spécialités */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex h-7 items-center rounded-full bg-slate-900 px-3 text-[11px] font-medium text-white">
                 <Star className="mr-1 h-3 w-3" />
@@ -130,32 +164,45 @@ export default function MeetPage() {
         </section>
       </div>
 
-      <section className="mt-4 space-y-8 sm:mt-6">
-        <p className="text-xs text-slate-500">
-          {totalCreators} créateurs trouvés.
-        </p>
+      {/* Petit compteur sous le bloc sticky */}
+      <p className="mb-3 text-xs text-slate-500">
+        {baseCreators.length} créateurs trouvés.
+      </p>
 
-        {HASHTAG_GROUPS.map((group) => {
-          const creatorsForGroup = baseCreators.filter(group.filter);
-          if (!creatorsForGroup.length) return null;
+      {/* LIGNES TYPE TIKTOK DISCOVER */}
+      <section className="space-y-6 sm:space-y-8">
+        {TRENDING_ROWS.map((row, rowIndex) => {
+          const start = rowIndex * CARDS_PER_ROW;
+          const rowCreators = extendedCreators.slice(
+            start,
+            start + CARDS_PER_ROW
+          );
 
           return (
-            <div key={group.slug} className="space-y-2">
-              <div className="space-y-1">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  {group.hashtag}
-                </h2>
-                <p className="text-xs text-slate-500">{group.description}</p>
+            <div key={row.id} className="space-y-2">
+              <div className="flex items-baseline justify-between px-1">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {row.label}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {row.description}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="text-[11px] font-medium text-brand-600"
+                >
+                  Voir tout
+                </button>
               </div>
 
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {creatorsForGroup.map((creator) => (
-                  <div
-                    key={`${group.slug}-${creator.id}`}
-                    className="w-[240px] flex-shrink-0 sm:w-[260px]"
-                  >
-                    <CreatorCard c={creator} />
-                  </div>
+              <div className="-mx-4 flex gap-3 overflow-x-auto pb-1 pl-4 pr-4 sm:-mx-6 sm:pl-6 sm:pr-6 sm:pb-2">
+                {rowCreators.map((creator: any) => (
+                  <MiniCreatorCard
+                    key={creator._fakeId ?? creator.id}
+                    creator={creator}
+                  />
                 ))}
               </div>
             </div>
