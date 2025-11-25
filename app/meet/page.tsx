@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import { CREATORS } from "@/features/meet/creators";
 
-const REPEAT_COUNT = 6;
+const REPEAT_COUNT = 4; // on répète la liste pour remplir un peu
 const CARDS_PER_ROW = 10;
 
 const TRENDING_ROWS = [
@@ -20,8 +20,8 @@ const TRENDING_ROWS = [
 function MiniCreatorCard({ creator }: { creator: any }) {
   return (
     <button
-      type="button"
       className="w-40 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/60"
+      type="button"
     >
       <div className="relative h-44 w-full overflow-hidden">
         <img
@@ -56,6 +56,7 @@ function MiniCreatorCard({ creator }: { creator: any }) {
 
 export default function MeetPage() {
   const baseCreators = CREATORS;
+  const totalCreators = baseCreators.length;
 
   const extendedCreators = Array.from({ length: REPEAT_COUNT }, (_, idx) =>
     baseCreators.map((creator: any) => ({
@@ -65,67 +66,65 @@ export default function MeetPage() {
   ).flat();
 
   return (
-    <main className="min-h-screen w-full overflow-x-hidden bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-        {/* Titre */}
-        <header className="mb-4 sm:mb-5">
-          <h1 className="text-2xl font-semibold text-slate-900">Meet me</h1>
-        </header>
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      {/* HEADER SIMPLE */}
+      <header className="mb-2 sm:mb-3">
+        <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
+      </header>
 
-        {/* Barre de recherche seule, comme Instagram */}
-        <div className="mb-4 flex justify-center">
-          <div className="flex h-10 w-full max-w-[360px] items-center gap-2 rounded-full border border-slate-200 bg-white px-3 shadow-sm">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              className="h-full w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              placeholder=""
-              disabled
-            />
-          </div>
+      {/* BARRE DE RECHERCHE COLLÉE À GAUCHE */}
+      <div className="mt-3">
+        <div className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+          <Search className="h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder=""
+            className="h-8 w-full bg-transparent text-xs outline-none sm:text-sm"
+            disabled
+          />
         </div>
+      </div>
 
-        {/* Compteur */}
-        <p className="mb-3 text-xs text-slate-500">
-          {baseCreators.length} créateurs trouvés.
-        </p>
+      {/* COMPTEUR */}
+      <p className="mt-4 mb-3 text-xs text-slate-500">
+        {totalCreators} créateurs trouvés.
+      </p>
 
-        {/* Lignes hashtags avec scroll horizontal */}
-        <section className="space-y-6 sm:space-y-8">
-          {TRENDING_ROWS.map((row, rowIndex) => {
-            const start = rowIndex * CARDS_PER_ROW;
-            const rowCreators = extendedCreators.slice(
-              start,
-              start + CARDS_PER_ROW
-            );
+      {/* LIGNES DE CRÉATEURS */}
+      <section className="space-y-6 sm:space-y-8">
+        {TRENDING_ROWS.map((row, rowIndex) => {
+          const start = rowIndex * CARDS_PER_ROW;
+          const rowCreators = extendedCreators.slice(
+            start,
+            start + CARDS_PER_ROW
+          );
 
-            return (
-              <div key={row.id} className="space-y-2">
-                <div className="flex items-baseline justify-between px-1">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {row.label}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {row.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Lignes scrollables façon TikTok */}
-                <div className="flex gap-3 overflow-x-auto pb-1">
-                  {rowCreators.map((creator: any) => (
-                    <MiniCreatorCard
-                      key={creator._fakeId ?? creator.id}
-                      creator={creator}
-                    />
-                  ))}
+          return (
+            <div key={row.id} className="space-y-2">
+              <div className="flex items-baseline justify-between px-1">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {row.label}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {row.description}
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </section>
-      </div>
+
+              {/* Lignes scrollables façon TikTok */}
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {rowCreators.map((creator: any) => (
+                  <MiniCreatorCard
+                    key={creator._fakeId ?? creator.id}
+                    creator={creator}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </section>
     </main>
   );
 }
