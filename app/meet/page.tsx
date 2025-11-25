@@ -4,7 +4,6 @@ import { CREATORS } from "@/features/meet/creators";
 const REPEAT_COUNT = 6; // on répète la liste pour remplir plusieurs lignes
 const CARDS_PER_ROW = 10;
 
-// On ne garde que 2 lignes : MagicClockPro + BalayageCaramel
 const TRENDING_ROWS = [
   {
     id: "magic-pro",
@@ -57,6 +56,7 @@ function MiniCreatorCard({ creator }: { creator: any }) {
 
 export default function MeetPage() {
   const baseCreators = CREATORS;
+  const totalCreators = baseCreators.length;
 
   // On étend un peu la liste pour remplir plusieurs rangées
   const extendedCreators = Array.from({ length: REPEAT_COUNT }, (_, idx) =>
@@ -67,46 +67,41 @@ export default function MeetPage() {
   ).flat();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* HEADER + BARRE DE RECHERCHE STICKY (sans filtres) */}
-      <div className="sticky top-0 z-20 mb-4 border-b border-slate-200/70 bg-slate-50/95 pb-4 pt-1 backdrop-blur sm:pb-5">
-        {/* Header texte */}
-        <header className="mb-3 space-y-2 sm:mb-4">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 overflow-x-hidden">
+      {/* HEADER + SEARCH STICKY */}
+      <div className="sticky top-0 z-20 mb-4 border-b border-slate-200/70 bg-slate-50/95 pb-4 pt-1 backdrop-blur">
+        <header className="mb-3">
           <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
-          <p className="text-sm text-slate-600">
-            Trouve des créateurs Magic Clock près de toi ou dans le monde
-            entier. Sur mobile, swipe la liste pour découvrir de nouveaux
-            profils.
-          </p>
         </header>
 
-        {/* Bloc recherche uniquement */}
-        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+        {/* Barre de recherche seule */}
+        <section className="rounded-3xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
             <Search className="h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Rechercher un créateur, une ville, une technique, un hashtag ou @creator..."
-              className="h-8 w-full bg-transparent text-xs outline-none placeholder:text-slate-400 sm:text-sm"
+              aria-label="Rechercher un créateur, une ville, une technique, un hashtag ou @creator"
+              className="h-8 w-full bg-transparent text-xs outline-none sm:text-sm"
               disabled
             />
           </div>
         </section>
       </div>
 
-      {/* Petit compteur sous le bloc sticky */}
-      <p className="mb-3 text-xs text-slate-500">
-        {baseCreators.length} créateurs trouvés.
-      </p>
+      {/* Résultats + lignes de créateurs */}
+      <section className="space-y-8">
+        <p className="text-xs text-slate-500">
+          {totalCreators} créateurs trouvés.
+        </p>
 
-      {/* LIGNES TYPE TIKTOK DISCOVER (seulement 2 groupes) */}
-      <section className="space-y-6 sm:space-y-8">
         {TRENDING_ROWS.map((row, rowIndex) => {
           const start = rowIndex * CARDS_PER_ROW;
           const rowCreators = extendedCreators.slice(
             start,
             start + CARDS_PER_ROW
           );
+
+          if (!rowCreators.length) return null;
 
           return (
             <div key={row.id} className="space-y-2">
@@ -127,8 +122,8 @@ export default function MeetPage() {
                 </button>
               </div>
 
-              {/* CONTAINER sans marges négatives, scroll horizontal local */}
-              <div className="flex gap-3 overflow-x-auto pb-1 sm:pb-2">
+              {/* Lignes scrollables façon TikTok */}
+              <div className="flex gap-3 overflow-x-auto pb-1">
                 {rowCreators.map((creator: any) => (
                   <MiniCreatorCard
                     key={creator._fakeId ?? creator.id}
