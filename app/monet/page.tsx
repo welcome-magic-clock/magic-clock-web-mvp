@@ -203,6 +203,12 @@ export default function MonetPage() {
     creatorShareNet: realCreatorShareNet,
   } = computeVatAndShares(realGrossTotal, realTier, vatRateReal);
 
+  // ➜ CONVERSIONS RÉELLES pour nourrir le Cockpit
+  const realAboConvPct =
+    realFollowers > 0 ? (realAboSubs / realFollowers) * 100 : 0;
+  const realPpvConvPct =
+    realFollowers > 0 ? (realPpvBuyers / realFollowers) * 100 : 0;
+
   // 🔸 Partie "SIMULATEUR"
   const [simFollowers, setSimFollowers] = useState<number>(5000);
   const [simAboPrice, setSimAboPrice] = useState<number>(9.99);
@@ -340,6 +346,24 @@ export default function MonetPage() {
             Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
             la répartition plateforme / créateur.
           </p>
+        </div>
+
+        {/* ✅ Cockpit réutilisable en mode "full", nourri par les vraies données */}
+        <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+          <h2 className="mb-2 text-sm font-semibold text-slate-700">
+            Résumé rapide (cockpit Magic Clock)
+          </h2>
+          <Cockpit
+            mode="full"
+            followers={realFollowers}
+            aboConvPct={realAboConvPct}
+            ppvConvPct={realPpvConvPct}
+            aboPriceTtc={realAboPrice}
+            ppvPriceTtc={realPpvPrice}
+            ppvPerBuyer={realPpvPerBuyer}
+            vatRate={vatRateReal}
+            likes={realLikes}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -653,7 +677,7 @@ export default function MonetPage() {
 
           {/* Followers */}
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items_center justify-between text-xs">
               <span className="font-medium text-slate-700">
                 Followers (tous réseaux)
               </span>
@@ -736,7 +760,7 @@ export default function MonetPage() {
           {/* PPV */}
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify_between text-xs">
                 <span className="font-medium text-slate-700">
                   Prix PPV moyen
                 </span>
@@ -761,7 +785,7 @@ export default function MonetPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify_between text-xs">
                 <span className="font-medium text-slate-700">
                   Conversion PPV
                 </span>
@@ -786,7 +810,7 @@ export default function MonetPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify_between text-xs">
                 <span className="font-medium text-slate-700">
                   PPV / acheteur / mois
                 </span>
@@ -815,7 +839,7 @@ export default function MonetPage() {
 
           {/* Likes → palier simulateur */}
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify_between text-xs">
               <span className="font-medium text-slate-700">
                 Likes / mois (simulateur)
               </span>
