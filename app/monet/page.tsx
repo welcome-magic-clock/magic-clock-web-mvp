@@ -281,7 +281,7 @@ export default function MonetPage() {
   }, [historyPoints]);
 
   return (
-    <div className="container space-y-8 py-8">
+   <div className="container space-y-8 pt-8 pb-24">
       {/* HEADER AVEC AVATAR CRÉATEUR */}
       <header className="space-y-4">
         {/* Ligne avatar + nom + handle */}
@@ -334,9 +334,9 @@ export default function MonetPage() {
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="inline-flex h-6 items-center rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
-              Réalité · compte Magic Clock
-            </span>
+            <span className="inline-flex h-6 items-center whitespace-nowrap rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
+  Réalité · compte Magic Clock
+</span>
             <span className="flex items-center gap-1 text-xs text-slate-500">
               <Info className="h-3 w-3" />
               Données indicatives pour le MVP (non connectées au backend).
