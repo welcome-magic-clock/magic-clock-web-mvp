@@ -26,8 +26,8 @@ export default function LegalIndexPage() {
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">CGV</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Conditions générales de vente et d’utilisation de la plateforme,
-            créateurs et utilisateurs.
+            Conditions générales de vente et de monétisation sur Magic Clock
+            (créateurs, abonnements, contenus payants).
           </p>
           <Link
             href="/legal/cgv"
@@ -37,8 +37,23 @@ export default function LegalIndexPage() {
           </Link>
         </article>
 
-        {/* Privacy */}
+        {/* CGU */}
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-900">CGU</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Conditions générales d’utilisation de la plateforme&nbsp;:
+            création de compte, contenus UGC, règles de la communauté.
+          </p>
+          <Link
+            href="/legal/cgu"
+            className="mt-3 inline-flex text-xs font-medium text-indigo-600 hover:text-indigo-700"
+          >
+            Voir les CGU
+          </Link>
+        </article>
+
+        {/* Privacy */}
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
           <h2 className="text-sm font-semibold text-slate-900">
             Politique de confidentialité
           </h2>
@@ -61,8 +76,8 @@ export default function LegalIndexPage() {
           </h2>
           <p className="mt-1 text-xs text-slate-500">
             Informations sur les cookies et technologies similaires utilisés
-            pour le fonctionnement, les statistiques et, le cas échéant, le
-            marketing.
+            pour le fonctionnement, les statistiques et, le cas échéant,
+            le marketing.
           </p>
           <Link
             href="/legal/cookies"
