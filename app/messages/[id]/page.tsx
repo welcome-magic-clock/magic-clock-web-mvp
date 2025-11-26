@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 
 type ChatMeta = {
@@ -141,21 +142,21 @@ const baseMessagesById: Record<string, ChatMessage[]> = {
   ],
 };
 
-export default function MessageThreadPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function MessageThreadPage() {
+  // 🔑 Récupération de l'id via useParams (logique App Router côté client)
+  const params = useParams<{ id: string }>();
+  const id = (params?.id ?? "") as string;
+
   const meta: ChatMeta =
-    chatMetas[params.id] ??
+    chatMetas[id] ??
     ({
-      id: params.id,
+      id,
       name: "Conversation",
       handle: "",
     } as ChatMeta);
 
   const [messages, setMessages] = useState<ChatMessage[]>(
-    baseMessagesById[params.id] ?? [
+    baseMessagesById[id] ?? [
       {
         id: 1,
         from: "them",
