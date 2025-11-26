@@ -1,1 +1,473 @@
-export default ()=> <section className='container space-y-4'><h1 className='text-2xl font-semibold'>CGV (MVP)</h1><p>À compléter par pays.</p></section>
+// app/legal/cgv/page.tsx
+
+export const metadata = {
+  title: "CGV – Magic Clock",
+};
+
+export default function LegalCGVPage() {
+  return (
+    <main className="mx-auto max-w-3xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+      <header className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Conditions générales d’utilisation et de vente
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Plateforme Magic Clock – Dernière mise à jour : 26 novembre 2025
+        </p>
+      </header>
+
+      <div className="space-y-8 text-sm leading-relaxed text-slate-700">
+        {/* 1. Objet */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            1. Objet des CGU/CGV
+          </h2>
+          <p className="mt-2">
+            Les présentes conditions générales d’utilisation et de vente
+            (ci-après les <strong>« CGU/CGV »</strong>) ont pour objet de
+            définir les règles d’accès et d’utilisation de la plateforme{" "}
+            <strong>Magic Clock</strong> (ci-après la{" "}
+            <strong>« Plateforme »</strong>) ainsi que les conditions
+            applicables à la vente de contenus numériques et d’abonnements
+            proposés par les créateurs via la Plateforme.
+          </p>
+          <p className="mt-2">
+            La Plateforme est éditée par{" "}
+            <strong>[Magic Clock SA]</strong>, société de droit suisse, dont le
+            siège social est situé à <strong>[adresse à compléter]</strong>{" "}
+            (ci-après l’<strong>« Éditeur »</strong>, <strong>« nous »</strong>
+            ).
+          </p>
+          <p className="mt-2">
+            En accédant à la Plateforme, en créant un compte ou en achetant un
+            contenu ou un abonnement, l’utilisateur (ci-après{" "}
+            <strong>« vous »</strong> ou l’<strong>« Utilisateur »</strong>)
+            reconnaît avoir lu, compris et accepté les présentes CGU/CGV.
+          </p>
+        </section>
+
+        {/* 2. Définitions */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            2. Définitions
+          </h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              <strong>Utilisateur</strong> : toute personne disposant d’un
+              compte Magic Clock (créateur ou simple membre inscrit).
+            </li>
+            <li>
+              <strong>Créateur</strong> : Utilisateur qui publie des contenus
+              (photos, vidéos, Magic Studio, Magic Display, textes, etc.) sur la
+              Plateforme.
+            </li>
+            <li>
+              <strong>Contenu</strong> : tout élément publié par un Utilisateur
+              via la Plateforme (images, vidéos, textes, commentaires, profils,
+              etc.).
+            </li>
+            <li>
+              <strong>Abonnement</strong> : formule payante permettant d’accéder
+              à certains contenus d’un Créateur pour une période déterminée.
+            </li>
+            <li>
+              <strong>Contenu PPV (« Pay-Per-View »)</strong> : contenu payant
+              accessible après achat unitaire.
+            </li>
+            <li>
+              <strong>Services</strong> : ensemble des fonctionnalités proposées
+              par la Plateforme (Amazing, Meet me, My Magic Clock, Monétisation,
+              messagerie, etc.).
+            </li>
+          </ul>
+        </section>
+
+        {/* 3. Champ d’application */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            3. Champ d’application géographique
+          </h2>
+          <p className="mt-2">
+            La Plateforme est accessible aux Utilisateurs situés en Suisse, dans
+            l’Union européenne / EEE, au Royaume-Uni, aux États-Unis et, plus
+            largement, dans tout pays où son utilisation n’est pas contraire au
+            droit local.
+          </p>
+          <p className="mt-2">
+            En cas de conflit entre le droit local impératif du pays de
+            résidence habituelle de l’Utilisateur et les présentes CGU/CGV, les
+            règles impératives locales prévalent.
+          </p>
+        </section>
+
+        {/* 4. Inscription & compte */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            4. Inscription et compte
+          </h2>
+          <h3 className="mt-2 font-medium text-slate-900">4.1. Âge minimum</h3>
+          <p className="mt-1">
+            La Plateforme est réservée aux personnes :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>âgées d’au moins 16 ans dans l’UE/EEE et au Royaume-Uni ;</li>
+            <li>âgées d’au moins 13 ans en Suisse et aux États-Unis ;</li>
+          </ul>
+          <p className="mt-1">
+            ou disposant de l’autorisation de leur représentant légal lorsque
+            cela est requis par le droit applicable.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            4.2. Création du compte
+          </h3>
+          <p className="mt-1">
+            Vous vous engagez à fournir des informations exactes, complètes et à
+            jour, à ne pas usurper l’identité d’un tiers et à garder vos
+            identifiants confidentiels. Vous nous informez sans délai de toute
+            utilisation non autorisée de votre compte.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            4.3. Suspension et fermeture
+          </h3>
+          <p className="mt-1">
+            Nous pouvons suspendre ou fermer un compte en cas de :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>violation des présentes CGU/CGV ;</li>
+            <li>comportement illicite, trompeur, haineux ou abusif ;</li>
+            <li>non-respect des lois applicables.</li>
+          </ul>
+        </section>
+
+        {/* 5. Rôle de la Plateforme */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            5. Rôle de la Plateforme
+          </h2>
+          <p className="mt-2">
+            Magic Clock est une <strong>plateforme UGC</strong> permettant à des
+            créateurs indépendants de publier, monétiser et partager leurs
+            contenus avec une communauté.
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              Nous ne sommes pas partie au contrat qui lie un Créateur et ses
+              abonnés ou acheteurs.
+            </li>
+            <li>
+              Nous fournissons l’infrastructure technique, les outils de
+              publication et de paiement, ainsi que des mécanismes de
+              modération.
+            </li>
+          </ul>
+        </section>
+
+        {/* 6. Contenus & licence */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            6. Contenus et licence accordée à Magic Clock
+          </h2>
+
+          <h3 className="mt-2 font-medium text-slate-900">
+            6.1. Responsabilité des contenus
+          </h3>
+          <p className="mt-1">
+            Vous restez seul responsable des contenus que vous publiez. Vous
+            garantissez notamment que :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>
+              vous disposez de tous les droits nécessaires (droits d’auteur,
+              droit à l’image, droits voisins, etc.) ;
+            </li>
+            <li>
+              le contenu ne viole aucun droit de tiers ni aucune loi applicable
+              ;
+            </li>
+            <li>
+              le contenu respecte nos règles de communauté et de modération.
+            </li>
+          </ul>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            6.2. Licence accordée à la Plateforme
+          </h3>
+          <p className="mt-1">
+            En publiant un contenu sur Magic Clock, vous accordez à l’Éditeur,
+            pour le monde entier et pour la durée légale des droits, une{" "}
+            <strong>
+              licence non exclusive, transférable, sous-licenciable et gratuite
+            </strong>{" "}
+            afin de :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>héberger, stocker, reproduire et adapter le contenu ;</li>
+            <li>
+              le représenter et le communiquer au public via la Plateforme et
+              ses supports associés ;
+            </li>
+            <li>
+              réaliser des actions raisonnables de promotion de la Plateforme,
+              dans le respect de vos droits moraux.
+            </li>
+          </ul>
+          <p className="mt-1">
+            Cette licence est limitée au fonctionnement et à la promotion de la
+            Plateforme. Nous ne revendons pas vos contenus à des tiers
+            indépendants sans votre accord spécifique.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            6.3. Suppression des contenus
+          </h3>
+          <p className="mt-1">
+            Vous pouvez supprimer vos contenus à tout moment. Certains contenus
+            peuvent cependant être conservés :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>en raison d’obligations légales de conservation ;</li>
+            <li>
+              pour la gestion de litiges ou la protection de nos droits ; et/ou
+            </li>
+            <li>
+              pour les utilisateurs ayant déjà acquis un droit d’accès au
+              contenu.
+            </li>
+          </ul>
+        </section>
+
+        {/* 7. Comportements interdits */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            7. Comportements interdits
+          </h2>
+          <p className="mt-2">
+            Sont strictement interdits, notamment, les contenus ou
+            comportements :
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              violents, haineux, discriminatoires, diffamatoires, harcelants ou
+              pornographiques ;
+            </li>
+            <li>
+              portant atteinte à la dignité humaine, aux mineurs, ou incitant à
+              des activités illégales ;
+            </li>
+            <li>
+              portant atteinte aux droits de propriété intellectuelle ou aux
+              données personnelles de tiers ;
+            </li>
+            <li>
+              relevant de la fraude, de la manipulation de paiements ou de
+              statistiques ;
+            </li>
+            <li>
+              visant à dégrader la sécurité ou le fonctionnement de la
+              Plateforme.
+            </li>
+          </ul>
+          <p className="mt-2">
+            Nous pouvons supprimer tout contenu et prendre des mesures à
+            l’encontre du compte concerné, y compris la fermeture et, le cas
+            échéant, le signalement aux autorités.
+          </p>
+        </section>
+
+        {/* 8. Monétisation & paiements */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            8. Monétisation, prix et paiements
+          </h2>
+          <h3 className="mt-2 font-medium text-slate-900">
+            8.1. Fixation des prix
+          </h3>
+          <p className="mt-1">
+            Les Créateurs fixent librement le prix de leurs abonnements et de
+            leurs contenus PPV, dans les limites techniques définies par la
+            Plateforme.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            8.2. Commission de la Plateforme
+          </h3>
+          <p className="mt-1">
+            En contrepartie des Services (hébergement, outils, paiement,
+            support, etc.), l’Éditeur perçoit une <strong>commission</strong> sur
+            chaque transaction. Le pourcentage applicable est indiqué dans
+            l’interface Monétisation et peut être modifié pour l’avenir avec
+            information préalable.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            8.3. Taxes et TVA
+          </h3>
+          <p className="mt-1">
+            Les prix affichés tiennent compte, lorsque la loi l’exige, de la TVA
+            et des autres taxes applicables, en fonction de la localisation de
+            l’Utilisateur.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            8.4. Paiements et prestataire de paiement
+          </h3>
+          <p className="mt-1">
+            Les paiements sont traités par un prestataire de services de
+            paiement tiers (par exemple Stripe ou équivalent). En utilisant les
+            Services payants, vous acceptez également les conditions de ce
+            prestataire.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            8.5. Droit de rétractation
+          </h3>
+          <p className="mt-1">
+            Pour les consommateurs résidant dans l’UE/EEE ou au Royaume-Uni, le
+            droit de rétractation peut être limité ou exclu pour les contenus
+            numériques fournis immédiatement après l’achat, lorsque
+            l’Utilisateur a expressément consenti à l’exécution immédiate et
+            reconnu qu’il perdait son droit de rétractation. Cette section
+            pourra être ajustée par notre conseil juridique selon l’offre
+            définitive.
+          </p>
+        </section>
+
+        {/* 9. Rémunération des créateurs */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            9. Rémunération des Créateurs
+          </h2>
+          <p className="mt-2">
+            Le montant dû à un Créateur correspond aux sommes encaissées auprès
+            des Utilisateurs, déduction faite de la commission de la
+            Plateforme, des taxes éventuellement applicables et des frais de
+            paiement et de change.
+          </p>
+          <p className="mt-2">
+            Les seuils de versement, devises, fréquences et modalités
+            (vérification d’identité, facturation, etc.) sont précisés dans
+            l’interface Monétisation.
+          </p>
+        </section>
+
+        {/* 10. Modération */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            10. Modération et signalements
+          </h2>
+          <p className="mt-2">
+            Les Utilisateurs peuvent signaler un contenu ou un comportement via
+            les outils prévus à cet effet. Nous pouvons, de bonne foi et à
+            notre seule appréciation raisonnable :
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>retirer ou restreindre l’accès à un contenu ;</li>
+            <li>limiter certaines fonctionnalités d’un compte ;</li>
+            <li>
+              suspendre ou fermer un compte et, le cas échéant, informer les
+              autorités compétentes.
+            </li>
+          </ul>
+        </section>
+
+        {/* 11. Données personnelles */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            11. Données personnelles
+          </h2>
+          <p className="mt-2">
+            Le traitement de vos données personnelles est régi par notre{" "}
+            <a
+              href="/legal/privacy"
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              Politique de confidentialité
+            </a>
+            . Les présentes CGU/CGV renvoient à ce document pour tous les
+            aspects liés à la protection des données.
+          </p>
+        </section>
+
+        {/* 12. Propriété intellectuelle */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            12. Propriété intellectuelle de Magic Clock
+          </h2>
+          <p className="mt-2">
+            Tous les éléments de la Plateforme (marques, logos, interfaces,
+            designs, textes, code, fonctionnalités, etc.) sont protégés par des
+            droits de propriété intellectuelle. Sauf autorisation écrite
+            préalable, toute reproduction, modification ou exploitation est
+            interdite.
+          </p>
+        </section>
+
+        {/* 13. Responsabilité */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            13. Responsabilité
+          </h2>
+          <p className="mt-2">
+            Dans les limites autorisées par la loi applicable :
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              l’Éditeur n’est pas responsable des contenus publiés par les
+              Utilisateurs ;
+            </li>
+            <li>
+              l’Éditeur ne garantit pas l’absence totale d’erreurs ni la
+              disponibilité ininterrompue des Services ;
+            </li>
+            <li>
+              l’Éditeur ne peut être tenu responsable des dommages indirects,
+              pertes de données ou manque à gagner.
+            </li>
+          </ul>
+          <p className="mt-2">
+            Rien dans cette clause ne limite les droits impératifs des
+            consommateurs, notamment dans l’UE/EEE, au Royaume-Uni, en Suisse ou
+            dans les États où une telle limitation est interdite.
+          </p>
+        </section>
+
+        {/* 14. Droit applicable */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            14. Droit applicable et juridiction compétente
+          </h2>
+          <p className="mt-2">
+            Sauf disposition impérative contraire, les présentes CGU/CGV sont
+            soumises au <strong>droit suisse</strong>.
+          </p>
+          <p className="mt-2">
+            Tout litige sera soumis aux tribunaux compétents du siège de
+            l’Éditeur. Pour les consommateurs résidant dans l’UE/EEE ou au
+            Royaume-Uni, ceux-ci peuvent également saisir les tribunaux de leur
+            lieu de résidence habituelle, conformément aux règles applicables.
+          </p>
+        </section>
+
+        {/* 15. Contact */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            15. Contact
+          </h2>
+          <p className="mt-2">
+            Pour toute question concernant les présentes CGU/CGV, vous pouvez
+            nous écrire à :{" "}
+            <a
+              href="mailto:[email-légal-à-compléter]"
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              [email-légal-à-compléter]
+            </a>
+            .
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}
