@@ -48,7 +48,8 @@ const conversations: Conversation[] = [
     id: "mc-sub",
     name: "Magic Clock",
     handle: "@magic_clock",
-    preview: "Nouveau abonné : @hairby_jules vient de s’abonner à ton contenu.",
+    preview:
+      "Nouveau abonné : @hairby_jules vient de s’abonner à ton contenu.",
     time: "Il y a 5 min",
     unread: true,
     isSystem: true,
@@ -72,9 +73,7 @@ const conversations: Conversation[] = [
   },
 ];
 
-export const metadata = {
-  title: "Messages – Magic Clock",
-};
+// ❌ plus de export const metadata ici
 
 export default function MessagesPage() {
   const [showBanner, setShowBanner] = useState(true);
@@ -87,7 +86,6 @@ export default function MessagesPage() {
           <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
             Messages
           </h1>
-          {/* Petit compteur symbolique */}
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
             {conversations.length} fils
           </span>
