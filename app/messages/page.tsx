@@ -1,7 +1,17 @@
 // app/messages/page.tsx
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+// ...
+
+<li key={conv.id} className="py-3 first:pt-1 last:pb-0">
+  <Link
+    href={`/messages/${conv.id}`}
+    className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-slate-50"
+  >
+    {/* … avatar + texte + point non lu, exactement comme avant … */}
+  </Link>
+</li>
 
 type Conversation = {
   id: string;
