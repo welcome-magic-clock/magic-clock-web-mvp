@@ -27,18 +27,18 @@ export default function CreatePage() {
         </Link>
 
         <Link
-          href="/display"
-          className="rounded-2xl border border-slate-200 bg-white/80 p-5 flex flex-col gap-2 hover:border-brand-500 hover:shadow-sm transition"
-        >
-          <div className="text-lg font-semibold">Magic Display — Cube 3D</div>
-          <p className="text-sm text-slate-600">
-            Construis l&apos;explication pédagogique : faces, cercles, segments, aiguilles
-            et médias. Le Display montre comment reproduire l&apos;Avant / Après de Studio.
-          </p>
-          <span className="mt-2 text-sm font-medium text-brand-600">
-            Ouvrir Magic Display →
-          </span>
-        </Link>
+  href="/magic-display"
+  className="rounded-2xl border border-slate-200 bg-white/80 p-5 flex flex-col gap-2 hover:border-brand-500 hover:shadow-sm transition"
+>
+  <div className="text-lg font-semibold">Magic Display — Cube 3D</div>
+  <p className="text-sm text-slate-600">
+    Construis l&apos;explication pédagogique : faces, cercles, segments, aiguilles
+    et médias. Le Display montre comment reproduire l&apos;Avant / Après de Studio.
+  </p>
+  <span className="mt-2 text-sm font-medium text-brand-600">
+    Ouvrir Magic Display →
+  </span>
+</Link>
       </section>
 
       <section className="space-y-2">
