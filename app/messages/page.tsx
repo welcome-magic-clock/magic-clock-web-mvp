@@ -1,17 +1,8 @@
 // app/messages/page.tsx
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-// ...
-
-<li key={conv.id} className="py-3 first:pt-1 last:pb-0">
-  <Link
-    href={`/messages/${conv.id}`}
-    className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-slate-50"
-  >
-    {/* … avatar + texte + point non lu, exactement comme avant … */}
-  </Link>
-</li>
 
 type Conversation = {
   id: string;
@@ -21,10 +12,10 @@ type Conversation = {
   time: string;
   unread?: boolean;
   isSystem?: boolean;
-  avatarUrl?: string;            // pour les photos locales (Aiko, Sofia, Lena)
+  avatarUrl?: string; // pour les photos locales (Aiko, Sofia, Lena)
   avatarType?: "photo" | "brand";
-  avatarInitials?: string;       // pour les bulles "MC"
-  avatarGradient?: string;       // pour les dégradés Magic Clock
+  avatarInitials?: string; // pour les bulles "MC"
+  avatarGradient?: string; // pour les dégradés Magic Clock
 };
 
 const conversations: Conversation[] = [
@@ -36,7 +27,6 @@ const conversations: Conversation[] = [
     time: "Il y a 2 h",
     unread: true,
     avatarType: "photo",
-    // dossier public/creators
     avatarUrl: "/creators/aiko-tanaka.jpeg",
   },
   {
@@ -129,8 +119,8 @@ export default function MessagesPage() {
         <ul className="divide-y divide-slate-100">
           {conversations.map((conv) => (
             <li key={conv.id} className="py-3 first:pt-1 last:pb-0">
-              <button
-                type="button"
+              <Link
+                href={`/messages/${conv.id}`}
                 className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-slate-50"
               >
                 {/* Avatar */}
@@ -180,7 +170,7 @@ export default function MessagesPage() {
                 {conv.unread && (
                   <span className="ml-1 h-2 w-2 flex-shrink-0 rounded-full bg-violet-500" />
                 )}
-              </button>
+              </Link>
             </li>
           ))}
         </ul>
@@ -202,10 +192,7 @@ export default function MessagesPage() {
                     d="M12 3a5 5 0 00-5 5v2.586c0 .265-.105.52-.293.707L5 14h14l-1.707-2.707A1 1 0 0117 10.586V8a5 5 0 00-5-5z"
                     fill="currentColor"
                   />
-                  <path
-                    d="M10 18a2 2 0 004 0h-4z"
-                    fill="currentColor"
-                  />
+                  <path d="M10 18a2 2 0 004 0h-4z" fill="currentColor" />
                 </svg>
               </div>
 
@@ -233,8 +220,8 @@ export default function MessagesPage() {
                   </button>
                 </div>
                 <p className="mt-2 text-[10px] text-slate-400">
-                  En continuant, tu acceptes de recevoir des notifications liées
-                  à tes messages Magic Clock. Aucune pub, uniquement de
+                  En continuant, tu acceptes de recevoir des notifications
+                  liées à tes messages Magic Clock. Aucune pub, uniquement de
                   l’activité utile.
                 </p>
               </div>
