@@ -1,197 +1,213 @@
+// app/messages/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { Search, Bell, X } from "lucide-react";
+import { useState } from "react";
 
 type Conversation = {
   id: string;
   name: string;
-  initials: string;
+  handle: string;
   preview: string;
   time: string;
   unread?: boolean;
+  isSystem?: boolean;
+  avatarUrl?: string;
 };
 
-const MOCK_CONVERSATIONS: Conversation[] = [
+const conversations: Conversation[] = [
   {
     id: "aiko",
     name: "Aiko Tanaka",
-    initials: "AT",
+    handle: "@aiko_tanaka",
     preview: "J’ai publié la nouvelle transformation caramel ✨",
     time: "Il y a 2 h",
     unread: true,
+    avatarUrl:
+      "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=200",
   },
   {
     id: "sofia",
     name: "Sofia Rivera",
-    initials: "SR",
+    handle: "@sofia_rivera",
     preview: "On teste Magic Clock avec l’équipe du salon 😍",
     time: "Hier",
+    avatarUrl:
+      "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=201",
   },
   {
     id: "lena",
     name: "Lena Martin",
-    initials: "LM",
+    handle: "@lena_martin",
     preview: "Merci pour tes conseils sur le blond froid 💬",
     time: "Mar.",
+    avatarUrl:
+      "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=202",
+  },
+  // Messages système Magic Clock
+  {
+    id: "mc-sub",
+    name: "Magic Clock",
+    handle: "@magic_clock",
+    preview: "Nouveau abonné : @hairby_jules vient de s’abonner à ton contenu.",
+    time: "Il y a 5 min",
+    unread: true,
+    isSystem: true,
+  },
+  {
+    id: "mc-ppv",
+    name: "Magic Clock",
+    handle: "@magic_clock",
+    preview:
+      "Achat PPV confirmé : « Balayage caramel studio » (4,90 CHF).",
+    time: "Il y a 12 min",
+    isSystem: true,
+  },
+  {
+    id: "mc-likes",
+    name: "Magic Clock",
+    handle: "@magic_clock",
+    preview: "Boom ! 12 302 likes sur « Blond ambré ». Bravo 🪄",
+    time: "Aujourd’hui",
+    isSystem: true,
   },
 ];
 
-const STORAGE_KEY = "mc-messages-notifs-dismissed";
+export const metadata = {
+  title: "Messages – Magic Clock",
+};
 
 export default function MessagesPage() {
-  const [showNotifBanner, setShowNotifBanner] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const alreadyDismissed = window.localStorage.getItem(STORAGE_KEY);
-    if (!alreadyDismissed) {
-      setShowNotifBanner(true);
-    }
-  }, []);
-
-  const handleCloseBanner = () => {
-    setShowNotifBanner(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "true");
-    }
-  };
-
-  const handleEnableNotifications = () => {
-    // Ici plus tard : vraie demande de permission navigateur / push
-    setShowNotifBanner(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "true");
-    }
-  };
+  const [showBanner, setShowBanner] = useState(true);
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* Header simple */}
-      <header className="mb-4 sm:mb-6">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-          Messages
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Échange avec d’autres créateurs, partage tes transformations et pose
-          tes questions techniques. La messagerie Magic Clock est pensée pour le
-          partage d’expérience.
-        </p>
-      </header>
+    <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+      {/* Carte principale Messages (plein écran mobile) */}
+      <section className="mt-2 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
+            Messages
+          </h1>
+          {/* Petit compteur symbolique */}
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+            {conversations.length} fils
+          </span>
+        </div>
 
-      {/* Carte principale Messages : elle remplit tout l’espace sur mobile */}
-      <section className="flex justify-center">
-        <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          {/* Titre + petite description desktop only */}
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">
-                Messages
-              </h2>
-              <p className="mt-1 hidden text-xs text-slate-500 sm:block">
-                Tes dernières conversations apparaîtront ici dès que tu envoies
-                ou reçois un message.
-              </p>
-            </div>
+        {/* Barre de recherche */}
+        <div className="mb-3 rounded-full border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500 shadow-inner">
+          <div className="flex items-center gap-2">
+            <span className="text-[13px]">🔍</span>
+            <span className="truncate text-xs sm:text-sm">
+              Rechercher une conversation
+            </span>
           </div>
+        </div>
 
-          {/* Barre de recherche */}
-          <div className="mb-3 flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Rechercher une conversation"
-              className="h-7 w-full bg-transparent text-xs outline-none placeholder:text-slate-400 sm:text-sm"
-              disabled
-            />
-          </div>
-
-          {/* Liste de conversations mockée */}
-          <ul className="divide-y divide-slate-100">
-            {MOCK_CONVERSATIONS.map((conv) => (
-              <li
-                key={conv.id}
-                className="flex cursor-default items-center gap-3 py-3"
+        {/* Liste de conversations */}
+        <ul className="divide-y divide-slate-100">
+          {conversations.map((conv) => (
+            <li key={conv.id} className="py-3 first:pt-1 last:pb-0">
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 text-left hover:bg-slate-50 rounded-2xl px-2 py-2 transition"
               >
-                {/* Avatar initiales */}
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
-                  {conv.initials}
+                {/* Avatar */}
+                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-violet-100 text-xs font-semibold text-violet-700">
+                  {conv.avatarUrl ? (
+                    <img
+                      src={conv.avatarUrl}
+                      alt={conv.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : conv.isSystem ? (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-500 to-indigo-500 text-[10px] font-semibold text-white">
+                      MC
+                    </div>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      {conv.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Texte */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-900">
-                    {conv.name}
-                  </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-medium text-slate-900">
+                      {conv.name}
+                    </p>
+                    <p className="flex-shrink-0 text-[11px] text-slate-400">
+                      {conv.time}
+                    </p>
+                  </div>
+                  <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
                     {conv.preview}
                   </p>
                 </div>
 
-                {/* Heure + point non-lu */}
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-[11px] text-slate-400">
-                    {conv.time}
-                  </span>
-                  {conv.unread && (
-                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+                {/* Indicateur non lu */}
+                {conv.unread && (
+                  <span className="ml-1 h-2 w-2 flex-shrink-0 rounded-full bg-violet-500" />
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      {/* Bandeau d’activation des notifications – version claire / douce */}
-      {showNotifBanner && (
-        <div className="pointer-events-none fixed inset-x-4 bottom-4 z-30 sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-full sm:max-w-xl sm:-translate-x-1/2">
-          <div className="pointer-events-auto flex items-start gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-xs shadow-lg backdrop-blur-sm sm:text-sm">
-            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100">
-              <Bell className="h-4 w-4 text-slate-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-xs font-semibold text-slate-900 sm:text-sm">
-                Activer les notifications de messages ?
-              </p>
-              <p className="mt-1 text-[11px] leading-snug text-slate-500 sm:text-xs">
-                Sois averti dès qu’un créateur t’écrit ou répond à l’un de tes
-                contenus. Tu pourras modifier ce réglage plus tard.
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleCloseBanner}
-                  className="inline-flex items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 sm:text-xs"
-                >
-                  Plus tard
-                </button>
-                <button
-                  type="button"
-                  onClick={handleEnableNotifications}
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-slate-800 sm:text-xs"
-                >
-                  Activer les notifications
-                </button>
+      {/* Bandeau d’activation des notifications (gris clair) */}
+      {showBanner && (
+        <section className="fixed inset-x-0 bottom-[72px] z-20 px-4 pb-4 sm:bottom-6 sm:flex sm:justify-center sm:px-0">
+          <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-slate-50/95 p-4 shadow-lg backdrop-blur">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm">
+                🔔
               </div>
-
-              <p className="mt-2 text-[10px] leading-snug text-slate-400">
-                En continuant, tu acceptes de recevoir des notifications liées à
-                tes messages Magic Clock. Aucune pub, uniquement de l’activité
-                utile.
-              </p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-900">
+                  Activer les notifications de messages ?
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Sois averti dès qu’un créateur t’écrit ou répond à l’un de tes
+                  contenus. Tu pourras modifier ce réglage plus tard.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                    onClick={() => setShowBanner(false)}
+                  >
+                    Plus tard
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex flex-1 items-center justify-center rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                  >
+                    Activer les notifications
+                  </button>
+                </div>
+                <p className="mt-2 text-[10px] text-slate-400">
+                  En continuant, tu acceptes de recevoir des notifications liées
+                  à tes messages Magic Clock. Aucune pub, uniquement de
+                  l’activité utile.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="ml-2 mt-1 text-slate-400 hover:text-slate-600"
+                onClick={() => setShowBanner(false)}
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleCloseBanner}
-              className="ml-2 mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-              aria-label="Fermer"
-            >
-              <X className="h-3 w-3" />
-            </button>
           </div>
-        </div>
+        </section>
       )}
     </main>
   );
