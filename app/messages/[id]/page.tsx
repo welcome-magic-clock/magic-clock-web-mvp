@@ -21,7 +21,6 @@ type ChatMessage = {
   time: string;
 };
 
-// Métadonnées simples pour nos fils existants
 const chatMetas: Record<string, ChatMeta> = {
   aiko: {
     id: "aiko",
@@ -73,57 +72,110 @@ const chatMetas: Record<string, ChatMeta> = {
   },
 };
 
-const baseMessages: ChatMessage[] = [
-  {
-    id: 1,
-    from: "them",
-    text: "Salut ! Merci encore pour tes conseils couleur, c’était top 🙏",
-    time: "Il y a 2 h",
-  },
-  {
-    id: 2,
-    from: "me",
-    text: "Avec plaisir ! N’hésite pas à poster l’avant/après dans Magic Studio ✨",
-    time: "Il y a 1 h",
-  },
-  {
-    id: 3,
-    from: "them",
-    text: "Je le fais demain, j’aimerais viser le hashtag #BalayageCaramel 😍",
-    time: "Il y a 30 min",
-  },
-];
+const baseMessagesById: Record<string, ChatMessage[]> = {
+  aiko: [
+    {
+      id: 1,
+      from: "them",
+      text: "Coucou 👋 J’ai publié la nouvelle transformation caramel ✨",
+      time: "14:02",
+    },
+    {
+      id: 2,
+      from: "me",
+      text: "Je viens de la voir, elle est magnifique 😍",
+      time: "14:05",
+    },
+  ],
+  sofia: [
+    {
+      id: 1,
+      from: "them",
+      text: "On teste Magic Clock avec l’équipe du salon, c’est top !",
+      time: "Hier",
+    },
+    {
+      id: 2,
+      from: "me",
+      text: "Merci 🙏 N’hésite pas à m’envoyer tes retours.",
+      time: "Hier",
+    },
+  ],
+  lena: [
+    {
+      id: 1,
+      from: "them",
+      text: "Merci pour tes conseils sur le blond froid 💬",
+      time: "Mar.",
+    },
+    {
+      id: 2,
+      from: "me",
+      text: "Avec plaisir, tu peux enregistrer la formule dans Magic Clock.",
+      time: "Mar.",
+    },
+  ],
+  "mc-sub": [
+    {
+      id: 1,
+      from: "them",
+      text: "Nouveau abonné : @hairby_jules vient de s’abonner à ton contenu.",
+      time: "Il y a 5 min",
+    },
+  ],
+  "mc-ppv": [
+    {
+      id: 1,
+      from: "them",
+      text: "Achat PPV confirmé : « Balayage caramel studio » (4,90 CHF).",
+      time: "Il y a 12 min",
+    },
+  ],
+  "mc-likes": [
+    {
+      id: 1,
+      from: "them",
+      text: "Boom ! 12 302 likes sur « Blond ambré ». Bravo 🪄",
+      time: "Aujourd’hui",
+    },
+  ],
+};
 
-export default function ChatThreadPage({
+export default function MessageThreadPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const meta =
+  const meta: ChatMeta =
     chatMetas[params.id] ??
     ({
       id: params.id,
-      name: "Magic Clock",
-      handle: "@magic_clock_app",
-      avatarType: "brand",
-      avatarInitials: "MC",
-      avatarGradient:
-        "bg-gradient-to-tr from-indigo-500 via-purple-500 to-sky-500",
+      name: "Conversation",
+      handle: "",
     } as ChatMeta);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(baseMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    baseMessagesById[params.id] ?? [
+      {
+        id: 1,
+        from: "them",
+        text: "Bienvenue dans ta messagerie Magic Clock ✨",
+        time: "Maintenant",
+      },
+    ]
+  );
   const [draft, setDraft] = useState("");
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!draft.trim()) return;
+  const handleSend = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
 
     setMessages((prev) => [
       ...prev,
       {
         id: prev.length + 1,
         from: "me",
-        text: draft.trim(),
+        text: trimmed,
         time: "Maintenant",
       },
     ]);
@@ -131,12 +183,12 @@ export default function ChatThreadPage({
   };
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-80px)] max-w-3xl flex-col px-4 pb-24 pt-4 sm:px-6 lg:px-8">
-      {/* Header */}
+    <main className="mx-auto flex h-[calc(100vh-72px)] max-w-3xl flex-col px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+      {/* Header chat */}
       <header className="mb-3 flex items-center gap-3">
         <Link
           href="/messages"
-          className="mr-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
           aria-label="Retour aux messages"
         >
           ←
@@ -152,14 +204,14 @@ export default function ChatThreadPage({
               />
             ) : meta.avatarType === "brand" ? (
               <div
-                className={`flex h-full w-full items-center justify-center text-xs font-semibold text-white ${
+                className={`flex h-full w-full items-center justify-center rounded-full text-xs font-semibold text-white ${
                   meta.avatarGradient ?? "bg-slate-400"
                 }`}
               >
                 {meta.avatarInitials ?? "MC"}
               </div>
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-600">
+              <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500">
                 {meta.name
                   .split(" ")
                   .map((n) => n[0])
@@ -169,72 +221,74 @@ export default function ChatThreadPage({
               </div>
             )}
           </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">
               {meta.name}
             </p>
-            <p className="truncate text-xs text-slate-500">{meta.handle}</p>
+            {meta.handle && (
+              <p className="text-[11px] text-slate-500">{meta.handle}</p>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Zone de conversation */}
-      <section className="flex-1 overflow-y-auto rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
-        <div className="mb-4 flex justify-center">
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-500">
-            Aujourd’hui
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${
-                msg.from === "me" ? "justify-end" : "justify-start"
-              }`}
-            >
+      {/* Zone messages */}
+      <section className="flex-1 overflow-y-auto rounded-3xl border border-slate-200 bg-white/80 p-3 sm:p-4">
+        <div className="flex flex-col gap-2 text-sm">
+          {messages.map((msg) => {
+            const isMe = msg.from === "me";
+            return (
               <div
-                className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                  msg.from === "me"
-                    ? "rounded-br-sm bg-violet-600 text-white"
-                    : "rounded-bl-sm border border-slate-100 bg-white text-slate-900"
-                }`}
+                key={msg.id}
+                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
               >
-                <p>{msg.text}</p>
-                <p
-                  className={`mt-1 text-[10px] ${
-                    msg.from === "me" ? "text-violet-200" : "text-slate-400"
+                <div
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                    isMe
+                      ? "bg-violet-600 text-white"
+                      : "bg-slate-100 text-slate-900"
                   }`}
                 >
-                  {msg.time}
-                </p>
+                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  <p
+                    className={`mt-1 text-[10px] ${
+                      isMe
+                        ? "text-violet-100/80"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {msg.time}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
-      {/* Zone de saisie */}
-      <form
-        onSubmit={handleSend}
-        className="mt-3 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm"
-      >
+      {/* Barre d’entrée message */}
+      <section className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm">
         <input
           type="text"
-          placeholder="Écrire un message…"
-          className="flex-1 border-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          placeholder="Écrire un message…"
+          className="flex-1 border-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
         />
         <button
-          type="submit"
-          className="inline-flex items-center justify-center rounded-full bg-violet-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-violet-700"
+          type="button"
+          onClick={handleSend}
+          className="inline-flex items-center justify-center rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700"
         >
           Envoyer
         </button>
-      </form>
+      </section>
     </main>
   );
 }
