@@ -1,9 +1,7 @@
 // app/notifications/page.tsx
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Notifications – Magic Clock",
-};
+import { useState } from "react";
 
 type NotificationType = "activity" | "earnings" | "system";
 
@@ -71,11 +69,21 @@ const NOTIFICATIONS_EARLIER: NotificationItem[] = [
   },
 ];
 
+const gradientByType: Record<NotificationType, string> = {
+  activity: "bg-gradient-to-tr from-sky-500 via-indigo-500 to-violet-500",
+  earnings: "bg-gradient-to-tr from-emerald-500 via-teal-500 to-sky-400",
+  system: "bg-gradient-to-tr from-slate-500 via-slate-600 to-slate-800",
+};
+
 function NotificationCard({ item }: { item: NotificationItem }) {
+  const gradient = gradientByType[item.type] ?? "bg-slate-900";
+
   return (
     <article className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-4">
-      {/* Avatar */}
-      <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+      {/* Avatar coloré / dégradé */}
+      <div
+        className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${gradient}`}
+      >
         {item.avatarInitial ?? "MC"}
       </div>
 
@@ -99,111 +107,141 @@ function NotificationCard({ item }: { item: NotificationItem }) {
 }
 
 export default function NotificationsPage() {
-  return (
-    <main className="mx-auto max-w-3xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-      {/* Header */}
-      <header className="mb-4 sm:mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Notifications
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Suis en un coup d’œil l’activité autour de tes contenus Magic Clock :
-          likes, abonnements, achats PPV et messages importants de la
-          plateforme.
-        </p>
-      </header>
+  const [showBanner, setShowBanner] = useState(true);
 
-      {/* Bannière : activer les notifications (MVP visuel, non fonctionnel) */}
-      <section className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-xs text-slate-700 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-lg">
-            🔔
+  return (
+    <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+      {/* Carte principale, cohérente avec Messages */}
+      <section className="mt-2 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
+            Notifications
+          </h1>
+          {/* Compteur simple (total) */}
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+            {NOTIFICATIONS_TODAY.length +
+              NOTIFICATIONS_THIS_WEEK.length +
+              NOTIFICATIONS_EARLIER.length}{" "}
+            événements
+          </span>
+        </div>
+
+        {/* Filtres visuels (non interactifs pour le MVP) */}
+        <section className="mb-5 flex flex-wrap gap-2 text-xs">
+          <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-medium text-white">
+            Tout
+          </span>
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
+            Activité
+          </span>
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
+            Revenus
+          </span>
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
+            Système
+          </span>
+        </section>
+
+        {/* Aujourd’hui */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Aujourd’hui
+          </h2>
+          <div className="space-y-3">
+            {NOTIFICATIONS_TODAY.map((item) => (
+              <NotificationCard key={item.id} item={item} />
+            ))}
           </div>
-          <div className="flex-1">
-            <h2 className="text-sm font-semibold text-slate-900">
-              Activer les notifications Magic Clock ?
-            </h2>
-            <p className="mt-1 text-xs text-slate-600">
-              Reste informé·e en temps réel des nouveaux abonnements, ventes
-              PPV, likes et commentaires sur tes contenus. Tu pourras modifier
-              ce choix plus tard dans les paramètres.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+        </section>
+
+        {/* Cette semaine */}
+        <section className="mt-6 space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Cette semaine
+          </h2>
+          <div className="space-y-3">
+            {NOTIFICATIONS_THIS_WEEK.map((item) => (
+              <NotificationCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+
+        {/* Plus tôt */}
+        <section className="mt-6 space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Plus tôt
+          </h2>
+          <div className="space-y-3">
+            {NOTIFICATIONS_EARLIER.map((item) => (
+              <NotificationCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      </section>
+
+      {/* Bannière d’activation des notifications (pop-up en bas, comme Messages) */}
+      {showBanner && (
+        <section className="fixed inset-x-0 bottom-[72px] z-20 px-4 pb-4 sm:bottom-6 sm:flex sm:justify-center sm:px-0">
+          <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-slate-50/95 p-4 shadow-lg backdrop-blur">
+            <div className="flex items-start gap-3">
+              {/* Icône style Magic Clock */}
+              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-sky-500 text-white shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                >
+                  <path
+                    d="M12 3a5 5 0 00-5 5v2.586c0 .265-.105.52-.293.707L5 14h14l-1.707-2.707A1 1 0 0117 10.586V8a5 5 0 00-5-5z"
+                    fill="currentColor"
+                  />
+                  <path d="M10 18a2 2 0 004 0h-4z" fill="currentColor" />
+                </svg>
+              </div>
+
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-900">
+                  Activer les notifications Magic Clock ?
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Reste informé·e en temps réel des nouveaux abonnements, ventes
+                  PPV, likes et commentaires sur tes contenus. Tu pourras
+                  modifier ce choix plus tard dans les paramètres.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                    onClick={() => setShowBanner(false)}
+                  >
+                    Plus tard
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex flex-1 items-center justify-center rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                  >
+                    Activer les notifications
+                  </button>
+                </div>
+                <p className="mt-2 text-[10px] text-slate-400">
+                  En continuant, tu acceptes de recevoir des notifications
+                  liées à ton activité Magic Clock. Aucune pub, uniquement de
+                  l’activité utile.
+                </p>
+              </div>
+
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                className="ml-2 mt-1 text-slate-400 hover:text-slate-600"
+                onClick={() => setShowBanner(false)}
+                aria-label="Fermer"
               >
-                Plus tard
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-indigo-700"
-              >
-                Activer les notifications
+                ✕
               </button>
             </div>
           </div>
-        </div>
-        {/* 
-          NOTE MVP :
-          Ces boutons sont uniquement visuels pour l’instant.
-          Plus tard, on pourra :
-          - déclencher une vraie demande de permission navigateur / mobile,
-          - enregistrer le choix de l’utilisateur dans le backend.
-        */}
-      </section>
-
-      {/* Filtres visuels (non interactifs en MVP) */}
-      <section className="mb-6 flex flex-wrap gap-2 text-xs">
-        <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-medium text-white">
-          Tout
-        </span>
-        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
-          Activité
-        </span>
-        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
-          Revenus
-        </span>
-        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
-          Système
-        </span>
-      </section>
-
-      {/* Aujourd’hui */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Aujourd’hui
-        </h2>
-        <div className="space-y-3">
-          {NOTIFICATIONS_TODAY.map((item) => (
-            <NotificationCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
-
-      {/* Cette semaine */}
-      <section className="mt-6 space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Cette semaine
-        </h2>
-        <div className="space-y-3">
-          {NOTIFICATIONS_THIS_WEEK.map((item) => (
-            <NotificationCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
-
-      {/* Plus tôt */}
-      <section className="mt-6 space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Plus tôt
-        </h2>
-        <div className="space-y-3">
-          {NOTIFICATIONS_EARLIER.map((item) => (
-            <NotificationCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
+        </section>
+      )}
     </main>
   );
 }
