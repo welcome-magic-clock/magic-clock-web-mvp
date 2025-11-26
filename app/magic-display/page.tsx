@@ -17,42 +17,42 @@ type Segment = {
 const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 1,
-    label: "Étape 1",
+    label: "Face 1",
     description: "Diagnostic / point de départ",
     angleDeg: -90,
     hasMedia: false,
   },
   {
     id: 2,
-    label: "Étape 2",
+    label: "Face 2",
     description: "Préparation / sectionnement",
     angleDeg: -30,
     hasMedia: false,
   },
   {
     id: 3,
-    label: "Étape 3",
+    label: "Face 3",
     description: "Application principale",
     angleDeg: 30,
     hasMedia: false,
   },
   {
     id: 4,
-    label: "Étape 4",
+    label: "Face 4",
     description: "Patine / correction",
     angleDeg: 90,
     hasMedia: false,
   },
   {
     id: 5,
-    label: "Étape 5",
+    label: "Face 5",
     description: "Finition / coiffage",
     angleDeg: 150,
     hasMedia: false,
   },
   {
     id: 6,
-    label: "Étape 6",
+    label: "Face 6",
     description: "Résultat / conseils maison",
     angleDeg: 210,
     hasMedia: false,
@@ -82,13 +82,13 @@ export default function MagicDisplayFacePage() {
       {/* Header simple – on reste neutre, pas de logique métier figée */}
       <header className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-violet-500">
-          Magic Display · Prototype face universelle v1
+          Magic Display · Vue cube 2D (prototype v1)
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Face Magic Clock – 6 étapes libres
+          Cube Magic Clock – 6 faces libres
         </h1>
         <p className="text-sm text-slate-500">
-          Chaque point autour du cercle représente une étape. Tu peux lui
+          Chaque point autour du cercle représente une face du cube. Tu peux lui
           associer une photo ou une vidéo (MVP purement visuel, pas d&apos;upload
           réel pour l&apos;instant).
         </p>
@@ -147,7 +147,7 @@ export default function MagicDisplayFacePage() {
                       top: `${top}%`,
                       left: `${left}%`,
                     }}
-                    aria-label={`Segment ${seg.label}`}
+                    aria-label={`Face ${seg.label}`}
                   >
                     {icon}
                   </button>
@@ -156,10 +156,10 @@ export default function MagicDisplayFacePage() {
             </div>
           </div>
 
-          {/* Légende / liste des 6 étapes */}
+          {/* Légende / liste des 6 faces */}
           <div className="flex-1 space-y-3">
             <h2 className="text-sm font-semibold text-slate-900">
-              Étapes de cette face
+              Faces de ce cube
             </h2>
             <div className="space-y-2">
               {segments.map((seg) => {
@@ -200,13 +200,13 @@ export default function MagicDisplayFacePage() {
           </div>
         </div>
 
-        {/* Panneau d’action segment sélectionné */}
+        {/* Panneau d’action face sélectionnée */}
         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-xs text-slate-700 sm:px-4">
           {selectedSegment ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Segment sélectionné
+                  Face sélectionnée
                 </p>
                 <p className="text-sm font-semibold text-slate-900">
                   {selectedSegment.label}
@@ -234,9 +234,9 @@ export default function MagicDisplayFacePage() {
             </div>
           ) : (
             <p className="text-[11px] text-slate-500">
-              Clique sur un rond autour du cercle pour sélectionner une étape,
-              puis choisis si tu veux y associer une photo ou une vidéo. (MVP
-              local, aucune donnée n&apos;est sauvegardée pour l&apos;instant.)
+              Clique sur un rond autour du cercle pour sélectionner une face du
+              cube, puis choisis si tu veux y associer une photo ou une vidéo.
+              (MVP local, aucune donnée n&apos;est sauvegardée pour l&apos;instant.)
             </p>
           )}
         </div>
