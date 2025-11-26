@@ -1,8 +1,8 @@
 // app/messages/page.tsx
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Conversation = {
   id: string;
@@ -90,6 +90,7 @@ const conversations: Conversation[] = [
 ];
 
 export default function MessagesPage() {
+  const router = useRouter();
   const [showBanner, setShowBanner] = useState(true);
 
   return (
@@ -119,8 +120,9 @@ export default function MessagesPage() {
         <ul className="divide-y divide-slate-100">
           {conversations.map((conv) => (
             <li key={conv.id} className="py-3 first:pt-1 last:pb-0">
-              <Link
-                href={`/messages/${conv.id}`}
+              <button
+                type="button"
+                onClick={() => router.push(`/messages/${conv.id}`)}
                 className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-slate-50"
               >
                 {/* Avatar */}
@@ -170,7 +172,7 @@ export default function MessagesPage() {
                 {conv.unread && (
                   <span className="ml-1 h-2 w-2 flex-shrink-0 rounded-full bg-violet-500" />
                 )}
-              </Link>
+              </button>
             </li>
           ))}
         </ul>
