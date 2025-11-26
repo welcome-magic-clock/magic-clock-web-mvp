@@ -1,8 +1,8 @@
 // app/messages/page.tsx
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 type Conversation = {
   id: string;
@@ -12,10 +12,10 @@ type Conversation = {
   time: string;
   unread?: boolean;
   isSystem?: boolean;
-  avatarUrl?: string;
+  avatarUrl?: string; // photos locales (Aiko, Sofia, Lena)
   avatarType?: "photo" | "brand";
-  avatarInitials?: string;
-  avatarGradient?: string;
+  avatarInitials?: string; // bulles "MC"
+  avatarGradient?: string; // dégradés Magic Clock
 };
 
 const conversations: Conversation[] = [
@@ -90,12 +90,11 @@ const conversations: Conversation[] = [
 ];
 
 export default function MessagesPage() {
-  const router = useRouter();
   const [showBanner, setShowBanner] = useState(true);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
-      {/* Carte principale Messages */}
+      {/* Carte principale Messages (plein écran mobile) */}
       <section className="mt-2 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
         <div className="mb-3 flex items-center justify-between">
           <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
@@ -120,9 +119,8 @@ export default function MessagesPage() {
         <ul className="divide-y divide-slate-100">
           {conversations.map((conv) => (
             <li key={conv.id} className="py-3 first:pt-1 last:pb-0">
-              <button
-                type="button"
-                onClick={() => router.push(`/messages/${conv.id}`)}
+              <Link
+                href={`/messages/${conv.id}`}
                 className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-slate-50"
               >
                 {/* Avatar */}
@@ -172,7 +170,7 @@ export default function MessagesPage() {
                 {conv.unread && (
                   <span className="ml-1 h-2 w-2 flex-shrink-0 rounded-full bg-violet-500" />
                 )}
-              </button>
+              </Link>
             </li>
           ))}
         </ul>
@@ -183,7 +181,7 @@ export default function MessagesPage() {
         <section className="fixed inset-x-0 bottom-[72px] z-20 px-4 pb-4 sm:bottom-6 sm:flex sm:justify-center sm:px-0">
           <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-slate-50/95 p-4 shadow-lg backdrop-blur">
             <div className="flex items-start gap-3">
-              {/* Icône Magic Clock notifications */}
+              {/* Icône moderne Magic Clock notifications */}
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-sky-500 text-white shadow-sm">
                 <svg
                   viewBox="0 0 24 24"
@@ -194,10 +192,7 @@ export default function MessagesPage() {
                     d="M12 3a5 5 0 00-5 5v2.586c0 .265-.105.52-.293.707L5 14h14l-1.707-2.707A1 1 0 0117 10.586V8a5 5 0 00-5-5z"
                     fill="currentColor"
                   />
-                  <path
-                    d="M10 18a2 2 0 004 0h-4z"
-                    fill="currentColor"
-                  />
+                  <path d="M10 18a2 2 0 004 0h-4z" fill="currentColor" />
                 </svg>
               </div>
 
