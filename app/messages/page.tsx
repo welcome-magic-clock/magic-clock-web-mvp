@@ -1,8 +1,8 @@
 // app/messages/page.tsx
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 
 type Conversation = {
   id: string;
@@ -12,10 +12,10 @@ type Conversation = {
   time: string;
   unread?: boolean;
   isSystem?: boolean;
-  avatarUrl?: string; // pour les photos locales (Aiko, Sofia, Lena)
+  avatarUrl?: string;
   avatarType?: "photo" | "brand";
-  avatarInitials?: string; // pour les bulles "MC"
-  avatarGradient?: string; // pour les dégradés Magic Clock
+  avatarInitials?: string;
+  avatarGradient?: string;
 };
 
 const conversations: Conversation[] = [
@@ -94,7 +94,7 @@ export default function MessagesPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
-      {/* Carte principale Messages (plein écran mobile) */}
+      {/* Carte principale Messages */}
       <section className="mt-2 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
         <div className="mb-3 flex items-center justify-between">
           <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
@@ -181,7 +181,7 @@ export default function MessagesPage() {
         <section className="fixed inset-x-0 bottom-[72px] z-20 px-4 pb-4 sm:bottom-6 sm:flex sm:justify-center sm:px-0">
           <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-slate-50/95 p-4 shadow-lg backdrop-blur">
             <div className="flex items-start gap-3">
-              {/* Icône moderne Magic Clock notifications */}
+              {/* Icône Magic Clock notifications */}
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-sky-500 text-white shadow-sm">
                 <svg
                   viewBox="0 0 24 24"
@@ -192,7 +192,10 @@ export default function MessagesPage() {
                     d="M12 3a5 5 0 00-5 5v2.586c0 .265-.105.52-.293.707L5 14h14l-1.707-2.707A1 1 0 0117 10.586V8a5 5 0 00-5-5z"
                     fill="currentColor"
                   />
-                  <path d="M10 18a2 2 0 004 0h-4z" fill="currentColor" />
+                  <path
+                    d="M10 18a2 2 0 004 0h-4z"
+                    fill="currentColor"
+                  />
                 </svg>
               </div>
 
@@ -220,8 +223,8 @@ export default function MessagesPage() {
                   </button>
                 </div>
                 <p className="mt-2 text-[10px] text-slate-400">
-                  En continuant, tu acceptes de recevoir des notifications
-                  liées à tes messages Magic Clock. Aucune pub, uniquement de
+                  En continuant, tu acceptes de recevoir des notifications liées
+                  à tes messages Magic Clock. Aucune pub, uniquement de
                   l’activité utile.
                 </p>
               </div>
