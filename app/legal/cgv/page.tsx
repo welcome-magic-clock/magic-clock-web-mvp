@@ -1,4 +1,5 @@
 // app/legal/cgv/page.tsx
+import { PaymentMethodsSection } from "@/components/legal/PaymentMethodsSection";
 
 export const metadata = {
   title: "CGV – Magic Clock",
@@ -333,6 +334,9 @@ export default function LegalCGVPage() {
             définitive.
           </p>
         </section>
+
+        {/* 8 bis. Moyens de paiement disponibles (section réutilisable) */}
+        <PaymentMethodsSection />
 
         {/* 9. Rémunération des créateurs */}
         <section>
