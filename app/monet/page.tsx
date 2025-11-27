@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 
@@ -123,7 +124,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 /**
- * Interprétation : les prix saisis (Abo / PPV) sont TTC.
+ * Interprétation : les prix saisis (Abo / Pay-Per-View) sont TTC.
  * On retire la TVA pour obtenir la base HT, puis on applique la commission.
  *
  * @param grossTotal Montant TOTAL TTC (ce que payent les clients)
@@ -288,7 +289,7 @@ export default function MonetPage() {
   }, [historyPoints]);
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container space-y-8 py-8">
       {/* HEADER AVEC AVATAR AIKO */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
@@ -315,13 +316,33 @@ export default function MonetPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h2 className="text-xl font-semibold">Monétisation</h2>
           <p className="text-sm text-slate-600">
             Comprends l&apos;impact de ton audience et simule ton potentiel avec
-            Magic Clock (abonnements + PPV). Partie haute = ton cockpit. Partie
-            basse = simulateur.
+            Magic Clock (abonnements + Pay-Per-View). Partie haute = ton
+            cockpit. Partie basse = simulateur.
           </p>
+
+          {/* Lien vers la page Prix & monétisation */}
+          <div className="mb-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-slate-800 sm:text-sm">
+            <p className="font-medium">Nouveau sur Magic Clock ?</p>
+            <p>
+              Tu peux utiliser Magic Clock en{" "}
+              <span className="font-semibold">MODE FREE</span> sans monétiser,
+              puis activer les modèles{" "}
+              <span className="font-semibold">SUB / Pay-Per-View</span> quand tu
+              es prêt. Découvre comment tout fonctionne sur la page{" "}
+              <Link
+                href="/pricing"
+                className="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-800"
+              >
+                Prix &amp; monétisation
+              </Link>
+              .
+            </p>
+          </div>
+
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
             <Info className="h-3 w-3" />
             <span>
@@ -340,8 +361,8 @@ export default function MonetPage() {
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="inline-flex h-6 items-center rounded-full bg-slate-900 px-3 text-xs font-semibold text-white">
-              Réalité · compte Magic Clock
+            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
+              Réalité · compte
             </span>
             <span className="flex items-center gap-1 text-xs text-slate-500">
               <Info className="h-3 w-3" />
@@ -386,18 +407,19 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* PPV */}
+          {/* Pay-Per-View */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">Contenus PPV</p>
+            <p className="text-xs text-slate-500">Contenus Pay-Per-View</p>
             <p className="mt-1 text-lg font-semibold">
               {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
               Prix moyen : {formatMoney(realPpvPrice)} (TTC) ·{" "}
-              {realPpvPerBuyer.toFixed(1)} PPV / acheteur / mois.
+              {realPpvPerBuyer.toFixed(1)} Pay-Per-View / acheteur / mois.
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Revenu brut PPV : {formatMoney(realGrossPpv)} / mois (TTC).
+              Revenu brut Pay-Per-View : {formatMoney(realGrossPpv)} / mois
+              (TTC).
             </p>
             <div className="mt-2">
               <TrendBadge value={realPpvDelta} />
@@ -407,12 +429,12 @@ export default function MonetPage() {
 
         {/* Résumé revenus + TVA + commission réelle */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col justify-between">
+          <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-500">Revenu brut total</p>
-                  <p className="mt-1 text-2xl font-semibold">
+                  <p className="mt-1 text-lg font-semibold">
                     {formatMoney(realGrossTotal)}
                   </p>
                 </div>
@@ -433,7 +455,7 @@ export default function MonetPage() {
                   <p className="text-[11px] text-slate-500">
                     Part plateforme (HT)
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-700">
+                  <p className="mt-1 text-base font-semibold text-slate-700">
                     {formatMoney(realPlatformShareNet)}
                   </p>
                   <p className="mt-1 text-[11px] text-slate-500">
@@ -445,7 +467,7 @@ export default function MonetPage() {
                   <p className="text-[11px] text-slate-500">
                     Part créateur estimée (HT)
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-emerald-600">
+                  <p className="mt-1 text-2xl font-semibold text-emerald-600">
                     {formatMoney(realCreatorShareNet)}
                   </p>
                   <p className="mt-1 text-[11px] text-slate-500">
@@ -457,7 +479,7 @@ export default function MonetPage() {
           </div>
 
           {/* Paliers commission (réels, non modifiables) */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center justify-between text-xs">
               <p className="font-medium text-slate-700">
                 Paliers de commission Magic Clock
@@ -488,7 +510,8 @@ export default function MonetPage() {
                   >
                     <div className="flex flex-col">
                       <span className="font-semibold">
-                        {tier.label} · {Math.round(tier.rate * 100)}% plateforme
+                        {tier.label} · {Math.round(tier.rate * 100)}%
+                        &nbsp;plateforme
                       </span>
                       <span className="text-[11px] text-slate-500">
                         {tier.id === "BRONZE" && "0 → 1 000 likes / mois"}
@@ -541,7 +564,7 @@ export default function MonetPage() {
       {/* Séparateur Réalité / Simulateur */}
       <div className="relative my-4 flex items-center justify-center">
         <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-        <span className="absolute inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600 border border-slate-200">
+        <span className="absolute inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
           Simulateur (projection)
         </span>
@@ -584,7 +607,7 @@ export default function MonetPage() {
               <span className="font-medium text-slate-700">
                 Followers (tous réseaux)
               </span>
-              <span className="text-slate-500">
+              <span className="font-semibold text-slate-700">
                 {simFollowers.toLocaleString("fr-CH")}
               </span>
             </div>
@@ -601,8 +624,8 @@ export default function MonetPage() {
             />
             <p className="text-[11px] text-slate-500">
               Glisse pour simuler ton audience. Le curseur va jusqu&apos;à 1
-              million pour rester lisible, mais en réalité il n&apos;y a pas
-              de limite.
+              million pour rester lisible, mais en réalité il n&apos;y a pas de
+              limite.
             </p>
           </div>
 
@@ -623,9 +646,12 @@ export default function MonetPage() {
                 max={999}
                 step={0.5}
                 value={simAboPrice}
-                onChange={(e) =>
-                  setSimAboPrice(clamp(Number(e.target.value), 0.99, 999))
-                }
+                onChange={(e) => {
+                  const raw = Number(e.target.value);
+                  const clamped = clamp(raw, 0.99, 999);
+                  const rounded = Math.round(clamped * 100) / 100;
+                  setSimAboPrice(rounded);
+                }}
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
@@ -659,12 +685,12 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* PPV */}
+          {/* Pay-Per-View */}
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
-                  Prix PPV moyen
+                  Prix Pay-Per-View moyen
                 </span>
                 <span className="text-slate-500">
                   {simPpvPrice.toFixed(2)} CHF
@@ -676,20 +702,24 @@ export default function MonetPage() {
                 max={999}
                 step={0.5}
                 value={simPpvPrice}
-                onChange={(e) =>
-                  setSimPpvPrice(clamp(Number(e.target.value), 0.99, 999))
-                }
+                onChange={(e) => {
+                  const raw = Number(e.target.value);
+                  const clamped = clamp(raw, 0.99, 999);
+                  const rounded = Math.round(clamped * 100) / 100;
+                  setSimPpvPrice(rounded);
+                }}
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Prix moyen d&apos;un contenu PPV (0,99 → 999 CHF, TTC).
+                Prix moyen d&apos;un contenu Pay-Per-View (PPV) (0,99 → 999 CHF,
+                TTC).
               </p>
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
-                  Conversion PPV
+                  Conversion Pay-Per-View
                 </span>
                 <span className="text-slate-500">
                   {simPpvConv.toFixed(1)}% followers
@@ -707,14 +737,15 @@ export default function MonetPage() {
                 className="w-full"
               />
               <p className="text-[11px] text-slate-500">
-                Part de tes followers qui achètent au moins un PPV ce mois-ci.
+                Part de tes followers qui achètent au moins un Pay-Per-View ce
+                mois-ci.
               </p>
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
-                  PPV / acheteur / mois
+                  Pay-Per-View / acheteur / mois
                 </span>
                 <span className="text-slate-500">
                   {simPpvPerBuyer.toFixed(1)}
@@ -725,11 +756,13 @@ export default function MonetPage() {
                 min={0}
                 step={0.1}
                 value={simPpvPerBuyer}
-                onChange={(e) =>
-                  setSimPpvPerBuyer(
-                    clamp(Number(e.target.value) || 0, 0, 9999),
-                  )
-                }
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const normalized = raw.replace(/^0+(?=\d)/, "");
+                  const num = Number(normalized || "0");
+                  setSimPpvPerBuyer(clamp(num, 0, 9999));
+                }}
                 className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
               />
               <p className="text-[11px] text-slate-500">
@@ -786,7 +819,7 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Acheteurs PPV estimés · {simPpvConv.toFixed(1)}%
+                Acheteurs Pay-Per-View estimés · {simPpvConv.toFixed(1)}%
               </span>
               <span className="font-semibold">
                 {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
@@ -802,7 +835,7 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Revenu brut PPV (TTC, avant TVA)
+                Revenu brut Pay-Per-View (TTC, avant TVA)
               </span>
               <span className="font-semibold">
                 {formatMoney(simGrossPpv)}
@@ -810,7 +843,7 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
               <span className="text-slate-500">Revenu brut total (TTC)</span>
-              <span className="text-base font-semibold">
+              <span className="text-sm font-medium">
                 {formatMoney(simGrossTotal)}
               </span>
             </div>
@@ -841,14 +874,14 @@ export default function MonetPage() {
               <span className="text-slate-500">
                 Part créateur (HT, après TVA + commission)
               </span>
-              <span className="font-semibold text-emerald-600">
+              <span className="text-lg font-semibold text-emerald-600">
                 {formatMoney(simCreatorShareNet)}
               </span>
             </div>
           </div>
 
           {/* Donut + légende */}
-          <div className="mt-2 grid gap-4 items-center md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="flex flex-col items-center gap-2">
               <div
                 className="flex h-32 w-32 items-center justify-center rounded-full"
@@ -859,8 +892,9 @@ export default function MonetPage() {
                 </div>
               </div>
               <p className="text-[11px] text-slate-500">
-                Répartition Abo / PPV dans ton revenu brut (TTC). Le montant au
-                centre est ta part créateur estimée (HT) après TVA + commission.
+                Répartition Abo / Pay-Per-View dans ton revenu brut (TTC). Le
+                montant au centre est ta part créateur estimée (HT) après TVA +
+                commission.
               </p>
               <div className="flex items-center gap-3 text-[11px]">
                 <div className="flex items-center gap-1">
@@ -869,7 +903,7 @@ export default function MonetPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="inline-block h-2 w-2 rounded-full bg-[rgb(16,185,129)]" />
-                  <span>PPV · {simPpvSharePct.toFixed(1)}%</span>
+                  <span>Pay-Per-View · {simPpvSharePct.toFixed(1)}%</span>
                 </div>
               </div>
             </div>
