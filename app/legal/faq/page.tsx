@@ -17,6 +17,17 @@ export default function LegalFAQPage() {
           <strong>utilisateurs (abonnements & contenus PPV)</strong> dans la
           version bêta de Magic Clock.
         </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Pour un aperçu global des modèles tarifaires et du fonctionnement de
+          la monétisation, tu peux aussi consulter la page{" "}
+          <a
+            href="/pricing"
+            className="font-medium text-indigo-600 hover:text-indigo-700"
+          >
+            Prix &amp; monétisation
+          </a>
+          .
+        </p>
       </header>
 
       <div className="space-y-10 text-sm leading-relaxed text-slate-700">
