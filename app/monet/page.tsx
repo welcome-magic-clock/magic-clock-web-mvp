@@ -1066,7 +1066,7 @@ export default function MonetPage() {
               </div>
             </div>
 
-            {/* Courbe d'évolution */}
+                       {/* Courbe d'évolution */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (part créateur HT)
@@ -1077,7 +1077,7 @@ export default function MonetPage() {
                     <linearGradient
                       id="mc-line"
                       x1="0%"
-                      y1="0%"
+                      y1="0%
                       x2="100%"
                       y2="0%"
                     >
