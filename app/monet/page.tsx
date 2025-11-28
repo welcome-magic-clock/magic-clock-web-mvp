@@ -753,7 +753,7 @@ export default function MonetPage() {
         const raw = e.target.value;
         const normalized = raw.replace(/^0+(?=\d)/, "");
         const num = Number(normalized || "0");
-        setSimFollowers(clamp(num, 0, 10000000));
+        setSimFollowers(clamp(num, 0, 1000000000));
       }}
       className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-[11px]"
     />
