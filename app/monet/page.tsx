@@ -1074,13 +1074,13 @@ export default function MonetPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                 <svg viewBox="0 0 100 100" className="h-24 w-full">
                   <defs>
-                    <linearGradient
-                      id="mc-line"
-                      x1="0%"
-                      y1="0%
-                      x2="100%"
-                      y2="0%"
-                    >
+                   <linearGradient
+  id="mc-line"
+  x1="0%"
+  y1="0%"
+  x2="100%"
+  y2="0%"
+>
                       <stop offset="0%" stopColor="#38bdf8" />
                       <stop offset="100%" stopColor="#22c55e" />
                     </linearGradient>
