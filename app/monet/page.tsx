@@ -777,20 +777,20 @@ export default function MonetPage() {
                   {simAboPrice.toFixed(2)} CHF / mois
                 </span>
               </div>
-              <input
-                type="range"
-                min={0.99}
-                max={999}
-                step={0.5}
-                value={simAboPrice}
-                onChange={(e) => {
-                  const raw = Number(e.target.value);
-                  const clamped = clamp(raw, 0.99, 999);
-                  const rounded = Math.round(clamped * 100) / 100;
-                  setSimAboPrice(rounded);
-                }}
-                className="w-full"
-              />
+             <input
+  type="range"
+  min={0.99}
+  max={1000}
+  step={0.5}
+  value={simAboPrice}
+  onChange={(e) => {
+    const raw = Number(e.target.value);
+    const clamped = clamp(raw, 0.99, 999); // ← garde bien 999 ici
+    const rounded = Math.round(clamped * 100) / 100;
+    setSimAboPrice(rounded);
+  }}
+  className="w-full"
+/>
               <p className="text-[11px] text-slate-500">
                 Tarification Abo Magic Clock (0,99 → 999 CHF / mois, TTC).
               </p>
@@ -833,20 +833,20 @@ export default function MonetPage() {
                   {simPpvPrice.toFixed(2)} CHF
                 </span>
               </div>
-              <input
-                type="range"
-                min={0.99}
-                max={999}
-                step={0.5}
-                value={simPpvPrice}
-                onChange={(e) => {
-                  const raw = Number(e.target.value);
-                  const clamped = clamp(raw, 0.99, 999);
-                  const rounded = Math.round(clamped * 100) / 100;
-                  setSimPpvPrice(rounded);
-                }}
-                className="w-full"
-              />
+            <input
+  type="range"
+  min={0.99}
+  max={1000}
+  step={0.5}
+  value={simPpvPrice}
+  onChange={(e) => {
+    const raw = Number(e.target.value);
+    const clamped = clamp(raw, 0.99, 999);
+    const rounded = Math.round(clamped * 100) / 100;
+    setSimPpvPrice(rounded);
+  }}
+  className="w-full"
+/>
               <p className="text-[11px] text-slate-500">
                 Prix moyen d&apos;un contenu Pay-Per-View (PPV) (0,99 → 999 CHF,
                 TTC).
