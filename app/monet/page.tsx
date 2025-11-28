@@ -879,36 +879,57 @@ export default function MonetPage() {
               </p>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
-                  Pay-Per-View / acheteur / mois
-                </span>
-                <span className="text-slate-500">
-                  {simPpvPerBuyer.toFixed(1)}
-                </span>
-              </div>
-              <input
-                type="number"
-                min={0}
-                step={0.1}
-                value={simPpvPerBuyer}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const normalized = raw.replace(/^0+(?=\d)/, "");
-                  const num = Number(normalized || "0");
-                  setSimPpvPerBuyer(clamp(num, 0, 9999));
-                }}
-                className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-              />
-              <p className="text-[11px] text-slate-500">
-                Tu peux saisir n&apos;importe quelle valeur (0 → ∞). Le champ
-                n&apos;est pas limité par un slider.
-              </p>
-            </div>
-          </div>
+           <div className="space-y-1">
+  <div className="flex items-center justify-between text-xs">
+    <span className="font-medium text-slate-700">
+      Pay-Per-View / acheteur / mois
+    </span>
+    <span className="text-slate-500">
+      {simPpvPerBuyer.toFixed(1)}
+    </span>
+  </div>
 
+  {/* Slider rapide (0 → 100 PPV / acheteur / mois) */}
+  <input
+    type="range"
+    min={0}
+    max={100}
+    step={0.1}
+    value={Math.min(simPpvPerBuyer, 100)}
+    onChange={(e) => {
+      const num = Number(e.target.value);
+      setSimPpvPerBuyer(clamp(num, 0, 100000000));
+    }}
+    className="w-full"
+  />
+
+  {/* Champ numérique comme pour Followers */}
+  <div className="mt-2 flex items-center justify-between gap-2">
+    <span className="text-[11px] text-slate-500">
+      Saisis un nombre précis :
+    </span>
+    <input
+      type="number"
+      min={0}
+      step={0.1}
+      value={simPpvPerBuyer}
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => {
+        const raw = e.target.value;
+        const normalized = raw.replace(/^0+(?=\d)/, "");
+        const num = Number(normalized || "0");
+        setSimPpvPerBuyer(clamp(num, 0, 100000000));
+      }}
+      className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-xs"
+    />
+  </div>
+
+  <p className="text-[11px] text-slate-500">
+    Utilise le slider pour une valeur rapide (0 → 100), ou saisis un
+    nombre exact. Le champ accepte aussi des valeurs plus élevées
+    pour les très gros créateurs.
+  </p>
+</div>
           {/* Likes → palier simulateur */}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
