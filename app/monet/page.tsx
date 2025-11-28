@@ -1038,7 +1038,7 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Donut + légende */}
+                   {/* Donut + légende */}
           <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="flex flex-col items-center gap-2">
               <div
@@ -1066,48 +1066,48 @@ export default function MonetPage() {
               </div>
             </div>
 
-                                {/* Courbe d'évolution */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-slate-700">
-              Projection d&apos;évolution (part créateur HT)
-            </p>
-            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-              <svg viewBox="0 0 100 100" className="h-24 w-full">
-                <defs>
-                  <linearGradient
-                    id="mc-line"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="0%"
-                  >
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="100%" stopColor="#22c55e" />
-                  </linearGradient>
-                </defs>
-                <polyline
-                  fill="none"
-                  stroke="url(#mc-line)"
-                  strokeWidth={1.6}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={linePoints}
-                />
-              </svg>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Exemple de progression sur 7 périodes (par ex. jours ou
-                semaines) basée sur ta part créateur nette (HT).
+            {/* Courbe d'évolution */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-700">
+                Projection d&apos;évolution (part créateur HT)
               </p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                <svg viewBox="0 0 100 100" className="h-24 w-full">
+                  <defs>
+                    <linearGradient
+                      id="mc-line"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="100%" stopColor="#22c55e" />
+                    </linearGradient>
+                  </defs>
+                  <polyline
+                    fill="none"
+                    stroke="url(#mc-line)"
+                    strokeWidth={1.6}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={linePoints}
+                  />
+                </svg>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Exemple de progression sur 7 périodes (par ex. jours ou
+                  semaines) basée sur ta part créateur nette (HT).
+                </p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Petit rappel légal sous le simulateur */}
-        <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-          Simulation indicative, ne constitue pas une garantie de revenus.
-        </p>
       </section>
 
+      {/* Petit rappel légal sous le simulateur */}
+      <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+        Simulation indicative — ne constitue pas une garantie de revenus.
+      </p>
     </div>
   );
 }
