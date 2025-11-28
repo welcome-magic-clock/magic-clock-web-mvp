@@ -745,7 +745,7 @@ export default function MonetPage() {
     <input
       type="number"
       min={0}
-      max={10000000}
+      max={1000000000}
       step={100}
       value={simFollowers}
       onFocus={(e) => e.target.select()}
