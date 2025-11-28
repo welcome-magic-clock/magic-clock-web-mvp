@@ -15,6 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
+      <head>
+        {/* Icône iOS quand l’utilisateur ajoute le site à l’écran d’accueil */}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className="bg-slate-50 text-slate-900">
         <div className="min-h-screen flex">
           {/* Sidebar desktop */}
