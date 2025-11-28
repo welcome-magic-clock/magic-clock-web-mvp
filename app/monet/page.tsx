@@ -22,6 +22,8 @@ const COUNTRY_VAT_TABLE: CountryVat[] = [
   { code: "DE", label: "Allemagne", vatRate: 0.19 },
   { code: "ES", label: "Espagne", vatRate: 0.21 },
   { code: "IT", label: "Italie", vatRate: 0.22 },
+  { code: "UK", label: "Royaume-Uni", vatRate: 0.2 },          // ~20% TVA UK
+  { code: "US", label: "États-Unis (indicatif)", vatRate: 0 }, // pas de TVA fédérale
   { code: "EU", label: "Autres pays UE", vatRate: 0.2 },
 ];
 
