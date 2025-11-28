@@ -169,6 +169,55 @@ type CreatorLight = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Réseaux sociaux (maquette MVP, chiffres indicatifs)
+// ─────────────────────────────────────────────────────────────
+
+const SOCIAL_NETWORKS = [
+  {
+    id: "facebook",
+    label: "Facebook",
+    icon: "/magic-clock-social-facebook.png",
+    followers: 12500,
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    icon: "/magic-clock-social-instagram.png",
+    followers: 9800,
+  },
+  {
+    id: "youtube",
+    label: "YouTube",
+    icon: "/magic-clock-social-youtube.png",
+    followers: 7200,
+  },
+  {
+    id: "tiktok",
+    label: "TikTok",
+    icon: "/magic-clock-social-tiktok.png",
+    followers: 15400,
+  },
+  {
+    id: "snapchat",
+    label: "Snapchat",
+    icon: "/magic-clock-social-snapchat.png",
+    followers: 4300,
+  },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    icon: "/magic-clock-social-linkedin.png",
+    followers: 2100,
+  },
+  {
+    id: "x",
+    label: "X (Twitter)",
+    icon: "/magic-clock-social-x.png",
+    followers: 5600,
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
 // Page Monétisation
 // ─────────────────────────────────────────────────────────────
 
@@ -214,6 +263,12 @@ export default function MonetPage() {
     platformShareNet: realPlatformShareNet,
     creatorShareNet: realCreatorShareNet,
   } = computeVatAndShares(realGrossTotal, realTier, vatRateReal);
+
+  // Total indicatif de followers sur les autres réseaux (maquette)
+  const indicativeFollowersTotal = SOCIAL_NETWORKS.reduce(
+    (sum, n) => sum + n.followers,
+    0,
+  );
 
   // 🔸 Partie "SIMULATEUR"
   const [simFollowers, setSimFollowers] = useState<number>(
@@ -320,7 +375,7 @@ export default function MonetPage() {
           <h2 className="text-xl font-semibold">Monétisation</h2>
           <p className="text-sm text-slate-600">
             Comprends l&apos;impact de ton audience et simule ton potentiel avec
-            Magic Clock (abonnements + Pay-Per-View). Partie haute = ton
+            Magic Clock (Free, abonnements + Pay-Per-View). Partie haute = ton
             cockpit. Partie basse = simulateur.
           </p>
 
@@ -378,15 +433,71 @@ export default function MonetPage() {
         <div className="grid gap-4 md:grid-cols-3">
           {/* Followers */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">Followers (tous réseaux)</p>
-            <p className="mt-1 text-xl font-semibold">
-              {realFollowers.toLocaleString("fr-CH")}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              Base estimée de ton audience activable avec Magic Clock.
-            </p>
-            <div className="mt-2">
+            {/* Ligne Magic Clock = réel */}
+            <p className="text-xs text-slate-500">Followers Magic Clock</p>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {/* Logo Magic Clock (réel) */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/magic-clock-social-monet.png"
+                  alt="Magic Clock"
+                  className="h-7 w-7 rounded-xl"
+                />
+                <div className="flex flex-col">
+                  <p className="text-xl font-semibold">
+                    {realFollowers.toLocaleString("fr-CH")}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Followers réels sur Magic Clock (cockpit).
+                  </p>
+                </div>
+              </div>
               <TrendBadge value={realFollowersDelta} />
+            </div>
+
+            {/* Bandeau autres réseaux = indicatif */}
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-medium text-slate-700">
+                  Aperçu autres réseaux sociaux
+                </span>
+                <span className="text-slate-500">
+                  Total indicatif :{" "}
+                  <span className="font-semibold">
+                    {indicativeFollowersTotal.toLocaleString("fr-CH")}
+                  </span>
+                </span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {SOCIAL_NETWORKS.map((net) => (
+                  <div
+                    key={net.id}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 shadow-sm"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={net.icon}
+                      alt={net.label}
+                      className="h-4 w-4 rounded-full"
+                    />
+                    <span className="text-[10px] text-slate-600">
+                      {net.followers.toLocaleString("fr-CH")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-2 text-[10px] leading-snug text-slate-400">
+                Les chiffres par réseau (Facebook, Instagram, YouTube, TikTok,
+                Snapchat, LinkedIn, X) sont fournis à titre illustratif dans ce
+                cockpit MVP et ne sont pas encore connectés en temps réel aux
+                plateformes concernées. En production, la synchronisation se
+                fera via les APIs officielles, sous réserve des conditions
+                d&apos;utilisation de chaque service (validation juridique
+                recommandée avec Alexandre).
+              </p>
             </div>
           </div>
 
@@ -409,7 +520,7 @@ export default function MonetPage() {
 
           {/* Pay-Per-View */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">Contenus Pay-Per-View</p>
+            <p className="text-xs text-slate-500">Contenus Pay-Per-View (PPV)</p>
             <p className="mt-1 text-lg font-semibold">
               {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
             </p>
@@ -927,14 +1038,14 @@ export default function MonetPage() {
                       <stop offset="100%" stopColor="#22c55e" />
                     </linearGradient>
                   </defs>
-                  <polyline
-                    fill="none"
-                    stroke="url(#mc-line)"
-                    strokeWidth={1.6}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={linePoints}
-                  />
+                <polyline
+                  fill="none"
+                  stroke="url(#mc-line)"
+                  strokeWidth={1.6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={linePoints}
+                />
                 </svg>
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
