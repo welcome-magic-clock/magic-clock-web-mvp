@@ -1038,7 +1038,7 @@ export default function MonetPage() {
             </div>
           </div>
 
-                   {/* Donut + légende */}
+                            {/* Donut + légende */}
           <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="flex flex-col items-center gap-2">
               <div
@@ -1101,13 +1101,14 @@ export default function MonetPage() {
               </div>
             </div>
           </div>
+
+          {/* Petit rappel légal sous le simulateur */}
+          <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+            Simulation indicative, ne constitue pas une garantie de revenus.
+          </p>
         </div>
       </section>
 
-      {/* Petit rappel légal sous le simulateur */}
-      <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-        Simulation indicative — ne constitue pas une garantie de revenus.
-      </p>
     </div>
   );
 }
