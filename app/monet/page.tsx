@@ -676,7 +676,7 @@ export default function MonetPage() {
         </div>
       </section>
 
-      {/* Séparateur Réalité / Simulateur */}
+           {/* Séparateur Réalité / Simulateur */}
       <div className="relative my-4 flex items-center justify-center">
         <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
         <span className="absolute inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
@@ -684,7 +684,8 @@ export default function MonetPage() {
           Simulateur (projection)
         </span>
       </div>
-           {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC → TVA → HT → parts) */}
+
+      {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC -> TVA -> HT -> parts) */}
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {/* Contrôles simulateur */}
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
@@ -716,57 +717,55 @@ export default function MonetPage() {
           </p>
 
           {/* Followers */}
-<div className="space-y-1">
-  <div className="flex items-center justify-between text-xs">
-    <span className="font-medium text-slate-700">
-      Followers (tous réseaux)
-    </span>
-    <span className="font-semibold text-slate-700">
-      {simFollowers.toLocaleString("fr-CH")}
-    </span>
-  </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-slate-700">
+                Followers (tous réseaux)
+              </span>
+              <span className="font-semibold text-slate-700">
+                {simFollowers.toLocaleString("fr-CH")}
+              </span>
+            </div>
 
-  {/* Slider */}
-  <input
-    type="range"
-    min={0}
-    max={1000000}
-    step={1000}
-    value={simFollowers}
-    onChange={(e) =>
-      setSimFollowers(clamp(Number(e.target.value), 0, 1000000))
-    }
-    className="w-full"
-  />
+            <input
+              type="range"
+              min={0}
+              max={1000000}
+              step={1000}
+              value={simFollowers}
+              onChange={(e) =>
+                setSimFollowers(clamp(Number(e.target.value), 0, 1000000))
+              }
+              className="w-full"
+            />
 
-  {/* Champ de saisie directe */}
-  <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
-    <span className="text-slate-500">Saisis un nombre précis :</span>
-    <input
-      type="number"
-      min={0}
-      max={1000000000}
-      step={100}
-      value={simFollowers}
-      onFocus={(e) => e.target.select()}
-      onChange={(e) => {
-        const raw = e.target.value;
-        const normalized = raw.replace(/^0+(?=\d)/, "");
-        const num = Number(normalized || "0");
-        setSimFollowers(clamp(num, 0, 1000000000));
-      }}
-      className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-[11px]"
-    />
-  </div>
+            <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-slate-500">Saisis un nombre précis :</span>
+              <input
+                type="number"
+                min={0}
+                max={1000000000}
+                step={100}
+                value={simFollowers}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const normalized = raw.replace(/^0+(?=\d)/, "");
+                  const num = Number(normalized || "0");
+                  setSimFollowers(clamp(num, 0, 1000000000));
+                }}
+                className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-[11px]"
+              />
+            </div>
 
-  <p className="text-[11px] text-slate-500">
-    Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million pour
-    garder le slider lisible) ou saisis directement le nombre de
-    followers.
-  </p>
-</div>
+            <p className="text-[11px] text-slate-500">
+              Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million pour
+              garder le slider lisible) ou saisis directement le nombre de
+              followers.
+            </p>
+          </div>
 
-          {/* Abos */}
+          {/* Abonnements */}
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
@@ -777,20 +776,20 @@ export default function MonetPage() {
                   {simAboPrice.toFixed(2)} CHF / mois
                 </span>
               </div>
-             <input
-  type="range"
-  min={0.99}
-  max={1000}
-  step={0.5}
-  value={simAboPrice}
-  onChange={(e) => {
-    const raw = Number(e.target.value);
-    const clamped = clamp(raw, 0.99, 999); // ← garde bien 999 ici
-    const rounded = Math.round(clamped * 100) / 100;
-    setSimAboPrice(rounded);
-  }}
-  className="w-full"
-/>
+              <input
+                type="range"
+                min={0.99}
+                max={1000}
+                step={0.5}
+                value={simAboPrice}
+                onChange={(e) => {
+                  const raw = Number(e.target.value);
+                  const clamped = clamp(raw, 0.99, 999);
+                  const rounded = Math.round(clamped * 100) / 100;
+                  setSimAboPrice(rounded);
+                }}
+                className="w-full"
+              />
               <p className="text-[11px] text-slate-500">
                 Tarification Abo Magic Clock (0,99 → 999 CHF / mois, TTC).
               </p>
@@ -824,6 +823,7 @@ export default function MonetPage() {
 
           {/* Pay-Per-View */}
           <div className="grid gap-3 md:grid-cols-3">
+            {/* Prix PPV */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
@@ -833,26 +833,27 @@ export default function MonetPage() {
                   {simPpvPrice.toFixed(2)} CHF
                 </span>
               </div>
-            <input
-  type="range"
-  min={0.99}
-  max={1000}
-  step={0.5}
-  value={simPpvPrice}
-  onChange={(e) => {
-    const raw = Number(e.target.value);
-    const clamped = clamp(raw, 0.99, 999);
-    const rounded = Math.round(clamped * 100) / 100;
-    setSimPpvPrice(rounded);
-  }}
-  className="w-full"
-/>
+              <input
+                type="range"
+                min={0.99}
+                max={1000}
+                step={0.5}
+                value={simPpvPrice}
+                onChange={(e) => {
+                  const raw = Number(e.target.value);
+                  const clamped = clamp(raw, 0.99, 999);
+                  const rounded = Math.round(clamped * 100) / 100;
+                  setSimPpvPrice(rounded);
+                }}
+                className="w-full"
+              />
               <p className="text-[11px] text-slate-500">
                 Prix moyen d&apos;un contenu Pay-Per-View (PPV) (0,99 → 999 CHF,
                 TTC).
               </p>
             </div>
 
+            {/* Conversion PPV */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
@@ -879,58 +880,59 @@ export default function MonetPage() {
               </p>
             </div>
 
-           <div className="space-y-1">
-  <div className="flex items-center justify-between text-xs">
-    <span className="font-medium text-slate-700">
-      Pay-Per-View / acheteur / mois
-    </span>
-    <span className="text-slate-500">
-      {simPpvPerBuyer.toFixed(1)}
-    </span>
-  </div>
+            {/* PPV / acheteur */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-700">
+                  Pay-Per-View / acheteur / mois
+                </span>
+                <span className="text-slate-500">
+                  {simPpvPerBuyer.toFixed(1)}
+                </span>
+              </div>
 
-  {/* Slider rapide (0 → 100 PPV / acheteur / mois) */}
-  <input
-    type="range"
-    min={0}
-    max={100}
-    step={0.1}
-    value={Math.min(simPpvPerBuyer, 100)}
-    onChange={(e) => {
-      const num = Number(e.target.value);
-      setSimPpvPerBuyer(clamp(num, 0, 100000000));
-    }}
-    className="w-full"
-  />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={0.1}
+                value={Math.min(simPpvPerBuyer, 100)}
+                onChange={(e) => {
+                  const num = Number(e.target.value);
+                  setSimPpvPerBuyer(clamp(num, 0, 100000000));
+                }}
+                className="w-full"
+              />
 
-  {/* Champ numérique comme pour Followers */}
-  <div className="mt-2 flex items-center justify-between gap-2">
-    <span className="text-[11px] text-slate-500">
-      Saisis un nombre précis :
-    </span>
-    <input
-      type="number"
-      min={0}
-      step={0.1}
-      value={simPpvPerBuyer}
-      onFocus={(e) => e.target.select()}
-      onChange={(e) => {
-        const raw = e.target.value;
-        const normalized = raw.replace(/^0+(?=\d)/, "");
-        const num = Number(normalized || "0");
-        setSimPpvPerBuyer(clamp(num, 0, 100000000));
-      }}
-      className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-xs"
-    />
-  </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-500">
+                  Saisis un nombre précis :
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={simPpvPerBuyer}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const normalized = raw.replace(/^0+(?=\d)/, "");
+                    const num = Number(normalized || "0");
+                    setSimPpvPerBuyer(clamp(num, 0, 100000000));
+                  }}
+                  className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-xs"
+                />
+              </div>
 
-  <p className="text-[11px] text-slate-500">
-    Utilise le slider pour une valeur rapide (0 → 100), ou saisis un
-    nombre exact. Le champ accepte aussi des valeurs plus élevées
-    pour les très gros créateurs.
-  </p>
-</div>
-          {/* Likes → palier simulateur */}
+              <p className="text-[11px] text-slate-500">
+                Utilise le slider pour une valeur rapide (0 → 100), ou saisis un
+                nombre exact. Le champ accepte aussi des valeurs plus élevées
+                pour les très gros créateurs.
+              </p>
+            </div>
+          </div>
+
+          {/* Likes / palier simulateur */}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-700">
@@ -1038,8 +1040,9 @@ export default function MonetPage() {
             </div>
           </div>
 
-                                     {/* Donut + légende */}
+          {/* Donut + courbe */}
           <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            {/* Donut */}
             <div className="flex flex-col items-center gap-2">
               <div
                 className="flex h-32 w-32 items-center justify-center rounded-full"
@@ -1108,7 +1111,6 @@ export default function MonetPage() {
           </p>
         </div>
       </section>
-
     </div>
   );
 }
