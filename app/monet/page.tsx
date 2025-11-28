@@ -682,8 +682,7 @@ export default function MonetPage() {
           Simulateur (projection)
         </span>
       </div>
-
-      {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC → TVA → HT → parts) */}
+           {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC → TVA → HT → parts) */}
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {/* Contrôles simulateur */}
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
@@ -1040,14 +1039,14 @@ export default function MonetPage() {
                       <stop offset="100%" stopColor="#22c55e" />
                     </linearGradient>
                   </defs>
-                <polyline
-                  fill="none"
-                  stroke="url(#mc-line)"
-                  strokeWidth={1.6}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={linePoints}
-                />
+                  <polyline
+                    fill="none"
+                    stroke="url(#mc-line)"
+                    strokeWidth={1.6}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={linePoints}
+                  />
                 </svg>
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
@@ -1058,6 +1057,11 @@ export default function MonetPage() {
           </div>
         </div>
       </section>
+
+      {/* 🔐 Petit rappel légal sous le simulateur */}
+      <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+        Simulation indicative, ne constitue pas une garantie de revenus.
+      </p>
     </div>
   );
 }
