@@ -491,15 +491,15 @@ export default function MonetPage() {
                 ))}
               </div>
 
-              <p className="mt-2 text-[10px] leading-snug text-slate-400">
-                Les chiffres par réseau (Facebook, Instagram, YouTube, TikTok,
-                Snapchat, LinkedIn, X) sont fournis à titre illustratif dans ce
-                cockpit MVP et ne sont pas encore connectés en temps réel aux
-                plateformes concernées. En production, la synchronisation se
-                fera via les APIs officielles, sous réserve des conditions
-                d&apos;utilisation de chaque service (validation juridique
-                recommandée avec Alexandre).
-              </p>
+              <p className="mt-3 text-[10px] leading-snug text-slate-500">
+  Les chiffres affichés par réseau social (Facebook, Instagram, YouTube,
+  TikTok, Snapchat, LinkedIn, X) sont fournis à titre <strong>purement
+  indicatif</strong> dans ce cockpit MVP. Ils ne sont ni en temps réel ni
+  validés par les plateformes concernées et ne constituent pas une
+  information contractuelle. En production, les données pourront être
+  synchronisées via les APIs officielles, sous réserve du respect des
+  conditions d&apos;utilisation de chaque service.
+</p>
             </div>
           </div>
 
