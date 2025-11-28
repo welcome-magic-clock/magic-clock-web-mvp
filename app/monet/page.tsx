@@ -373,11 +373,11 @@ export default function MonetPage() {
 
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Monétisation</h2>
-          <p className="text-sm text-slate-600">
-            Comprends l&apos;impact de ton audience et simule ton potentiel avec
-            Magic Clock (Free, abonnements + Pay-Per-View). Partie haute = ton
-            cockpit. Partie basse = simulateur.
-          </p>
+         <p className="text-sm text-slate-600">
+  Comprends l&apos;impact de ton audience et simule ton potentiel avec
+  Magic Clock (MODE FREE, abonnements + Pay-Per-View). Partie haute =
+  ton cockpit. Partie basse = simulateur.
+</p>
 
           {/* Lien vers la page Prix & monétisation */}
           <div className="mb-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-slate-800 sm:text-sm">
@@ -397,41 +397,43 @@ export default function MonetPage() {
               .
             </p>
           </div>
-
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
-            <Info className="h-3 w-3" />
-            <span>
-              Pays détecté (réalité, MVP) :{" "}
-              <strong>
-                {CURRENT_COUNTRY.label} · TVA{" "}
-                {Math.round(vatRateReal * 1000) / 10}%
-              </strong>{" "}
-              — non modifiable par l&apos;utilisateur.
-            </span>
-          </div>
         </div>
       </header>
 
       {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
-              Réalité · compte
-            </span>
-            <span className="flex items-center gap-1 text-xs text-slate-500">
-              <Info className="h-3 w-3" />
-              Données indicatives pour le MVP (non connectées au backend).
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
-            la répartition plateforme / créateur.
-          </p>
-        </div>
+  <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex items-center gap-2 text-sm font-medium">
+      <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
+        Réalité · compte
+      </span>
+      <span className="flex items-center gap-1 text-xs text-slate-500">
+        <Info className="h-3 w-3" />
+        Données indicatives pour le MVP (non connectées au backend).
+      </span>
+    </div>
+    <p className="text-[11px] text-slate-500">
+      Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
+      la répartition plateforme / créateur.
+    </p>
+  </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* Followers */}
+  {/* Encadré TVA / pays déplacé ici */}
+  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+    <Info className="h-3 w-3" />
+    <span>
+      Pays détecté :{" "}
+      <strong>
+        {CURRENT_COUNTRY.label} · TVA{" "}
+        {Math.round(vatRateReal * 1000) / 10}%
+      </strong>{" "}
+      — estimée pour ce cockpit (MVP).
+    </span>
+  </div>
+
+  {/* ... puis la grille avec Followers / Abo / Pay-Per-View */}
+  <div className="grid gap-4 md:grid-cols-3">
+    {/* Followers / Abo / PPV comme avant */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
             {/* Ligne Magic Clock = réel */}
             <p className="text-xs text-slate-500">Followers Magic Clock</p>
