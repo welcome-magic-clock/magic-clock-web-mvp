@@ -716,32 +716,55 @@ export default function MonetPage() {
           </p>
 
           {/* Followers */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-700">
-                Followers (tous réseaux)
-              </span>
-              <span className="font-semibold text-slate-700">
-                {simFollowers.toLocaleString("fr-CH")}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={1000000}
-              step={1000}
-              value={simFollowers}
-              onChange={(e) =>
-                setSimFollowers(clamp(Number(e.target.value), 0, 1000000))
-              }
-              className="w-full"
-            />
-            <p className="text-[11px] text-slate-500">
-              Glisse pour simuler ton audience. Le curseur va jusqu&apos;à 1
-              million pour rester lisible, mais en réalité il n&apos;y a pas de
-              limite.
-            </p>
-          </div>
+<div className="space-y-1">
+  <div className="flex items-center justify-between text-xs">
+    <span className="font-medium text-slate-700">
+      Followers (tous réseaux)
+    </span>
+    <span className="font-semibold text-slate-700">
+      {simFollowers.toLocaleString("fr-CH")}
+    </span>
+  </div>
+
+  {/* Slider */}
+  <input
+    type="range"
+    min={0}
+    max={1000000}
+    step={1000}
+    value={simFollowers}
+    onChange={(e) =>
+      setSimFollowers(clamp(Number(e.target.value), 0, 1000000))
+    }
+    className="w-full"
+  />
+
+  {/* Champ de saisie directe */}
+  <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+    <span className="text-slate-500">Saisis un nombre précis :</span>
+    <input
+      type="number"
+      min={0}
+      max={10000000}
+      step={100}
+      value={simFollowers}
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => {
+        const raw = e.target.value;
+        const normalized = raw.replace(/^0+(?=\d)/, "");
+        const num = Number(normalized || "0");
+        setSimFollowers(clamp(num, 0, 10000000));
+      }}
+      className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-[11px]"
+    />
+  </div>
+
+  <p className="text-[11px] text-slate-500">
+    Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million pour
+    garder le slider lisible) ou saisis directement le nombre de
+    followers.
+  </p>
+</div>
 
           {/* Abos */}
           <div className="grid gap-3 md:grid-cols-2">
