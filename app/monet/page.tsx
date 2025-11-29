@@ -593,88 +593,85 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Paliers commission (réels, non modifiables) */}
-          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-            <div className="flex items-center justify-between text-xs">
-              <p className="font-medium text-slate-700">
-                Paliers de commission Magic Clock
-              </p>
-              <p className="text-slate-500">
-                Likes ce mois-ci :{" "}
-                <span className="font-semibold">
-                  {realLikes.toLocaleString("fr-CH")}
-                </span>
-              </p>
-            </div>
+         {/* Paliers commission (réels, non modifiables) */}
+<div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+  <div className="flex items-center justify-between text-xs">
+    <p className="font-medium text-slate-700">
+      Paliers de commission Magic Clock
+    </p>
+    <p className="text-slate-500">
+      Likes cumulés :{" "}
+      <span className="font-semibold">
+        {realLikes.toLocaleString("fr-CH")}
+      </span>
+    </p>
+  </div>
 
-            <div className="flex flex-col gap-2 text-xs">
-              {TIERS.map((tier) => {
-                const isActive = tier.id === realTier.id;
-                const locked =
-                  (tier.id === "SILVER" && realLikes <= 1000) ||
-                  (tier.id === "GOLD" && realLikes <= 10000);
+  <div className="flex flex-col gap-2 text-xs">
+    {TIERS.map((tier) => {
+      const isActive = tier.id === realTier.id;
+      const locked =
+        (tier.id === "SILVER" && realLikes <= 1000) ||
+        (tier.id === "GOLD" && realLikes <= 10000);
 
-                return (
-                  <div
-                    key={tier.id}
-                    className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
-                      isActive
-                        ? "border-emerald-500 bg-emerald-50/60"
-                        : "border-slate-200 bg-white/80"
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-semibold">
-                        {tier.label} · {Math.round(tier.rate * 100)}%
-                        &nbsp;plateforme
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        {tier.id === "BRONZE" && "0 → 1 000 likes / mois"}
-                        {tier.id === "SILVER" &&
-                          "1 001 → 10 000 likes / mois (débloqué Argent)"}
-                        {tier.id === "GOLD" &&
-                          "+ de 10 000 likes / mois (débloqué Or)"}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {locked ? (
-                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
-                          🔒 Bloqué
-                        </span>
-                      ) : isActive ? (
-                        <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-white">
-                          Actif
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
-                          Inactif
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Barre de progression likes */}
-            <div className="mt-1">
-              <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
-                <span>0</span>
-                <span>1 000</span>
-                <span>10 000+</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-400 via-sky-500 to-emerald-500"
-                  style={{
-                    width: `${Math.min(100, (realLikes / 10000) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
+      return (
+        <div
+          key={tier.id}
+          className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+            isActive
+              ? "border-emerald-500 bg-emerald-50/60"
+              : "border-slate-200 bg-white/80"
+          }`}
+        >
+          <div className="flex flex-col">
+            <span className="font-semibold">
+              {tier.label} · {Math.round(tier.rate * 100)}%&nbsp;plateforme
+            </span>
+            <span className="text-[11px] text-slate-500">
+              {tier.id === "BRONZE" && "0 → 1 000 likes cumulés"}
+              {tier.id === "SILVER" &&
+                "1 001 → 10 000 likes cumulés (débloqué Argent)"}
+              {tier.id === "GOLD" &&
+                "+ de 10 000 likes cumulés (débloqué Or)"}
+            </span>
+          </div>
+          <div className="text-[11px] text-slate-500">
+            {locked ? (
+              <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
+                🔒 Bloqué
+              </span>
+            ) : isActive ? (
+              <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-white">
+                Actif
+              </span>
+            ) : (
+              <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
+                Inactif
+              </span>
+            )}
           </div>
         </div>
-      </section>
+      );
+    })}
+  </div>
+
+  {/* Barre de progression likes */}
+  <div className="mt-1">
+    <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
+      <span>0</span>
+      <span>1 000</span>
+      <span>10 000+</span>
+    </div>
+    <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+      <div
+        className="h-full bg-gradient-to-r from-amber-400 via-sky-500 to-emerald-500"
+        style={{
+          width: `${Math.min(100, (realLikes / 10000) * 100)}%`,
+        }}
+      />
+    </div>
+  </div>
+</div>
 
            {/* Séparateur Réalité / Simulateur */}
       <div className="relative my-4 flex items-center justify-center">
