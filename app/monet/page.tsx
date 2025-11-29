@@ -1359,13 +1359,13 @@ export default function MonetPage() {
                   semaines) basée sur tes revenus simulés PPV / abonnements.
                 </p>
               </div>
-            </div>
+            </div> {/* 👈 fermeture de la grid */}
 
           {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
             Simulation indicative, ne constitue pas une garantie de revenus.
           </p>
-        </div>
+        </div> {/* card "Résultat simulateur" */}
       </section>
     </div>
   );
