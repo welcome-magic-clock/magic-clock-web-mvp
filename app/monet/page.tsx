@@ -22,7 +22,7 @@ const COUNTRY_VAT_TABLE: CountryVat[] = [
   { code: "DE", label: "Allemagne", vatRate: 0.19 },
   { code: "ES", label: "Espagne", vatRate: 0.21 },
   { code: "IT", label: "Italie", vatRate: 0.22 },
-  { code: "UK", label: "Royaume-Uni", vatRate: 0.2 },          // ~20% TVA UK
+  { code: "UK", label: "Royaume-Uni", vatRate: 0.2 }, // ~20% TVA UK
   { code: "US", label: "États-Unis (indicatif)", vatRate: 0 }, // pas de TVA fédérale
   { code: "EU", label: "Autres pays UE", vatRate: 0.2 },
 ];
@@ -346,7 +346,7 @@ export default function MonetPage() {
   }, [historyPoints]);
 
   return (
-    <div className="container space-y-8 py-8">
+    <main className="container space-y-8 py-8">
       {/* HEADER AVEC AVATAR AIKO */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
@@ -375,11 +375,11 @@ export default function MonetPage() {
 
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Monétisation</h2>
-         <p className="text-sm text-slate-600">
-  Comprends l&apos;impact de ton audience et simule ton potentiel avec
-  Magic Clock (MODE FREE, abonnements + Pay-Per-View). Partie haute =
-  ton cockpit. Partie basse = simulateur.
-</p>
+          <p className="text-sm text-slate-600">
+            Comprends l&apos;impact de ton audience et simule ton potentiel avec
+            Magic Clock (MODE FREE, abonnements + Pay-Per-View). Partie haute =
+            ton cockpit. Partie basse = simulateur.
+          </p>
 
           {/* Lien vers la page Prix & monétisation */}
           <div className="mb-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-slate-800 sm:text-sm">
@@ -404,44 +404,42 @@ export default function MonetPage() {
 
       {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-  <div className="flex flex-wrap items-center justify-between gap-3">
-    <div className="flex items-center gap-2 text-sm font-medium">
-      <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
-        Réalité · compte
-      </span>
-      <span className="flex items-center gap-1 text-xs text-slate-500">
-        <Info className="h-3 w-3" />
-        Données indicatives pour le MVP (non connectées au backend).
-      </span>
-    </div>
-    <p className="text-[11px] text-slate-500">
-      Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
-      la répartition plateforme / créateur.
-    </p>
-  </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
+              Réalité · compte
+            </span>
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <Info className="h-3 w-3" />
+              Données indicatives pour le MVP (non connectées au backend).
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Les montants sont affichés en TTC, TVA estimée, puis en base HT
+            pour la répartition plateforme / créateur.
+          </p>
+        </div>
 
-  {/* Encadré TVA / pays déplacé ici */}
-  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
-    <Info className="h-3 w-3" />
-    <span>
-      Pays détecté :{" "}
-      <strong>
-        {CURRENT_COUNTRY.label} · TVA{" "}
-        {Math.round(vatRateReal * 1000) / 10}%
-      </strong>{" "}
-      — estimée pour ce cockpit (MVP).
-    </span>
-  </div>
+        {/* Encadré TVA / pays */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+          <Info className="h-3 w-3" />
+          <span>
+            Pays détecté :{" "}
+            <strong>
+              {CURRENT_COUNTRY.label} · TVA{" "}
+              {Math.round(vatRateReal * 1000) / 10}%
+            </strong>{" "}
+            — estimée pour ce cockpit (MVP).
+          </span>
+        </div>
 
-  {/* ... puis la grille avec Followers / Abo / Pay-Per-View */}
-  <div className="grid gap-4 md:grid-cols-3">
-    {/* Followers / Abo / PPV comme avant */}
+        {/* Grille Followers / Abo / PPV */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Followers */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-            {/* Ligne Magic Clock = réel */}
             <p className="text-xs text-slate-500">Followers Magic Clock</p>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                {/* Logo Magic Clock (réel) */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/magic-clock-social-monet.png"
@@ -460,7 +458,7 @@ export default function MonetPage() {
               <TrendBadge value={realFollowersDelta} />
             </div>
 
-            {/* Bandeau autres réseaux = indicatif */}
+            {/* Bandeau autres réseaux */}
             <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-2">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="font-medium text-slate-700">
@@ -494,14 +492,15 @@ export default function MonetPage() {
               </div>
 
               <p className="mt-3 text-[10px] leading-snug text-slate-500">
-  Les chiffres affichés par réseau social (Facebook, Instagram, YouTube,
-  TikTok, Snapchat, LinkedIn, X) sont fournis à titre <strong>purement
-  indicatif</strong> dans ce cockpit MVP. Ils ne sont ni en temps réel ni
-  validés par les plateformes concernées et ne constituent pas une
-  information contractuelle. En production, les données pourront être
-  synchronisées via les APIs officielles, sous réserve du respect des
-  conditions d&apos;utilisation de chaque service.
-</p>
+                Les chiffres affichés par réseau social (Facebook, Instagram,
+                YouTube, TikTok, Snapchat, LinkedIn, X) sont fournis à titre{" "}
+                <strong>purement indicatif</strong> dans ce cockpit MVP. Ils ne
+                sont ni en temps réel ni validés par les plateformes concernées
+                et ne constituent pas une information contractuelle. En
+                production, les données pourront être synchronisées via les APIs
+                officielles, sous réserve du respect des conditions
+                d&apos;utilisation de chaque service.
+              </p>
             </div>
           </div>
 
@@ -524,7 +523,9 @@ export default function MonetPage() {
 
           {/* Pay-Per-View */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">Contenus Pay-Per-View (PPV)</p>
+            <p className="text-xs text-slate-500">
+              Contenus Pay-Per-View (PPV)
+            </p>
             <p className="mt-1 text-lg font-semibold">
               {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
             </p>
@@ -579,100 +580,105 @@ export default function MonetPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
-                 <p className="text-[11px] text-slate-500">
-  Part créateur estimée
-</p>
-<p className="mt-1 text-2xl font-semibold text-emerald-600">
-  {formatMoney(realCreatorShareNet)}
-</p>
-<p className="mt-1 text-[11px] text-slate-500">
-  Montant estimé versé par Magic Clock.
-</p>
+                  <p className="text-[11px] text-slate-500">
+                    Part créateur estimée
+                  </p>
+                  <p className="mt-1 text-2xl font-semibold text-emerald-600">
+                    {formatMoney(realCreatorShareNet)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Montant estimé versé par Magic Clock.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-     {/* Paliers commission (réels, non modifiables) */}
-<div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-  <div className="flex items-center justify-between text-xs">
-    <p className="font-medium text-slate-700">
-      Paliers de commission Magic Clock
-    </p>
-    <p className="text-slate-500">
-      Likes cumulés :{" "}
-      <span className="font-semibold">
-        {realLikes.toLocaleString("fr-CH")}
-      </span>
-    </p>
-  </div>
+          {/* Paliers commission (réels, non modifiables) */}
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+            <div className="flex items-center justify-between text-xs">
+              <p className="font-medium text-slate-700">
+                Paliers de commission Magic Clock
+              </p>
+              <p className="text-slate-500">
+                Likes cumulés :{" "}
+                <span className="font-semibold">
+                  {realLikes.toLocaleString("fr-CH")}
+                </span>
+              </p>
+            </div>
 
-  <div className="flex flex-col gap-2 text-xs">
-    {TIERS.map((tier) => {
-      const isActive = tier.id === realTier.id;
-      const locked =
-        (tier.id === "SILVER" && realLikes <= 1000) ||
-        (tier.id === "GOLD" && realLikes <= 10000);
+            <div className="flex flex-col gap-2 text-xs">
+              {TIERS.map((tier) => {
+                const isActive = tier.id === realTier.id;
+                const locked =
+                  (tier.id === "SILVER" && realLikes <= 1000) ||
+                  (tier.id === "GOLD" && realLikes <= 10000);
 
-      return (
-        <div
-          key={tier.id}
-          className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
-            isActive
-              ? "border-emerald-500 bg-emerald-50/60"
-              : "border-slate-200 bg-white/80"
-          }`}
-        >
-          <div className="flex flex-col">
-            <span className="font-semibold">
-              {tier.label} · {Math.round(tier.rate * 100)}%&nbsp;plateforme
-            </span>
-            <span className="text-[11px] text-slate-500">
-              {tier.id === "BRONZE" && "0 → 1 000 likes cumulés"}
-              {tier.id === "SILVER" &&
-                "1 001 → 10 000 likes cumulés (débloqué Argent)"}
-              {tier.id === "GOLD" &&
-                "+ de 10 000 likes cumulés (débloqué Or)"}
-            </span>
-          </div>
-          <div className="text-[11px] text-slate-500">
-            {locked ? (
-              <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
-                🔒 Bloqué
-              </span>
-            ) : isActive ? (
-              <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-white">
-                Actif
-              </span>
-            ) : (
-              <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
-                Inactif
-              </span>
-            )}
+                return (
+                  <div
+                    key={tier.id}
+                    className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                      isActive
+                        ? "border-emerald-500 bg-emerald-50/60"
+                        : "border-slate-200 bg-white/80"
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-semibold">
+                        {tier.label} · {Math.round(tier.rate * 100)}
+                        %&nbsp;plateforme
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {tier.id === "BRONZE" &&
+                          "0 → 1 000 likes cumulés"}
+                        {tier.id === "SILVER" &&
+                          "1 001 → 10 000 likes cumulés (débloqué Argent)"}
+                        {tier.id === "GOLD" &&
+                          "+ de 10 000 likes cumulés (débloqué Or)"}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {locked ? (
+                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
+                          🔒 Bloqué
+                        </span>
+                      ) : isActive ? (
+                        <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-white">
+                          Actif
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
+                          Inactif
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Barre de progression likes */}
+            <div className="mt-1">
+              <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
+                <span>0</span>
+                <span>1 000</span>
+                <span>10 000+</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 via-sky-500 to-emerald-500"
+                  style={{
+                    width: `${Math.min(100, (realLikes / 10000) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      );
-    })}
-  </div>
+      </section>
 
-  {/* Barre de progression likes */}
-  <div className="mt-1">
-    <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
-      <span>0</span>
-      <span>1 000</span>
-      <span>10 000+</span>
-    </div>
-    <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-      <div
-        className="h-full bg-gradient-to-r from-amber-400 via-sky-500 to-emerald-500"
-        style={{
-          width: `${Math.min(100, (realLikes / 10000) * 100)}%`,
-        }}
-      />
-    </div>
-  </div>
-</div>
-           {/* Séparateur Réalité / Simulateur */}
+      {/* Séparateur Réalité / Simulateur */}
       <div className="relative my-4 flex items-center justify-center">
         <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
         <span className="absolute inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
@@ -681,7 +687,7 @@ export default function MonetPage() {
         </span>
       </div>
 
-      {/* 🔸 2. SIMULATEUR : réglages + logique complète (TTC -> TVA -> HT -> parts) */}
+      {/* 🔸 2. SIMULATEUR */}
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {/* Contrôles simulateur */}
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
@@ -755,8 +761,8 @@ export default function MonetPage() {
             </div>
 
             <p className="text-[11px] text-slate-500">
-              Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million pour
-              garder le slider lisible) ou saisis directement le nombre de
+              Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million
+              pour garder le slider lisible) ou saisis directement le nombre de
               followers.
             </p>
           </div>
@@ -772,22 +778,22 @@ export default function MonetPage() {
                   {simAboPrice.toFixed(2)} CHF / mois
                 </span>
               </div>
-             <input
-  type="range"
-  min={0.99}
-  max={999.99}
-  step={0.5}
-  value={simAboPrice}
-  onChange={(e) => {
-    const raw = Number(e.target.value);
-    const rounded = Math.round(raw * 100) / 100; // propre sur 2 décimales
-    setSimAboPrice(rounded);
-  }}
-  className="w-full"
-/>
-<p className="text-[11px] text-slate-500">
-  Tarification Abo Magic Clock (0,99 → 999,99 CHF / mois, TTC).
-</p>
+              <input
+                type="range"
+                min={0.99}
+                max={999.99}
+                step={0.5}
+                value={simAboPrice}
+                onChange={(e) => {
+                  const raw = Number(e.target.value);
+                  const rounded = Math.round(raw * 100) / 100;
+                  setSimAboPrice(rounded);
+                }}
+                className="w-full"
+              />
+              <p className="text-[11px] text-slate-500">
+                Tarification Abo Magic Clock (0,99 → 999,99 CHF / mois, TTC).
+              </p>
             </div>
 
             <div className="space-y-1">
@@ -828,22 +834,23 @@ export default function MonetPage() {
                   {simPpvPrice.toFixed(2)} CHF
                 </span>
               </div>
-             <input
-  type="range"
-  min={0.99}
-  max={999.99}
-  step={0.5}
-  value={simPpvPrice}
-  onChange={(e) => {
-    const raw = Number(e.target.value);
-    const rounded = Math.round(raw * 100) / 100;
-    setSimPpvPrice(rounded);
-  }}
-  className="w-full"
-/>
-<p className="text-[11px] text-slate-500">
-  Prix moyen d&apos;un contenu Pay-Per-View (PPV) (0,99 → 999,99 CHF, TTC).
-</p>
+              <input
+                type="range"
+                min={0.99}
+                max={999.99}
+                step={0.5}
+                value={simPpvPrice}
+                onChange={(e) => {
+                  const raw = Number(e.target.value);
+                  const rounded = Math.round(raw * 100) / 100;
+                  setSimPpvPrice(rounded);
+                }}
+                className="w-full"
+              />
+              <p className="text-[11px] text-slate-500">
+                Prix moyen d&apos;un contenu Pay-Per-View (PPV) (0,99 →
+                999,99 CHF, TTC).
+              </p>
             </div>
 
             {/* Conversion PPV */}
@@ -1025,8 +1032,8 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-  Part créateur (après TVA + commission)
-</span>
+                Part créateur (après TVA + commission)
+              </span>
               <span className="text-lg font-semibold text-emerald-600">
                 {formatMoney(simCreatorShareNet)}
               </span>
@@ -1097,12 +1104,13 @@ export default function MonetPage() {
               </div>
             </div>
           </div>
-      {/* Texte légal sous le simulateur */}
-      <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-        Simulation indicative, ne constitue pas une garantie de revenus.
-      </p>
-    </div>
-  </section>
-</main>
+
+          {/* Texte légal sous le simulateur */}
+          <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+            Simulation indicative, ne constitue pas une garantie de revenus.
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
