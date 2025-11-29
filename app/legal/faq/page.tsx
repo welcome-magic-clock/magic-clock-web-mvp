@@ -1,5 +1,3 @@
-// app/legal/faq/page.tsx
-
 export const metadata = {
   title: "FAQ – Magic Clock",
 };
@@ -120,11 +118,13 @@ export default function LegalFAQPage() {
           {/* 5. TVA & frais */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
-              5. Comment sont gérés la TVA et les frais de paiement&nbsp;?
+              5. Comment sont gérés la TVA, les devises et les frais de paiement&nbsp;?
             </h3>
             <p className="mt-2">
               Le montant que tu vois dans ton espace créateur correspond
-              généralement au <strong>montant TTC payé par les abonnés</strong>.
+              généralement au <strong>montant TTC payé par les abonnés</strong>{" "}
+              dans leur <strong>devise d&apos;achat</strong> (par exemple EUR,
+              CHF, USD).
             </p>
             <p className="mt-1">
               Avant de calculer ton versement net, nous déduisons :
@@ -142,6 +142,13 @@ export default function LegalFAQPage() {
                 la <strong>commission Magic Clock</strong>.
               </li>
             </ul>
+            <p className="mt-2">
+              Lorsque les utilisateurs paient dans une devise différente de ta{" "}
+              <strong>devise de versement</strong> (par exemple achat en EUR,
+              versement en CHF), une <strong>conversion</strong> est effectuée
+              par notre prestataire de paiement ou par ta banque, selon les
+              cas. Les détails seront précisés dans ton Cockpit Monétisation.
+            </p>
           </section>
 
           {/* 6. Remboursements / litiges */}
@@ -189,8 +196,15 @@ export default function LegalFAQPage() {
                 contenus).
               </li>
               <li>
-                TVA et frais de paiement déduits avant calcul de ton{" "}
-                <strong>montant net</strong>.
+                TVA, frais de paiement et conversions de devises déduits avant
+                calcul de ton <strong>montant net</strong>.
+              </li>
+              <li>
+                <strong>Plage de prix techniques :</strong> tu peux fixer tes
+                abonnements et contenus PPV dans une large plage (par exemple de{" "}
+                <strong>0,99 à 999,99</strong>) dans la{" "}
+                <strong>devise d&apos;achat de l&apos;Utilisateur</strong>, telle
+                qu&apos;affichée au moment du paiement.
               </li>
             </ul>
           </section>
@@ -203,8 +217,9 @@ export default function LegalFAQPage() {
             <p className="mt-2">
               Voici un exemple <strong>purement indicatif</strong> pour t’aider
               à visualiser comment ton gain net peut être calculé. Les chiffres
-              exacts dépendront de la commission, de la TVA applicable et des
-              frais de paiement réels.
+              exacts dépendront de la commission, de la TVA applicable, des
+              frais de paiement réels et, le cas échéant, des conversions de
+              devise.
             </p>
 
             <p className="mt-3 font-medium text-slate-900">
@@ -212,14 +227,16 @@ export default function LegalFAQPage() {
             </p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
               <li>
-                Prix de ton abonnement : <strong>10&nbsp;CHF / mois</strong>.
+                Prix de ton abonnement :{" "}
+                <strong>10&nbsp;unités dans la devise d&apos;achat</strong>{" "}
+                (par ex. 10&nbsp;CHF).
               </li>
               <li>
                 Nombre d’abonnés payants : <strong>100</strong>.
               </li>
               <li>
                 Montant total payé par les abonnés (TTC) :{" "}
-                <strong>1’000&nbsp;CHF</strong>.
+                <strong>1’000&nbsp;CHF</strong> (ou équivalent).
               </li>
             </ul>
 
@@ -253,14 +270,16 @@ export default function LegalFAQPage() {
               920&nbsp;CHF – 230&nbsp;CHF – 28&nbsp;CHF ={" "}
               <strong>≈ 662&nbsp;CHF nets</strong>{" "}
               <span className="font-normal">
-                (avant ta propre fiscalité personnelle).
+                (montant estimé versé par Magic Clock dans ce scénario
+                simplifié).
               </span>
             </p>
 
             <p className="mt-2 text-xs text-slate-500">
               Cet exemple est volontairement simplifié pour la compréhension.
-              Les pourcentages (TVA, commission, frais) peuvent varier selon ton
-              pays, ton statut et les conditions définitives de Magic Clock.
+              Les pourcentages (TVA, commission, frais) et les devises peuvent
+              varier selon ton pays, ton statut, le moyen de paiement utilisé et
+              les conditions définitives de Magic Clock.
             </p>
           </section>
         </section>
@@ -286,7 +305,9 @@ export default function LegalFAQPage() {
               Sur la page d’un créateur, tu peux cliquer sur le bouton{" "}
               <strong>« S’abonner »</strong>. Le prix mensuel et les éventuels
               avantages inclus (contenus exclusifs, accès prioritaire, etc.)
-              sont affichés clairement avant la validation.
+              sont affichés clairement{" "}
+              <strong>dans ta devise d’achat (devise locale) et toutes taxes comprises</strong>{" "}
+              avant la validation.
             </p>
             <p className="mt-1">
               L’abonnement est généralement <strong>mensuel</strong> et se
@@ -306,9 +327,9 @@ export default function LegalFAQPage() {
             </p>
             <p className="mt-1">
               Lorsque tu résilies, tu gardes en principe l’accès aux contenus
-              de ce créateur jusqu’à la <strong>fin de la période déjà payée</strong>
-              . L’abonnement ne sera simplement pas renouvelé pour le mois
-              suivant.
+              de ce créateur jusqu’à la{" "}
+              <strong>fin de la période déjà payée</strong>. L’abonnement ne
+              sera simplement pas renouvelé pour le mois suivant.
             </p>
             <p className="mt-1">
               Sauf exception prévue par la loi locale, il n’y a pas de
@@ -327,7 +348,9 @@ export default function LegalFAQPage() {
               transformation détaillée, un tutoriel avancé, etc.).
             </p>
             <p className="mt-1">
-              Une fois l’achat effectué et le paiement confirmé, tu obtiens un{" "}
+              Avant de payer, le <strong>prix TTC</strong> est toujours affiché
+              clairement dans ta <strong>devise d&apos;achat</strong>. Une fois
+              l’achat effectué et le paiement confirmé, tu obtiens un{" "}
               <strong>droit d’accès</strong> à ce contenu depuis ton compte
               Magic Clock, selon les conditions définies par le créateur et par
               nos CGV.
