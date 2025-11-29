@@ -593,7 +593,7 @@ export default function MonetPage() {
             </div>
           </div>
 
-         {/* Paliers commission (réels, non modifiables) */}
+     {/* Paliers commission (réels, non modifiables) */}
 <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
   <div className="flex items-center justify-between text-xs">
     <p className="font-medium text-slate-700">
@@ -672,7 +672,6 @@ export default function MonetPage() {
     </div>
   </div>
 </div>
-
            {/* Séparateur Réalité / Simulateur */}
       <div className="relative my-4 flex items-center justify-center">
         <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
@@ -930,7 +929,7 @@ export default function MonetPage() {
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-700">
-                Likes / mois (simulateur)
+                Likes cumulés (simulateur)
               </span>
               <span className="text-slate-500">
                 {simLikes.toLocaleString("fr-CH")} · palier{" "}
@@ -1098,13 +1097,12 @@ export default function MonetPage() {
               </div>
             </div>
           </div>
-
-          {/* Texte légal sous le simulateur */}
-          <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-            Simulation indicative, ne constitue pas une garantie de revenus.
-          </p>
-        </div>
-      </section>
+      {/* Texte légal sous le simulateur */}
+      <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+        Simulation indicative, ne constitue pas une garantie de revenus.
+      </p>
     </div>
+  </section>
+</main>
   );
 }
