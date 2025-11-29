@@ -219,100 +219,7 @@ const SOCIAL_NETWORKS = [
   },
 ];
 // ─────────────────────────────────────────────────────────────
-// Mini graphique revenus (PPV / Abos)
-// ─────────────────────────────────────────────────────────────
-
-type DailyRevenuePoint = {
-  index: number;
-  ppv: number;
-  abo: number;
-};
-
-// Maquette : exemple de revenus quotidiens réels (PPV + Abo)
-const REAL_DAILY_REVENUE: DailyRevenuePoint[] = [
-  { index: 0, ppv: 180, abo: 80 },
-  { index: 1, ppv: 210, abo: 90 },
-  { index: 2, ppv: 260, abo: 100 },
-  { index: 3, ppv: 290, abo: 110 },
-  { index: 4, ppv: 310, abo: 115 },
-  { index: 5, ppv: 280, abo: 118 },
-  { index: 6, ppv: 260, abo: 120 },
-  { index: 7, ppv: 240, abo: 122 },
-  { index: 8, ppv: 260, abo: 125 },
-  { index: 9, ppv: 310, abo: 128 },
-  { index: 10, ppv: 360, abo: 130 },
-  { index: 11, ppv: 400, abo: 132 },
-  { index: 12, ppv: 380, abo: 134 },
-  { index: 13, ppv: 340, abo: 136 },
-];
-
-function RevenueLinesChart({ data }: { data: DailyRevenuePoint[] }) {
-  if (!data || data.length === 0) return null;
-
-  const ppvValues = data.map((d) => d.ppv);
-  const aboValues = data.map((d) => d.abo);
-  const maxY = Math.max(...ppvValues, ...aboValues, 1);
-  const minY = 0;
-  const spanY = maxY - minY || 1;
-
-  const buildPoints = (key: "ppv" | "abo") =>
-    data
-      .map((d, idx) => {
-        const x = (idx / (data.length - 1 || 1)) * 100;
-        const normY = (d[key] - minY) / spanY;
-        const y = 100 - normY * 80 - 10; // marges haut/bas
-        return `${x},${y}`;
-      })
-      .join(" ");
-
-  const ppvPoints = buildPoints("ppv");
-  const aboPoints = buildPoints("abo");
-
-  return (
-    <svg viewBox="0 0 100 100" className="h-28 w-full">
-      <defs>
-        <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#eef2ff" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#f8fafc" stopOpacity="0.2" />
-        </linearGradient>
-        <linearGradient id="mc-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#2563eb" />
-        </linearGradient>
-        <linearGradient id="mc-abo" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#6366f1" />
-        </linearGradient>
-      </defs>
-
-      {/* fond “carte” */}
-      <rect x={0} y={10} width={100} height={80} rx={8} fill="url(#mc-bg)" />
-
-      {/* Abonnements */}
-      <polyline
-        fill="none"
-        stroke="url(#mc-abo)"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={aboPoints}
-      />
-
-      {/* PPV */}
-      <polyline
-        fill="none"
-        stroke="url(#mc-ppv)"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={ppvPoints}
-      />
-    </svg>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Types & composant graphique revenus quotidiens
+// Graphique revenus quotidiens (PPV / Abos)
 // ─────────────────────────────────────────────────────────────
 
 type DailyRevenuePoint = {
@@ -329,25 +236,26 @@ type RevenueLinesChartProps = {
 function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) {
   if (!data || data.length === 0) return null;
 
-  // maxY pour normaliser les courbes
   const maxY = Math.max(
     ...data.map((d) => Math.max(d.ppv, d.abo)),
     1,
   );
 
-  const heightClass = variant === "large" ? "h-48" : "h-24";
+  const heightClass = variant === "large" ? "h-48" : "h-28";
 
-  // On pré-calcule les coordonnées des points dans le viewBox 0–100
+  // Coordonnées normalisées dans un viewBox 0–100
   const coords = data.map((point, idx) => {
     const t = data.length > 1 ? idx / (data.length - 1) : 0; // 0 → 1
-    const x = 4 + t * 92; // petit padding gauche/droite
+    const x = 4 + t * 92; // padding gauche/droite
 
     const ppvNorm = point.ppv / maxY;
     const aboNorm = point.abo / maxY;
 
-    // zone utile ~70 de hauteur, reposant sur une "ligne" à y=95
-    const ppvY = 95 - ppvNorm * 70;
-    const aboY = 95 - aboNorm * 70;
+    const baseLine = 92; // “ligne de sol” des aires
+    const amplitude = 70; // hauteur utile
+
+    const ppvY = baseLine - ppvNorm * amplitude;
+    const aboY = baseLine - aboNorm * amplitude;
 
     return { x, ppvY, aboY };
   });
@@ -356,99 +264,76 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
   const aboLine = coords.map((c) => `${c.x},${c.aboY}`).join(" ");
 
   const ppvArea = [
-    `${coords[0].x},95`,
+    `${coords[0].x},92`,
     ...coords.map((c) => `${c.x},${c.ppvY}`),
-    `${coords[coords.length - 1].x},95`,
+    `${coords[coords.length - 1].x},92`,
   ].join(" ");
 
   const aboArea = [
-    `${coords[0].x},95`,
+    `${coords[0].x},92`,
     ...coords.map((c) => `${c.x},${c.aboY}`),
-    `${coords[coords.length - 1].x},95`,
+    `${coords[coords.length - 1].x},92`,
   ].join(" ");
 
-  const last = data[data.length - 1];
-
   return (
-    <div className="relative w-full">
-      <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
-        <defs>
-          {/* Fond global */}
-          <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="100%" stopColor="#eef2ff" />
-          </linearGradient>
+    <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
+      <defs>
+        {/* Fond global */}
+        <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#f9fafb" />
+          <stop offset="100%" stopColor="#eef2ff" />
+        </linearGradient>
 
-          {/* Remplissage PPV */}
-          <linearGradient id="mc-fill-ppv" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#bfdbfe" />
-            <stop offset="100%" stopColor="#eff6ff" />
-          </linearGradient>
+        {/* Remplissage PPV */}
+        <linearGradient id="mc-fill-ppv" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#bfdbfe" />
+          <stop offset="100%" stopColor="#eff6ff" />
+        </linearGradient>
 
-          {/* Remplissage Abo */}
-          <linearGradient id="mc-fill-abo" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#e9d5ff" />
-            <stop offset="100%" stopColor="#f5f3ff" />
-          </linearGradient>
+        {/* Remplissage Abo */}
+        <linearGradient id="mc-fill-abo" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#e9d5ff" />
+          <stop offset="100%" stopColor="#f5f3ff" />
+        </linearGradient>
 
-          {/* Traits des lignes */}
-          <linearGradient id="mc-line-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#60a5fa" />
-            <stop offset="100%" stopColor="#1d4ed8" />
-          </linearGradient>
-          <linearGradient id="mc-line-abo" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#a855f7" />
-            <stop offset="100%" stopColor="#6366f1" />
-          </linearGradient>
-        </defs>
+        {/* Traits des lignes */}
+        <linearGradient id="mc-line-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#2563eb" />
+        </linearGradient>
+        <linearGradient id="mc-line-abo" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+      </defs>
 
-        {/* Carte de fond */}
-        <rect x={4} y={6} width={92} height={90} rx={12} fill="url(#mc-bg)" />
+      {/* Carte de fond */}
+      <rect x={4} y={6} width={92} height={88} rx={16} fill="url(#mc-bg)" />
 
-        {/* Aplatis sous les courbes */}
-        <polygon points={aboArea} fill="url(#mc-fill-abo)" fillOpacity={0.35} />
-        <polygon points={ppvArea} fill="url(#mc-fill-ppv)" fillOpacity={0.4} />
+      {/* Aires sous les courbes */}
+      <polygon points={aboArea} fill="url(#mc-fill-abo)" fillOpacity={0.45} />
+      <polygon points={ppvArea} fill="url(#mc-fill-ppv)" fillOpacity={0.5} />
 
-        {/* Courbe Abo */}
-        <polyline
-          fill="none"
-          stroke="url(#mc-line-abo)"
-          strokeWidth={1.6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={aboLine}
-        />
+      {/* Courbe Abonnements */}
+      <polyline
+        fill="none"
+        stroke="url(#mc-line-abo)"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={aboLine}
+      />
 
-        {/* Courbe PPV */}
-        <polyline
-          fill="none"
-          stroke="url(#mc-line-ppv)"
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={ppvLine}
-        />
-      </svg>
-
-      {/* Tooltip fixe sur la dernière période (comme ta maquette jour 7) */}
-      <div className="pointer-events-none absolute bottom-2 right-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm">
-        <p className="font-medium text-slate-700">
-          Jour {last.day}
-        </p>
-        <p className="text-slate-500">
-          PPV :{" "}
-          <span className="font-semibold text-slate-700">
-            {formatMoney(last.ppv)}
-          </span>
-        </p>
-        <p className="text-slate-500">
-          Abo :{" "}
-          <span className="font-semibold text-slate-700">
-            {formatMoney(last.abo)}
-          </span>
-        </p>
-      </div>
-    </div>
+      {/* Courbe PPV */}
+      <polyline
+        fill="none"
+        stroke="url(#mc-line-ppv)"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={ppvLine}
+      />
+    </svg>
   );
 }
 
@@ -532,16 +417,6 @@ export default function MonetPage() {
   const simGrossAbos = simAboSubs * simAboPrice;
   const simGrossPpv = simPpvBuyers * simPpvPrice * simPpvPerBuyer;
   const simGrossTotal = simGrossAbos + simGrossPpv;
-  
-  // Historique simulé pour le graphique (ex: 7 périodes)
-  const simDailyRevenue = useMemo<DailyRevenuePoint[]>(() => {
-    const factors = [0.45, 0.6, 0.8, 1, 1.1, 1.2, 1.3];
-    return factors.map((f, index) => ({
-      index,
-      ppv: simGrossPpv * f,
-      abo: simGrossAbos * f * 0.9, // Abos un peu plus stables
-    }));
-  }, [simGrossAbos, simGrossPpv]);
   
   const {
     vatAmount: simVatAmount,
@@ -1347,7 +1222,14 @@ export default function MonetPage() {
               </div>
             </div>
 
-                       {/* Courbe revenus simulés (PPV + Abo) */}
+                                {/* Donut + courbe simulée */}
+          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+            {/* Donut */}
+            <div className="flex flex-col items-center gap-2">
+              ...
+            </div>
+
+            {/* Courbe revenus simulés (PPV + Abo) */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (revenus simulés)
@@ -1359,15 +1241,15 @@ export default function MonetPage() {
                   semaines) basée sur tes revenus simulés PPV / abonnements.
                 </p>
               </div>
-            </div> {/* 👈 fermeture de la grid */}
+            </div>
+          </div>
 
           {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
             Simulation indicative, ne constitue pas une garantie de revenus.
           </p>
-        </div> {/* card "Résultat simulateur" */}
+        </div>
       </section>
     </div>
   );
 }
-
