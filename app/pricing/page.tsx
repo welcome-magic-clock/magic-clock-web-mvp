@@ -79,7 +79,7 @@ export default function PricingPage() {
 
       {/* CONTENU DÉTAILLÉ */}
       <section className="mt-12 space-y-12 text-sm leading-relaxed text-slate-700">
-        {/* 2. POUR LES UTILISATEURS */}
+        {/* 1. POUR LES UTILISATEURS */}
         <section>
           <h2 className="text-lg font-semibold text-slate-900">
             1. Pour les utilisateurs (abonnés &amp; contenus PPV)
@@ -99,8 +99,8 @@ export default function PricingPage() {
             <li>
               <strong>Abonnements mensuels :</strong> tu peux soutenir un
               créateur avec un abonnement mensuel. Le prix est fixé par chaque
-              créateur (par exemple 4.90&nbsp;CHF / mois, 9.90&nbsp;CHF / mois,
-              etc.).
+              créateur (par exemple 4,99 ou 9,99 par mois, dans ta{" "}
+              <strong>devise d&apos;achat</strong>).
             </li>
             <li>
               <strong>Contenus PPV (« Pay-Per-View ») :</strong> certains
@@ -119,9 +119,15 @@ export default function PricingPage() {
             disponibles dans ton pays (cartes bancaires, PostFinance Pay, TWINT,
             certains wallets, etc.).
           </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Les montants sont toujours facturés dans ta{" "}
+            <strong>devise d&apos;achat</strong> (par exemple CHF, EUR ou USD),
+            en fonction de ton pays et du moyen de paiement utilisé. Le détail
+            (montant exact, taxes éventuelles) est affiché avant validation.
+          </p>
         </section>
 
-        {/* 3. POUR LES CRÉATEURS */}
+        {/* 2. POUR LES CRÉATEURS */}
         <section>
           <h2 className="text-lg font-semibold text-slate-900">
             2. Pour les créateurs
@@ -159,7 +165,9 @@ export default function PricingPage() {
           </h3>
           <p className="mt-2">
             Sur Magic Clock, c’est <strong>toi</strong> qui fixes tes tarifs
-            dans les limites techniques de la plateforme :
+            dans les limites techniques de la plateforme. Par défaut, les prix
+            peuvent aller de <strong>0,99 à 999,99</strong>, toujours dans la{" "}
+            <strong>devise d&apos;achat</strong> (par exemple CHF, EUR ou USD).
           </p>
           <ul className="mt-2 space-y-1">
             <li>
@@ -168,7 +176,9 @@ export default function PricingPage() {
                 <li>niveau “gratuit” possible ;</li>
                 <li>
                   ou prix mensuel compris dans une large plage (par exemple
-                  0.99 à 999.00, selon le marché et ta stratégie).
+                  entre <strong>0,99 et 999,99</strong>, dans la{" "}
+                  <strong>devise d&apos;achat</strong>, selon le marché et ta
+                  stratégie).
                 </li>
               </ul>
             </li>
@@ -178,7 +188,9 @@ export default function PricingPage() {
                 <li>chaque contenu peut être vendu à l’unité ;</li>
                 <li>
                   tu définis le prix de chaque vidéo / cours / masterclass dans
-                  la même plage de prix.
+                  la même plage de prix (
+                  <strong>0,99 → 999,99</strong> dans la{" "}
+                  <strong>devise d&apos;achat</strong>).
                 </li>
               </ul>
             </li>
@@ -204,12 +216,17 @@ export default function PricingPage() {
             </li>
             <li>
               <strong>Seuil minimum :</strong> un paiement est effectué dès que
-              ton montant net atteint 50&nbsp;CHF (ou équivalent). En dessous,
-              le solde est simplement reporté sur le mois suivant.
+              ton montant net atteint 50 dans la{" "}
+              <strong>devise de versement</strong> (par exemple 50&nbsp;CHF ou
+              50&nbsp;EUR). En dessous, le solde est simplement reporté sur le
+              mois suivant.
             </li>
             <li>
               <strong>Devise :</strong> versements en CHF ou EUR (via virement
-              bancaire / SEPA), selon ton pays et les solutions disponibles.
+              bancaire / SEPA), selon ton pays et les solutions disponibles.{" "}
+              <span className="text-xs text-slate-500">
+                D&apos;autres devises pourront être ajoutées à l&apos;avenir.
+              </span>
             </li>
           </ul>
           <p className="mt-3 text-xs text-slate-500">
