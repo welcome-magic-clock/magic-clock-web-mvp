@@ -73,8 +73,19 @@ export default function CguPage() {
           </ul>
           <p className="mt-2">
             Les fonctionnalités détaillées et les modalités de monétisation
-            sont précisées dans les CGV et dans la documentation disponible sur
-            la plateforme.
+            sont précisées dans les CGV, dans l&apos;interface Monétisation et
+            sur la page dédiée{" "}
+            <a
+              href="/pricing"
+              className="font-medium text-violet-600 hover:text-violet-700"
+            >
+              « Prix &amp; monétisation »
+            </a>
+            . À titre indicatif, les prix des abonnements et des contenus PPV
+            peuvent être fixés par les créateurs dans une plage large (par
+            exemple de <strong>0,99 à 999,99</strong>) dans la{" "}
+            <strong>devise d&apos;achat de l&apos;Utilisateur</strong>, telle
+            qu&apos;affichée au moment du paiement.
           </p>
         </section>
 
@@ -148,7 +159,7 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 5. Contenus générés par les utilisateurs */}
+        {/* 5. UGC */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             5. Contenus générés par les utilisateurs (UGC)
@@ -178,7 +189,7 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 6. Propriété intellectuelle de Magic Clock */}
+        {/* 6. PI Magic Clock */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             6. Propriété intellectuelle de Magic Clock
@@ -213,7 +224,7 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 8. Suspension et résiliation */}
+        {/* 8. Suspension / résiliation */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             8. Suspension et résiliation de compte
@@ -260,7 +271,7 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 10. Données personnelles */}
+        {/* 10. Données perso */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             10. Données personnelles
@@ -279,7 +290,7 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 11. Modifications des CGU */}
+        {/* 11. Modifications */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             11. Modifications des CGU
