@@ -238,7 +238,8 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     1,
   );
 
-  const heightClass = variant === "large" ? "h-48" : "h-28";
+  const heightClass =
+    variant === "large" ? "h-56 md:h-64" : "h-28 md:h-32";
 
   // Coordonnées normalisées dans un viewBox 0–100
   const coords = data.map((point, idx) => {
@@ -248,7 +249,7 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     const ppvNorm = point.ppv / maxY;
     const aboNorm = point.abo / maxY;
 
-    const baseLine = 92; // “ligne de sol” des aires
+    const baseLine = 90; // “ligne de sol” des aires
     const amplitude = 70; // hauteur utile
 
     const ppvY = baseLine - ppvNorm * amplitude;
@@ -261,16 +262,18 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
   const aboLine = coords.map((c) => `${c.x},${c.aboY}`).join(" ");
 
   const ppvArea = [
-    `${coords[0].x},92`,
+    `${coords[0].x},90`,
     ...coords.map((c) => `${c.x},${c.ppvY}`),
-    `${coords[coords.length - 1].x},92`,
+    `${coords[coords.length - 1].x},90`,
   ].join(" ");
 
   const aboArea = [
-    `${coords[0].x},92`,
+    `${coords[0].x},90`,
     ...coords.map((c) => `${c.x},${c.aboY}`),
-    `${coords[coords.length - 1].x},92`,
+    `${coords[coords.length - 1].x},90`,
   ].join(" ");
+
+  const gridLevels = [0.2, 0.4, 0.6, 0.8];
 
   return (
     <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
@@ -295,8 +298,8 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
 
         {/* Traits des lignes */}
         <linearGradient id="mc-line-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#2563eb" />
+          <stop offset="0%" stopColor="#2563eb" />
+          <stop offset="100%" stopColor="#1d4ed8" />
         </linearGradient>
         <linearGradient id="mc-line-abo" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#a855f7" />
@@ -307,9 +310,29 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
       {/* Carte de fond */}
       <rect x={4} y={6} width={92} height={88} rx={16} fill="url(#mc-bg)" />
 
+      {/* Lignes de grille horizontales */}
+      {gridLevels.map((level) => {
+        const baseLine = 90;
+        const amplitude = 70;
+        const y = baseLine - amplitude * level;
+        return (
+          <line
+            key={level}
+            x1={4}
+            x2={96}
+            y1={y}
+            y2={y}
+            stroke="#cbd5f5"
+            strokeWidth={0.3}
+            strokeDasharray="1.5 2"
+            opacity={0.7}
+          />
+        );
+      })}
+
       {/* Aires sous les courbes */}
-      <polygon points={aboArea} fill="url(#mc-fill-abo)" fillOpacity={0.45} />
-      <polygon points={ppvArea} fill="url(#mc-fill-ppv)" fillOpacity={0.5} />
+      <polygon points={aboArea} fill="url(#mc-fill-abo)" fillOpacity={0.55} />
+      <polygon points={ppvArea} fill="url(#mc-fill-ppv)" fillOpacity={0.55} />
 
       {/* Courbe Abonnements */}
       <polyline
@@ -433,22 +456,31 @@ export default function MonetPage() {
     [simAboSharePct],
   );
 
-  // Revenus quotidiens (réalité) : exemple sur 30 jours
+  // Revenus quotidiens (réalité) : exemple sur 30 jours avec fluctuations
   const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
     const days = 30;
-    const baseAbo = realGrossAbos / days;
-    const basePpv = realGrossPpv / days;
+    if (realGrossAbos <= 0 && realGrossPpv <= 0) return [];
+
+    const baseAbo = Math.max(realGrossAbos / days, 1);
+    const basePpv = Math.max(realGrossPpv / days, 1);
 
     return Array.from({ length: days }, (_, index) => {
-      const t = index / (days - 1 || 1); // 0 → 1
-      const abo = Math.max(0, Math.round(baseAbo * (0.7 + t * 0.8))); // tendance haussière
-      const ppv = Math.max(
-        0,
-        Math.round(
-          basePpv *
-            (0.8 + 0.4 * t + 0.08 * Math.sin(index / 3)), // petite ondulation
-        ),
-      );
+      const t = days > 1 ? index / (days - 1) : 0; // 0 → 1
+      const phase = t * Math.PI * 2;
+
+      // Courbe “mer agitée” mais douce
+      const aboFactor =
+        0.75 +
+        0.25 * Math.cos(phase) + // grande vague
+        0.12 * Math.sin(2 * phase + 0.4); // petites oscillations
+
+      const ppvFactor =
+        0.8 +
+        0.3 * Math.sin(phase + 0.6) + // déphasée par rapport aux abos
+        0.15 * Math.sin(2.3 * phase); // variations supplémentaires
+
+      const abo = Math.max(0, Math.round(baseAbo * aboFactor));
+      const ppv = Math.max(0, Math.round(basePpv * ppvFactor));
 
       return {
         day: index + 1,
@@ -458,22 +490,25 @@ export default function MonetPage() {
     });
   }, [realGrossAbos, realGrossPpv]);
 
-  // Revenus quotidiens (simulateur) : exemple sur 7 périodes
+  // Revenus quotidiens (simulateur) : 7 périodes, progression + variations
   const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
     const days = 7;
-    const baseAbo = simGrossAbos / days;
-    const basePpv = simGrossPpv / days;
+    if (simGrossAbos <= 0 && simGrossPpv <= 0) return [];
+
+    const baseAbo = Math.max(simGrossAbos / days, 1);
+    const basePpv = Math.max(simGrossPpv / days, 1);
 
     return Array.from({ length: days }, (_, index) => {
-      const t = index / (days - 1 || 1);
-      const abo = Math.max(0, Math.round(baseAbo * (0.8 + t * 0.7)));
-      const ppv = Math.max(
-        0,
-        Math.round(
-          basePpv *
-            (0.8 + t * 0.7 + 0.06 * Math.sin(index / 2)),
-        ),
-      );
+      const t = days > 1 ? index / (days - 1) : 0; // 0 → 1
+
+      // Progression “positive” mais pas linéaire
+      const aboFactor =
+        0.7 + 0.7 * t + 0.12 * Math.sin(t * Math.PI * 1.5);
+      const ppvFactor =
+        0.75 + 0.85 * t + 0.18 * Math.sin(t * Math.PI * 1.8 + 0.5);
+
+      const abo = Math.max(0, Math.round(baseAbo * aboFactor));
+      const ppv = Math.max(0, Math.round(basePpv * ppvFactor));
 
       return {
         day: index + 1,
@@ -682,13 +717,13 @@ export default function MonetPage() {
         </div>
 
         {/* Graphique revenus quotidiens (réalité) */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+        <div className="mt-4 -mx-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-4 sm:mx-0 sm:px-4">
           <div className="mb-3 flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
             <p className="font-medium text-slate-700">
               Revenus quotidiens (réels) · PPV &amp; abonnements
             </p>
             <p className="text-slate-500">
-              Exemple de répartition sur 30 jours, basé sur tes chiffres PPV /
+              Exemple de répartition sur 30 jours, basée sur tes chiffres PPV /
               abonnements du cockpit.
             </p>
           </div>
