@@ -579,15 +579,15 @@ export default function MonetPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
-                  <p className="text-[11px] text-slate-500">
-                    Part créateur estimée (HT)
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold text-emerald-600">
-                    {formatMoney(realCreatorShareNet)}
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Montant avant charges sociales / impôts côté créateur.
-                  </p>
+                 <p className="text-[11px] text-slate-500">
+  Part créateur estimée
+</p>
+<p className="mt-1 text-2xl font-semibold text-emerald-600">
+  {formatMoney(realCreatorShareNet)}
+</p>
+<p className="mt-1 text-[11px] text-slate-500">
+  Montant estimé versé par Magic Clock.
+</p>
                 </div>
               </div>
             </div>
@@ -1032,8 +1032,8 @@ export default function MonetPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">
-                Part créateur (HT, après TVA + commission)
-              </span>
+  Part créateur (après TVA + commission)
+</span>
               <span className="text-lg font-semibold text-emerald-600">
                 {formatMoney(simCreatorShareNet)}
               </span>
