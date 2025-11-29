@@ -310,6 +310,125 @@ function RevenueLinesChart({ data }: { data: DailyRevenuePoint[] }) {
     </svg>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// Types & composant graphique revenus quotidiens
+// ─────────────────────────────────────────────────────────────
+
+type DailyRevenuePoint = {
+  day: number;
+  ppv: number;
+  abo: number;
+};
+
+type RevenueLinesChartProps = {
+  data: DailyRevenuePoint[];
+  variant?: "large" | "small";
+};
+
+function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) {
+  if (!data || data.length === 0) return null;
+
+  const maxY = Math.max(
+    ...data.map((d) => Math.max(d.ppv, d.abo)),
+    1,
+  );
+
+  const heightClass = variant === "large" ? "h-48" : "h-24";
+
+  const buildPoints = (key: "ppv" | "abo") =>
+    data
+      .map((point, idx) => {
+        const x = (idx / (data.length - 1 || 1)) * 100; // 0 → 100
+        const normY = (point[key] / maxY) * 0.8; // 0 → 0.8 dans la zone utile
+        const y = 100 - normY * 100 - 5; // padding haut/bas
+        return `${x},${y}`;
+      })
+      .join(" ");
+
+  const ppvPoints = buildPoints("ppv");
+  const aboPoints = buildPoints("abo");
+  const last = data[data.length - 1];
+
+  return (
+    <div className="relative w-full">
+      <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
+        <defs>
+          <linearGradient
+            id="mc-line-ppv"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
+            <stop offset="0%" stopColor="#60a5fa" />
+            <stop offset="100%" stopColor="#1d4ed8" />
+          </linearGradient>
+          <linearGradient
+            id="mc-line-abo"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
+            <stop offset="0%" stopColor="#a855f7" />
+            <stop offset="100%" stopColor="#22c55e" />
+          </linearGradient>
+        </defs>
+
+        {/* Fond */}
+        <rect
+          x={4}
+          y={6}
+          width={92}
+          height={90}
+          rx={8}
+          className="fill-slate-50"
+        />
+
+        {/* Courbe PPV */}
+        <polyline
+          fill="none"
+          stroke="url(#mc-line-ppv)"
+          strokeWidth={1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={ppvPoints}
+        />
+
+        {/* Courbe Abo */}
+        <polyline
+          fill="none"
+          stroke="url(#mc-line-abo)"
+          strokeWidth={1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={aboPoints}
+        />
+      </svg>
+
+      {/* Tooltip fixe (dernier point) */}
+      <div className="pointer-events-none absolute bottom-2 right-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm">
+        <p className="font-medium text-slate-700">
+          Jour {last.day}
+        </p>
+        <p className="text-slate-500">
+          PPV :{" "}
+          <span className="font-semibold text-slate-700">
+            {formatMoney(last.ppv)}
+          </span>
+        </p>
+        <p className="text-slate-500">
+          Abo :{" "}
+          <span className="font-semibold text-slate-700">
+            {formatMoney(last.abo)}
+          </span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // Page Monétisation
 // ─────────────────────────────────────────────────────────────
@@ -412,12 +531,62 @@ export default function MonetPage() {
     simGrossTotal > 0 ? (simGrossAbos / simGrossTotal) * 100 : 0;
   const simPpvSharePct = simGrossTotal > 0 ? 100 - simAboSharePct : 0;
 
-  const donutStyle = useMemo(
+    const donutStyle = useMemo(
     () => ({
       backgroundImage: `conic-gradient(rgb(59,130,246) 0 ${simAboSharePct}%, rgb(16,185,129) ${simAboSharePct}% 100%)`,
     }),
     [simAboSharePct],
   );
+
+  // Revenus quotidiens (réalité) : exemple sur 30 jours
+  const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
+    const days = 30;
+    const baseAbo = realGrossAbos / days;
+    const basePpv = realGrossPpv / days;
+
+    return Array.from({ length: days }, (_, index) => {
+      const t = index / (days - 1 || 1); // 0 → 1
+      const abo = Math.max(0, Math.round(baseAbo * (0.7 + t * 0.8))); // tendance haussière
+      const ppv = Math.max(
+        0,
+        Math.round(
+          basePpv *
+            (0.8 + 0.4 * t + 0.08 * Math.sin(index / 3)), // petite ondulation
+        ),
+      );
+
+      return {
+        day: index + 1,
+        abo,
+        ppv,
+      };
+    });
+  }, [realGrossAbos, realGrossPpv]);
+
+  // Revenus quotidiens (simulateur) : exemple sur 7 périodes
+  const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
+    const days = 7;
+    const baseAbo = simGrossAbos / days;
+    const basePpv = simGrossPpv / days;
+
+    return Array.from({ length: days }, (_, index) => {
+      const t = index / (days - 1 || 1);
+      const abo = Math.max(0, Math.round(baseAbo * (0.8 + t * 0.7)));
+      const ppv = Math.max(
+        0,
+        Math.round(
+          basePpv *
+            (0.8 + t * 0.7 + 0.06 * Math.sin(index / 2)),
+        ),
+      );
+
+      return {
+        day: index + 1,
+        abo,
+        ppv,
+      };
+    });
+  }, [simGrossAbos, simGrossPpv]);
 
     return (
     <div className="container space-y-8 py-8">
@@ -617,6 +786,20 @@ export default function MonetPage() {
           </div>
         </div>
 
+        {/* Graphique revenus quotidiens (réalité) */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+          <div className="mb-3 flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
+            <p className="font-medium text-slate-700">
+              Revenus quotidiens (réels) · PPV &amp; abonnements
+            </p>
+            <p className="text-slate-500">
+              Exemple de répartition sur 30 jours, basé sur tes chiffres PPV /
+              abonnements du cockpit.
+            </p>
+          </div>
+          <RevenueLinesChart data={realDailyRevenue} variant="large" />
+        </div>
+        
         {/* Résumé revenus + TVA + commission réelle */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-4">
@@ -1141,20 +1324,19 @@ export default function MonetPage() {
               </div>
             </div>
 
-            {/* Courbe d’évolution simulée (PPV + Abos) */}
+                       {/* Courbe revenus simulés (PPV + Abo) */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (revenus simulés)
               </p>
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                <RevenueLinesChart data={simDailyRevenue} />
+                <RevenueLinesChart data={simDailyRevenue} variant="small" />
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
                   semaines) basée sur tes revenus simulés PPV / abonnements.
                 </p>
               </div>
             </div>
-          </div>
 
           {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
