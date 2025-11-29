@@ -6,14 +6,12 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 
-// ─────────────────────────────────────────────────────────────
-// TVA / Pays
-// ─────────────────────────────────────────────────────────────
+// --- TVA / Pays -------------------------------------------------------------
 
 type CountryVat = {
   code: string;
   label: string;
-  vatRate: number; // ex: 0.081 = 8.1 %
+  vatRate: number;
 };
 
 const COUNTRY_VAT_TABLE: CountryVat[] = [
@@ -22,63 +20,41 @@ const COUNTRY_VAT_TABLE: CountryVat[] = [
   { code: "DE", label: "Allemagne", vatRate: 0.19 },
   { code: "ES", label: "Espagne", vatRate: 0.21 },
   { code: "IT", label: "Italie", vatRate: 0.22 },
-  { code: "UK", label: "Royaume-Uni", vatRate: 0.2 }, // ~20% TVA UK
-  { code: "US", label: "États-Unis (indicatif)", vatRate: 0 }, // pas de TVA fédérale
+  { code: "UK", label: "Royaume-Uni", vatRate: 0.2 },
+  { code: "US", label: "États-Unis (indicatif)", vatRate: 0 },
   { code: "EU", label: "Autres pays UE", vatRate: 0.2 },
 ];
 
-// 🔒 Pour la partie “réalité”, pays figé (ex: Suisse)
 const CURRENT_COUNTRY_CODE = "CH";
 const CURRENT_COUNTRY =
   COUNTRY_VAT_TABLE.find((c) => c.code === CURRENT_COUNTRY_CODE) ??
   COUNTRY_VAT_TABLE[0];
 
-// ─────────────────────────────────────────────────────────────
-// Paliers commission (Bronze / Argent / Or)
-// ─────────────────────────────────────────────────────────────
+// --- Tiers de commission ----------------------------------------------------
 
 type TierId = "BRONZE" | "SILVER" | "GOLD";
 
 type Tier = {
   id: TierId;
   label: string;
-  rate: number; // part plateforme, ex: 0.30 = 30 %
+  rate: number; // part plateforme
   minLikes: number;
   maxLikes?: number;
 };
 
 const TIERS: Tier[] = [
-  {
-    id: "BRONZE",
-    label: "Bronze",
-    rate: 0.3,
-    minLikes: 0,
-    maxLikes: 1000,
-  },
-  {
-    id: "SILVER",
-    label: "Argent",
-    rate: 0.25,
-    minLikes: 1001,
-    maxLikes: 10000,
-  },
-  {
-    id: "GOLD",
-    label: "Or",
-    rate: 0.2,
-    minLikes: 10001,
-  },
+  { id: "BRONZE", label: "Bronze", rate: 0.3, minLikes: 0, maxLikes: 1000 },
+  { id: "SILVER", label: "Argent", rate: 0.25, minLikes: 1001, maxLikes: 10000 },
+  { id: "GOLD", label: "Or", rate: 0.2, minLikes: 10001 },
 ];
 
 function getTierFromLikes(likes: number): Tier {
-  if (likes > 10000) return TIERS[2]; // Or
-  if (likes > 1000) return TIERS[1]; // Argent
-  return TIERS[0]; // Bronze
+  if (likes > 10000) return TIERS[2];
+  if (likes > 1000) return TIERS[1];
+  return TIERS[0];
 }
 
-// ─────────────────────────────────────────────────────────────
-// Helpers UI & maths
-// ─────────────────────────────────────────────────────────────
+// --- Helpers visuels / formats ---------------------------------------------
 
 type Trend = "up" | "down" | "flat";
 
@@ -121,18 +97,6 @@ function formatMoney(amount: number, currency = "CHF") {
   }).format(amount);
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-/**
- * Interprétation : les prix saisis (Abo / Pay-Per-View) sont TTC.
- * On retire la TVA pour obtenir la base HT, puis on applique la commission.
- *
- * @param grossTotal Montant TOTAL TTC (ce que payent les clients)
- * @param tier       Palier de commission (Bronze / Argent / Or)
- * @param vatRate    Taux de TVA (ex: 0.081)
- */
 function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
   if (grossTotal <= 0) {
     return {
@@ -143,10 +107,8 @@ function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
     };
   }
 
-  // On considère grossTotal = HT * (1 + TVA)
   const netBase = grossTotal / (1 + vatRate);
   const vatAmount = grossTotal - netBase;
-
   const platformShareNet = netBase * tier.rate;
   const creatorShareNet = netBase - platformShareNet;
 
@@ -158,9 +120,7 @@ function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// Types créateur (profil Aiko)
-// ─────────────────────────────────────────────────────────────
+// --- Types créateurs --------------------------------------------------------
 
 type CreatorLight = {
   name?: string;
@@ -170,9 +130,7 @@ type CreatorLight = {
   likes?: number;
 };
 
-// ─────────────────────────────────────────────────────────────
-// Réseaux sociaux (maquette MVP, chiffres indicatifs)
-// ─────────────────────────────────────────────────────────────
+// --- Réseaux sociaux (maquette cockpit) ------------------------------------
 
 const SOCIAL_NETWORKS = [
   {
@@ -218,102 +176,8 @@ const SOCIAL_NETWORKS = [
     followers: 5600,
   },
 ];
-// ─────────────────────────────────────────────────────────────
-// Mini graphique revenus (PPV / Abos)
-// ─────────────────────────────────────────────────────────────
 
-type DailyRevenuePoint = {
-  index: number;
-  ppv: number;
-  abo: number;
-};
-
-// Maquette : exemple de revenus quotidiens réels (PPV + Abo)
-const REAL_DAILY_REVENUE: DailyRevenuePoint[] = [
-  { index: 0, ppv: 180, abo: 80 },
-  { index: 1, ppv: 210, abo: 90 },
-  { index: 2, ppv: 260, abo: 100 },
-  { index: 3, ppv: 290, abo: 110 },
-  { index: 4, ppv: 310, abo: 115 },
-  { index: 5, ppv: 280, abo: 118 },
-  { index: 6, ppv: 260, abo: 120 },
-  { index: 7, ppv: 240, abo: 122 },
-  { index: 8, ppv: 260, abo: 125 },
-  { index: 9, ppv: 310, abo: 128 },
-  { index: 10, ppv: 360, abo: 130 },
-  { index: 11, ppv: 400, abo: 132 },
-  { index: 12, ppv: 380, abo: 134 },
-  { index: 13, ppv: 340, abo: 136 },
-];
-
-function RevenueLinesChart({ data }: { data: DailyRevenuePoint[] }) {
-  if (!data || data.length === 0) return null;
-
-  const ppvValues = data.map((d) => d.ppv);
-  const aboValues = data.map((d) => d.abo);
-  const maxY = Math.max(...ppvValues, ...aboValues, 1);
-  const minY = 0;
-  const spanY = maxY - minY || 1;
-
-  const buildPoints = (key: "ppv" | "abo") =>
-    data
-      .map((d, idx) => {
-        const x = (idx / (data.length - 1 || 1)) * 100;
-        const normY = (d[key] - minY) / spanY;
-        const y = 100 - normY * 80 - 10; // marges haut/bas
-        return `${x},${y}`;
-      })
-      .join(" ");
-
-  const ppvPoints = buildPoints("ppv");
-  const aboPoints = buildPoints("abo");
-
-  return (
-    <svg viewBox="0 0 100 100" className="h-28 w-full">
-      <defs>
-        <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#eef2ff" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#f8fafc" stopOpacity="0.2" />
-        </linearGradient>
-        <linearGradient id="mc-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#2563eb" />
-        </linearGradient>
-        <linearGradient id="mc-abo" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#6366f1" />
-        </linearGradient>
-      </defs>
-
-      {/* fond “carte” */}
-      <rect x={0} y={10} width={100} height={80} rx={8} fill="url(#mc-bg)" />
-
-      {/* Abonnements */}
-      <polyline
-        fill="none"
-        stroke="url(#mc-abo)"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={aboPoints}
-      />
-
-      {/* PPV */}
-      <polyline
-        fill="none"
-        stroke="url(#mc-ppv)"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={ppvPoints}
-      />
-    </svg>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Types & composant graphique revenus quotidiens
-// ─────────────────────────────────────────────────────────────
+// --- Graphique des revenus (2 courbes + tooltip) ---------------------------
 
 type DailyRevenuePoint = {
   day: number;
@@ -339,9 +203,9 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
   const buildPoints = (key: "ppv" | "abo") =>
     data
       .map((point, idx) => {
-        const x = (idx / (data.length - 1 || 1)) * 100; // 0 → 100
-        const normY = (point[key] / maxY) * 0.8; // 0 → 0.8 dans la zone utile
-        const y = 100 - normY * 100 - 5; // padding haut/bas
+        const x = (idx / (data.length - 1 || 1)) * 100;
+        const normY = (point[key] / maxY) * 0.8;
+        const y = 100 - normY * 100 - 5;
         return `${x},${y}`;
       })
       .join(" ");
@@ -354,29 +218,17 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     <div className="relative w-full">
       <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
         <defs>
-          <linearGradient
-            id="mc-line-ppv"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
+          <linearGradient id="mc-line-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#60a5fa" />
             <stop offset="100%" stopColor="#1d4ed8" />
           </linearGradient>
-          <linearGradient
-            id="mc-line-abo"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
+          <linearGradient id="mc-line-abo" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#a855f7" />
             <stop offset="100%" stopColor="#22c55e" />
           </linearGradient>
         </defs>
 
-        {/* Fond */}
+        {/* fond */}
         <rect
           x={4}
           y={6}
@@ -386,7 +238,7 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
           className="fill-slate-50"
         />
 
-        {/* Courbe PPV */}
+        {/* PPV */}
         <polyline
           fill="none"
           stroke="url(#mc-line-ppv)"
@@ -396,7 +248,7 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
           points={ppvPoints}
         />
 
-        {/* Courbe Abo */}
+        {/* Abo */}
         <polyline
           fill="none"
           stroke="url(#mc-line-abo)"
@@ -407,11 +259,9 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
         />
       </svg>
 
-      {/* Tooltip fixe (dernier point) */}
+      {/* Tooltip simple « Jour N / PPV / Abo » */}
       <div className="pointer-events-none absolute bottom-2 right-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm">
-        <p className="font-medium text-slate-700">
-          Jour {last.day}
-        </p>
+        <p className="font-medium text-slate-700">Jour {last.day}</p>
         <p className="text-slate-500">
           PPV :{" "}
           <span className="font-semibold text-slate-700">
@@ -429,12 +279,11 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Page Monétisation
-// ─────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+//  PAGE PRINCIPALE
+// ---------------------------------------------------------------------------
 
 export default function MonetPage() {
-  // ── Profil créateur : Aiko Tanaka depuis le repository
   const creators = listCreators() as CreatorLight[];
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
@@ -446,18 +295,18 @@ export default function MonetPage() {
         : `@${currentCreator.handle}`
       : "@magic_clock";
 
-  // TVA “réalité” : pays figé (ex: Suisse)
+  // --- Cockpit réel --------------------------------------------------------
+
   const vatRateReal = CURRENT_COUNTRY.vatRate;
 
-  // 🔹 Partie "réalité" (cockpit actuel, en lecture seule)
   const realFollowers = currentCreator?.followers ?? 12450;
   const realFollowersDelta = 12.4;
 
-  const realAboPrice = 14.9; // TTC
+  const realAboPrice = 14.9;
   const realAboSubs = 480;
   const realAboDelta = 8.1;
 
-  const realPpvPrice = 19.9; // TTC
+  const realPpvPrice = 19.9;
   const realPpvBuyers = 120;
   const realPpvPerBuyer = 1.4;
   const realPpvDelta = 5.2;
@@ -476,27 +325,42 @@ export default function MonetPage() {
     creatorShareNet: realCreatorShareNet,
   } = computeVatAndShares(realGrossTotal, realTier, vatRateReal);
 
-  // Total indicatif de followers sur les autres réseaux (maquette)
   const indicativeFollowersTotal = SOCIAL_NETWORKS.reduce(
     (sum, n) => sum + n.followers,
     0,
   );
 
-  // 🔸 Partie "SIMULATEUR"
-  const [simFollowers, setSimFollowers] = useState<number>(
-    realFollowers || 5000,
-  );
-  const [simAboPrice, setSimAboPrice] = useState<number>(9.99);
-  const [simAboConv, setSimAboConv] = useState<number>(3); // % followers → abo
-  const [simPpvPrice, setSimPpvPrice] = useState<number>(14.99);
-  const [simPpvConv, setSimPpvConv] = useState<number>(1.5); // % followers → acheteurs PPV
-  const [simPpvPerBuyer, setSimPpvPerBuyer] = useState<number>(1);
-  const [simLikes, setSimLikes] = useState<number>(realLikes);
+  // Données « courbes réelles » (30 jours)
+  const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
+    const days = 30;
+    const baseAbo = realGrossAbos / days;
+    const basePpv = realGrossPpv / days;
 
-  // 🧾 Pays TVA pour le simulateur (CH / FR / DE / ES / IT / EU)
-  const [simCountryCode, setSimCountryCode] = useState<string>(
-    CURRENT_COUNTRY.code,
-  );
+    return Array.from({ length: days }, (_, index) => {
+      const t = index / (days - 1 || 1);
+      const abo = Math.max(0, Math.round(baseAbo * (0.7 + t * 0.8)));
+      const ppv = Math.max(
+        0,
+        Math.round(
+          basePpv *
+            (0.8 + 0.4 * t + 0.08 * Math.sin(index / 3)),
+        ),
+      );
+      return { day: index + 1, abo, ppv };
+    });
+  }, [realGrossAbos, realGrossPpv]);
+
+  // --- Simulateur (états simples pour la V2) -------------------------------
+
+  const [simFollowers] = useState<number>(realFollowers || 5000);
+  const [simAboPrice] = useState<number>(9.99);
+  const [simAboConv] = useState<number>(3);
+  const [simPpvPrice] = useState<number>(14.99);
+  const [simPpvConv] = useState<number>(1.5);
+  const [simPpvPerBuyer] = useState<number>(1);
+  const [simLikes] = useState<number>(realLikes);
+
+  const [simCountryCode] = useState<string>(CURRENT_COUNTRY.code);
   const simCountry =
     COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ??
     CURRENT_COUNTRY;
@@ -509,17 +373,7 @@ export default function MonetPage() {
   const simGrossAbos = simAboSubs * simAboPrice;
   const simGrossPpv = simPpvBuyers * simPpvPrice * simPpvPerBuyer;
   const simGrossTotal = simGrossAbos + simGrossPpv;
-  
-  // Historique simulé pour le graphique (ex: 7 périodes)
-  const simDailyRevenue = useMemo<DailyRevenuePoint[]>(() => {
-    const factors = [0.45, 0.6, 0.8, 1, 1.1, 1.2, 1.3];
-    return factors.map((f, index) => ({
-      index,
-      ppv: simGrossPpv * f,
-      abo: simGrossAbos * f * 0.9, // Abos un peu plus stables
-    }));
-  }, [simGrossAbos, simGrossPpv]);
-  
+
   const {
     vatAmount: simVatAmount,
     netBase: simNetBase,
@@ -531,39 +385,13 @@ export default function MonetPage() {
     simGrossTotal > 0 ? (simGrossAbos / simGrossTotal) * 100 : 0;
   const simPpvSharePct = simGrossTotal > 0 ? 100 - simAboSharePct : 0;
 
-    const donutStyle = useMemo(
+  const donutStyle = useMemo(
     () => ({
       backgroundImage: `conic-gradient(rgb(59,130,246) 0 ${simAboSharePct}%, rgb(16,185,129) ${simAboSharePct}% 100%)`,
     }),
     [simAboSharePct],
   );
 
-  // Revenus quotidiens (réalité) : exemple sur 30 jours
-  const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
-    const days = 30;
-    const baseAbo = realGrossAbos / days;
-    const basePpv = realGrossPpv / days;
-
-    return Array.from({ length: days }, (_, index) => {
-      const t = index / (days - 1 || 1); // 0 → 1
-      const abo = Math.max(0, Math.round(baseAbo * (0.7 + t * 0.8))); // tendance haussière
-      const ppv = Math.max(
-        0,
-        Math.round(
-          basePpv *
-            (0.8 + 0.4 * t + 0.08 * Math.sin(index / 3)), // petite ondulation
-        ),
-      );
-
-      return {
-        day: index + 1,
-        abo,
-        ppv,
-      };
-    });
-  }, [realGrossAbos, realGrossPpv]);
-
-  // Revenus quotidiens (simulateur) : exemple sur 7 périodes
   const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
     const days = 7;
     const baseAbo = simGrossAbos / days;
@@ -579,23 +407,21 @@ export default function MonetPage() {
             (0.8 + t * 0.7 + 0.06 * Math.sin(index / 2)),
         ),
       );
-
-      return {
-        day: index + 1,
-        abo,
-        ppv,
-      };
+      return { day: index + 1, abo, ppv };
     });
   }, [simGrossAbos, simGrossPpv]);
 
-    return (
+  // -------------------------------------------------------------------------
+  //  RENDER
+  // -------------------------------------------------------------------------
+
+  return (
     <div className="container space-y-8 py-8">
-      {/* HEADER AVEC AVATAR AIKO */}
+      {/* HEADER AVEC AVATAR */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
             {currentCreator?.avatar && (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={currentCreator.avatar}
                 alt={currentCreator.name ?? "Créateur Magic Clock"}
@@ -624,7 +450,6 @@ export default function MonetPage() {
             ton cockpit. Partie basse = simulateur.
           </p>
 
-          {/* Lien vers la page Prix & monétisation */}
           <div className="mb-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-slate-800 sm:text-sm">
             <p className="font-medium">Nouveau sur Magic Clock ?</p>
             <p>
@@ -645,7 +470,10 @@ export default function MonetPage() {
         </div>
       </header>
 
-      {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
+      {/* ------------------------------------------------------------------- */}
+      {/* 1. RÉALITÉ (COCKPIT RÉEL)                                           */}
+      {/* ------------------------------------------------------------------- */}
+
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -663,7 +491,6 @@ export default function MonetPage() {
           </p>
         </div>
 
-        {/* Encadré TVA / pays */}
         <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
           <Info className="h-3 w-3" />
           <span>
@@ -676,14 +503,13 @@ export default function MonetPage() {
           </span>
         </div>
 
-        {/* Grille Followers / Abo / PPV */}
+        {/* Cartes followers / abo / PPV */}
         <div className="grid gap-4 md:grid-cols-3">
           {/* Followers */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
             <p className="text-xs text-slate-500">Followers Magic Clock</p>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/magic-clock-social-monet.png"
                   alt="Magic Clock"
@@ -721,7 +547,6 @@ export default function MonetPage() {
                     key={net.id}
                     className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 shadow-sm"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={net.icon}
                       alt={net.label}
@@ -735,14 +560,11 @@ export default function MonetPage() {
               </div>
 
               <p className="mt-3 text-[10px] leading-snug text-slate-500">
-                Les chiffres affichés par réseau social (Facebook, Instagram,
-                YouTube, TikTok, Snapchat, LinkedIn, X) sont fournis à titre{" "}
+                Les chiffres affichés par réseau social sont fournis à titre{" "}
                 <strong>purement indicatif</strong> dans ce cockpit MVP. Ils ne
-                sont ni en temps réel ni validés par les plateformes concernées
-                et ne constituent pas une information contractuelle. En
-                production, les données pourront être synchronisées via les APIs
-                officielles, sous réserve du respect des conditions
-                d&apos;utilisation de chaque service.
+                sont ni en temps réel ni validés par les plateformes
+                concernées. En production, les données pourront être
+                synchronisées via les APIs officielles.
               </p>
             </div>
           </div>
@@ -764,11 +586,9 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Pay-Per-View */}
+          {/* PPV */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-            <p className="text-xs text-slate-500">
-              Contenus Pay-Per-View (PPV)
-            </p>
+            <p className="text-xs text-slate-500">Contenus Pay-Per-View (PPV)</p>
             <p className="mt-1 text-lg font-semibold">
               {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
             </p>
@@ -786,7 +606,7 @@ export default function MonetPage() {
           </div>
         </div>
 
-        {/* Graphique revenus quotidiens (réalité) */}
+        {/* Graphique revenus quotidiens réels */}
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
           <div className="mb-3 flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
             <p className="font-medium text-slate-700">
@@ -799,9 +619,10 @@ export default function MonetPage() {
           </div>
           <RevenueLinesChart data={realDailyRevenue} variant="large" />
         </div>
-        
-        {/* Résumé revenus + TVA + commission réelle */}
+
+        {/* Résumé HT + paliers */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          {/* Répartition HT */}
           <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex items-center justify-between">
@@ -851,7 +672,7 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Paliers commission */}
+          {/* Paliers de commission */}
           <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center justify-between text-xs">
               <p className="font-medium text-slate-700">
@@ -883,8 +704,8 @@ export default function MonetPage() {
                   >
                     <div className="flex flex-col">
                       <span className="font-semibold">
-                        {tier.label} · {Math.round(tier.rate * 100)}
-                        %&nbsp;plateforme
+                        {tier.label} · {Math.round(tier.rate * 100)}%&nbsp;
+                        plateforme
                       </span>
                       <span className="text-[11px] text-slate-500">
                         {tier.id === "BRONZE" && "0 → 1 000 likes cumulés"}
@@ -942,9 +763,12 @@ export default function MonetPage() {
         </span>
       </div>
 
-      {/* 🔸 2. SIMULATEUR */}
+      {/* ------------------------------------------------------------------- */}
+      {/* 2. SIMULATEUR (V2 simple : donut + courbe + résumé)                 */}
+      {/* ------------------------------------------------------------------- */}
+
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        {/* Contrôles simulateur */}
+        {/* Colonne gauche : réglages (texte explicatif pour le MVP) */}
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-800">
@@ -952,351 +776,91 @@ export default function MonetPage() {
             </h2>
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <span>Pays TVA (simulation)</span>
-              <select
-                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px]"
-                value={simCountryCode}
-                onChange={(e) => setSimCountryCode(e.target.value)}
-              >
-                {COUNTRY_VAT_TABLE.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              <span className="rounded-md border border-slate-300 bg-slate-50 px-2 py-1 text-[11px]">
+                {simCountry.label}
+              </span>
             </div>
           </div>
 
           <p className="text-xs text-slate-500">
-            Les prix saisis sont considérés comme TTC. Magic Clock retire
-            automatiquement la TVA du pays sélectionné, puis applique la
-            commission Bronze / Argent / Or sur la base HT. En production, le
-            pays serait détecté automatiquement (IP / profil / Stripe Tax).
+            Dans cette V2 MVP, les valeurs sont pré-remplies à partir de ton
+            cockpit réel pour te donner une idée de ton{" "}
+            <strong>potentiel mensuel</strong> si tu actives les modèles Abo /
+            Pay-Per-View. Dans la version suivante, tu pourras ajuster chaque
+            curseur (followers, prix, conversions, etc.).
           </p>
 
-          {/* Followers */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-700">
-                Followers (tous réseaux)
-              </span>
-              <span className="font-semibold text-slate-700">
-                {simFollowers.toLocaleString("fr-CH")}
-              </span>
-            </div>
-
-            <input
-              type="range"
-              min={0}
-              max={1000000}
-              step={1000}
-              value={simFollowers}
-              onChange={(e) =>
-                setSimFollowers(clamp(Number(e.target.value), 0, 1000000))
-              }
-              className="w-full"
-            />
-
-            <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
-              <span className="text-slate-500">Saisis un nombre précis :</span>
-              <input
-                type="number"
-                min={0}
-                max={1000000000}
-                step={100}
-                value={simFollowers}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const normalized = raw.replace(/^0+(?=\d)/, "");
-                  const num = Number(normalized || "0");
-                  setSimFollowers(clamp(num, 0, 1000000000));
-                }}
-                className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-[11px]"
-              />
-            </div>
-
-            <p className="text-[11px] text-slate-500">
-              Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million pour
-              garder le slider lisible) ou saisis directement le nombre de
-              followers.
-            </p>
-          </div>
-
-          {/* Abonnements */}
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
-                  Prix abonnement (Abo)
-                </span>
-                <span className="text-slate-500">
-                  {simAboPrice.toFixed(2)} CHF / mois
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0.99}
-                max={999.99}
-                step={0.5}
-                value={simAboPrice}
-                onChange={(e) => {
-                  const raw = Number(e.target.value);
-                  const rounded = Math.round(raw * 100) / 100;
-                  setSimAboPrice(rounded);
-                }}
-                className="w-full"
-              />
-              <p className="text-[11px] text-slate-500">
-                Tarification Abo Magic Clock (0,99 → 999,99 CHF / mois, TTC).
+          <div className="grid gap-3 text-xs md:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+              <p className="text-[11px] text-slate-500">Hypothèses Abo</p>
+              <p className="mt-1 font-medium text-slate-700">
+                {simAboConv.toFixed(1)}% de conversion
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                {simFollowers.toLocaleString("fr-CH")} followers simulés ·{" "}
+                {Math.round(simAboSubs).toLocaleString("fr-CH")} abonnés
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Prix moyen : {formatMoney(simAboPrice)} / mois (TTC).
               </p>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
-                  Conversion Abo
-                </span>
-                <span className="text-slate-500">
-                  {simAboConv.toFixed(1)}% followers
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.5}
-                value={simAboConv}
-                onChange={(e) =>
-                  setSimAboConv(clamp(Number(e.target.value), 0, 100))
-                }
-                className="w-full"
-              />
-              <p className="text-[11px] text-slate-500">
-                Pourcentage de tes followers qui deviennent abonnés Magic Clock.
+            <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+              <p className="text-[11px] text-slate-500">Hypothèses PPV</p>
+              <p className="mt-1 font-medium text-slate-700">
+                {simPpvConv.toFixed(1)}% de conversion
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                {simFollowers.toLocaleString("fr-CH")} followers simulés ·{" "}
+                {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Prix moyen : {formatMoney(simPpvPrice)} ·{" "}
+                {simPpvPerBuyer.toFixed(1)} Pay-Per-View / acheteur / mois.
               </p>
             </div>
-          </div>
-
-          {/* Pay-Per-View */}
-          <div className="grid gap-3 md:grid-cols-3">
-            {/* Prix PPV */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
-                  Prix Pay-Per-View moyen
-                </span>
-                <span className="text-slate-500">
-                  {simPpvPrice.toFixed(2)} CHF
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0.99}
-                max={999.99}
-                step={0.5}
-                value={simPpvPrice}
-                onChange={(e) => {
-                  const raw = Number(e.target.value);
-                  const rounded = Math.round(raw * 100) / 100;
-                  setSimPpvPrice(rounded);
-                }}
-                className="w-full"
-              />
-              <p className="text-[11px] text-slate-500">
-                Prix moyen d&apos;un contenu Pay-Per-View (PPV) (0,99 →
-                999,99 CHF, TTC).
-              </p>
-            </div>
-
-            {/* Conversion PPV */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
-                  Conversion Pay-Per-View
-                </span>
-                <span className="text-slate-500">
-                  {simPpvConv.toFixed(1)}% followers
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.5}
-                value={simPpvConv}
-                onChange={(e) =>
-                  setSimPpvConv(clamp(Number(e.target.value), 0, 100))
-                }
-                className="w-full"
-              />
-              <p className="text-[11px] text-slate-500">
-                Part de tes followers qui achètent au moins un Pay-Per-View ce
-                mois-ci.
-              </p>
-            </div>
-
-            {/* PPV / acheteur */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
-                  Pay-Per-View / acheteur / mois
-                </span>
-                <span className="text-slate-500">
-                  {simPpvPerBuyer.toFixed(1)}
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.1}
-                value={Math.min(simPpvPerBuyer, 100)}
-                onChange={(e) => {
-                  const num = Number(e.target.value);
-                  setSimPpvPerBuyer(clamp(num, 0, 100000000));
-                }}
-                className="w-full"
-              />
-
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="text-[11px] text-slate-500">
-                  Saisis un nombre précis :
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={simPpvPerBuyer}
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    const normalized = raw.replace(/^0+(?=\d)/, "");
-                    const num = Number(normalized || "0");
-                    setSimPpvPerBuyer(clamp(num, 0, 100000000));
-                  }}
-                  className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-xs"
-                />
-              </div>
-
-              <p className="text-[11px] text-slate-500">
-                Utilise le slider pour une valeur rapide (0 → 100), ou saisis un
-                nombre exact. Le champ accepte aussi des valeurs plus élevées
-                pour les très gros créateurs.
-              </p>
-            </div>
-          </div>
-
-          {/* Likes / palier simulateur */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-700">
-                Likes cumulés (simulateur)
-              </span>
-              <span className="text-slate-500">
-                {simLikes.toLocaleString("fr-CH")} · palier{" "}
-                <span className="font-semibold">{simTier.label}</span>{" "}
-                ({Math.round(simTier.rate * 100)}% plateforme)
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={50000}
-              step={100}
-              value={simLikes}
-              onChange={(e) =>
-                setSimLikes(clamp(Number(e.target.value), 0, 50000))
-              }
-              className="w-full"
-            />
-            <p className="text-[11px] text-slate-500">
-              Le palier de commission est 100% automatique : plus de likes =
-              plus de part créateur (Or = 20% plateforme, 80% pour toi).
-            </p>
           </div>
         </div>
 
-        {/* Résultats simulateur */}
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-800">
+        {/* Colonne droite : résultats simulateur (donut + courbe) */}
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-700">
             Résultat simulateur (par mois)
-          </h2>
+          </p>
 
-          <div className="grid gap-3 text-xs">
+          <div className="space-y-1 text-xs text-slate-600">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                Abonnés estimés (Abo) · {simAboConv.toFixed(1)}%
-              </span>
+              <span>Revenu brut total (TTC)</span>
               <span className="font-semibold">
-                {Math.round(simAboSubs).toLocaleString("fr-CH")} abonnés
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                Acheteurs Pay-Per-View estimés · {simPpvConv.toFixed(1)}%
-              </span>
-              <span className="font-semibold">
-                {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                Revenu brut Abo (TTC, avant TVA)
-              </span>
-              <span className="font-semibold">
-                {formatMoney(simGrossAbos)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                Revenu brut Pay-Per-View (TTC, avant TVA)
-              </span>
-              <span className="font-semibold">
-                {formatMoney(simGrossPpv)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
-              <span className="text-slate-500">Revenu brut total (TTC)</span>
-              <span className="text-sm font-medium">
                 {formatMoney(simGrossTotal)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                TVA estimée ({Math.round(vatRateSim * 1000) / 10}% ·{" "}
-                {simCountry.label})
-              </span>
-              <span className="font-semibold text-slate-600">
+              <span>TVA estimée ({Math.round(vatRateSim * 1000) / 10}%)</span>
+              <span className="font-semibold">
                 {formatMoney(simVatAmount)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Base HT estimée</span>
-              <span className="font-semibold text-slate-700">
-                {formatMoney(simNetBase)}
-              </span>
+              <span>Base HT estimée</span>
+              <span className="font-semibold">{formatMoney(simNetBase)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                Part plateforme (HT, {Math.round(simTier.rate * 100)}%)
-              </span>
-              <span className="font-semibold text-slate-600">
+              <span>Part plateforme (HT, {Math.round(simTier.rate * 100)}%)</span>
+              <span className="font-semibold">
                 {formatMoney(simPlatformShareNet)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                Part créateur (après TVA + commission)
-              </span>
-              <span className="text-lg font-semibold text-emerald-600">
+              <span>Part créateur (après TVA + commission)</span>
+              <span className="text-base font-semibold text-emerald-600">
                 {formatMoney(simCreatorShareNet)}
               </span>
             </div>
           </div>
 
-          {/* Donut + courbe simulée */}
-          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          {/* Donut + courbe */}
+          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             {/* Donut */}
             <div className="flex flex-col items-center gap-2">
               <div
@@ -1324,7 +888,7 @@ export default function MonetPage() {
               </div>
             </div>
 
-                       {/* Courbe revenus simulés (PPV + Abo) */}
+            {/* Courbe d'évolution simulée */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (revenus simulés)
@@ -1337,6 +901,7 @@ export default function MonetPage() {
                 </p>
               </div>
             </div>
+          </div>
 
           {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
