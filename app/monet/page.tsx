@@ -218,7 +218,98 @@ const SOCIAL_NETWORKS = [
     followers: 5600,
   },
 ];
+// ─────────────────────────────────────────────────────────────
+// Mini graphique revenus (PPV / Abos)
+// ─────────────────────────────────────────────────────────────
 
+type DailyRevenuePoint = {
+  index: number;
+  ppv: number;
+  abo: number;
+};
+
+// Maquette : exemple de revenus quotidiens réels (PPV + Abo)
+const REAL_DAILY_REVENUE: DailyRevenuePoint[] = [
+  { index: 0, ppv: 180, abo: 80 },
+  { index: 1, ppv: 210, abo: 90 },
+  { index: 2, ppv: 260, abo: 100 },
+  { index: 3, ppv: 290, abo: 110 },
+  { index: 4, ppv: 310, abo: 115 },
+  { index: 5, ppv: 280, abo: 118 },
+  { index: 6, ppv: 260, abo: 120 },
+  { index: 7, ppv: 240, abo: 122 },
+  { index: 8, ppv: 260, abo: 125 },
+  { index: 9, ppv: 310, abo: 128 },
+  { index: 10, ppv: 360, abo: 130 },
+  { index: 11, ppv: 400, abo: 132 },
+  { index: 12, ppv: 380, abo: 134 },
+  { index: 13, ppv: 340, abo: 136 },
+];
+
+function RevenueLinesChart({ data }: { data: DailyRevenuePoint[] }) {
+  if (!data || data.length === 0) return null;
+
+  const ppvValues = data.map((d) => d.ppv);
+  const aboValues = data.map((d) => d.abo);
+  const maxY = Math.max(...ppvValues, ...aboValues, 1);
+  const minY = 0;
+  const spanY = maxY - minY || 1;
+
+  const buildPoints = (key: "ppv" | "abo") =>
+    data
+      .map((d, idx) => {
+        const x = (idx / (data.length - 1 || 1)) * 100;
+        const normY = (d[key] - minY) / spanY;
+        const y = 100 - normY * 80 - 10; // marges haut/bas
+        return `${x},${y}`;
+      })
+      .join(" ");
+
+  const ppvPoints = buildPoints("ppv");
+  const aboPoints = buildPoints("abo");
+
+  return (
+    <svg viewBox="0 0 100 100" className="h-28 w-full">
+      <defs>
+        <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#eef2ff" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#f8fafc" stopOpacity="0.2" />
+        </linearGradient>
+        <linearGradient id="mc-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#2563eb" />
+        </linearGradient>
+        <linearGradient id="mc-abo" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+      </defs>
+
+      {/* fond “carte” */}
+      <rect x={0} y={10} width={100} height={80} rx={8} fill="url(#mc-bg)" />
+
+      {/* Abonnements */}
+      <polyline
+        fill="none"
+        stroke="url(#mc-abo)"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={aboPoints}
+      />
+
+      {/* PPV */}
+      <polyline
+        fill="none"
+        stroke="url(#mc-ppv)"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={ppvPoints}
+      />
+    </svg>
+  );
+}
 // ─────────────────────────────────────────────────────────────
 // Page Monétisation
 // ─────────────────────────────────────────────────────────────
@@ -299,7 +390,17 @@ export default function MonetPage() {
   const simGrossAbos = simAboSubs * simAboPrice;
   const simGrossPpv = simPpvBuyers * simPpvPrice * simPpvPerBuyer;
   const simGrossTotal = simGrossAbos + simGrossPpv;
-
+  
+  // Historique simulé pour le graphique (ex: 7 périodes)
+  const simDailyRevenue = useMemo<DailyRevenuePoint[]>(() => {
+    const factors = [0.45, 0.6, 0.8, 1, 1.1, 1.2, 1.3];
+    return factors.map((f, index) => ({
+      index,
+      ppv: simGrossPpv * f,
+      abo: simGrossAbos * f * 0.9, // Abos un peu plus stables
+    }));
+  }, [simGrossAbos, simGrossPpv]);
+  
   const {
     vatAmount: simVatAmount,
     netBase: simNetBase,
@@ -317,33 +418,6 @@ export default function MonetPage() {
     }),
     [simAboSharePct],
   );
-
-  // Mini "courbe" d’évolution simulée (7 périodes) basée sur la part créateur NETTE
-  const historyPoints = useMemo(() => {
-    const base = simCreatorShareNet || 0;
-    const factors = [0.55, 0.7, 0.85, 1, 1.08, 1.15, 1.25];
-    return factors.map((f, idx) => ({
-      x: idx,
-      y: Math.round(base * f),
-    }));
-  }, [simCreatorShareNet]);
-
-  const linePoints = useMemo(() => {
-    if (historyPoints.length === 0) return "";
-    const ys = historyPoints.map((p) => p.y);
-    const maxY = Math.max(...ys, 1);
-    const minY = Math.min(...ys, 0);
-    const spanY = maxY - minY || 1;
-
-    return historyPoints
-      .map((p, idx) => {
-        const x = (idx / (historyPoints.length - 1 || 1)) * 100;
-        const normY = (p.y - minY) / spanY;
-        const y = 100 - normY * 80 - 10; // marge haut/bas
-        return `${x},${y}`;
-      })
-      .join(" ");
-  }, [historyPoints]);
 
   return (
     <main className="container space-y-8 py-8">
@@ -594,6 +668,32 @@ export default function MonetPage() {
             </div>
           </div>
 
+                  {/* Graphique revenus quotidiens (réalité) */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+          <div className="mb-3 flex items-center justify-between text-xs">
+            <p className="font-medium text-slate-700">
+              Revenus quotidiens (exemple cockpit)
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
+                <span className="text-[11px] text-slate-500">PPV</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[rgb(129,140,248)]" />
+                <span className="text-[11px] text-slate-500">Abonnements</span>
+              </div>
+            </div>
+          </div>
+
+          <RevenueLinesChart data={REAL_DAILY_REVENUE} />
+
+          <p className="mt-2 text-[11px] text-slate-500">
+            Données de maquette pour illustrer l&apos;activité quotidienne PPV /
+            abonnements dans ton cockpit Magic Clock.
+          </p>
+        </div>
+          
           {/* Paliers commission (réels, non modifiables) */}
           <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center justify-between text-xs">
@@ -1069,48 +1169,26 @@ export default function MonetPage() {
               </div>
             </div>
 
-            {/* Courbe d'évolution */}
+                       {/* Courbe d'évolution simulée (PPV + Abos) */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
-                Projection d&apos;évolution (part créateur HT)
+                Projection d&apos;évolution (revenus simulés)
               </p>
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                <svg viewBox="0 0 100 100" className="h-24 w-full">
-                  <defs>
-                    <linearGradient
-                      id="mc-line"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="0%"
-                    >
-                      <stop offset="0%" stopColor="#38bdf8" />
-                      <stop offset="100%" stopColor="#22c55e" />
-                    </linearGradient>
-                  </defs>
-                  <polyline
-                    fill="none"
-                    stroke="url(#mc-line)"
-                    strokeWidth={1.6}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={linePoints}
-                  />
-                </svg>
+                <RevenueLinesChart data={simDailyRevenue} />
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
-                  semaines) basée sur ta part créateur nette (HT).
+                  semaines) basée sur tes revenus simulés PPV / abonnements.
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Texte légal sous le simulateur */}
+                   {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
             Simulation indicative, ne constitue pas une garantie de revenus.
           </p>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
