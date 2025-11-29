@@ -128,10 +128,6 @@ function clamp(value: number, min: number, max: number) {
 /**
  * Interprétation : les prix saisis (Abo / Pay-Per-View) sont TTC.
  * On retire la TVA pour obtenir la base HT, puis on applique la commission.
- *
- * @param grossTotal Montant TOTAL TTC (ce que payent les clients)
- * @param tier       Palier de commission (Bronze / Argent / Or)
- * @param vatRate    Taux de TVA (ex: 0.081)
  */
 function computeVatAndShares(grossTotal: number, tier: Tier, vatRate: number) {
   if (grossTotal <= 0) {
@@ -218,6 +214,7 @@ const SOCIAL_NETWORKS = [
     followers: 5600,
   },
 ];
+
 // ─────────────────────────────────────────────────────────────
 // Graphique revenus quotidiens (PPV / Abos)
 // ─────────────────────────────────────────────────────────────
@@ -417,7 +414,7 @@ export default function MonetPage() {
   const simGrossAbos = simAboSubs * simAboPrice;
   const simGrossPpv = simPpvBuyers * simPpvPrice * simPpvPerBuyer;
   const simGrossTotal = simGrossAbos + simGrossPpv;
-  
+
   const {
     vatAmount: simVatAmount,
     netBase: simNetBase,
@@ -429,7 +426,7 @@ export default function MonetPage() {
     simGrossTotal > 0 ? (simGrossAbos / simGrossTotal) * 100 : 0;
   const simPpvSharePct = simGrossTotal > 0 ? 100 - simAboSharePct : 0;
 
-    const donutStyle = useMemo(
+  const donutStyle = useMemo(
     () => ({
       backgroundImage: `conic-gradient(rgb(59,130,246) 0 ${simAboSharePct}%, rgb(16,185,129) ${simAboSharePct}% 100%)`,
     }),
@@ -486,7 +483,7 @@ export default function MonetPage() {
     });
   }, [simGrossAbos, simGrossPpv]);
 
-    return (
+  return (
     <div className="container space-y-8 py-8">
       {/* HEADER AVEC AVATAR AIKO */}
       <header className="space-y-4">
@@ -697,7 +694,7 @@ export default function MonetPage() {
           </div>
           <RevenueLinesChart data={realDailyRevenue} variant="large" />
         </div>
-        
+
         {/* Résumé revenus + TVA + commission réelle */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-4">
@@ -1222,13 +1219,6 @@ export default function MonetPage() {
               </div>
             </div>
 
-                                {/* Donut + courbe simulée */}
-          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-            {/* Donut */}
-            <div className="flex flex-col items-center gap-2">
-              ...
-            </div>
-
             {/* Courbe revenus simulés (PPV + Abo) */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
@@ -1245,7 +1235,7 @@ export default function MonetPage() {
           </div>
 
           {/* Texte légal sous le simulateur */}
-          <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+          <p className="mt-2 text-center text-[11px] text-slate-500 md:text-right">
             Simulation indicative, ne constitue pas une garantie de revenus.
           </p>
         </div>
