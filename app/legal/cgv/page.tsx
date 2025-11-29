@@ -288,7 +288,11 @@ export default function LegalCGVPage() {
           <p className="mt-1">
             Les Créateurs fixent librement le prix de leurs abonnements et de
             leurs contenus PPV, dans les limites techniques définies par la
-            Plateforme.
+            Plateforme. Par défaut, les prix peuvent aller de{" "}
+            <strong>0,99 à 999,99</strong>, toujours dans la{" "}
+            <strong>devise d&apos;achat</strong> de l&apos;Utilisateur (par
+            exemple CHF, EUR ou USD), telle qu&apos;affichée au moment du
+            paiement.
           </p>
 
           <h3 className="mt-3 font-medium text-slate-900">
@@ -306,9 +310,13 @@ export default function LegalCGVPage() {
             8.3. Taxes et TVA
           </h3>
           <p className="mt-1">
-            Les prix affichés tiennent compte, lorsque la loi l’exige, de la TVA
-            et des autres taxes applicables, en fonction de la localisation de
-            l’Utilisateur.
+            Les prix affichés sont, lorsque la loi l’exige, indiqués{" "}
+            <strong>TTC (toutes taxes comprises)</strong> dans la{" "}
+            <strong>devise d&apos;achat</strong> de l&apos;Utilisateur, en
+            fonction de sa localisation et du moyen de paiement utilisé. La part
+            correspondant à la TVA et aux autres taxes applicables est gérée par
+            la Plateforme et/ou le prestataire de paiement conformément au droit
+            en vigueur.
           </p>
 
           <h3 className="mt-3 font-medium text-slate-900">
@@ -338,59 +346,64 @@ export default function LegalCGVPage() {
         {/* 8 bis. Moyens de paiement disponibles (section réutilisable) */}
         <PaymentMethodsSection />
 
-               {/* 9. Rémunération des créateurs */}
+        {/* 9. Rémunération des créateurs */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             9. Rémunération des Créateurs
           </h2>
 
           <p className="mt-2">
-            Le montant dû à un Créateur correspond aux sommes effectivement encaissées
-            auprès des Utilisateurs pour ses abonnements et contenus PPV, déduction
-            faite de la commission de la Plateforme, des taxes applicables et des frais
-            de paiement et de change.
+            Le montant dû à un Créateur correspond aux sommes effectivement
+            encaissées auprès des Utilisateurs pour ses abonnements et contenus
+            PPV, déduction faite de la commission de la Plateforme, des taxes
+            applicables et des frais de paiement et de change.
           </p>
 
           <p className="mt-2">
             La commission de la Plateforme est comprise entre{" "}
             <strong>20% et 30%</strong>, en fonction de la{" "}
-            <strong>catégorie du Créateur</strong> (notamment déterminée sur la base
-            de la performance globale de son contenu, par exemple le nombre de likes
-            sur l’ensemble de ses créations). Le pourcentage applicable peut évoluer
-            pour l’avenir ; toute modification sera communiquée de manière claire
-            dans l’interface Monétisation.
+            <strong>catégorie du Créateur</strong> (notamment déterminée sur la
+            base de la performance globale de son contenu, par exemple le nombre
+            de likes sur l’ensemble de ses créations). Le pourcentage applicable
+            peut évoluer pour l’avenir ; toute modification sera communiquée de
+            manière claire dans l’interface Monétisation.
           </p>
 
           <p className="mt-2">
             Les revenus sont regroupés et, sauf indication contraire dans
             l’interface Monétisation, versés en principe autour du{" "}
-            <strong>15 de chaque mois</strong> pour les ventes du mois précédent.
-            Lorsque cette date tombe un week-end ou un jour férié bancaire, le
-            versement peut être effectué le <strong>jour ouvrable précédent</strong>.
+            <strong>15 de chaque mois</strong> pour les ventes du mois
+            précédent. Lorsque cette date tombe un week-end ou un jour férié
+            bancaire, le versement peut être effectué le{" "}
+            <strong>jour ouvrable précédent</strong>.
           </p>
 
           <p className="mt-2">
-            Un <strong>seuil minimum de versement</strong> peut être appliqué (par
-            exemple 50 CHF ou équivalent) afin de limiter les frais bancaires et
-            administratifs. Lorsque le solde d’un Créateur est inférieur à ce seuil
-            au moment du paiement, il est automatiquement reporté sur la période
-            suivante jusqu’à ce que le seuil soit atteint.
+            Un <strong>seuil minimum de versement</strong> peut être appliqué
+            (par exemple <strong>50</strong> dans la{" "}
+            <strong>devise de versement</strong>, comme 50&nbsp;CHF ou
+            50&nbsp;EUR) afin de limiter les frais bancaires et
+            administratifs. Lorsque le solde d’un Créateur est inférieur à ce
+            seuil au moment du paiement, il est automatiquement reporté sur la
+            période suivante jusqu’à ce que le seuil soit atteint.
           </p>
 
           <p className="mt-2">
-            Les paiements sont réalisés par <strong>virement bancaire</strong>
-            (notamment via les réseaux SEPA lorsque cela est possible), sur le compte
-            communiqué par le Créateur. Il lui appartient de fournir des coordonnées
-            bancaires exactes et à jour. Des vérifications d’identité
-            (procédures KYC, lutte contre le blanchiment d’argent, etc.) peuvent être
-            exigées avant tout premier versement ou au-delà de certains seuils.
+            Les paiements sont réalisés par <strong>virement bancaire</strong>{" "}
+            (notamment via les réseaux SEPA lorsque cela est possible), sur le
+            compte communiqué par le Créateur. Il lui appartient de fournir des
+            coordonnées bancaires exactes et à jour. Des vérifications d’identité
+            (procédures KYC, lutte contre le blanchiment d’argent, etc.) peuvent
+            être exigées avant tout premier versement ou au-delà de certains
+            seuils.
           </p>
 
           <p className="mt-2">
-            En cas de remboursements, de litiges, de chargebacks ou de suspicion de
-            fraude, les montants concernés peuvent être <strong>déduits</strong> des
-            revenus à venir ou faire l’objet d’ajustements sur les versements
-            futurs, conformément aux présentes CGU/CGV et au droit applicable.
+            En cas de remboursements, de litiges, de chargebacks ou de suspicion
+            de fraude, les montants concernés peuvent être{" "}
+            <strong>déduits</strong> des revenus à venir ou faire l’objet
+            d’ajustements sur les versements futurs, conformément aux présentes
+            CGU/CGV et au droit applicable.
           </p>
         </section>
 
