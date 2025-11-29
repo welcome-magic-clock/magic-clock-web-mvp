@@ -419,8 +419,8 @@ export default function MonetPage() {
     [simAboSharePct],
   );
 
-  return (
-    <main className="container space-y-8 py-8">
+    return (
+    <div className="container space-y-8 py-8">
       {/* HEADER AVEC AVATAR AIKO */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
@@ -489,8 +489,8 @@ export default function MonetPage() {
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
-            Les montants sont affichés en TTC, TVA estimée, puis en base HT
-            pour la répartition plateforme / créateur.
+            Les montants sont affichés en TTC, TVA estimée, puis en base HT pour
+            la répartition plateforme / créateur.
           </p>
         </div>
 
@@ -532,7 +532,7 @@ export default function MonetPage() {
               <TrendBadge value={realFollowersDelta} />
             </div>
 
-            {/* Bandeau autres réseaux */}
+            {/* Autres réseaux */}
             <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-2">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="font-medium text-slate-700">
@@ -668,33 +668,7 @@ export default function MonetPage() {
             </div>
           </div>
 
-                  {/* Graphique revenus quotidiens (réalité) */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-          <div className="mb-3 flex items-center justify-between text-xs">
-            <p className="font-medium text-slate-700">
-              Revenus quotidiens (exemple cockpit)
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
-                <span className="text-[11px] text-slate-500">PPV</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[rgb(129,140,248)]" />
-                <span className="text-[11px] text-slate-500">Abonnements</span>
-              </div>
-            </div>
-          </div>
-
-          <RevenueLinesChart data={REAL_DAILY_REVENUE} />
-
-          <p className="mt-2 text-[11px] text-slate-500">
-            Données de maquette pour illustrer l&apos;activité quotidienne PPV /
-            abonnements dans ton cockpit Magic Clock.
-          </p>
-        </div>
-          
-          {/* Paliers commission (réels, non modifiables) */}
+          {/* Paliers commission */}
           <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center justify-between text-xs">
               <p className="font-medium text-slate-700">
@@ -730,8 +704,7 @@ export default function MonetPage() {
                         %&nbsp;plateforme
                       </span>
                       <span className="text-[11px] text-slate-500">
-                        {tier.id === "BRONZE" &&
-                          "0 → 1 000 likes cumulés"}
+                        {tier.id === "BRONZE" && "0 → 1 000 likes cumulés"}
                         {tier.id === "SILVER" &&
                           "1 001 → 10 000 likes cumulés (débloqué Argent)"}
                         {tier.id === "GOLD" &&
@@ -758,7 +731,6 @@ export default function MonetPage() {
               })}
             </div>
 
-            {/* Barre de progression likes */}
             <div className="mt-1">
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                 <span>0</span>
@@ -861,8 +833,8 @@ export default function MonetPage() {
             </div>
 
             <p className="text-[11px] text-slate-500">
-              Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million
-              pour garder le slider lisible) ou saisis directement le nombre de
+              Glisse pour simuler ton audience (jusqu&apos;à 1&nbsp;million pour
+              garder le slider lisible) ou saisis directement le nombre de
               followers.
             </p>
           </div>
@@ -1140,8 +1112,8 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Donut + courbe */}
-          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          {/* Donut + courbe simulée */}
+          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
             {/* Donut */}
             <div className="flex flex-col items-center gap-2">
               <div
@@ -1169,7 +1141,7 @@ export default function MonetPage() {
               </div>
             </div>
 
-                       {/* Courbe d'évolution simulée (PPV + Abos) */}
+            {/* Courbe d’évolution simulée (PPV + Abos) */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-700">
                 Projection d&apos;évolution (revenus simulés)
@@ -1182,8 +1154,9 @@ export default function MonetPage() {
                 </p>
               </div>
             </div>
+          </div>
 
-                                           {/* Texte légal sous le simulateur */}
+          {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
             Simulation indicative, ne constitue pas une garantie de revenus.
           </p>
