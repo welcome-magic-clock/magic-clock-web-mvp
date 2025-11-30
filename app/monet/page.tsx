@@ -510,7 +510,7 @@ export default function MonetPage() {
     [simAboSharePct],
   );
 
-  // Revenus quotidiens (réalité) : 30 jours avec vraies fluctuations
+ // Revenus quotidiens (réalité) : 30 jours avec vraie "vallée" au milieu
 const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
   const days = 30;
   const baseAbo = realGrossAbos / days;
@@ -519,16 +519,14 @@ const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
   return Array.from({ length: days }, (_, index) => {
     const t = index / (days - 1 || 1); // 0 → 1
 
-    // courbe type "vallée puis remontée"
-    const wave = Math.sin((index / days) * Math.PI * 2); // -1 → 1
-    const trend = 0.7 + 0.4 * t; // tendance globale
-    const noise = 0.08 * wave;
+    // vague : haut → creux → haut (comme le mock desktop)
+    const wave = Math.sin((t - 0.25) * Math.PI * 2); // -1 → 1
 
-    const abo = Math.max(0, Math.round(baseAbo * (0.9 * trend + noise)));
-    const ppv = Math.max(
-      0,
-      Math.round(basePpv * (0.95 * trend + 0.12 * Math.sin(index / 2))),
-    );
+    const aboFactor = 0.95 + 0.45 * wave; // ≈ 0.5 → 1.4
+    const ppvFactor = 0.85 + 0.55 * wave; // ≈ 0.3 → 1.4
+
+    const abo = Math.max(0, Math.round(baseAbo * aboFactor));
+    const ppv = Math.max(0, Math.round(basePpv * ppvFactor));
 
     return {
       day: index + 1,
@@ -538,7 +536,7 @@ const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
   });
 }, [realGrossAbos, realGrossPpv]);
 
-// Revenus quotidiens (simulateur) : 7 périodes, progression douce
+// Revenus quotidiens (simulateur) : 7 périodes, tendance haussière + petites ondulations
 const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
   const days = 7;
   const baseAbo = simGrossAbos / days;
@@ -546,15 +544,16 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
 
   return Array.from({ length: days }, (_, index) => {
     const t = index / (days - 1 || 1); // 0 → 1
-    // progression + légère respiration, jamais complètement plate
-    const growth = 0.8 + 0.6 * t;
-    const wobble = 0.06 * Math.sin(index / 1.5);
 
-    const abo = Math.max(0, Math.round(baseAbo * (growth + wobble)));
-    const ppv = Math.max(
-      0,
-      Math.round(basePpv * (growth + wobble + 0.04 * Math.cos(index))),
-    );
+    // tendance générale vers le haut
+    const trend = 0.7 + 0.8 * t; // 0.7 → 1.5
+
+    // petites vagues pour que ça vive mais reste “projection”
+    const waveA = 0.12 * Math.sin(t * Math.PI * 2);
+    const waveP = 0.18 * Math.sin((t + 0.35) * Math.PI * 2);
+
+    const abo = Math.max(0, Math.round(baseAbo * (trend + waveA)));
+    const ppv = Math.max(0, Math.round(basePpv * (trend + waveP)));
 
     return {
       day: index + 1,
@@ -762,9 +761,9 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
           </div>
         </div>
 
-        {/* Graphique revenus quotidiens (réalité) */}
-       <div className="mt-4 -mx-3 rounded-3xl border border-slate-200 bg-slate-50/80 px-2 py-4 sm:mx-0 sm:p-4">
-  <div className="mb-3 flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
+      {/* Graphique revenus quotidiens (réalité) */}
+<div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80">
+  <div className="mb-3 flex flex-col gap-1 px-4 pt-4 text-xs md:flex-row md:items-center md:justify-between">
     <p className="font-medium text-slate-700">
       Revenus quotidiens (réels) · PPV &amp; abonnements
     </p>
@@ -773,7 +772,9 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
       abonnements du cockpit.
     </p>
   </div>
-  <RevenueLinesChart data={realDailyRevenue} variant="large" />
+  <div className="px-1 pb-4">
+    <RevenueLinesChart data={realDailyRevenue} variant="large" />
+  </div>
 </div>
 
         {/* Résumé revenus + TVA + commission réelle */}
@@ -1271,56 +1272,49 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
             </div>
           </div>
 
-          {/* Donut + courbe simulée */}
-          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-            {/* Donut */}
-            <div className="flex flex-col items-center gap-2">
-              <div
-                className="flex h-32 w-32 items-center justify-center rounded-full"
-                style={donutStyle}
-              >
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
-                  <span>{formatMoney(simCreatorShareNet)}</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Répartition Abo / Pay-Per-View dans ton revenu brut (TTC). Le
-                montant au centre est ta part créateur estimée (HT) après TVA +
-                commission.
-              </p>
-              <div className="flex items-center gap-3 text-[11px]">
-                <div className="flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
-                  <span>Abo · {simAboSharePct.toFixed(1)}%</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[rgb(16,185,129)]" />
-                  <span>Pay-Per-View · {simPpvSharePct.toFixed(1)}%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Courbe revenus simulés (PPV + Abo) */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-700">
-                Projection d&apos;évolution (revenus simulés)
-              </p>
-             <div className="-mx-3 rounded-3xl border border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:p-3">
-  <RevenueLinesChart data={simDailyRevenue} variant="large" />
-  <p className="mt-1 text-[11px] text-slate-500">
-    Exemple de progression sur 7 périodes (par ex. jours ou semaines)
-    basée sur tes revenus simulés PPV / abonnements.
-  </p>
-</div>
-            </div>
-          </div>
-
-          {/* Texte légal sous le simulateur */}
-          <p className="mt-2 text-center text-[11px] text-slate-500 md:text-right">
-            Simulation indicative, ne constitue pas une garantie de revenus.
-          </p>
-        </div>
-      </section>
+        {/* Donut + courbe simulée */}
+<div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+  {/* Donut */}
+  <div className="flex flex-col items-center gap-2">
+    <div
+      className="flex h-32 w-32 items-center justify-center rounded-full"
+      style={donutStyle}
+    >
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
+        <span>{formatMoney(simCreatorShareNet)}</span>
+      </div>
     </div>
-  );
-}
+    <p className="text-[11px] text-slate-500">
+      Répartition Abo / Pay-Per-View dans ton revenu brut (TTC). Le montant au
+      centre est ta part créateur estimée (HT) après TVA + commission.
+    </p>
+    <div className="flex items-center gap-3 text-[11px]">
+      <div className="flex items-center gap-1">
+        <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
+        <span>Abo · {simAboSharePct.toFixed(1)}%</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="inline-block h-2 w-2 rounded-full bg-[rgb(16,185,129)]" />
+        <span>Pay-Per-View · {simPpvSharePct.toFixed(1)}%</span>
+      </div>
+    </div>
+  </div>
+
+  {/* Courbe revenus simulés (PPV + Abo) */}
+  <div className="space-y-2">
+    <p className="text-xs font-medium text-slate-700">
+      Projection d&apos;évolution (revenus simulés)
+    </p>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80">
+      <div className="px-3 pt-3">
+        <p className="text-[11px] text-slate-500">
+          Exemple de progression sur 7 périodes (par ex. jours ou semaines)
+          basée sur tes revenus simulés PPV / abonnements.
+        </p>
+      </div>
+      <div className="px-1 pb-3">
+        <RevenueLinesChart data={simDailyRevenue} variant="small" />
+      </div>
+    </div>
+  </div>
+</div>
