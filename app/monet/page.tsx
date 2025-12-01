@@ -1382,12 +1382,6 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
           </div>
         </div>
 
-        {/* Texte légal sous le simulateur */}
-        <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-          Simulation indicative, ne constitue pas une garantie de revenus.
-        </p>
-      </div>
-
           {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
             Simulation indicative, ne constitue pas une garantie de revenus.
