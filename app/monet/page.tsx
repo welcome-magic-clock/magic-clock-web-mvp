@@ -220,7 +220,7 @@ const SOCIAL_NETWORKS = [
 // ─────────────────────────────────────────────────────────────
 
 type DailyRevenuePoint = {
-  day: number; // 1 → n (jour ou période)
+  day: number;
   ppv: number;
   abo: number;
 };
@@ -238,63 +238,68 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     1,
   );
 
-  const heightClass = variant === "large" ? "h-52" : "h-36";
+  const heightClass = variant === "large" ? "h-52" : "h-32";
 
-  // Cadre du graphe dans le viewBox 0–100
-  const leftPad = 10;
-  const rightPad = 4;
-  const topPad = 10;
-  const bottomPad = 12;
-  const baseLine = 100 - bottomPad;
-  const amplitude = baseLine - topPad;
+  // Marges internes du graphique
+  const paddingLeft = 14;
+  const paddingRight = 4;
+  const paddingTop = 10;
+  const paddingBottom = 14;
+  const innerWidth = 100 - paddingLeft - paddingRight;
+  const innerHeight = 100 - paddingTop - paddingBottom;
 
-  const coords = data.map((point, idx) => {
-    const t = data.length > 1 ? idx / (data.length - 1) : 0; // 0 → 1
-    const x = leftPad + t * (100 - leftPad - rightPad);
+  const getX = (index: number) => {
+    const t = data.length > 1 ? index / (data.length - 1) : 0; // 0 → 1
+    return paddingLeft + t * innerWidth;
+  };
 
-    const ppvNorm = point.ppv / maxY;
-    const aboNorm = point.abo / maxY;
+  const getY = (value: number) => {
+    if (!Number.isFinite(value) || maxY <= 0) {
+      return paddingTop + innerHeight;
+    }
+    const ratio = value / maxY; // 0 → 1
+    return paddingTop + (1 - ratio) * innerHeight;
+  };
 
-    const ppvY = baseLine - ppvNorm * amplitude;
-    const aboY = baseLine - aboNorm * amplitude;
+  const ppvPoints = data
+    .map((point, idx) => `${getX(idx)},${getY(point.ppv)}`)
+    .join(" ");
 
-    return { x, ppvY, aboY };
-  });
+  const aboPoints = data
+    .map((point, idx) => `${getX(idx)},${getY(point.abo)}`)
+    .join(" ");
 
-  const ppvLine = coords.map((c) => `${c.x},${c.ppvY}`).join(" ");
-  const aboLine = coords.map((c) => `${c.x},${c.aboY}`).join(" ");
-
-  const ppvArea = [
-    `${coords[0].x},${baseLine}`,
-    ...coords.map((c) => `${c.x},${c.ppvY}`),
-    `${coords[coords.length - 1].x},${baseLine}`,
+  const ppvAreaPoints = [
+    `${getX(0)},${paddingTop + innerHeight}`,
+    ...data.map((point, idx) => `${getX(idx)},${getY(point.ppv)}`),
+    `${getX(data.length - 1)},${paddingTop + innerHeight}`,
   ].join(" ");
 
-  const aboArea = [
-    `${coords[0].x},${baseLine}`,
-    ...coords.map((c) => `${c.x},${c.aboY}`),
-    `${coords[coords.length - 1].x},${baseLine}`,
+  const aboAreaPoints = [
+    `${getX(0)},${paddingTop + innerHeight}`,
+    ...data.map((point, idx) => `${getX(idx)},${getY(point.abo)}`),
+    `${getX(data.length - 1)},${paddingTop + innerHeight}`,
   ].join(" ");
 
-  // Ticks verticaux (montants)
-  const gridCount = 4;
-  const gridLines = Array.from({ length: gridCount }, (_, i) => {
-    const value = ((i + 1) / gridCount) * maxY;
-    const norm = value / maxY;
-    const y = baseLine - norm * amplitude;
-    return { y, value };
-  });
+  // Lignes horizontales (paliers) : 0, 25%, 50%, 75%, 100%
+  const horizontalSteps = [0, 0.25, 0.5, 0.75, 1];
 
-  // Ticks horizontaux (temps : début / milieu / fin)
-  const midIndex = Math.floor(data.length / 2);
-  const xTicks = [
-    { label: `J${data[0].day}`, x: coords[0].x },
-    { label: `J${data[midIndex].day}`, x: coords[midIndex].x },
+  // Lignes verticales : début, milieu, fin
+  const verticalSteps = [0, 0.5, 1];
+
+  const yLabels = [
+    { label: `${Math.round(maxY).toLocaleString("fr-CH")} CHF`, value: maxY },
     {
-      label: `J${data[data.length - 1].day}`,
-      x: coords[coords.length - 1].x,
+      label: `${Math.round(maxY / 2).toLocaleString("fr-CH")} CHF`,
+      value: maxY / 2,
     },
+    { label: "0 CHF", value: 0 },
   ];
+
+  const firstDay = data[0]?.day ?? 1;
+  const lastDay = data[data.length - 1]?.day ?? data.length;
+  const midIndex = Math.floor(data.length / 2);
+  const midDay = data[midIndex]?.day ?? Math.round((firstDay + lastDay) / 2);
 
   return (
     <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
@@ -319,8 +324,8 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
 
         {/* Traits des lignes */}
         <linearGradient id="mc-line-ppv" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#2563eb" />
-          <stop offset="100%" stopColor="#1d4ed8" />
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#2563eb" />
         </linearGradient>
         <linearGradient id="mc-line-abo" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#a855f7" />
@@ -328,52 +333,70 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
         </linearGradient>
       </defs>
 
-      {/* Carte de fond pleine largeur */}
+      {/* Carte de fond */}
       <rect
-        x={2}
+        x={4}
         y={6}
-        width={96}
+        width={92}
         height={88}
-        rx={18}
+        rx={16}
         fill="url(#mc-bg)"
       />
 
-      {/* Lignes de grille horizontales */}
-      {gridLines.map((g, idx) => (
-        <g key={idx}>
+      {/* Grille horizontale */}
+      {horizontalSteps.map((step, idx) => {
+        const y = paddingTop + (1 - step) * innerHeight;
+        return (
           <line
-            x1={leftPad}
-            x2={100 - rightPad}
-            y1={g.y}
-            y2={g.y}
+            key={`h-${idx}`}
+            x1={paddingLeft}
+            x2={paddingLeft + innerWidth}
+            y1={y}
+            y2={y}
             stroke="#e5e7eb"
-            strokeWidth={0.4}
+            strokeWidth={0.3}
             strokeDasharray="2 2"
           />
-          <text
-            x={leftPad - 1}
-            y={g.y - 0.5}
-            fontSize="4"
-            textAnchor="end"
-            fill="#9ca3af"
-          >
-            {formatMoney(g.value)}
-          </text>
-        </g>
-      ))}
+        );
+      })}
+
+      {/* Grille verticale */}
+      {verticalSteps.map((step, idx) => {
+        const x = paddingLeft + step * innerWidth;
+        return (
+          <line
+            key={`v-${idx}`}
+            x1={x}
+            x2={x}
+            y1={paddingTop}
+            y2={paddingTop + innerHeight}
+            stroke="#e5e7eb"
+            strokeWidth={0.3}
+            strokeDasharray="2 2"
+          />
+        );
+      })}
 
       {/* Aires sous les courbes */}
-      <polygon points={aboArea} fill="url(#mc-fill-abo)" fillOpacity={0.5} />
-      <polygon points={ppvArea} fill="url(#mc-fill-ppv)" fillOpacity={0.55} />
+      <polygon
+        points={aboAreaPoints}
+        fill="url(#mc-fill-abo)"
+        fillOpacity={0.5}
+      />
+      <polygon
+        points={ppvAreaPoints}
+        fill="url(#mc-fill-ppv)"
+        fillOpacity={0.6}
+      />
 
-      {/* Courbe Abonnements */}
+      {/* Courbe Abo */}
       <polyline
         fill="none"
         stroke="url(#mc-line-abo)"
         strokeWidth={1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
-        points={aboLine}
+        points={aboPoints}
       />
 
       {/* Courbe PPV */}
@@ -383,30 +406,66 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        points={ppvLine}
+        points={ppvPoints}
       />
 
-      {/* Axe X (temps) */}
-      <line
-        x1={leftPad}
-        x2={100 - rightPad}
-        y1={baseLine}
-        y2={baseLine}
-        stroke="#e5e7eb"
-        strokeWidth={0.6}
-      />
-      {xTicks.map((t, idx) => (
-        <text
-          key={idx}
-          x={t.x}
-          y={baseLine + 6}
-          fontSize="4"
-          textAnchor="middle"
-          fill="#9ca3af"
-        >
-          {t.label}
-        </text>
-      ))}
+      {/* Labels axe Y (CHF) */}
+      {yLabels.map((yl, idx) => {
+        const y = getY(yl.value);
+        return (
+          <text
+            key={`yl-${idx}`}
+            x={paddingLeft - 1.5}
+            y={y + 1.5}
+            fontSize={3.3}
+            textAnchor="end"
+            fill="#6b7280"
+          >
+            {yl.label}
+          </text>
+        );
+      })}
+
+      {/* Label “CHF / jour” en haut à gauche */}
+      <text
+        x={paddingLeft}
+        y={paddingTop - 2}
+        fontSize={3.5}
+        textAnchor="start"
+        fill="#4b5563"
+        fontWeight={500}
+      >
+        CHF / jour
+      </text>
+
+      {/* Labels axe X (temps) */}
+      <text
+        x={getX(0)}
+        y={paddingTop + innerHeight + 8}
+        fontSize={3.3}
+        textAnchor="middle"
+        fill="#6b7280"
+      >
+        J{firstDay}
+      </text>
+      <text
+        x={getX(midIndex)}
+        y={paddingTop + innerHeight + 8}
+        fontSize={3.3}
+        textAnchor="middle"
+        fill="#6b7280"
+      >
+        J{midDay}
+      </text>
+      <text
+        x={getX(data.length - 1)}
+        y={paddingTop + innerHeight + 8}
+        fontSize={3.3}
+        textAnchor="middle"
+        fill="#6b7280"
+      >
+        J{lastDay}
+      </text>
     </svg>
   );
 }
@@ -762,8 +821,8 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
         </div>
 
       {/* Graphique revenus quotidiens (réalité) */}
-<div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80">
-  <div className="mb-3 flex flex-col gap-1 px-4 pt-4 text-xs md:flex-row md:items-center md:justify-between">
+<div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+  <div className="mb-3 flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
     <p className="font-medium text-slate-700">
       Revenus quotidiens (réels) · PPV &amp; abonnements
     </p>
@@ -772,7 +831,7 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
       abonnements du cockpit.
     </p>
   </div>
-  <div className="px-1 pb-4">
+  <div className="-mx-2 sm:mx-0">
     <RevenueLinesChart data={realDailyRevenue} variant="large" />
   </div>
 </div>
@@ -1300,22 +1359,16 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
     </div>
   </div>
 
-  {/* Courbe revenus simulés (PPV + Abo) */}
-  <div className="space-y-2">
-    <p className="text-xs font-medium text-slate-700">
-      Projection d&apos;évolution (revenus simulés)
+ <div className="space-y-2">
+  <p className="text-xs font-medium text-slate-700">
+    Projection d&apos;évolution (revenus simulés)
+  </p>
+  <div className="-mx-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:px-3">
+    <RevenueLinesChart data={simDailyRevenue} variant="large" />
+    <p className="mt-1 text-[11px] text-slate-500">
+      Exemple de progression sur 7 périodes (par ex. jours ou semaines)
+      basée sur tes revenus simulés PPV / abonnements.
     </p>
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80">
-      <div className="px-3 pt-3">
-        <p className="text-[11px] text-slate-500">
-          Exemple de progression sur 7 périodes (par ex. jours ou semaines)
-          basée sur tes revenus simulés PPV / abonnements.
-        </p>
-      </div>
-      <div className="px-1 pb-3">
-        <RevenueLinesChart data={simDailyRevenue} variant="small" />
-      </div>
-    </div>
   </div>
 </div>
 
