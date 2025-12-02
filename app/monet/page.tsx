@@ -533,7 +533,7 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
   });
 }, [simGrossAbos, simGrossPpv]);
 
-  return (
+   return (
     <div className="container space-y-8 py-8">
       {/* HEADER AVEC AVATAR AIKO */}
       <header className="space-y-4">
@@ -731,22 +731,22 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
           </div>
         </div>
 
-     {/* Graphique revenus quotidiens (réalité) */}
-<div className="mt-4 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
-  <div className="mb-3 flex flex-col gap-1 text-[11px] md:flex-row md:items-center md:justify-between">
-    <p className="font-medium text-slate-700">
-      Revenus quotidiens (réels) · PPV &amp; abonnements
-    </p>
-    <p className="text-slate-500">
-      Exemple de répartition sur 30 jours, basé sur tes chiffres PPV /
-      abonnements du cockpit.
-    </p>
-  </div>
+        {/* Graphique revenus quotidiens (réalité) */}
+        <div className="mt-4 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
+          <div className="mb-3 flex flex-col gap-1 text-[11px] md:flex-row md:items-center md:justify-between">
+            <p className="font-medium text-slate-700">
+              Revenus quotidiens (réels) · PPV &amp; abonnements
+            </p>
+            <p className="text-slate-500">
+              Exemple de répartition sur 30 jours, basé sur tes chiffres PPV /
+              abonnements du cockpit.
+            </p>
+          </div>
 
-  <div className="mt-1">
-    <RevenueLinesChart data={realDailyRevenue} variant="large" />
-  </div>
-</div>
+          <div className="mt-1">
+            <RevenueLinesChart data={realDailyRevenue} variant="large" />
+          </div>
+        </div>
 
         {/* Résumé revenus + TVA + commission réelle */}
         <div className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -1165,141 +1165,143 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
           </div>
         </div>
 
-              {/* Résultats simulateur */}
-      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-800">
-          Résultat simulateur (par mois)
-        </h2>
+        {/* Résultats simulateur */}
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-800">
+            Résultat simulateur (par mois)
+          </h2>
 
-        <div className="grid gap-3 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              Abonnés estimés (Abo) · {simAboConv.toFixed(1)}%
-            </span>
-            <span className="font-semibold">
-              {Math.round(simAboSubs).toLocaleString("fr-CH")} abonnés
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              Acheteurs Pay-Per-View estimés · {simPpvConv.toFixed(1)}%
-            </span>
-            <span className="font-semibold">
-              {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              Revenu brut Abo (TTC, avant TVA)
-            </span>
-            <span className="font-semibold">
-              {formatMoney(simGrossAbos)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              Revenu brut Pay-Per-View (TTC, avant TVA)
-            </span>
-            <span className="font-semibold">
-              {formatMoney(simGrossPpv)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
-            <span className="text-slate-500">Revenu brut total (TTC)</span>
-            <span className="text-sm font-medium">
-              {formatMoney(simGrossTotal)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              TVA estimée ({Math.round(vatRateSim * 1000) / 10}% · {simCountry.label})
-            </span>
-            <span className="font-semibold text-slate-600">
-              {formatMoney(simVatAmount)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Base HT estimée</span>
-            <span className="font-semibold text-slate-700">
-              {formatMoney(simNetBase)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              Part plateforme (HT, {Math.round(simTier.rate * 100)}%)
-            </span>
-            <span className="font-semibold text-slate-600">
-              {formatMoney(simPlatformShareNet)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">
-              Part créateur (après TVA + commission)
-            </span>
-            <span className="text-lg font-semibold text-emerald-600">
-              {formatMoney(simCreatorShareNet)}
-            </span>
-          </div>
-        </div>
-
-        {/* Donut + courbe simulée */}
-        <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-          {/* Donut */}
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className="flex h-32 w-32 items-center justify-center rounded-full"
-              style={donutStyle}
-            >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
-                <span>{formatMoney(simCreatorShareNet)}</span>
-              </div>
+          <div className="grid gap-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Abonnés estimés (Abo) · {simAboConv.toFixed(1)}%
+              </span>
+              <span className="font-semibold">
+                {Math.round(simAboSubs).toLocaleString("fr-CH")} abonnés
+              </span>
             </div>
-            <p className="text-[11px] text-slate-500 text-center">
-              Répartition Abo / Pay-Per-View dans ton revenu brut (TTC). Le
-              montant au centre est ta part créateur estimée (HT) après TVA +
-              commission.
-            </p>
-            <div className="flex items-center gap-3 text-[11px]">
-              <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
-                <span>Abo · {simAboSharePct.toFixed(1)}%</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[rgb(16,185,129)]" />
-                <span>Pay-Per-View · {simPpvSharePct.toFixed(1)}%</span>
-              </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Acheteurs Pay-Per-View estimés · {simPpvConv.toFixed(1)}%
+              </span>
+              <span className="font-semibold">
+                {Math.round(simPpvBuyers).toLocaleString("fr-CH")} acheteurs
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Revenu brut Abo (TTC, avant TVA)
+              </span>
+              <span className="font-semibold">
+                {formatMoney(simGrossAbos)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Revenu brut Pay-Per-View (TTC, avant TVA)
+              </span>
+              <span className="font-semibold">
+                {formatMoney(simGrossPpv)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
+              <span className="text-slate-500">Revenu brut total (TTC)</span>
+              <span className="text-sm font-medium">
+                {formatMoney(simGrossTotal)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                TVA estimée ({Math.round(vatRateSim * 1000) / 10}% ·{" "}
+                {simCountry.label})
+              </span>
+              <span className="font-semibold text-slate-600">
+                {formatMoney(simVatAmount)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Base HT estimée</span>
+              <span className="font-semibold text-slate-700">
+                {formatMoney(simNetBase)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Part plateforme (HT, {Math.round(simTier.rate * 100)}%)
+              </span>
+              <span className="font-semibold text-slate-600">
+                {formatMoney(simPlatformShareNet)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                Part créateur (après TVA + commission)
+              </span>
+              <span className="text-lg font-semibold text-emerald-600">
+                {formatMoney(simCreatorShareNet)}
+              </span>
             </div>
           </div>
 
-               {/* Courbe revenus simulés (PPV + Abo) */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-slate-700">
-          Projection d&apos;évolution (revenus simulés)
-        </p>
+          {/* Donut + courbe simulée */}
+          <div className="mt-2 grid items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+            {/* Donut */}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="flex h-32 w-32 items-center justify-center rounded-full"
+                style={donutStyle}
+              >
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-[11px] font-semibold text-slate-700 shadow">
+                  <span>{formatMoney(simCreatorShareNet)}</span>
+                </div>
+              </div>
+              <p className="text-center text-[11px] text-slate-500">
+                Répartition Abo / Pay-Per-View dans ton revenu brut (TTC). Le
+                montant au centre est ta part créateur estimée (HT) après TVA +
+                commission.
+              </p>
+              <div className="flex items-center gap-3 text-[11px]">
+                <div className="flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[rgb(59,130,246)]" />
+                  <span>Abo · {simAboSharePct.toFixed(1)}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[rgb(16,185,129)]" />
+                  <span>Pay-Per-View · {simPpvSharePct.toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
 
-        <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
-          <RevenueLinesChart data={simDailyRevenue} variant="large" />
-          <p className="mt-1 text-[11px] text-slate-500">
-            Exemple de progression sur 7 périodes (par ex. jours ou semaines)
-            basée sur tes revenus simulés PPV / abonnements.
-          </p>
+            {/* Courbe revenus simulés (PPV + Abo) */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-700">
+                Projection d&apos;évolution (revenus simulés)
+              </p>
+
+              <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
+                <RevenueLinesChart data={simDailyRevenue} variant="large" />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Exemple de progression sur 7 périodes (par ex. jours ou
+                  semaines) basée sur tes revenus simulés PPV / abonnements.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Texte légal global sous simulateur */}
+      <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+        Simulation indicative, ne constitue pas une garantie de revenus.
+      </p>
     </div>
-
-    {/* Texte légal sous le simulateur */}
-    <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-      Simulation indicative, ne constitue pas une garantie de revenus.
-    </p>
-  </section>
-</div>
-);
+  );
 }
