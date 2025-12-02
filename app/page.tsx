@@ -2,12 +2,16 @@
 
 import { FEED } from "@/features/amazing/feed";
 import FeedCard from "@/features/amazing/FeedCard";
+import { SearchToolbar } from "@/components/search/SearchToolbar";
 
 const REPEAT_COUNT = 10; // on répète 10x pour simuler un scroll infini
 
 export default function AmazingPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      {/* Barre de recherche + bulles */}
+      <SearchToolbar variant="amazing" />
+
       <header className="mb-4 sm:mb-6">
         <h1 className="text-xl font-semibold sm:text-2xl">
           Amazing · flux public
