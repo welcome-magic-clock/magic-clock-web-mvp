@@ -1,7 +1,7 @@
 // app/monet/page.tsx
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
@@ -383,17 +383,6 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
 // ─────────────────────────────────────────────────────────────
 
 export default function MonetPage() {
-  // Toggle Réalité / Simulateur
-  const [activeView, setActiveView] = useState<"real" | "sim">("real");
-  const realRef = useRef<HTMLDivElement | null>(null);
-  const simRef = useRef<HTMLDivElement | null>(null);
-
-  const scrollToView = (view: "real" | "sim") => {
-    setActiveView(view);
-    const ref = view === "real" ? realRef : simRef;
-    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   // ── Profil créateur : Aiko Tanaka depuis le repository
   const creators = listCreators() as CreatorLight[];
   const currentCreator =
@@ -549,71 +538,43 @@ export default function MonetPage() {
 
   return (
     <div className="container space-y-6 py-8">
-           {/* HEADER AVEC AVATAR + TOGGLE */}
+      {/* HEADER AVEC AVATAR AIKO */}
       <header className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Avatar + nom */}
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
-              {currentCreator?.avatar && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={currentCreator.avatar}
-                  alt={currentCreator.name ?? "Créateur Magic Clock"}
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[11px] text-slate-500">
-                Cockpit monétisation
-              </span>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold">
-                  {currentCreator?.name ?? "Créateur Magic Clock"}
-                </h1>
-                <span className="text-xs text-slate-500">
-                  {displayHandle}
-                </span>
-              </div>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
+            {currentCreator?.avatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={currentCreator.avatar}
+                alt={currentCreator.name ?? "Créateur Magic Clock"}
+                className="h-full w-full object-cover"
+              />
+            )}
           </div>
-
-          {/* Toggle Réalité / Simulateur */}
-          <div className="inline-flex items-center rounded-full bg-slate-100 p-1 text-[11px] font-medium text-slate-600">
-            <button
-              type="button"
-              onClick={() => scrollToView("real")}
-              className={`inline-flex min-w-[140px] items-center justify-center rounded-full px-4 py-1.5 transition ${
-                activeView === "real"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Réalité · compte
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToView("sim")}
-              className={`inline-flex min-w-[160px] items-center justify-center rounded-full px-4 py-1.5 transition ${
-                activeView === "sim"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Simulateur · projection
-            </button>
+          <div className="flex flex-col">
+            <span className="text-[11px] text-slate-500">
+              Cockpit monétisation
+            </span>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">
+                {currentCreator?.name ?? "Créateur Magic Clock"}
+              </h1>
+              <span className="text-xs text-slate-500">{displayHandle}</span>
+            </div>
           </div>
         </div>
 
-        {/* Sous-titre + lien Prix & monétisation */}
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Monétisation</h2>
           <p className="text-sm text-slate-600">
-            Comprends l&apos;impact de ton audience et simule ton potentiel
-            avec Magic Clock (MODE FREE, abonnements + Pay-Per-View).
+            Comprends l&apos;impact de ton audience et simule ton potentiel avec
+            Magic Clock (MODE FREE, abonnements + Pay-Per-View). Choisis entre{" "}
+            <span className="font-semibold">Réalité</span> (données indicatives
+            du compte) et{" "}
+            <span className="font-semibold">Simulateur</span> (projections).
           </p>
 
+          {/* Lien vers la page Prix & monétisation */}
           <div className="mb-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-slate-800 sm:text-sm">
             <p className="font-medium">Nouveau sur Magic Clock ?</p>
             <p>
@@ -632,7 +593,7 @@ export default function MonetPage() {
             </p>
           </div>
         </div>
-      </header>    
+      </header>
 
       {/* TOGGLE RÉALITÉ / SIMULATEUR */}
       <section className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-sm">
@@ -680,39 +641,36 @@ export default function MonetPage() {
       {/* CONTENU PRINCIPAL, SELON LE MODE */}
       {activeMode === "real" ? (
         <>
-                     {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
-      <section
-        ref={realRef}
-        className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
-              Réalité · compte
-            </span>
-            <span className="flex items-center gap-1 text-[11px] text-slate-500">
-              <Info className="h-3 w-3" />
-              Données indicatives pour le MVP (non connectées au backend).
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            Les montants sont affichés en TTC, TVA estimée, puis en base HT
-            pour la répartition plateforme / créateur.
-          </p>
-        </div>
+          {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
+          <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
+                  Réalité · compte
+                </span>
+                <span className="flex items-center gap-1 text-xs text-slate-500">
+                  <Info className="h-3 w-3" />
+                  Données indicatives pour le MVP (non connectées au backend).
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Les montants sont affichés en TTC, TVA estimée, puis en base HT
+                pour la répartition plateforme / créateur.
+              </p>
+            </div>
 
-        {/* Encadré TVA / pays */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
-          <Info className="h-3 w-3" />
-          <span>
-            Pays détecté :{" "}
-            <strong>
-              {CURRENT_COUNTRY.label} · TVA{" "}
-              {Math.round(vatRateReal * 1000) / 10}%
-            </strong>{" "}
-            — estimée pour ce cockpit (MVP).
-          </span>
-        </div>
+            {/* Encadré TVA / pays */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+              <Info className="h-3 w-3" />
+              <span>
+                Pays détecté :{" "}
+                <strong>
+                  {CURRENT_COUNTRY.label} · TVA{" "}
+                  {Math.round(vatRateReal * 1000) / 10}%
+                </strong>{" "}
+                — estimée pour ce cockpit (MVP).
+              </span>
+            </div>
 
             {/* HERO : Graphique revenus quotidiens (réalité) */}
             <div className="mt-2 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
@@ -983,11 +941,8 @@ export default function MonetPage() {
         </>
       ) : (
         <>
-                  {/* 🔸 2. SIMULATEUR */}
-      <section
-        ref={simRef}
-        className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
-      >
+          {/* 🔸 2. SIMULATEUR */}
+          <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {/* Contrôles simulateur */}
             <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
@@ -1414,3 +1369,4 @@ export default function MonetPage() {
     </div>
   );
 }
+
