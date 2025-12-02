@@ -549,7 +549,7 @@ export default function MonetPage() {
 
   return (
     <div className="container space-y-6 py-8">
-          {/* HEADER AVEC AVATAR + TOGGLE */}
+           {/* HEADER AVEC AVATAR + TOGGLE */}
       <header className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Avatar + nom */}
@@ -632,7 +632,7 @@ export default function MonetPage() {
             </p>
           </div>
         </div>
-      </header>
+      </header>    
 
       {/* TOGGLE RÉALITÉ / SIMULATEUR */}
       <section className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-sm">
@@ -680,39 +680,39 @@ export default function MonetPage() {
       {/* CONTENU PRINCIPAL, SELON LE MODE */}
       {activeMode === "real" ? (
         <>
-                {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
+                     {/* 🔹 1. REALITÉ : Cockpit actuel (lecture seule) */}
       <section
         ref={realRef}
         className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
       >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
-                  Réalité · compte
-                </span>
-                <span className="flex items-center gap-1 text-xs text-slate-500">
-                  <Info className="h-3 w-3" />
-                  Données indicatives pour le MVP (non connectées au backend).
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Les montants sont affichés en TTC, TVA estimée, puis en base HT
-                pour la répartition plateforme / créateur.
-              </p>
-            </div>
-
-            {/* Encadré TVA / pays */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700">
+              Réalité · compte
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-slate-500">
               <Info className="h-3 w-3" />
-              <span>
-                Pays détecté :{" "}
-                <strong>
-                  {CURRENT_COUNTRY.label} · TVA{" "}
-                  {Math.round(vatRateReal * 1000) / 10}%
-                </strong>{" "}
-                — estimée pour ce cockpit (MVP).
-              </span>
-            </div>
+              Données indicatives pour le MVP (non connectées au backend).
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Les montants sont affichés en TTC, TVA estimée, puis en base HT
+            pour la répartition plateforme / créateur.
+          </p>
+        </div>
+
+        {/* Encadré TVA / pays */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600">
+          <Info className="h-3 w-3" />
+          <span>
+            Pays détecté :{" "}
+            <strong>
+              {CURRENT_COUNTRY.label} · TVA{" "}
+              {Math.round(vatRateReal * 1000) / 10}%
+            </strong>{" "}
+            — estimée pour ce cockpit (MVP).
+          </span>
+        </div>
 
             {/* HERO : Graphique revenus quotidiens (réalité) */}
             <div className="mt-2 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
@@ -983,7 +983,7 @@ export default function MonetPage() {
         </>
       ) : (
         <>
-                {/* 🔸 2. SIMULATEUR */}
+                  {/* 🔸 2. SIMULATEUR */}
       <section
         ref={simRef}
         className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
