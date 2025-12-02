@@ -538,29 +538,58 @@ export default function MonetPage() {
 
   return (
     <div className="container space-y-6 py-8">
-      {/* HEADER AVEC AVATAR AIKO */}
+      {/* HEADER AVEC AVATAR + TOGGLE */}
       <header className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
-            {currentCreator?.avatar && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={currentCreator.avatar}
-                alt={currentCreator.name ?? "Créateur Magic Clock"}
-                className="h-full w-full object-cover"
-              />
-            )}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[11px] text-slate-500">
-              Cockpit monétisation
-            </span>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">
-                {currentCreator?.name ?? "Créateur Magic Clock"}
-              </h1>
-              <span className="text-xs text-slate-500">{displayHandle}</span>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Bloc avatar + nom */}
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
+              {currentCreator?.avatar && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={currentCreator.avatar}
+                  alt={currentCreator.name ?? "Créateur Magic Clock"}
+                  className="h-full w-full object-cover"
+                />
+              )}
             </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] text-slate-500">
+                Cockpit monétisation
+              </span>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-semibold">
+                  {currentCreator?.name ?? "Créateur Magic Clock"}
+                </h1>
+                <span className="text-xs text-slate-500">{displayHandle}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Toggle Réalité / Simulateur */}
+          <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setActiveMode("real")}
+              className={`flex-1 rounded-full px-3 py-1.5 font-medium transition ${
+                activeMode === "real"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600"
+              }`}
+            >
+              Réalité · compte
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveMode("sim")}
+              className={`flex-1 rounded-full px-3 py-1.5 font-medium transition ${
+                activeMode === "sim"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600"
+              }`}
+            >
+              Simulateur · projection
+            </button>
           </div>
         </div>
 
@@ -594,49 +623,6 @@ export default function MonetPage() {
           </div>
         </div>
       </header>
-
-      {/* TOGGLE RÉALITÉ / SIMULATEUR */}
-      <section className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setActiveMode("real")}
-              className={`flex-1 rounded-full px-3 py-1.5 font-medium transition ${
-                activeMode === "real"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600"
-              }`}
-            >
-              Réalité · compte
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveMode("sim")}
-              className={`flex-1 rounded-full px-3 py-1.5 font-medium transition ${
-                activeMode === "sim"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600"
-              }`}
-            >
-              Simulateur · projection
-            </button>
-          </div>
-
-          <span className="flex items-center gap-1 text-[11px] text-slate-500">
-            <Info className="h-3 w-3" />
-            Les chiffres sont fournis à titre indicatif pour ce MVP.
-          </span>
-        </div>
-
-        <p className="text-[11px] text-slate-500">
-          <span className="font-semibold">Réalité</span> t&apos;offre une vue
-          cockpit sur tes revenus actuels (lecture seule).{" "}
-          <span className="font-semibold">Simulateur</span> te permet de jouer
-          avec les sliders (followers, prix, conversions) pour imaginer ton
-          potentiel.
-        </p>
-      </section>
 
       {/* CONTENU PRINCIPAL, SELON LE MODE */}
       {activeMode === "real" ? (
@@ -722,7 +708,7 @@ export default function MonetPage() {
                     </span>
                     <span className="text-slate-500">
                       Total indicatif :{" "}
-                        <span className="font-semibold">
+                      <span className="font-semibold">
                         {indicativeFollowersTotal.toLocaleString("fr-CH")}
                       </span>
                     </span>
@@ -968,9 +954,8 @@ export default function MonetPage() {
               <p className="text-xs text-slate-500">
                 Les prix saisis sont considérés comme TTC. Magic Clock retire
                 automatiquement la TVA du pays sélectionné, puis applique la
-                commission Bronze / Argent / Or sur la base HT. En production,
-                le pays serait détecté automatiquement (IP / profil / Stripe
-                Tax).
+                commission Bronze / Argent / Or sur la base HT. En production, le
+                pays serait détecté automatiquement (IP / profil / Stripe Tax).
               </p>
 
               {/* Followers */}
@@ -1239,7 +1224,7 @@ export default function MonetPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                               <div className="flex items-center justify-between">
                   <span className="text-slate-500">
                     Acheteurs Pay-Per-View estimés · {simPpvConv.toFixed(1)}%
                   </span>
@@ -1266,7 +1251,7 @@ export default function MonetPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
+                <div className="flex items-center justify-between border-top border-t border-dashed border-slate-200 pt-2">
                   <span className="text-slate-500">Revenu brut total (TTC)</span>
                   <span className="text-sm font-medium">
                     {formatMoney(simGrossTotal)}
@@ -1369,4 +1354,3 @@ export default function MonetPage() {
     </div>
   );
 }
-
