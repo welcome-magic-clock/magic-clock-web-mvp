@@ -1,6 +1,6 @@
+// app/meet/page.tsx
+
 import { SearchToolbar } from "@/components/search/SearchToolbar";
-import { Search } from "lucide-react";
-import CreatorCard from "@/features/meet/CreatorCard";
 import { CREATORS } from "@/features/meet/creators";
 
 const REPEAT_COUNT = 6; // on répète la liste pour remplir plusieurs lignes
@@ -67,30 +67,20 @@ export default function MeetPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 overflow-x-hidden">
-      {/* Titre + barre de recherche mini */}
-      <section className="mb-4 space-y-3">
-        <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
-
-        {/* Conteneur collé à gauche */}
-        <div className="flex justify-start">
-          <div className="flex h-9 w-full max-w-xs items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs text-slate-500 sm:max-w-sm">
-            <Search className="h-4 w-4 text-slate-400" />
-            {/* input désactivé, sans placeholder, pour garder un look très clean */}
-            <input
-              type="text"
-              className="h-full w-full bg-transparent text-xs outline-none"
-              disabled
-            />
-          </div>
-        </div>
+      {/* 🔍 Barre de recherche + bulles (comme Amazing, variante Meet me) */}
+      <section className="mb-4">
+        <SearchToolbar variant="meetme" />
       </section>
 
-      {/* Compteur */}
-      <p className="mb-3 text-xs text-slate-500">
-        {baseCreators.length} créateurs trouvés.
-      </p>
+      {/* Titre + compteur */}
+      <section className="mb-4 space-y-1">
+        <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
+        <p className="text-xs text-slate-500">
+          {baseCreators.length} créateurs trouvés.
+        </p>
+      </section>
 
-      {/* LIGNES TYPE TIKTOK DISCOVER */}
+      {/* LIGNES TYPE “découvrir des créateurs” */}
       <section className="space-y-6 sm:space-y-8">
         {TRENDING_ROWS.map((row, rowIndex) => {
           const start = rowIndex * CARDS_PER_ROW;
@@ -112,7 +102,7 @@ export default function MeetPage() {
                 </div>
               </div>
 
-              {/* Lignes scrollables façon TikTok */}
+              {/* Rangée scrollable de créateurs */}
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {rowCreators.map((creator: any) => (
                   <MiniCreatorCard
