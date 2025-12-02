@@ -238,71 +238,48 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     1,
   );
 
-  const heightClass = variant === "large" ? "h-52" : "h-32";
+  // Hauteur un peu plus généreuse pour mobile
+  const heightClass =
+    variant === "large" ? "h-56 md:h-52" : "h-32 md:h-36";
 
-  // Marges internes du graphique
-  const paddingLeft = 14;
-  const paddingRight = 4;
-  const paddingTop = 10;
-  const paddingBottom = 14;
-  const innerWidth = 100 - paddingLeft - paddingRight;
-  const innerHeight = 100 - paddingTop - paddingBottom;
+  // Coordonnées globales
+  const baseLine = 92; // “sol” des aires
+  const amplitude = 70; // hauteur utile
 
-  const getX = (index: number) => {
-    const t = data.length > 1 ? index / (data.length - 1) : 0; // 0 → 1
-    return paddingLeft + t * innerWidth;
-  };
+  // Coordonnées normalisées dans un viewBox 0–100
+  const coords = data.map((point, idx) => {
+    const t = data.length > 1 ? idx / (data.length - 1) : 0; // 0 → 1
+    const x = 4 + t * 92; // padding gauche/droite
 
-  const getY = (value: number) => {
-    if (!Number.isFinite(value) || maxY <= 0) {
-      return paddingTop + innerHeight;
-    }
-    const ratio = value / maxY; // 0 → 1
-    return paddingTop + (1 - ratio) * innerHeight;
-  };
+    const ppvNorm = point.ppv / maxY;
+    const aboNorm = point.abo / maxY;
 
-  const ppvPoints = data
-    .map((point, idx) => `${getX(idx)},${getY(point.ppv)}`)
-    .join(" ");
+    const ppvY = baseLine - ppvNorm * amplitude;
+    const aboY = baseLine - aboNorm * amplitude;
 
-  const aboPoints = data
-    .map((point, idx) => `${getX(idx)},${getY(point.abo)}`)
-    .join(" ");
+    return { x, ppvY, aboY };
+  });
 
-  const ppvAreaPoints = [
-    `${getX(0)},${paddingTop + innerHeight}`,
-    ...data.map((point, idx) => `${getX(idx)},${getY(point.ppv)}`),
-    `${getX(data.length - 1)},${paddingTop + innerHeight}`,
+  const ppvLine = coords.map((c) => ${c.x},${c.ppvY}).join(" ");
+  const aboLine = coords.map((c) => ${c.x},${c.aboY}).join(" ");
+
+  const ppvArea = [
+    ${coords[0].x},${baseLine},
+    ...coords.map((c) => ${c.x},${c.ppvY}),
+    ${coords[coords.length - 1].x},${baseLine},
   ].join(" ");
 
-  const aboAreaPoints = [
-    `${getX(0)},${paddingTop + innerHeight}`,
-    ...data.map((point, idx) => `${getX(idx)},${getY(point.abo)}`),
-    `${getX(data.length - 1)},${paddingTop + innerHeight}`,
+  const aboArea = [
+    ${coords[0].x},${baseLine},
+    ...coords.map((c) => ${c.x},${c.aboY}),
+    ${coords[coords.length - 1].x},${baseLine},
   ].join(" ");
 
-  // Lignes horizontales (paliers) : 0, 25%, 50%, 75%, 100%
-  const horizontalSteps = [0, 0.25, 0.5, 0.75, 1];
-
-  // Lignes verticales : début, milieu, fin
-  const verticalSteps = [0, 0.5, 1];
-
-  const yLabels = [
-    { label: `${Math.round(maxY).toLocaleString("fr-CH")} CHF`, value: maxY },
-    {
-      label: `${Math.round(maxY / 2).toLocaleString("fr-CH")} CHF`,
-      value: maxY / 2,
-    },
-    { label: "0 CHF", value: 0 },
-  ];
-
-  const firstDay = data[0]?.day ?? 1;
-  const lastDay = data[data.length - 1]?.day ?? data.length;
-  const midIndex = Math.floor(data.length / 2);
-  const midDay = data[midIndex]?.day ?? Math.round((firstDay + lastDay) / 2);
+  // Niveaux de grille (0%, 25%, 50%, 75%, 100%)
+  const gridLevels = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
+    <svg viewBox="0 0 100 100" className={${heightClass} w-full}>
       <defs>
         {/* Fond global */}
         <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -334,69 +311,57 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
       </defs>
 
       {/* Carte de fond */}
-      <rect
-        x={4}
-        y={6}
-        width={92}
-        height={88}
-        rx={16}
-        fill="url(#mc-bg)"
-      />
+      <rect x={4} y={6} width={92} height={88} rx={16} fill="url(#mc-bg)" />
 
-      {/* Grille horizontale */}
-      {horizontalSteps.map((step, idx) => {
-        const y = paddingTop + (1 - step) * innerHeight;
+      {/* Grille horizontale (paliers) */}
+      {gridLevels.map((level) => {
+        const y = baseLine - amplitude * level;
         return (
           <line
-            key={`h-${idx}`}
-            x1={paddingLeft}
-            x2={paddingLeft + innerWidth}
+            key={level}
+            x1={4}
+            x2={96}
             y1={y}
             y2={y}
             stroke="#e5e7eb"
-            strokeWidth={0.3}
+            strokeWidth={0.5}
             strokeDasharray="2 2"
           />
         );
       })}
 
-      {/* Grille verticale */}
-      {verticalSteps.map((step, idx) => {
-        const x = paddingLeft + step * innerWidth;
-        return (
-          <line
-            key={`v-${idx}`}
-            x1={x}
-            x2={x}
-            y1={paddingTop}
-            y2={paddingTop + innerHeight}
-            stroke="#e5e7eb"
-            strokeWidth={0.3}
-            strokeDasharray="2 2"
-          />
-        );
-      })}
+      {/* Axe "montant" et "temps" (indicatif) */}
+      <text
+        x={6}
+        y={14}
+        fontSize={4}
+        fill="#64748b"
+        style={{ textTransform: "uppercase" }}
+      >
+        CHF
+      </text>
+      <text
+        x={50}
+        y={99}
+        fontSize={4}
+        fill="#94a3b8"
+        textAnchor="middle"
+      >
+        Temps
+      </text>
 
       {/* Aires sous les courbes */}
-      <polygon
-        points={aboAreaPoints}
-        fill="url(#mc-fill-abo)"
-        fillOpacity={0.5}
-      />
-      <polygon
-        points={ppvAreaPoints}
-        fill="url(#mc-fill-ppv)"
-        fillOpacity={0.6}
-      />
+      <polygon points={aboArea} fill="url(#mc-fill-abo)" fillOpacity={0.45} />
+      <polygon points={ppvArea} fill="url(#mc-fill-ppv)" fillOpacity={0.5} />
 
-      {/* Courbe Abo */}
+      {/* Courbe Abonnements */}
       <polyline
         fill="none"
         stroke="url(#mc-line-abo)"
         strokeWidth={1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
-        points={aboPoints}
+        points={aboLine}
       />
 
       {/* Courbe PPV */}
@@ -406,69 +371,12 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        points={ppvPoints}
+        points={ppvLine}
       />
-
-      {/* Labels axe Y (CHF) */}
-      {yLabels.map((yl, idx) => {
-        const y = getY(yl.value);
-        return (
-          <text
-            key={`yl-${idx}`}
-            x={paddingLeft - 1.5}
-            y={y + 1.5}
-            fontSize={3.3}
-            textAnchor="end"
-            fill="#6b7280"
-          >
-            {yl.label}
-          </text>
-        );
-      })}
-
-      {/* Label “CHF / jour” en haut à gauche */}
-      <text
-        x={paddingLeft}
-        y={paddingTop - 2}
-        fontSize={3.5}
-        textAnchor="start"
-        fill="#4b5563"
-        fontWeight={500}
-      >
-        CHF / jour
-      </text>
-
-      {/* Labels axe X (temps) */}
-      <text
-        x={getX(0)}
-        y={paddingTop + innerHeight + 8}
-        fontSize={3.3}
-        textAnchor="middle"
-        fill="#6b7280"
-      >
-        J{firstDay}
-      </text>
-      <text
-        x={getX(midIndex)}
-        y={paddingTop + innerHeight + 8}
-        fontSize={3.3}
-        textAnchor="middle"
-        fill="#6b7280"
-      >
-        J{midDay}
-      </text>
-      <text
-        x={getX(data.length - 1)}
-        y={paddingTop + innerHeight + 8}
-        fontSize={3.3}
-        textAnchor="middle"
-        fill="#6b7280"
-      >
-        J{lastDay}
-      </text>
     </svg>
   );
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Page Monétisation
@@ -578,14 +486,17 @@ const realDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
   return Array.from({ length: days }, (_, index) => {
     const t = index / (days - 1 || 1); // 0 → 1
 
-    // vague : haut → creux → haut (comme le mock desktop)
-    const wave = Math.sin((t - 0.25) * Math.PI * 2); // -1 → 1
+    // tendance globale + oscillations
+    const waveAbo =
+      0.15 * Math.sin(index / 2) + 0.1 * Math.cos(index / 3);
+    const wavePpv =
+      0.2 * Math.sin(index / 1.7) + 0.05 * Math.cos(index / 4);
 
-    const aboFactor = 0.95 + 0.45 * wave; // ≈ 0.5 → 1.4
-    const ppvFactor = 0.85 + 0.55 * wave; // ≈ 0.3 → 1.4
+    const factorAbo = 0.8 + 0.6 * t + waveAbo;
+    const factorPpv = 0.9 + 0.7 * t + wavePpv;
 
-    const abo = Math.max(0, Math.round(baseAbo * aboFactor));
-    const ppv = Math.max(0, Math.round(basePpv * ppvFactor));
+    const abo = Math.max(0, Math.round(baseAbo * factorAbo));
+    const ppv = Math.max(0, Math.round(basePpv * factorPpv));
 
     return {
       day: index + 1,
@@ -820,9 +731,9 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
           </div>
         </div>
 
-      {/* Graphique revenus quotidiens (réalité) */}
-<div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-  <div className="mb-3 flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
+     {/* Graphique revenus quotidiens (réalité) */}
+<div className="mt-4 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
+  <div className="mb-3 flex flex-col gap-1 text-[11px] md:flex-row md:items-center md:justify-between">
     <p className="font-medium text-slate-700">
       Revenus quotidiens (réels) · PPV &amp; abonnements
     </p>
@@ -831,7 +742,8 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
       abonnements du cockpit.
     </p>
   </div>
-  <div className="-mx-2 sm:mx-0">
+
+  <div className="mt-1">
     <RevenueLinesChart data={realDailyRevenue} variant="large" />
   </div>
 </div>
@@ -1367,20 +1279,21 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
             </div>
           </div>
 
-          {/* Courbe revenus simulés (PPV + Abo) */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-slate-700">
-              Projection d&apos;évolution (revenus simulés)
-            </p>
-            <div className="-mx-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:px-3">
-              <RevenueLinesChart data={simDailyRevenue} variant="large" />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Exemple de progression sur 7 périodes (par ex. jours ou semaines)
-                basée sur tes revenus simulés PPV / abonnements.
-              </p>
-            </div>
-          </div>
-        </div>
+         {/* Courbe revenus simulés (PPV + Abo) */}
+<div className="space-y-2">
+  <p className="text-xs font-medium text-slate-700">
+    Projection d&apos;évolution (revenus simulés)
+  </p>
+
+  <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
+    <RevenueLinesChart data={simDailyRevenue} variant="large" />
+    <p className="mt-1 text-[11px] text-slate-500">
+      Exemple de progression sur 7 périodes (par ex. jours ou semaines)
+      basée sur tes revenus simulés PPV / abonnements.
+    </p>
+  </div>
+</div>
+
 
           {/* Texte légal sous le simulateur */}
           <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
