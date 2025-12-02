@@ -238,10 +238,11 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     1,
   );
 
-  // Hauteur un peu plus généreuse pour mobile
-  const heightClass =
-    variant === "large" ? "h-56 md:h-52" : "h-32 md:h-36";
-
+    const heightClass =
+    variant === "large"
+      ? "h-[320px] sm:h-[300px] md:h-[260px]"
+      : "h-32 md:h-36";
+  
   // Coordonnées globales
   const baseLine = 92; // “sol” des aires
   const amplitude = 70; // hauteur utile
