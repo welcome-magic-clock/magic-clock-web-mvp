@@ -260,26 +260,26 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
     return { x, ppvY, aboY };
   });
 
-  const ppvLine = coords.map((c) => ${c.x},${c.ppvY}).join(" ");
-  const aboLine = coords.map((c) => ${c.x},${c.aboY}).join(" ");
+  const ppvLine = coords.map((c) => `${c.x},${c.ppvY}`).join(" ");
+  const aboLine = coords.map((c) => `${c.x},${c.aboY}`).join(" ");
 
   const ppvArea = [
-    ${coords[0].x},${baseLine},
-    ...coords.map((c) => ${c.x},${c.ppvY}),
-    ${coords[coords.length - 1].x},${baseLine},
+    `${coords[0].x},${baseLine}`,
+    ...coords.map((c) => `${c.x},${c.ppvY}`),
+    `${coords[coords.length - 1].x},${baseLine}`,
   ].join(" ");
 
   const aboArea = [
-    ${coords[0].x},${baseLine},
-    ...coords.map((c) => ${c.x},${c.aboY}),
-    ${coords[coords.length - 1].x},${baseLine},
+    `${coords[0].x},${baseLine}`,
+    ...coords.map((c) => `${c.x},${c.aboY}`),
+    `${coords[coords.length - 1].x},${baseLine}`,
   ].join(" ");
 
   // Niveaux de grille (0%, 25%, 50%, 75%, 100%)
   const gridLevels = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox="0 0 100 100" className={${heightClass} w-full}>
+    <svg viewBox="0 0 100 100" className={`${heightClass} w-full`}>
       <defs>
         {/* Fond global */}
         <linearGradient id="mc-bg" x1="0%" y1="0%" x2="0%" y2="100%">
