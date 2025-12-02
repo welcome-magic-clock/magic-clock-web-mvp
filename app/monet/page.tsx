@@ -1279,29 +1279,27 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
             </div>
           </div>
 
-         {/* Courbe revenus simulés (PPV + Abo) */}
-<div className="space-y-2">
-  <p className="text-xs font-medium text-slate-700">
-    Projection d&apos;évolution (revenus simulés)
-  </p>
+               {/* Courbe revenus simulés (PPV + Abo) */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-slate-700">
+          Projection d&apos;évolution (revenus simulés)
+        </p>
 
-  <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
-    <RevenueLinesChart data={simDailyRevenue} variant="large" />
-    <p className="mt-1 text-[11px] text-slate-500">
-      Exemple de progression sur 7 périodes (par ex. jours ou semaines)
-      basée sur tes revenus simulés PPV / abonnements.
-    </p>
-  </div>
-</div>
-
-
-          {/* Texte légal sous le simulateur */}
-          <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
-            Simulation indicative, ne constitue pas une garantie de revenus.
+        <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
+          <RevenueLinesChart data={simDailyRevenue} variant="large" />
+          <p className="mt-1 text-[11px] text-slate-500">
+            Exemple de progression sur 7 périodes (par ex. jours ou semaines)
+            basée sur tes revenus simulés PPV / abonnements.
           </p>
         </div>
-      </section>
+      </div>
     </div>
-  );
-}
 
+    {/* Texte légal sous le simulateur */}
+    <p className="mt-2 text-[11px] text-slate-500 text-center md:text-right">
+      Simulation indicative, ne constitue pas une garantie de revenus.
+    </p>
+  </section>
+</div>
+);
+}
