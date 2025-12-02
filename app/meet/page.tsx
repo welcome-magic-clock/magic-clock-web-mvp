@@ -1,3 +1,4 @@
+import { SearchToolbar } from "@/components/search/SearchToolbar";
 import { Search } from "lucide-react";
 import CreatorCard from "@/features/meet/CreatorCard";
 import { CREATORS } from "@/features/meet/creators";
