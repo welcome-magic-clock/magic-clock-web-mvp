@@ -416,7 +416,17 @@ export default function MonetPage() {
 
   const realGrossAbos = realAboPrice * realAboSubs;
   const realGrossPpv = realPpvPrice * realPpvBuyers * realPpvPerBuyer;
-  const realGrossTotal = realGrossAbos + realGrossPpv;
+    const realGrossTotal = realGrossAbos + realGrossPpv;
+
+  // Résumé "tableau de bord" au-dessus du graphique (valeurs MVP)
+  const realDailyPpv = realGrossPpv / 30;
+  const realDailyAbos = realGrossAbos / 30;
+
+  const realActiveCreators = 141; // maquette MVP
+  const realActiveCreatorsDelta = 10; // +10 nouveaux créateurs
+
+  const realBookingConversion = 8.7; // %
+  const realBookingConvDelta = 0.3;  // +0.3 pt
 
   const {
     vatAmount: realVatAmount,
@@ -658,6 +668,70 @@ export default function MonetPage() {
               </span>
             </div>
 
+          {/* Tableau de bord résumé au-dessus du graphique */}
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            {/* Carte 1 : Revenus PPV */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Revenus PPV
+              </p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {formatMoney(realGrossPpv)}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Sur la période, contenus Pay-Per-View (TTC).
+              </p>
+              <div className="mt-2">
+                <TrendBadge value={realPpvDelta} />
+              </div>
+            </div>
+
+            {/* Carte 2 : Revenus abonnements */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Revenus abonnements
+              </p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {formatMoney(realGrossAbos)}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                MRR estimé basé sur tes abonnés actuels.
+              </p>
+              <div className="mt-2">
+                <TrendBadge value={realAboDelta} />
+              </div>
+            </div>
+
+            {/* Carte 3 : Créateurs actifs (maquette) */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Créateurs actifs
+              </p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {realActiveCreators.toLocaleString("fr-CH")}
+              </p>
+              <p className="mt-1 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
+                +{realActiveCreatorsDelta} nouveaux · 7 derniers jours
+              </p>
+            </div>
+
+            {/* Carte 4 : Conversion RDV (maquette) */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Conversion RDV
+              </p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {realBookingConversion.toFixed(1)}%
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Meet → réservation payée (indicatif MVP).
+              </p>
+              <div className="mt-2">
+                <TrendBadge value={realBookingConvDelta} />
+              </div>
+            </div>
+          </div>
+            
             {/* HERO : Graphique revenus quotidiens (réalité) */}
             <div className="mt-2 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
               <div className="mb-3 flex flex-col gap-1 text-[11px] md:flex-row md:items-center md:justify-between">
