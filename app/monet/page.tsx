@@ -243,9 +243,9 @@ function RevenueLinesChart({ data, variant = "large" }: RevenueLinesChartProps) 
       ? "h-[320px] sm:h-[300px] md:h-[260px]"
       : "h-32 md:h-36";
   
-  // Coordonnées globales
-  const baseLine = 92; // “sol” des aires
-  const amplitude = 70; // hauteur utile
+   // Coordonnées globales
+  const baseLine = 90; // un tout petit peu plus haut
+  const amplitude = 60; // vagues plus douces, style cockpit
 
   // Coordonnées normalisées dans un viewBox 0–100
   const coords = data.map((point, idx) => {
@@ -733,7 +733,7 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
         </div>
 
         {/* Graphique revenus quotidiens (réalité) */}
-        <div className="mt-4 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
+        <div className="mt-4 -mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-2xl sm:border sm:px-4 sm:py-4">
           <div className="mb-3 flex flex-col gap-1 text-[11px] md:flex-row md:items-center md:justify-between">
             <p className="font-medium text-slate-700">
               Revenus quotidiens (réels) · PPV &amp; abonnements
@@ -1287,7 +1287,7 @@ const simDailyRevenue: DailyRevenuePoint[] = useMemo(() => {
                 Projection d&apos;évolution (revenus simulés)
               </p>
 
-              <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-2 py-3 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
+             <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
                 <RevenueLinesChart data={simDailyRevenue} variant="large" />
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
