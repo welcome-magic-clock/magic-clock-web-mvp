@@ -80,40 +80,69 @@ const PLACEHOLDER_BY_VARIANT: Record<SearchToolbarVariant, string> = {
   meetme: "Rechercher un créateur, hashtag, ville...",
 };
 
+// Fonction utilitaire plus robuste pour récupérer la position de scroll
+function getScrollY(): number {
+  if (typeof window === "undefined") return 0;
+  return (
+    window.pageYOffset ||
+    document.documentElement?.scrollTop ||
+    document.body?.scrollTop ||
+    0
+  );
+}
+
 export function SearchToolbar({ variant }: SearchToolbarProps) {
   const [value, setValue] = useState("");
   const [visible, setVisible] = useState(true);
 
   const lastScrollYRef = useRef(0);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Disparition / réapparition au scroll (même logique pour Amazing & Meet me)
+  // Disparition / réapparition au scroll
   useEffect(() => {
-    const handleScroll = () => {
-      const current = window.scrollY || 0;
-      const diff = current - lastScrollYRef.current;
+    lastScrollYRef.current = getScrollY();
 
-      // Si on est proche du haut → toujours visible
-      if (current < 80) {
+    const handleScroll = () => {
+      const current = getScrollY();
+      const previous = lastScrollYRef.current;
+      const diff = current - previous;
+
+      // Toujours visible proche du haut
+      if (current <= 40) {
         setVisible(true);
       } else {
-        // Scroll vers le bas → on cache
         if (diff > 3) {
+          // Scroll vers le bas
           setVisible(false);
-        }
-        // Scroll vers le haut → on réaffiche
-        if (diff < -3) {
+        } else if (diff < -3) {
+          // Scroll vers le haut
           setVisible(true);
         }
       }
 
       lastScrollYRef.current = current;
+
+      // Timeout pour recacher après 2s quand on est loin du haut
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+
+      if (current > 80) {
+        hideTimeoutRef.current = setTimeout(() => {
+          const y = getScrollY();
+          if (y > 80) {
+            setVisible(false);
+          }
+        }, 2000);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
-  }, [variant]);
+  }, []);
 
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
