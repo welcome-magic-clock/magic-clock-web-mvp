@@ -2,11 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Cache la barre quand on scrolle vers le bas,
- * la ré-affiche dès qu’on remonte un peu.
- * Utilisé à la fois sur Amazing et Meet me.
- */
 export function useHideOnScroll() {
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
@@ -21,13 +16,10 @@ export function useHideOnScroll() {
         document.documentElement.scrollTop ??
         0;
 
-      // Vers le bas → on cache dès qu’on dépasse ~40px
       if (y > lastY.current && y > 40) {
-        setHidden(true);
-      }
-      // Vers le haut (même un peu) → on réaffiche
-      else if (y < lastY.current) {
-        setHidden(false);
+        setHidden(true);      // vers le bas → on cache
+      } else if (y < lastY.current) {
+        setHidden(false);     // vers le haut → on réaffiche
       }
 
       lastY.current = y;
