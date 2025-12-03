@@ -9,6 +9,7 @@ const REPEAT_COUNT = 4; // on répète la liste pour allonger le scroll
 export default function MeetPage() {
   const baseCreators = CREATORS;
 
+  // On duplique les créateurs pour avoir un long scroll (fake infini)
   const extendedCreators = Array.from({ length: REPEAT_COUNT }, (_, idx) =>
     baseCreators.map((creator: any) => ({
       ...creator,
@@ -28,12 +29,16 @@ export default function MeetPage() {
         aria-label="Créateurs Magic Clock"
         className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6"
       >
-        {extendedCreators.map((creator: any) => (
-          <CreatorCard
-            key={creator._fakeId ?? creator.id}
-            creator={creator}
-          />
-        ))}
+        {extendedCreators.map((creator: any) => {
+          const { _fakeId, ...creatorProps } = creator;
+
+          return (
+            <CreatorCard
+              key={_fakeId ?? creator.id}
+              {...creatorProps} // on passe les props “plates”, pas creator={...}
+            />
+          );
+        })}
       </section>
     </main>
   );
