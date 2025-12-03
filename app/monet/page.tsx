@@ -57,12 +57,14 @@ export default function MonetPage() {
                 <h1 className="text-lg font-semibold">
                   {currentCreator?.name ?? "Créateur Magic Clock"}
                 </h1>
-                <span className="text-xs text-slate-500">{displayHandle}</span>
+                <span className="text-xs text-slate-500">
+                  {displayHandle}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Toggle Réalité / Simulateur */}
+          {/* Toggle Réalité / Simulateur (bulles grises) */}
           <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px]">
             <button
               type="button"
