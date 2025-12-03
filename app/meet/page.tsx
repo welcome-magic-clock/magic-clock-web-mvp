@@ -57,6 +57,7 @@ function MiniCreatorCard({ creator }: { creator: any }) {
 export default function MeetPage() {
   const baseCreators = CREATORS;
 
+  // On étend un peu la liste pour remplir plusieurs rangées
   const extendedCreators = Array.from({ length: REPEAT_COUNT }, (_, idx) =>
     baseCreators.map((creator: any) => ({
       ...creator,
@@ -65,9 +66,9 @@ export default function MeetPage() {
   ).flat();
 
   return (
-    <main className="container overflow-x-hidden pb-24 pt-4 sm:pb-28">
-      {/* 🔍 Barre de recherche + bulles (même composant que Amazing) */}
-      <section className="mb-4">
+    <main className="container py-6 pb-24 sm:pb-28 overflow-x-hidden">
+      {/* 🔍 Barre de recherche + bulles (même gabarit que Amazing) */}
+      <section className="mb-4 sm:mb-5">
         <SearchToolbar variant="meetme" />
       </section>
 
@@ -101,6 +102,7 @@ export default function MeetPage() {
                 </div>
               </div>
 
+              {/* Rangée scrollable de créateurs */}
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {rowCreators.map((creator: any) => (
                   <MiniCreatorCard
