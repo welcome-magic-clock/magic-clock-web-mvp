@@ -1,9 +1,10 @@
+// components/mymagic/MyMagicToolbar.tsx
 "use client";
 
 import {
   MessageCircle,
   Bell,
-  User2,
+  UserRound,
   BarChart3,
   Sparkles,
   Unlock,
@@ -13,72 +14,68 @@ import {
 type MyMagicTab = {
   id: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  gradient: string;
+  className: string;
 };
 
-const TABS: MyMagicTab[] = [
+const MY_MAGIC_TABS: MyMagicTab[] = [
   {
     id: "messages",
     icon: MessageCircle,
-    gradient: "from-sky-400 via-sky-500 to-indigo-500",
+    className: "from-sky-400 via-indigo-500 to-violet-500",
   },
   {
     id: "notifications",
     icon: Bell,
-    gradient: "from-amber-400 via-orange-500 to-pink-500",
+    className: "from-amber-400 via-orange-500 to-pink-500",
   },
   {
     id: "profile",
-    icon: User2,
-    gradient: "from-emerald-400 via-teal-400 to-sky-400",
+    icon: UserRound,
+    className: "from-emerald-400 via-teal-400 to-sky-400",
   },
   {
     id: "cockpit",
     icon: BarChart3,
-    gradient: "from-violet-400 via-indigo-500 to-fuchsia-500",
+    className: "from-violet-500 via-purple-500 to-sky-500",
   },
   {
-    id: "created",
+    id: "magic-created",
     icon: Sparkles,
-    gradient: "from-sky-400 via-cyan-400 to-emerald-400",
+    className: "from-sky-400 via-cyan-400 to-emerald-400",
   },
   {
-    id: "unlocked",
+    id: "magic-unlocked",
     icon: Unlock,
-    gradient: "from-lime-400 via-emerald-400 to-teal-400",
+    className: "from-lime-400 via-emerald-400 to-teal-500",
   },
   {
     id: "legal",
     icon: Scale,
-    gradient: "from-slate-800 via-slate-900 to-slate-700",
+    className: "from-slate-800 via-slate-900 to-slate-950",
   },
 ];
 
-export function MyMagicToolbar() {
+function MyMagicToolbar() {
   return (
-    <div className="rounded-[32px] border border-slate-100 bg-white/90 px-3 py-3 shadow-sm sm:px-4">
-      <div className="flex items-center justify-between gap-2">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              className="flex items-center justify-center"
+    <nav className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
+      {MY_MAGIC_TABS.map((tab) => {
+        const Icon = tab.icon;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            className="group flex items-center"
+          >
+            <span
+              className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${tab.className} shadow-sm`}
             >
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full 
-                  bg-gradient-to-br ${tab.gradient} text-white shadow-sm
-                  transition-transform duration-150 ease-out
-                  hover:scale-105 active:scale-95
-                  sm:h-10 sm:w-10`}
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+              <Icon className="h-4 w-4 text-white" />
+            </span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
+
+export default MyMagicToolbar;
