@@ -80,67 +80,39 @@ const PLACEHOLDER_BY_VARIANT: Record<SearchToolbarVariant, string> = {
   meetme: "Rechercher un créateur, hashtag, ville...",
 };
 
-// Fonction utilitaire plus robuste pour récupérer la position de scroll
-function getScrollY(): number {
-  if (typeof window === "undefined") return 0;
-  return (
-    window.pageYOffset ||
-    document.documentElement?.scrollTop ||
-    document.body?.scrollTop ||
-    0
-  );
-}
-
 export function SearchToolbar({ variant }: SearchToolbarProps) {
   const [value, setValue] = useState("");
   const [visible, setVisible] = useState(true);
 
   const lastScrollYRef = useRef(0);
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Disparition / réapparition au scroll
+  // Même comportement sur toutes les pages :
+  // - scroll vers le bas → cache la barre
+  // - scroll vers le haut → réaffiche la barre
   useEffect(() => {
-    lastScrollYRef.current = getScrollY();
+    if (typeof window === "undefined") return;
+
+    lastScrollYRef.current = window.scrollY || 0;
 
     const handleScroll = () => {
-      const current = getScrollY();
-      const previous = lastScrollYRef.current;
-      const diff = current - previous;
+      const current = window.scrollY || 0;
+      const last = lastScrollYRef.current;
 
-      // Toujours visible proche du haut
-      if (current <= 40) {
+      // Vers le bas & assez loin → on cache
+      if (current > last && current > 80) {
+        setVisible(false);
+      }
+      // Vers le haut (petit mouvement) → on réaffiche
+      else if (current < last - 4) {
         setVisible(true);
-      } else {
-        if (diff > 3) {
-          // Scroll vers le bas
-          setVisible(false);
-        } else if (diff < -3) {
-          // Scroll vers le haut
-          setVisible(true);
-        }
       }
 
       lastScrollYRef.current = current;
-
-      // Timeout pour recacher après 2s quand on est loin du haut
-      if (hideTimeoutRef.current) {
-        clearTimeout(hideTimeoutRef.current);
-      }
-
-      if (current > 80) {
-        hideTimeoutRef.current = setTimeout(() => {
-          const y = getScrollY();
-          if (y > 80) {
-            setVisible(false);
-          }
-        }, 2000);
-      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, []);
 
@@ -156,8 +128,8 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
         ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
       {/* Barre de recherche */}
-      <div className="mb-3 flex items-center gap-2 justify-start">
-        <div className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs shadow-sm sm:text-sm">
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm">
           <Search className="h-4 w-4 text-slate-400" />
           <input
             type="text"
@@ -186,11 +158,13 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
+            {/* Pastille ronde */}
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
             >
               {bubble.shortLabel}
             </span>
+            {/* Label texte (desktop) */}
             <span className="hidden text-xs font-medium text-slate-600 sm:inline">
               {bubble.label}
             </span>
