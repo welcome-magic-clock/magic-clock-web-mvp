@@ -85,39 +85,33 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const [visible, setVisible] = useState(true);
 
   const lastScrollYRef = useRef(0);
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Disparition / réapparition au scroll (identique pour Amazing & Meet me)
+  // Disparition / réapparition au scroll (même logique pour Amazing & Meet me)
   useEffect(() => {
     const handleScroll = () => {
       const current = window.scrollY || 0;
       const diff = current - lastScrollYRef.current;
 
-      // Scroll vers le bas → on cache la barre
-      if (current > 80 && diff > 2) {
-        setVisible(false);
-      }
-
-      // Scroll vers le haut → on réaffiche
-      if (diff < -2) {
+      // Si on est proche du haut → toujours visible
+      if (current < 80) {
         setVisible(true);
+      } else {
+        // Scroll vers le bas → on cache
+        if (diff > 3) {
+          setVisible(false);
+        }
+        // Scroll vers le haut → on réaffiche
+        if (diff < -3) {
+          setVisible(true);
+        }
       }
 
       lastScrollYRef.current = current;
-
-      // Après quelques secondes sans interaction, on recache
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = setTimeout(() => {
-        if (window.scrollY > 80) {
-          setVisible(false);
-        }
-      }, 2500);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, [variant]);
 
@@ -163,13 +157,11 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
-            {/* Pastille ronde */}
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
             >
               {bubble.shortLabel}
             </span>
-            {/* Label texte (desktop) */}
             <span className="hidden text-xs font-medium text-slate-600 sm:inline">
               {bubble.label}
             </span>
