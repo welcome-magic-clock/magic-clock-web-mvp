@@ -1,7 +1,7 @@
 // components/create/CreateToolbar.tsx
 "use client";
 
-import { Sparkles, Cube, FileStack } from "lucide-react";
+import { Sparkles, Box, FileStack } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -21,7 +21,7 @@ const CREATE_TABS: CreateTab[] = [
   },
   {
     id: "display",
-    icon: Cube,
+    icon: Box,
     className: "from-emerald-400 via-teal-400 to-sky-400",
   },
   {
