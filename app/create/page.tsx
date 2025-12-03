@@ -11,49 +11,49 @@ export default function CreatePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* Titre / intro */}
-      <header className="mb-3 space-y-1">
-        <h1 className="text-xl font-semibold sm:text-2xl">Créer</h1>
-        <p className="text-xs text-slate-500 sm:text-sm">
+      {/* Titre + intro */}
+      <header className="mb-6 space-y-2">
+        <h1 className="text-2xl font-semibold sm:text-3xl">Créer</h1>
+        <p className="text-sm text-slate-600 sm:text-[15px]">
           Compose tes œuvres Magic Clock : le visuel{" "}
           <strong>Magic Studio</strong> et le cube pédagogique{" "}
           <strong>Magic Display</strong>, puis gère tes projets en cours.
         </p>
       </header>
 
-      {/* 🔵 Barre de bulles : Studio / Display / Projets en cours */}
-      <CreateToolbar mode={mode} onChange={setMode} />
+      {/* Bulles : Magic Studio / Magic Display / Projets */}
+      <section className="mb-4">
+        <CreateToolbar mode={mode} onChange={setMode} />
+      </section>
 
-      {/* MAGIC STUDIO */}
+      {/* CONTENU SELON LE MODE SÉLECTIONNÉ */}
+
       {mode === "studio" && (
-        <section
-          id="create-studio"
-          className="space-y-4 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6"
-        >
-          <h2 className="text-lg font-semibold text-slate-900">
+        <section className="rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold sm:text-xl">
             Magic Studio – Avant / Après
           </h2>
-          <p className="text-sm text-slate-600">
-            Crée un visuel <strong>Avant / Après</strong> propre et
-            partageable : parfait pour montrer une transformation capillaire,
-            un maquillage, ou tout autre résultat avant / après.
+          <p className="mt-2 text-sm text-slate-600">
+            Crée un visuel <strong>Avant / Après</strong> propre et partageable :
+            parfait pour montrer une transformation capillaire, un maquillage,
+            ou tout autre résultat avant / après.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Étape 1
-              </h3>
-              <p className="text-sm text-slate-700">
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                ÉTAPE 1
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
                 Importer les médias Avant &amp; Après, recadrer au format Magic
                 Clock, ajouter ton avatar et ton titre.
               </p>
             </div>
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Étape 2
-              </h3>
-              <p className="text-sm text-slate-700">
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                ÉTAPE 2
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
                 Choisir le mode <strong>FREE / Abo / PPV</strong>, fixer ton
                 prix et publier vers <strong>Amazing</strong> et{" "}
                 <strong>My Magic Clock</strong>.
@@ -61,101 +61,74 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <p className="text-xs text-slate-400">
-            MVP : l’éditeur complet (upload, recadrage, overlay, etc.) sera
-            branché ici. Pour l’instant, cette section sert de maquette claire
-            pour le design et les interactions.
+          <p className="mt-4 text-[11px] text-slate-400">
+            MVP : l&apos;éditeur complet (upload, recadrage, overlay, etc.) sera
+            branché ici. Pour l&apos;instant, cette section sert de maquette
+            claire pour le design et les interactions.
           </p>
         </section>
       )}
 
-      {/* MAGIC DISPLAY */}
       {mode === "display" && (
-        <section
-          id="create-display"
-          className="space-y-4 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6"
-        >
-          <h2 className="text-lg font-semibold text-slate-900">
-            Magic Display – Cube pédagogique
+        <section className="rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold sm:text-xl">
+            Magic Display – Cube 3D pédagogique
           </h2>
-          <p className="text-sm text-slate-600">
-            Configure ton <strong>cube 3D</strong> : faces pédagogiques,
-            cercles, segments et aiguilles pour expliquer{" "}
-            <strong>comment</strong> tu as obtenu le résultat.
+          <p className="mt-2 text-sm text-slate-600">
+            Construis le <strong>cube 3D</strong> qui explique comment
+            reproduire ton résultat : faces, cercles, segments, aiguilles,
+            textes et médias. Le Display est la partie pédagogique de ta Magic
+            Clock.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Faces &amp; cercles
-              </h3>
-              <p className="text-sm text-slate-700">
-                Choisis quelles faces utiliser, définis les cercles (anneaux),
-                les segments, les couleurs et les textes.
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                ÉTAPE 1
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
+                Choisir une face, définir les cercles et segments, puis poser
+                tes textes (produits, temps de pose, diagnostics, etc.).
               </p>
             </div>
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Aiguilles &amp; pédagogie
-              </h3>
-              <p className="text-sm text-slate-700">
-                Place les aiguilles pour guider l&apos;œil étape par étape :
-                diagnostic, choix de la technique, temps de pause, produits,
-                etc.
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                ÉTAPE 2
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
+                Ajouter les aiguilles et les médias (photos / vidéos courtes),
+                puis lier ce Display à ton Magic Studio correspondant pour
+                former une Magic Clock complète.
               </p>
             </div>
           </div>
 
-          <p className="text-xs text-slate-400">
-            MVP : le véritable éditeur 3D Magic Display (cube interactif) sera
-            branché dans cette section. La page actuelle pose le cadre visuel
-            et l&apos;UX.
+          <p className="mt-4 text-[11px] text-slate-400">
+            MVP : l&apos;éditeur Magic Display sera branché ici (cube 3D
+            interactif). Cette vue sert de base claire pour le produit et la
+            navigation.
           </p>
         </section>
       )}
 
-      {/* PROJETS EN COURS & BROUILLONS */}
       {mode === "projects" && (
-        <section
-          id="create-projects"
-          className="space-y-4 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6"
-        >
-          <h2 className="text-lg font-semibold text-slate-900">
-            Projets en cours & brouillons
+        <section className="rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold sm:text-xl">
+            Projets en cours
           </h2>
-          <p className="text-sm text-slate-600">
-            Ici tu retrouveras tous les Magic Studio et Magic Display{" "}
-            <strong>non publiés</strong> : travaux en cours, tests, idées à
-            finaliser avant mise en ligne.
+          <p className="mt-2 text-sm text-slate-600">
+            Cet espace accueillera tes <strong>brouillons</strong> : Magic
+            Studio non publiés, Magic Display en construction, et Magic Clock
+            complètes prêtes à être planifiées.
           </p>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Projets en cours
-              </h3>
-              <p className="text-sm text-slate-700">
-                Magic Clock que tu es en train de préparer (médias importés,
-                textes en brouillon, mais pas encore publiés). Ils resteront
-                visibles uniquement pour toi.
-              </p>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Brouillons & idées
-              </h3>
-              <p className="text-sm text-slate-700">
-                Notes, essais rapides, Magic Studio ou Display incomplets.
-                Parfait pour garder une trace de tes inspirations avant de les
-                transformer en contenu final.
-              </p>
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-400">
-            MVP : cette section ne liste pas encore de vrais contenus, mais elle
-            définit la structure UX. Plus tard, elle sera connectée à ta
-            bibliothèque My Magic Clock pour afficher tes projets en temps réel.
+          <p className="mt-3 text-sm text-slate-600">
+            Pour le MVP, cette section sert surtout de repère visuel : elle
+            montre où apparaîtront tes projets enregistrés automatiquement au
+            fur et à mesure de la création.
+          </p>
+          <p className="mt-4 text-[11px] text-slate-400">
+            Version ultérieure : filtres par statut (brouillon, prêt à publier,
+            publié), duplication rapide d&apos;une Magic Clock, archivage.
           </p>
         </section>
       )}
