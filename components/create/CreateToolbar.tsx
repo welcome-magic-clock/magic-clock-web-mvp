@@ -14,14 +14,14 @@ export default function CreateToolbar({ mode, onChange }: CreateToolbarProps) {
   const bubbles: {
     id: CreateMode;
     label: string;
-    description: string;
+    helper: string;
     gradient: string;
     renderIcon: () => React.ReactNode;
   }[] = [
     {
       id: "studio",
       label: "Magic Studio",
-      description: "Avant / Après & publication",
+      helper: "Avant / Après",
       gradient:
         "bg-gradient-to-br from-sky-400 via-indigo-500 to-violet-500 text-white",
       renderIcon: () => (
@@ -31,7 +31,7 @@ export default function CreateToolbar({ mode, onChange }: CreateToolbarProps) {
     {
       id: "display",
       label: "Magic Display",
-      description: "Cube pédagogique 3D",
+      helper: "Cube pédagogique",
       gradient:
         "bg-gradient-to-br from-emerald-400 via-teal-400 to-sky-500 text-white",
       renderIcon: () => (
@@ -66,7 +66,7 @@ export default function CreateToolbar({ mode, onChange }: CreateToolbarProps) {
     {
       id: "projects",
       label: "Projets en cours",
-      description: "En cours & brouillons (MVP)",
+      helper: "Brouillons (MVP)",
       gradient:
         "bg-gradient-to-br from-amber-400 via-pink-500 to-rose-500 text-white",
       renderIcon: () => (
@@ -75,7 +75,7 @@ export default function CreateToolbar({ mode, onChange }: CreateToolbarProps) {
           aria-hidden="true"
           className="h-4 w-4"
         >
-          {/* Petit bloc-notes / to-do stylisé */}
+          {/* petit bloc-notes */}
           <rect
             x="6"
             y="4"
@@ -98,45 +98,50 @@ export default function CreateToolbar({ mode, onChange }: CreateToolbarProps) {
 
   return (
     <div
-      className={`
-        sticky top-0 z-30 mb-4 border-b border-slate-100/60 
+      className="
+        sticky top-0 z-30 mb-4 border-b border-slate-100/60
         bg-slate-50/90 pb-3 pt-3 backdrop-blur
         px-4 sm:mx-0 sm:px-0
-      `}
+      "
     >
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {bubbles.map((bubble) => {
           const isActive = mode === bubble.id;
+
           return (
             <button
               key={bubble.id}
               type="button"
               onClick={() => onChange(bubble.id)}
               className={`
-                group flex items-center gap-2 rounded-full border px-2.5 py-1 
-                text-left transition
-                ${
-                  isActive
-                    ? "border-slate-900 bg-slate-900/90 text-white shadow-sm"
-                    : "border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-100"
-                }
+                group flex items-center gap-2 rounded-full px-1.5 py-1
+                transition
+                ${isActive ? "bg-slate-900/5" : "hover:bg-slate-100"}
               `}
             >
+              {/* Bulle ronde dégradée */}
               <span
                 className={`
-                  flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold shadow-sm
-                  ${isActive ? "bg-slate-900 text-white" : bubble.gradient}
+                  flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold shadow-sm
+                  ${bubble.gradient}
+                  ${isActive ? "ring-2 ring-slate-900/80 ring-offset-2 ring-offset-slate-50" : ""}
                 `}
               >
                 {bubble.renderIcon()}
               </span>
 
-              <span className="flex flex-col pr-1">
-                <span className="text-xs font-semibold sm:text-[13px]">
+              {/* Texte à droite, comme dans Amazing / Meet me */}
+              <span className="flex flex-col text-left">
+                <span
+                  className={`
+                    text-xs sm:text-[13px] font-semibold
+                    ${isActive ? "text-slate-900" : "text-slate-700"}
+                  `}
+                >
                   {bubble.label}
                 </span>
                 <span className="hidden text-[11px] text-slate-500 sm:inline">
-                  {bubble.description}
+                  {bubble.helper}
                 </span>
               </span>
             </button>
