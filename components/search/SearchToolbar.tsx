@@ -124,22 +124,32 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
 
-  return (
+   return (
     <div
       className={`sticky top-0 z-20 -mx-4 mb-4 border-b border-slate-100/60 bg-slate-50/80 px-4 pb-3 pt-3 backdrop-blur transition-transform duration-300 sm:mx-0 sm:rounded-2xl sm:border sm:bg-white/80 sm:px-5 sm:pt-4 ${
         visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
       {/* Barre de recherche */}
-      <div className="mb-3 flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-600 shadow-sm">
-        <Search className="h-4 w-4 text-slate-400" />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={placeholder}
-          className="h-6 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none sm:text-sm"
-        />
+      <div
+        className={`mb-3 flex items-center gap-2 ${
+          variant === "meetme" ? "justify-start" : ""
+        }`}
+      >
+        <div
+          className={`flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm ${
+            variant === "meetme" ? "max-w-md w-full" : "w-full"
+          }`}
+        >
+          <Search className="h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
+          />
+        </div>
       </div>
 
       {/* Rangée de bulles */}
