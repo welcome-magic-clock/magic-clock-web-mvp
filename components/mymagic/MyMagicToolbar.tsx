@@ -11,7 +11,7 @@ import {
   Scale,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useHideOnScroll } from "@/components/hooks/useHideOnScroll";
+import { useEffect, useRef, useState } from "react";
 
 type MyMagicTabId =
   | "messages"
@@ -73,14 +73,46 @@ function scrollToSection(id: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function MyMagicToolbar() {
+export default function MyMagicToolbar() {
   const router = useRouter();
-  const hidden = useHideOnScroll(); // 👈 même logique que la barre de recherche
+
+  // même logique que la SearchToolbar : visible / caché au scroll
+  const [visible, setVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScroll = () => {
+      const current =
+        window.scrollY ??
+        window.pageYOffset ??
+        document.documentElement.scrollTop ??
+        0;
+
+      const diff = current - lastScrollYRef.current;
+
+      // scroll vers le bas → on cache
+      if (diff > 6 && current > 40) {
+        setVisible(false);
+      }
+
+      // scroll vers le haut → on ré-affiche
+      if (diff < -6) {
+        setVisible(true);
+      }
+
+      lastScrollYRef.current = current;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleClick = (id: MyMagicTabId) => {
     switch (id) {
       case "messages":
-        router.push("/messages"); // route future, ok même si 404 pour l’instant
+        router.push("/messages");
         break;
       case "notifications":
         router.push("/notifications");
@@ -107,7 +139,7 @@ function MyMagicToolbar() {
     <div
       className={`sticky top-0 z-40 mb-4 bg-slate-50/80 pb-3 pt-3 backdrop-blur
       transition-transform duration-300 px-4 sm:mx-0 sm:px-0 sm:bg-transparent
-      ${hidden ? "-translate-y-full" : "translate-y-0"}`}
+      ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
       <nav className="flex items-center gap-2 overflow-x-auto">
         {MY_MAGIC_TABS.map((tab) => {
@@ -132,5 +164,3 @@ function MyMagicToolbar() {
     </div>
   );
 }
-
-export default MyMagicToolbar;
