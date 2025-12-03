@@ -124,8 +124,7 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
 
-   return (
-     return (
+  return (
     <div
       className={`sticky top-0 z-20 mb-4 border-b border-slate-100/60 bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
         ${
@@ -176,13 +175,11 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
-            {/* Pastille ronde */}
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
             >
               {bubble.shortLabel}
             </span>
-            {/* Label texte (desktop) */}
             <span className="hidden text-xs font-medium text-slate-600 sm:inline">
               {bubble.label}
             </span>
