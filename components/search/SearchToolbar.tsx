@@ -122,23 +122,25 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
         sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
         ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      {/* Barre de recherche */}
-      <div className="mb-3 flex items-center gap-2 justify-start">
-        <div
-          className={`flex items-center gap-2 rounded-full border border-slate-200 
-            bg-white/80 px-4 text-xs sm:text-sm shadow-sm w-full`}
-        >
-          <Search className="h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={placeholder}
-            className="h-10 w-full bg-transparent text-xs text-slate-700 
-              placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
-          />
-        </div>
-      </div>
+     {/* Barre de recherche */}
+<div className="mb-3 flex items-center gap-2 justify-start">
+  <div
+    className={`flex items-center gap-2 rounded-full border border-slate-200 
+      bg-white/80 px-4 text-xs sm:text-sm shadow-sm ${
+        variant === "meetme" ? "max-w-md w-full" : "w-full"
+      }`}
+  >
+    <Search className="h-4 w-4 text-slate-400" />
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      placeholder={placeholder}
+      className="h-10 w-full bg-transparent text-xs text-slate-700 
+        placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
+    />
+  </div>
+</div>
 
       {/* Rangée de bulles */}
       <div className="flex flex-wrap gap-2">
