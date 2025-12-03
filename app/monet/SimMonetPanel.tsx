@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import MonetToolbar from "@/components/monet/MonetToolbar";
 import {
   CreatorLight,
   COUNTRY_VAT_TABLE,
@@ -95,7 +96,10 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
   }, [simGrossAbos, simGrossPpv]);
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Toolbar bulles Monétisation (même logique que Réalité) */}
+      <MonetToolbar />
+
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {/* Contrôles simulateur */}
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
@@ -127,7 +131,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
           </p>
 
           {/* Followers */}
-          <div className="space-y-1">
+          <div id="monet-followers" className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-700">
                 Followers (tous réseaux)
@@ -176,7 +180,10 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
           </div>
 
           {/* Abonnements */}
-          <div className="grid gap-3 md:grid-cols-2">
+          <div
+            id="monet-subscriptions"
+            className="grid gap-3 md:grid-cols-2"
+          >
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700">
@@ -231,7 +238,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
           </div>
 
           {/* Pay-Per-View */}
-          <div className="grid gap-3 md:grid-cols-3">
+          <div id="monet-ppv" className="grid gap-3 md:grid-cols-3">
             {/* Prix PPV */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
@@ -312,7 +319,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
                 className="w-full"
               />
 
-              <div className="mt-2 flex items-center justify_between gap-2">
+              <div className="mt-2 flex items-center justify-between gap-2">
                 <span className="text-[11px] text-slate-500">
                   Saisis un nombre précis :
                 </span>
@@ -342,7 +349,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
 
           {/* Likes / palier simulateur */}
           <div className="space-y-1">
-            <div className="flex items_center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-700">
                 Likes cumulés (simulateur)
               </span>
@@ -371,7 +378,10 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
         </div>
 
         {/* Résultats simulateur */}
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+        <div
+          id="monet-revenue"
+          className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
+        >
           <h2 className="text-sm font-semibold text-slate-800">
             Résultat simulateur (par mois)
           </h2>
@@ -386,7 +396,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 Acheteurs Pay-Per-View estimés · {simPpvConv.toFixed(1)}%
               </span>
@@ -395,7 +405,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 Revenu brut Abo (TTC, avant TVA)
               </span>
@@ -404,7 +414,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 Revenu brut Pay-Per-View (TTC, avant TVA)
               </span>
@@ -413,14 +423,14 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
               </span>
             </div>
 
-            <div className="flex items_center justify-between border-top border-t border-dashed border-slate-200 pt-2">
+            <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
               <span className="text-slate-500">Revenu brut total (TTC)</span>
               <span className="text-sm font-medium">
                 {formatMoney(simGrossTotal)}
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 TVA estimée ({Math.round(vatRateSim * 1000) / 10}% ·{" "}
                 {simCountry.label})
@@ -430,14 +440,14 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">Base HT estimée</span>
               <span className="font-semibold text-slate-700">
                 {formatMoney(simNetBase)}
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 Part plateforme (HT, {Math.round(simTier.rate * 100)}%)
               </span>
@@ -446,7 +456,7 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
               </span>
             </div>
 
-            <div className="flex items_center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">
                 Part créateur (après TVA + commission)
               </span>
@@ -491,7 +501,10 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
                 Projection d&apos;évolution (revenus simulés)
               </p>
 
-              <div className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3">
+              <div
+                id="monet-graph"
+                className="-mx-4 overflow-hidden border-y border-slate-200 bg-slate-50/80 px-0 py-4 sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:py-3"
+              >
                 <RevenueLinesChart data={simDailyRevenue} variant="large" />
                 <p className="mt-1 text-[11px] text-slate-500">
                   Exemple de progression sur 7 périodes (par ex. jours ou
@@ -506,6 +519,6 @@ export function SimMonetPanel({ creator }: SimMonetPanelProps) {
       <p className="mt-2 text-center text-[11px] text-slate-500 md:text-right">
         Simulation indicative, ne constitue pas une garantie de revenus.
       </p>
-    </>
+    </div>
   );
 }
