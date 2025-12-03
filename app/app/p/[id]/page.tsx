@@ -1,0 +1,1 @@
+export default ({params}:{params:{id:string}})=> <div className='container'><h1 className='text-2xl font-semibold'>Détail #{params.id}</h1></div>

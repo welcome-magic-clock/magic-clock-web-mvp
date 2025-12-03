@@ -1,0 +1,8 @@
+
+@tailwind base; @tailwind components; @tailwind utilities;
+:root { color-scheme: light; }
+body { @apply bg-slate-50 text-slate-900; }
+.container { @apply max-w-6xl mx-auto px-4; }
+.card { @apply rounded-2xl bg-white shadow-soft border; }
+.badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border; }
+.link { @apply text-brand-600 hover:underline; }
