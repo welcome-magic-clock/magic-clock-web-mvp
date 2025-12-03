@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
+import { useHideOnScroll } from "@/components/hooks/useHideOnScroll";
 
 export type SearchToolbarVariant = "amazing" | "meetme";
 
@@ -82,39 +83,7 @@ const PLACEHOLDER_BY_VARIANT: Record<SearchToolbarVariant, string> = {
 
 export function SearchToolbar({ variant }: SearchToolbarProps) {
   const [value, setValue] = useState("");
-  const [visible, setVisible] = useState(true);
-
-  const lastScrollYRef = useRef(0);
-
-  // Même comportement sur toutes les pages :
-  // - scroll vers le bas → cache la barre
-  // - scroll vers le haut → réaffiche la barre
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    lastScrollYRef.current = window.scrollY || 0;
-
-    const handleScroll = () => {
-      const current = window.scrollY || 0;
-      const last = lastScrollYRef.current;
-
-      // Vers le bas & assez loin → on cache
-      if (current > last && current > 80) {
-        setVisible(false);
-      }
-      // Vers le haut (petit mouvement) → on réaffiche
-      else if (current < last - 4) {
-        setVisible(true);
-      }
-
-      lastScrollYRef.current = current;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  const hidden = useHideOnScroll(); // 👈 hook commun pour Amazing + Meet me
 
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
@@ -125,7 +94,7 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
         bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
         px-4 sm:mx-0 sm:px-5
         sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
-        ${visible ? "translate-y-0" : "-translate-y-full"}`}
+        ${hidden ? "-translate-y-full" : "translate-y-0"}`}
     >
       {/* Barre de recherche */}
       <div className="mb-3 flex items-center gap-2">
@@ -158,13 +127,11 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
-            {/* Pastille ronde */}
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
             >
               {bubble.shortLabel}
             </span>
-            {/* Label texte (desktop) */}
             <span className="hidden text-xs font-medium text-slate-600 sm:inline">
               {bubble.label}
             </span>
