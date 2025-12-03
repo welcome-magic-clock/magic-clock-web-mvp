@@ -134,14 +134,14 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
 
-  return (
-    <div
-      className={`sticky top-0 z-20 mb-4 border-b border-slate-100/60 
-        bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
-        px-4 sm:mx-0 sm:px-5
-        sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
-        ${visible ? "translate-y-0" : "-translate-y-full"}`}
-    >
+ return (
+  <div
+    className={`sticky top-0 z-40 mb-4 border-b border-slate-100/60 
+      bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
+      px-4 sm:mx-0 sm:px-5
+      sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
+      ${visible ? "translate-y-0" : "-translate-y-full"}`}
+  >
       {/* Barre de recherche */}
       <div className="mb-3 flex items-center gap-2">
         <div className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm">
