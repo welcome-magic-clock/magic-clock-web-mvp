@@ -1,6 +1,6 @@
 // app/mymagic/page.tsx
 
-import { MyMagicToolbar } from "@/components/navigation/MyMagicToolbar";
+import { MyMagicToolbar } from "@/components/mymagic/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
 import {
   listFeed,
@@ -9,24 +9,25 @@ import {
 } from "@/core/domain/repository";
 import Cockpit from "@/features/monet/Cockpit";
 
+type Creator = ReturnType<typeof listCreators>[number];
+
 export default function MyMagicClockPage() {
-  // On choisit Aiko Tanaka comme créatrice "courante"
   const creators = listCreators();
-  const currentCreator =
+  const currentCreator: Creator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
-  // On récupère tout le feed + on sépare :
-  // - créés par Aiko
-  // - débloqués (les autres)
   const all = listFeed();
   const created = listFeedByCreator(currentCreator.handle);
   const purchased = all.filter((item) => item.user !== currentCreator.handle);
 
-  const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
+  const followerLabel =
+    typeof currentCreator.followers === "number"
+      ? currentCreator.followers.toLocaleString("fr-CH")
+      : "";
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* 🔮 Menu bulles interne My Magic Clock */}
+      {/* 🔹 Toolbar interne My Magic (7 bulles : Messages / Notifs / Profil / …) */}
       <section className="mb-4">
         <MyMagicToolbar />
       </section>
@@ -53,8 +54,9 @@ export default function MyMagicClockPage() {
             <p className="text-sm text-slate-600">
               @{currentCreator.handle}
               {currentCreator.city ? ` · ${currentCreator.city}` : ""}
-              {currentCreator.langs?.length
-                ? ` · Langues : ${currentCreator.langs.join(", ")}`
+              {Array.isArray((currentCreator as any).langs) &&
+              (currentCreator as any).langs.length
+                ? ` · Langues : ${(currentCreator as any).langs.join(", ")}`
                 : ""}
             </p>
             <p className="text-xs text-slate-500">
@@ -70,12 +72,13 @@ export default function MyMagicClockPage() {
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2">
           <h2 className="text-lg font-semibold">Profil</h2>
           <p className="text-sm text-slate-600">
-            MVP : cette section accueillera tes informations de compte
-            (bio créateur, liens externes, spécialités, certifications,
-            langues, etc.). Pour l&apos;instant, elle illustre simplement
-            l&apos;espace profil associé à ton compte Magic Clock.
+            MVP : cette section accueillera tes informations de compte (bio
+            créateur, liens externes, spécialités, certifications, langues,
+            etc.). Pour l&apos;instant, elle illustre simplement l&apos;espace
+            profil associé à ton compte Magic Clock.
           </p>
         </div>
+
         <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4">
           <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
 
@@ -91,8 +94,8 @@ export default function MyMagicClockPage() {
         </div>
       </section>
 
-      {/* MES MAGIC CLOCK CRÉÉS (uniquement ceux d'Aiko) */}
-      <section className="mb-8 space-y-3" id="creations">
+      {/* MES MAGIC CLOCK CRÉÉS */}
+      <section className="mb-8 space-y-3">
         <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
         <p className="text-sm text-slate-600">
           Ici apparaissent uniquement tes propres Magic Clock (Studio + Display).
@@ -106,8 +109,8 @@ export default function MyMagicClockPage() {
         </div>
       </section>
 
-      {/* MAGIC CLOCK DÉBLOQUÉS (les autres créateurs) */}
-      <section className="space-y-3" id="unlocked">
+      {/* MAGIC CLOCK DÉBLOQUÉS */}
+      <section className="space-y-3">
         <h2 className="text-lg font-semibold">
           Magic Clock débloqués (Abonnements &amp; PPV)
         </h2>
