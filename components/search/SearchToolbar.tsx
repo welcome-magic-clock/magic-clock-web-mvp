@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Search, Heart, Globe2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export type SearchToolbarVariant = "amazing" | "meetme";
 
@@ -173,20 +173,25 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
-            <span
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
-            >
-              {bubble.id === "favorites" ? (
-                <Heart className="h-4 w-4" />
-              ) : bubble.id === "country" ? (
-                <Globe2 className="h-4 w-4" />
-              ) : (
-                bubble.shortLabel
-              )}
-            </span>
-            <span className="hidden text-xs font-medium text-slate-600 sm:inline">
-              {bubble.label}
-            </span>
+           <span
+  className={`flex h-11 w-11 items-center justify-center rounded-full shadow-md shadow-slate-900/15
+    ring-1 ring-white/30 ${bubble.className}
+    transition-transform duration-150 ease-out
+    sm:group-hover:-translate-y-0.5 sm:group-hover:shadow-lg`}
+>
+  {bubble.id === "favorites" ? (
+    // ❤️ Coups de cœur → icône vectorielle blanche
+    <Heart className="h-4 w-4 text-white" />
+  ) : bubble.id === "country" ? (
+    // 🌍 Pays / ville → icône globe blanche
+    <Globe2 className="h-4 w-4 text-white" />
+  ) : (
+    // # et T → texte blanc centré
+    <span className="text-sm font-semibold text-white">
+      {bubble.shortLabel}
+    </span>
+  )}
+</span>
           </button>
         ))}
       </div>
