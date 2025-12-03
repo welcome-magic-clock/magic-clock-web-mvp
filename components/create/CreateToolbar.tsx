@@ -1,153 +1,119 @@
 // components/create/CreateToolbar.tsx
 "use client";
 
-import React from "react";
+import { Sparkles, Cube, FileStack } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-export type CreateMode = "studio" | "display" | "projects";
+type CreateTabId = "studio" | "display" | "projects";
 
-type CreateToolbarProps = {
-  mode: CreateMode;
-  onChange: (mode: CreateMode) => void;
+type CreateTab = {
+  id: CreateTabId;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  className: string; // dégradé
 };
 
-export default function CreateToolbar({ mode, onChange }: CreateToolbarProps) {
-  const bubbles: {
-    id: CreateMode;
-    label: string;
-    helper: string;
-    gradient: string;
-    renderIcon: () => React.ReactNode;
-  }[] = [
-    {
-      id: "studio",
-      label: "Magic Studio",
-      helper: "Avant / Après",
-      gradient:
-        "bg-gradient-to-br from-sky-400 via-indigo-500 to-violet-500 text-white",
-      renderIcon: () => (
-        <span className="text-[11px] font-semibold tracking-tight">MC</span>
-      ),
-    },
-    {
-      id: "display",
-      label: "Magic Display",
-      helper: "Cube pédagogique",
-      gradient:
-        "bg-gradient-to-br from-emerald-400 via-teal-400 to-sky-500 text-white",
-      renderIcon: () => (
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-4 w-4"
-        >
-          <path
-            d="M12 3L5 7v10l7 4 7-4V7l-7-4z"
-            fill="currentColor"
-            opacity="0.9"
-          />
-          <path
-            d="M12 3L5 7l7 4 7-4-7-4z"
-            fill="currentColor"
-            opacity="0.7"
-          />
-          <path
-            d="M5 7v10l7 4V11L5 7z"
-            fill="currentColor"
-            opacity="0.5"
-          />
-          <path
-            d="M19 7l-7 4v10l7-4V7z"
-            fill="currentColor"
-            opacity="0.4"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: "projects",
-      label: "Projets en cours",
-      helper: "Brouillons (MVP)",
-      gradient:
-        "bg-gradient-to-br from-amber-400 via-pink-500 to-rose-500 text-white",
-      renderIcon: () => (
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-4 w-4"
-        >
-          {/* petit bloc-notes */}
-          <rect
-            x="6"
-            y="4"
-            width="12"
-            height="16"
-            rx="2"
-            fill="currentColor"
-            opacity="0.9"
-          />
-          <path
-            d="M9 8h6M9 12h6M9 16h3"
-            stroke="white"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-  ];
+const CREATE_TABS: CreateTab[] = [
+  {
+    id: "studio",
+    icon: Sparkles,
+    className: "from-slate-900 via-slate-800 to-slate-900",
+  },
+  {
+    id: "display",
+    icon: Cube,
+    className: "from-emerald-400 via-teal-400 to-sky-400",
+  },
+  {
+    id: "projects",
+    icon: FileStack,
+    className: "from-rose-400 via-orange-400 to-amber-400",
+  },
+];
+
+function scrollToSection(id: string) {
+  if (typeof window === "undefined") return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+export default function CreateToolbar() {
+  const router = useRouter();
+
+  // même logique que SearchToolbar / MyMagicToolbar
+  const [visible, setVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScroll = () => {
+      const current =
+        window.scrollY ??
+        window.pageYOffset ??
+        document.documentElement.scrollTop ??
+        0;
+
+      const diff = current - lastScrollYRef.current;
+
+      // scroll vers le bas → on cache
+      if (diff > 6 && current > 40) {
+        setVisible(false);
+      }
+
+      // scroll vers le haut → on ré-affiche
+      if (diff < -6) {
+        setVisible(true);
+      }
+
+      lastScrollYRef.current = current;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleClick = (id: CreateTabId) => {
+    switch (id) {
+      case "studio":
+        router.push("/studio");
+        break;
+      case "display":
+        router.push("/magic-display");
+        break;
+      case "projects":
+        scrollToSection("create-projects");
+        break;
+    }
+  };
 
   return (
     <div
-      className="
-        sticky top-0 z-30 mb-4 border-b border-slate-100/60
-        bg-slate-50/90 pb-3 pt-3 backdrop-blur
-        px-4 sm:mx-0 sm:px-0
-      "
+      className={`sticky top-0 z-40 mb-4 bg-slate-50/80 pb-3 pt-3 backdrop-blur
+      transition-transform duration-300 px-4 sm:mx-0 sm:px-0 sm:bg-transparent
+      ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="flex flex-wrap gap-3">
-        {bubbles.map((bubble) => {
-          const isActive = mode === bubble.id;
-
+      <nav className="flex items-center gap-2 overflow-x-auto">
+        {CREATE_TABS.map((tab) => {
+          const Icon = tab.icon;
           return (
             <button
-              key={bubble.id}
+              key={tab.id}
               type="button"
-              onClick={() => onChange(bubble.id)}
-              className={`
-                group flex items-center gap-2 rounded-full px-1.5 py-1
-                transition
-                ${isActive ? "bg-slate-900/5" : "hover:bg-slate-100"}
-              `}
+              onClick={() => handleClick(tab.id)}
+              className="group flex items-center"
             >
-              {/* Bulle ronde dégradée */}
               <span
-                className={`
-                  flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold shadow-sm
-                  ${bubble.gradient}
-                  ${isActive ? "ring-2 ring-slate-900/80 ring-offset-2 ring-offset-slate-50" : ""}
-                `}
+                className={`flex h-10 w-10 items-center justify-center rounded-full
+                bg-gradient-to-br ${tab.className} shadow-sm`}
               >
-                {bubble.renderIcon()}
-              </span>
-
-              {/* Texte à droite, comme dans Amazing / Meet me */}
-              <span className="flex flex-col text-left">
-                <span
-                  className={`
-                    text-xs sm:text-[13px] font-semibold
-                    ${isActive ? "text-slate-900" : "text-slate-700"}
-                  `}
-                >
-                  {bubble.label}
-                </span>
-                <span className="hidden text-[11px] text-slate-500 sm:inline">
-                  {bubble.helper}
-                </span>
+                <Icon className="h-4 w-4 text-white" />
               </span>
             </button>
           );
         })}
-      </div>
+      </nav>
     </div>
   );
 }
