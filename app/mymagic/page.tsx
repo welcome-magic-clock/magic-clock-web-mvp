@@ -50,9 +50,8 @@ export default function MyMagicClockPage() {
       </header>
 
       {/* 🔵 Toolbar bulles (messages / profil / cockpit / etc.) */}
-      <section className="mb-4">
         <MyMagicToolbar />
-      </section>
+      
 
       {/* PROFIL + COCKPIT RÉSUMÉ */}
       <section
