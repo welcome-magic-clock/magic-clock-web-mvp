@@ -1,5 +1,6 @@
 // app/mymagic/page.tsx
 
+import { MyMagicToolbar } from "@/components/navigation/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
 import {
   listFeed,
@@ -24,11 +25,16 @@ export default function MyMagicClockPage() {
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
   return (
-    <div className="container space-y-8">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      {/* 🔮 Menu bulles interne My Magic Clock */}
+      <section className="mb-4">
+        <MyMagicToolbar />
+      </section>
+
       {/* HEADER PROFIL CRÉATEUR */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-full overflow-hidden bg-slate-200">
+          <div className="h-16 w-16 overflow-hidden rounded-full bg-slate-200">
             <img
               src={currentCreator.avatar}
               alt={currentCreator.name}
@@ -60,43 +66,40 @@ export default function MyMagicClockPage() {
       </header>
 
       {/* PROFIL + COCKPIT RÉSUMÉ */}
-<section className="grid gap-6 lg:grid-cols-3">
-  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2 space-y-2">
-    <h2 className="text-lg font-semibold">Profil</h2>
-    <p className="text-sm text-slate-600">
-      MVP : cette section accueillera tes informations de compte
-      (bio créateur, liens externes, spécialités, certifications,
-      langues, etc.). Pour l&apos;instant, elle illustre simplement
-      l&apos;espace profil associé à ton compte Magic Clock.
-    </p>
-  </div>
-  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 space-y-3">
-    <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
+      <section className="mb-8 grid gap-6 lg:grid-cols-3">
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2">
+          <h2 className="text-lg font-semibold">Profil</h2>
+          <p className="text-sm text-slate-600">
+            MVP : cette section accueillera tes informations de compte
+            (bio créateur, liens externes, spécialités, certifications,
+            langues, etc.). Pour l&apos;instant, elle illustre simplement
+            l&apos;espace profil associé à ton compte Magic Clock.
+          </p>
+        </div>
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4">
+          <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
 
-    <Cockpit
-      mode="compact"
-      followers={currentCreator.followers}
-    />
+          <Cockpit mode="compact" followers={currentCreator.followers} />
 
-    <a
-      href="/monet"
-      className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
-    >
-      Ouvrir le cockpit complet
-      <span aria-hidden>↗</span>
-    </a>
-  </div>
-</section>
+          <a
+            href="/monet"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
+          >
+            Ouvrir le cockpit complet
+            <span aria-hidden>↗</span>
+          </a>
+        </div>
+      </section>
 
       {/* MES MAGIC CLOCK CRÉÉS (uniquement ceux d'Aiko) */}
-      <section className="space-y-3">
+      <section className="mb-8 space-y-3" id="creations">
         <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
         <p className="text-sm text-slate-600">
           Ici apparaissent uniquement tes propres Magic Clock (Studio + Display).
           Pour le MVP, nous réutilisons les contenus du flux Amazing créés par
           ton profil.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {created.map((item) => (
             <MediaCard key={item.id} item={item} />
           ))}
@@ -104,7 +107,7 @@ export default function MyMagicClockPage() {
       </section>
 
       {/* MAGIC CLOCK DÉBLOQUÉS (les autres créateurs) */}
-      <section className="space-y-3">
+      <section className="space-y-3" id="unlocked">
         <h2 className="text-lg font-semibold">
           Magic Clock débloqués (Abonnements &amp; PPV)
         </h2>
@@ -113,7 +116,7 @@ export default function MyMagicClockPage() {
           grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
           ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {purchased.map((item) => (
             <div key={item.id} className="space-y-2">
               <MediaCard item={item} />
@@ -127,6 +130,6 @@ export default function MyMagicClockPage() {
           ))}
         </div>
       </section>
-    </div>
+    </main>
   );
 }
