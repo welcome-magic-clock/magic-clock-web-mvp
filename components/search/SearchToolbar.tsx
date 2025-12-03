@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Heart, Globe2 } from "lucide-react";
+import { Heart, Globe2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export type SearchToolbarVariant = "amazing" | "meetme";
@@ -12,7 +12,7 @@ type SearchToolbarProps = {
 type BubbleConfig = {
   id: string;
   label: string;      // texte complet
-  shortLabel: string; // contenu dans la bulle
+  shortLabel: string; // contenu texte éventuel
   className: string;  // gradient + couleur texte
 };
 
@@ -37,7 +37,7 @@ const AMAZING_BUBBLES: BubbleConfig[] = [
   {
     id: "favorites",
     label: "Coups de cœur",
-    shortLabel: "❤️",
+    shortLabel: "", // on utilise l’icône Heart
     className:
       "bg-gradient-to-br from-amber-400 via-pink-500 to-rose-500 text-white",
   },
@@ -64,7 +64,7 @@ const MEETME_BUBBLES: BubbleConfig[] = [
   {
     id: "country",
     label: "Pays / ville",
-    shortLabel: "🌍",
+    shortLabel: "", // on utilise l’icône Globe2
     className:
       "bg-gradient-to-br from-fuchsia-500 via-purple-500 to-sky-500 text-white",
   },
@@ -87,7 +87,7 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const lastScrollYRef = useRef(0);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Disparition / réapparition au scroll – logique interne au composant
+  // Disparition / réapparition au scroll
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -138,7 +138,7 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
     <div
       className={`sticky top-0 z-40 mb-4 border-b border-slate-100/60 
         bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
-        px-4 sm:mx-0 sm:px-5
+        px-0 sm:mx-0 sm:px-5
         sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
         ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
@@ -173,25 +173,20 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
-           <span
-  className={`flex h-11 w-11 items-center justify-center rounded-full shadow-md shadow-slate-900/15
-    ring-1 ring-white/30 ${bubble.className}
-    transition-transform duration-150 ease-out
-    sm:group-hover:-translate-y-0.5 sm:group-hover:shadow-lg`}
->
-  {bubble.id === "favorites" ? (
-    // ❤️ Coups de cœur → icône vectorielle blanche
-    <Heart className="h-4 w-4 text-white" />
-  ) : bubble.id === "country" ? (
-    // 🌍 Pays / ville → icône globe blanche
-    <Globe2 className="h-4 w-4 text-white" />
-  ) : (
-    // # et T → texte blanc centré
-    <span className="text-sm font-semibold text-white">
-      {bubble.shortLabel}
-    </span>
-  )}
-</span>
+            <span
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
+            >
+              {bubble.id === "favorites" ? (
+                <Heart className="h-4 w-4 text-white" strokeWidth={2.4} />
+              ) : bubble.id === "country" ? (
+                <Globe2 className="h-4 w-4 text-white" strokeWidth={2.4} />
+              ) : (
+                bubble.shortLabel
+              )}
+            </span>
+            <span className="hidden text-xs font-medium text-slate-600 sm:inline">
+              {bubble.label}
+            </span>
           </button>
         ))}
       </div>
