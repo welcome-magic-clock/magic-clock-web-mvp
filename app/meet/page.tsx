@@ -31,20 +31,30 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
           </p>
         )}
 
-        {(creator as any).city || (creator as any).country ? (
+        {((creator as any).city || (creator as any).country) && (
           <p className="text-[11px] text-slate-400">
             {(creator as any).city}
             {(creator as any).city && (creator as any).country ? " · " : ""}
             {(creator as any).country}
           </p>
-        ) : null}
+        )}
       </div>
     </article>
   );
 }
 
 export default function MeetPage() {
-  const baseCreators = CREATORS;
+  const baseCreators = CREATORS as CreatorWithLocation[];
+
+  // On “allonge” la page : on répète la liste 10×
+  const REPEAT_TIMES = 10;
+
+  const extendedCreators = Array.from({ length: REPEAT_TIMES }, (_, idx) =>
+    baseCreators.map((creator) => ({
+      ...creator,
+      _fakeId: `${creator.id}-repeat-${idx}`,
+    }))
+  ).flat();
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -62,11 +72,11 @@ export default function MeetPage() {
       </header>
 
       {/* Grille de créateurs (mix Instagram / Magic Clock) */}
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {baseCreators.map((creator) => (
+      <section className="grid gap-4 sm:gap-6 sm:grid-cols-2">
+        {extendedCreators.map((creator) => (
           <CreatorGridCard
-            key={creator.id}
-            creator={creator as CreatorWithLocation}
+            key={creator._fakeId ?? creator.id}
+            creator={creator}
           />
         ))}
       </section>
