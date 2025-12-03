@@ -130,7 +130,7 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
         ${
           variant === "amazing"
             ? "-mx-4 px-4 sm:mx-0 sm:px-5" // Amazing : plein écran mobile
-            : "px-4"                        // Meet me : garde le cadre normal
+            : "px-4"                        // Meet me : reste dans le cadre
         }
         sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4 ${
           visible ? "translate-y-0" : "-translate-y-full"
@@ -142,20 +142,33 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
           variant === "meetme" ? "justify-start" : ""
         }`}
       >
-        <div
-          className={`flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm ${
-            variant === "meetme" ? "max-w-md w-full" : "w-full"
-          }`}
-        >
-          <Search className="h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={placeholder}
-            className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
-          />
-        </div>
+        {variant === "meetme" ? (
+          // 🔹 Meet me : barre plus courte, alignée à gauche
+          <div className="w-full max-w-xs sm:max-w-sm">
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm w-full">
+              <Search className="h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={placeholder}
+                className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
+              />
+            </div>
+          </div>
+        ) : (
+          // 🔹 Amazing : barre large, prend toute la colonne
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm w-full">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder={placeholder}
+              className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
+            />
+          </div>
+        )}
       </div>
 
       {/* Rangée de bulles */}
@@ -175,11 +188,13 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             }}
             className="group flex items-center gap-2"
           >
+            {/* Pastille ronde */}
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
             >
               {bubble.shortLabel}
             </span>
+            {/* Label texte (desktop) */}
             <span className="hidden text-xs font-medium text-slate-600 sm:inline">
               {bubble.label}
             </span>
