@@ -71,15 +71,15 @@ export default function MeetPage() {
         </p>
       </header>
 
-      {/* Grille de créateurs (mix Instagram / Magic Clock) */}
-      <section className="grid gap-4 sm:gap-6 sm:grid-cols-2">
-        {extendedCreators.map((creator) => (
-          <CreatorGridCard
-            key={creator._fakeId ?? creator.id}
-            creator={creator}
-          />
-        ))}
-      </section>
+     {/* Grille de créateurs (2 colonnes mobile, 3 colonnes desktop) */}
+<section className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+  {extendedCreators.map((creator: any) => (
+    <CreatorGridCard
+      key={creator._fakeId ?? creator.id}
+      creator={creator}
+    />
+  ))}
+</section>
     </main>
   );
 }
