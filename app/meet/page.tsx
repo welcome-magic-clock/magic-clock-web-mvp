@@ -59,27 +59,25 @@ export default function MeetPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* 🔍 Barre de recherche + bulles (comme Amazing, variante Meet me) */}
-      <section className="mb-4">
-        <SearchToolbar variant="meetme" />
-      </section>
+      <SearchToolbar variant="meetme" />
 
       {/* Titre + description */}
-      <header className="mb-4 space-y-1">
+      <header className="mb-4 mt-2 space-y-1">
         <h1 className="text-xl font-semibold sm:text-2xl">Meet me</h1>
         <p className="text-xs text-slate-500">
           Découvre et contacte les créateurs Magic Clock.
         </p>
       </header>
 
-     {/* Grille de créateurs (2 colonnes mobile, 3 colonnes desktop) */}
-<section className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
-  {extendedCreators.map((creator: any) => (
-    <CreatorGridCard
-      key={creator._fakeId ?? creator.id}
-      creator={creator}
-    />
-  ))}
-</section>
+      {/* Grille de créateurs (2 colonnes mobile, 3 colonnes desktop) */}
+      <section className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+        {extendedCreators.map((creator: any) => (
+          <CreatorGridCard
+            key={creator._fakeId ?? creator.id}
+            creator={creator}
+          />
+        ))}
+      </section>
     </main>
   );
 }
