@@ -10,20 +10,20 @@ export const metadata: Metadata = {
 export default function LegalIndexPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-      {/* Flèche retour vers My Magic */}
-      <div className="mb-4">
+      {/* Header avec back button bien visible */}
+      <header className="mb-10 space-y-4">
         <BackButton fallbackHref="/mymagic" label="Retour à My Magic" />
-      </div>
 
-      <header className="mb-10 space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Légal
-        </h1>
-        <p className="text-sm text-slate-700">
-          Retrouve ici les principaux documents juridiques qui encadrent
-          l’utilisation de la plateforme Magic Clock. Les versions définitives
-          seront validées avec notre cabinet d’avocats spécialisé.
-        </p>
+        <div className="space-y-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Légal
+          </h1>
+          <p className="text-sm text-slate-700">
+            Retrouve ici les principaux documents juridiques qui encadrent
+            l’utilisation de la plateforme Magic Clock. Les versions définitives
+            seront validées avec notre cabinet d’avocats spécialisé.
+          </p>
+        </div>
       </header>
 
       {/* Bloc principal de cartes */}
