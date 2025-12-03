@@ -87,19 +87,19 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const lastScrollYRef = useRef(0);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Disparition / réapparition au scroll
+  // Disparition / réapparition au scroll (identique pour Amazing & Meet me)
   useEffect(() => {
     const handleScroll = () => {
       const current = window.scrollY || 0;
       const diff = current - lastScrollYRef.current;
 
-      // Scroll vers le bas → on cache
-      if (diff > 4 && current > 80) {
+      // Scroll vers le bas → on cache la barre
+      if (current > 80 && diff > 2) {
         setVisible(false);
       }
 
-      // Petit scroll vers le haut → on réaffiche
-      if (diff < -4) {
+      // Scroll vers le haut → on réaffiche
+      if (diff < -2) {
         setVisible(true);
       }
 
@@ -119,56 +119,31 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
       window.removeEventListener("scroll", handleScroll);
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
-  }, []);
+  }, [variant]);
 
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
 
   return (
     <div
-      className={`sticky top-0 z-20 mb-4 border-b border-slate-100/60 bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
-        ${
-          variant === "amazing"
-            ? "-mx-4 px-4 sm:mx-0 sm:px-5" // Amazing : plein écran mobile
-            : "px-4"                        // Meet me : reste dans le cadre
-        }
-        sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4 ${
-          visible ? "translate-y-0" : "-translate-y-full"
-        }`}
+      className={`sticky top-0 z-20 mb-4 border-b border-slate-100/60 
+        bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
+        px-4 sm:mx-0 sm:px-5
+        sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
+        ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
       {/* Barre de recherche */}
-      <div
-        className={`mb-3 flex items-center gap-2 ${
-          variant === "meetme" ? "justify-start" : ""
-        }`}
-      >
-        {variant === "meetme" ? (
-          // 🔹 Meet me : désormais pleine largeur du cadre
-          <div className="w-full">
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm w-full">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder={placeholder}
-                className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
-              />
-            </div>
-          </div>
-        ) : (
-          // 🔹 Amazing : barre large, prend toute la colonne
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm w-full">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={placeholder}
-              className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
-            />
-          </div>
-        )}
+      <div className="mb-3 flex items-center gap-2 justify-start">
+        <div className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs shadow-sm sm:text-sm">
+          <Search className="h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            className="h-10 w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none sm:h-10 sm:text-sm"
+          />
+        </div>
       </div>
 
       {/* Rangée de bulles */}
