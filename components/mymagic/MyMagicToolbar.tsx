@@ -1,132 +1,84 @@
-// app/mymagic/page.tsx
+"use client";
 
-import { MyMagicToolbar } from "@/components/mymagic/MyMagicToolbar";
-import MediaCard from "@/features/amazing/MediaCard";
 import {
-  listFeed,
-  listCreators,
-  listFeedByCreator,
-} from "@/core/domain/repository";
-import Cockpit from "@/features/monet/Cockpit";
+  MessageCircle,
+  Bell,
+  User2,
+  BarChart3,
+  Sparkles,
+  Unlock,
+  Scale,
+} from "lucide-react";
 
-export default function MyMagicClockPage() {
-  // On choisit Aiko Tanaka comme créatrice "courante"
-  const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+type MyMagicTab = {
+  id: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  gradient: string;
+};
 
-  // On récupère tout le feed + on sépare :
-  // - créés par Aiko
-  // - débloqués (les autres)
-  const all = listFeed();
-  const created = listFeedByCreator(currentCreator.handle);
-  const purchased = all.filter((item) => item.user !== currentCreator.handle);
+const TABS: MyMagicTab[] = [
+  {
+    id: "messages",
+    icon: MessageCircle,
+    gradient: "from-sky-400 via-sky-500 to-indigo-500",
+  },
+  {
+    id: "notifications",
+    icon: Bell,
+    gradient: "from-amber-400 via-orange-500 to-pink-500",
+  },
+  {
+    id: "profile",
+    icon: User2,
+    gradient: "from-emerald-400 via-teal-400 to-sky-400",
+  },
+  {
+    id: "cockpit",
+    icon: BarChart3,
+    gradient: "from-violet-400 via-indigo-500 to-fuchsia-500",
+  },
+  {
+    id: "created",
+    icon: Sparkles,
+    gradient: "from-sky-400 via-cyan-400 to-emerald-400",
+  },
+  {
+    id: "unlocked",
+    icon: Unlock,
+    gradient: "from-lime-400 via-emerald-400 to-teal-400",
+  },
+  {
+    id: "legal",
+    icon: Scale,
+    gradient: "from-slate-800 via-slate-900 to-slate-700",
+  },
+];
 
-  const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
-
+export function MyMagicToolbar() {
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28 space-y-8">
-      {/* HEADER PROFIL CRÉATEUR */}
-      <header className="space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 overflow-hidden rounded-full bg-slate-200">
-              <img
-                src={currentCreator.avatar}
-                alt={currentCreator.name}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold">
-                {currentCreator.name}
-              </h1>
-              <p className="text-sm text-slate-600">
-                @{currentCreator.handle}
-                {currentCreator.city ? ` · ${currentCreator.city}` : ""}
-                {currentCreator.langs?.length
-                  ? ` · Langues : ${currentCreator.langs.join(", ")}`
-                  : ""}
-              </p>
-              <p className="text-xs text-slate-500">
-                {followerLabel} followers · {created.length} Magic Clock créés ·{" "}
-                {purchased.length} Magic Clock débloqués (MVP)
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 🔵 Barre de bulles My Magic (messages / notif / profil / cockpit / etc.) */}
-        <MyMagicToolbar />
-      </header>
-
-      {/* PROFIL + COCKPIT RÉSUMÉ */}
-      <section className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2">
-          <h2 className="text-lg font-semibold">Profil</h2>
-          <p className="text-sm text-slate-600">
-            Coiffeuse-coloriste professionnelle spécialisée dans les balayages
-            blonds, les blonds lumineux et les transformations en douceur.
-            Aiko partage ses techniques étape par étape à travers des Magic
-            Clock pédagogiques, pour t&apos;aider à reproduire des résultats
-            salon sur mesure et respectueux de la fibre.
-          </p>
-        </div>
-
-        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4">
-          <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
-
-          <Cockpit mode="compact" followers={currentCreator.followers} />
-
-          <a
-            href="/monet"
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
-          >
-            Ouvrir le cockpit complet
-            <span aria-hidden>↗</span>
-          </a>
-        </div>
-      </section>
-
-      {/* MES MAGIC CLOCK CRÉÉS (uniquement ceux d'Aiko) */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
-        <p className="text-sm text-slate-600">
-          Ici apparaissent tes propres Magic Clock (Studio + Display). Pour le
-          MVP, nous réutilisons les contenus du flux Amazing créés par ton
-          profil.
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {created.map((item) => (
-            <MediaCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
-
-      {/* MAGIC CLOCK DÉBLOQUÉS (les autres créateurs) */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">
-          Magic Clock débloqués (Abonnements &amp; PPV)
-        </h2>
-        <p className="text-sm text-slate-600">
-          Section bibliothèque de l&apos;utilisateur : contenus accessibles
-          grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
-          ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {purchased.map((item) => (
-            <div key={item.id} className="space-y-2">
-              <MediaCard item={item} />
-              <a
-                href={`/display/${item.id}`}
-                className="block text-[11px] font-medium text-brand-600 hover:underline"
+    <div className="rounded-[32px] border border-slate-100 bg-white/90 px-3 py-3 shadow-sm sm:px-4">
+      <div className="flex items-center justify-between gap-2">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              className="flex items-center justify-center"
+            >
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-full 
+                  bg-gradient-to-br ${tab.gradient} text-white shadow-sm
+                  transition-transform duration-150 ease-out
+                  hover:scale-105 active:scale-95
+                  sm:h-10 sm:w-10`}
               >
-                Ouvrir le Magic Display (MVP)
-              </a>
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+                <Icon className="h-4 w-4" />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
