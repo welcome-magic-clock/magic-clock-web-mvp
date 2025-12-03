@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
-import { useHideOnScroll } from "@/components/hooks/useHideOnScroll";
 
 export type SearchToolbarVariant = "amazing" | "meetme";
 
@@ -83,7 +82,54 @@ const PLACEHOLDER_BY_VARIANT: Record<SearchToolbarVariant, string> = {
 
 export function SearchToolbar({ variant }: SearchToolbarProps) {
   const [value, setValue] = useState("");
-  const hidden = useHideOnScroll(); // 👈 hook commun pour Amazing + Meet me
+  const [visible, setVisible] = useState(true);
+
+  const lastScrollYRef = useRef(0);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Disparition / réapparition au scroll – logique interne au composant
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScroll = () => {
+      const current =
+        window.scrollY ??
+        window.pageYOffset ??
+        document.documentElement.scrollTop ??
+        0;
+
+      const diff = current - lastScrollYRef.current;
+
+      // Scroll vers le bas → on cache
+      if (diff > 6 && current > 40) {
+        setVisible(false);
+      }
+
+      // Scroll vers le haut → on réaffiche
+      if (diff < -6) {
+        setVisible(true);
+      }
+
+      lastScrollYRef.current = current;
+
+      // Après un petit moment sans bouger, on recache si on est plus bas
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = setTimeout(() => {
+        const y =
+          window.scrollY ??
+          window.pageYOffset ??
+          document.documentElement.scrollTop ??
+          0;
+        if (y > 80) setVisible(false);
+      }, 2000);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    };
+  }, []);
 
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
@@ -94,7 +140,7 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
         bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
         px-4 sm:mx-0 sm:px-5
         sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
-        ${hidden ? "-translate-y-full" : "translate-y-0"}`}
+        ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
       {/* Barre de recherche */}
       <div className="mb-3 flex items-center gap-2">
