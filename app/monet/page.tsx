@@ -64,31 +64,33 @@ export default function MonetPage() {
             </div>
           </div>
 
-          {/* Toggle Réalité / Simulateur (bulles grises) */}
-          <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setActiveMode("real")}
-              className={`flex-1 rounded-full px-3 py-1.5 font-medium transition ${
-                activeMode === "real"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600"
-              }`}
-            >
-              Réalité · compte
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveMode("sim")}
-              className={`flex-1 rounded-full px-3 py-1.5 font-medium transition ${
-                activeMode === "sim"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600"
-              }`}
-            >
-              Simulateur · projection
-            </button>
-          </div>
+         {/* Toggle Réalité / Simulateur – version compacte, gris clair */}
+<div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-0.5 text-[11px]">
+  <button
+    type="button"
+    onClick={() => setActiveMode("real")}
+    className={`min-w-[70px] whitespace-nowrap rounded-full px-2.5 py-1 font-medium transition
+      ${
+        activeMode === "real"
+          ? "bg-slate-200 text-slate-900 shadow-sm"
+          : "bg-transparent text-slate-500"
+      }`}
+  >
+    Réalité
+  </button>
+  <button
+    type="button"
+    onClick={() => setActiveMode("sim")}
+    className={`min-w-[90px] whitespace-nowrap rounded-full px-2.5 py-1 font-medium transition
+      ${
+        activeMode === "sim"
+          ? "bg-slate-200 text-slate-900 shadow-sm"
+          : "bg-transparent text-slate-500"
+      }`}
+  >
+    Simulateur
+  </button>
+</div>
         </div>
 
         <div className="space-y-3">
