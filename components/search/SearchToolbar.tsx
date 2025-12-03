@@ -125,10 +125,17 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
 
    return (
+     return (
     <div
-      className={`sticky top-0 z-20 -mx-4 mb-4 border-b border-slate-100/60 bg-slate-50/80 px-4 pb-3 pt-3 backdrop-blur transition-transform duration-300 sm:mx-0 sm:rounded-2xl sm:border sm:bg-white/80 sm:px-5 sm:pt-4 ${
-        visible ? "translate-y-0" : "-translate-y-full"
-      }`}
+      className={`sticky top-0 z-20 mb-4 border-b border-slate-100/60 bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
+        ${
+          variant === "amazing"
+            ? "-mx-4 px-4 sm:mx-0 sm:px-5" // Amazing : plein écran mobile
+            : "px-4"                        // Meet me : garde le cadre normal
+        }
+        sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4 ${
+          visible ? "translate-y-0" : "-translate-y-full"
+        }`}
     >
       {/* Barre de recherche */}
       <div
