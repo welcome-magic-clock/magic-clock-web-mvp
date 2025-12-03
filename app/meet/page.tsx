@@ -3,8 +3,16 @@
 import { SearchToolbar } from "@/components/search/SearchToolbar";
 import { CREATORS } from "@/features/meet/creators";
 
-// On typpe un créateur à partir de ton tableau existant
-type Creator = (typeof CREATORS)[number];
+// Typage souple : on laisse passer city / country sans que TS nous embête
+type Creator = {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  followers?: number;
+  city?: string;
+  country?: string;
+};
 
 function CreatorGridCard({ creator }: { creator: Creator }) {
   return (
@@ -41,7 +49,7 @@ function CreatorGridCard({ creator }: { creator: Creator }) {
 }
 
 export default function MeetPage() {
-  const baseCreators = CREATORS;
+  const baseCreators = CREATORS as Creator[];
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
