@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import BackButton from "@/components/navigation/BackButton";
 
 type Conversation = {
   id: string;
@@ -94,8 +95,13 @@ export default function MessagesPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+      {/* Flèche retour vers My Magic */}
+      <div className="mb-3">
+        <BackButton fallbackHref="/mymagic" label="Retour à My Magic" />
+      </div>
+
       {/* Carte principale Messages (plein écran mobile) */}
-      <section className="mt-2 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
+      <section className="mt-1 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
         <div className="mb-3 flex items-center justify-between">
           <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
             Messages
@@ -105,7 +111,7 @@ export default function MessagesPage() {
           </span>
         </div>
 
-        {/* Barre de recherche */}
+        {/* Barre de recherche (statique MVP) */}
         <div className="mb-3 rounded-full border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500 shadow-inner">
           <div className="flex items-center gap-2">
             <span className="text-[13px]">🔍</span>
