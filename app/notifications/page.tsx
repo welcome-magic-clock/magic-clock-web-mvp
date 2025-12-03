@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import BackButton from "@/components/navigation/BackButton";
 
 type NotificationType = "activity" | "earnings" | "system";
 
@@ -80,14 +81,12 @@ function NotificationCard({ item }: { item: NotificationItem }) {
 
   return (
     <article className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-4">
-      {/* Avatar coloré / dégradé */}
       <div
         className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${gradient}`}
       >
         {item.avatarInitial ?? "MC"}
       </div>
 
-      {/* Texte */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h3 className="truncate text-sm font-semibold text-slate-900">
@@ -109,24 +108,30 @@ function NotificationCard({ item }: { item: NotificationItem }) {
 export default function NotificationsPage() {
   const [showBanner, setShowBanner] = useState(true);
 
+  const totalCount =
+    NOTIFICATIONS_TODAY.length +
+    NOTIFICATIONS_THIS_WEEK.length +
+    NOTIFICATIONS_EARLIER.length;
+
   return (
     <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
-      {/* Carte principale, cohérente avec Messages */}
-      <section className="mt-2 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
+      {/* Flèche retour vers My Magic */}
+      <div className="mb-3">
+        <BackButton fallbackHref="/mymagic" label="Retour à My Magic" />
+      </div>
+
+      {/* Carte principale */}
+      <section className="mt-1 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
             Notifications
           </h1>
-          {/* Compteur simple (total) */}
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-            {NOTIFICATIONS_TODAY.length +
-              NOTIFICATIONS_THIS_WEEK.length +
-              NOTIFICATIONS_EARLIER.length}{" "}
-            événements
+            {totalCount} événements
           </span>
         </div>
 
-        {/* Filtres visuels (non interactifs pour le MVP) */}
+        {/* Filtres visuels */}
         <section className="mb-5 flex flex-wrap gap-2 text-xs">
           <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-medium text-white">
             Tout
@@ -179,12 +184,11 @@ export default function NotificationsPage() {
         </section>
       </section>
 
-      {/* Bannière d’activation des notifications (pop-up en bas, comme Messages) */}
+      {/* Bannière d’activation */}
       {showBanner && (
         <section className="fixed inset-x-0 bottom-[72px] z-20 px-4 pb-4 sm:bottom-6 sm:flex sm:justify-center sm:px-0">
           <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-slate-50/95 p-4 shadow-lg backdrop-blur">
             <div className="flex items-start gap-3">
-              {/* Icône style Magic Clock */}
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-sky-500 text-white shadow-sm">
                 <svg
                   viewBox="0 0 24 24"
