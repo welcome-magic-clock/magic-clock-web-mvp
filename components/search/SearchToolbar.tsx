@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Heart, Globe2 } from "lucide-react";
 
 export type SearchToolbarVariant = "amazing" | "meetme";
 
@@ -134,14 +134,14 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
   const bubbles = BUBBLES_BY_VARIANT[variant];
   const placeholder = PLACEHOLDER_BY_VARIANT[variant];
 
- return (
-  <div
-    className={`sticky top-0 z-40 mb-4 border-b border-slate-100/60 
-      bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
-      px-4 sm:mx-0 sm:px-5
-      sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
-      ${visible ? "translate-y-0" : "-translate-y-full"}`}
-  >
+  return (
+    <div
+      className={`sticky top-0 z-40 mb-4 border-b border-slate-100/60 
+        bg-slate-50/80 pb-3 pt-3 backdrop-blur transition-transform duration-300
+        px-4 sm:mx-0 sm:px-5
+        sm:rounded-2xl sm:border sm:bg-white/80 sm:pt-4
+        ${visible ? "translate-y-0" : "-translate-y-full"}`}
+    >
       {/* Barre de recherche */}
       <div className="mb-3 flex items-center gap-2">
         <div className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 text-xs sm:text-sm shadow-sm">
@@ -176,7 +176,13 @@ export function SearchToolbar({ variant }: SearchToolbarProps) {
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${bubble.className}`}
             >
-              {bubble.shortLabel}
+              {bubble.id === "favorites" ? (
+                <Heart className="h-4 w-4" />
+              ) : bubble.id === "country" ? (
+                <Globe2 className="h-4 w-4" />
+              ) : (
+                bubble.shortLabel
+              )}
             </span>
             <span className="hidden text-xs font-medium text-slate-600 sm:inline">
               {bubble.label}
