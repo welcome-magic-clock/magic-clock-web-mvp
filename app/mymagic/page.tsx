@@ -15,8 +15,12 @@ export default function MyMagicClockPage() {
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
   const all = listFeed();
-  const created = listFeedByCreator(currentCreator.handle);
-  const purchased = all.filter((item) => item.user !== currentCreator.handle);
+const created = listFeedByCreator(currentCreator.handle);
+const purchased = all.filter((item) => {
+  const user = item.user ?? "";
+  const handle = currentCreator.handle ?? "";
+  return user !== handle && user !== `@${handle}`;
+});
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
