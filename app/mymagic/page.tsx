@@ -119,30 +119,30 @@ export default function MyMagicClockPage() {
         </div>
       </section>
 
-      {/* MAGIC CLOCK DÉBLOQUÉS */}
-      <section id="mymagic-unlocked" className="space-y-3">
-        <h2 className="text-lg font-semibold">
-          Magic Clock débloqués (Abonnements &amp; PPV)
-        </h2>
-        <p className="text-sm text-slate-600">
-          Section bibliothèque de l&apos;utilisateur : contenus accessibles
-          grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
-          ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {purchased.map((item) => (
-            <div key={item.id} className="space-y-2">
-              <MediaCard item={item} />
-             <Link
-  href={`/display/${item.id}`}
-  className="block text-[11px] font-medium text-brand-600 hover:underline"
->
-  Ouvrir le Magic Display (MVP)
-</Link>
-            </div>
-          ))}
-        </div>
-      </section>
+     {/* MAGIC CLOCK DÉBLOQUÉS */}
+<section id="mymagic-unlocked" className="space-y-3">
+  <h2 className="text-lg font-semibold">
+    Magic Clock débloqués (Abonnements &amp; PPV)
+  </h2>
+  <p className="text-sm text-slate-600">
+    Section bibliothèque de l&apos;utilisateur : contenus accessibles
+    grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
+    ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
+  </p>
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {purchased.map((item) => (
+      <div key={item.id} className="space-y-2">
+        <MediaCard item={item} />
+        <Link
+          href={`/display/${item.id}`}
+          className="block text-[11px] font-medium text-brand-600 hover:underline"
+        >
+          Ouvrir le Magic Display (MVP)
+        </Link>
+      </div>
+    ))}
+  </div>
+</section>
     </main>
   );
 }
