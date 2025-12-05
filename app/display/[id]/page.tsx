@@ -12,15 +12,17 @@ type PageProps = {
 };
 
 export default function DisplayPage({ params }: PageProps) {
-  // On cherche dans FEED l'item qui correspond à l'id de l'URL
-  const item =
-    FEED.find((i) => String(i.id) === String(params.id)) ?? FEED[0];
+  // On cherche l'index dans FEED qui correspond à l'id de l'URL
+  const index = FEED.findIndex((i) => String(i.id) === String(params.id));
 
-  // On retrouve le créateur à partir de son handle (@sofia_rivera, etc.)
+  // Sélection de l'item (fallback sur le premier si non trouvé)
+  const item = index >= 0 ? FEED[index] : FEED[0];
+
+  // ID numérique stable pour le MagicDisplayViewer (1, 2, 3, ...)
+  const contentId = (index >= 0 ? index : 0) + 1;
+
+  // Créateur lié à la carte
   const creator = CREATORS.find((c) => c.handle === item.user);
-
-  // On s'assure d'avoir un number pour le viewer
-  const contentId = Number(item.id) || 0;
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -75,8 +77,8 @@ export default function DisplayPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Détails sous l'image */}
-        <div className="px-5 pb-6 pt-4 sm:px-6 sm:pb-7 sm:pt-5 space-y-3">
+        {/* Détails + Magic Display */}
+        <div className="space-y-3 px-5 pb-6 pt-4 sm:px-6 sm:pb-7 sm:pt-5">
           <header>
             <h1 className="text-lg font-semibold sm:text-xl">{item.title}</h1>
 
@@ -96,7 +98,7 @@ export default function DisplayPage({ params }: PageProps) {
             saisis dans l’éditeur.
           </p>
 
-          {/* 💫 Magic Display Viewer (souffle de vie du Cube) */}
+          {/* 💫 Souffle de vie : Magic Display Viewer */}
           <div className="mt-4">
             <MagicDisplayViewer contentId={contentId} />
           </div>
