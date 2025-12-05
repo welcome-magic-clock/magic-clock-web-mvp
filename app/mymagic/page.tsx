@@ -10,7 +10,7 @@ export default function MyMagicClockPage() {
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
-    // Tout le flux Amazing
+  // Tout le flux Amazing
   const all = listFeed();
 
   // Normalise les handles pour les comparer proprement
@@ -27,9 +27,7 @@ export default function MyMagicClockPage() {
       (item as any).creatorHandle,
     ];
 
-    return candidates
-      .map((v) => normalize(v))
-      .includes(targetHandle);
+    return candidates.map((v) => normalize(v)).includes(targetHandle);
   };
 
   // Mes Magic Clock créés = ceux qui appartiennent à Aiko
@@ -37,6 +35,9 @@ export default function MyMagicClockPage() {
 
   // Magic Clock débloqués = les autres créateurs
   const purchased = all.filter((item) => !isOwnedByCurrent(item));
+
+  // 🟢 Restaure le followerLabel
+  const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
