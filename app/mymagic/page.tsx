@@ -2,11 +2,7 @@
 
 import MyMagicToolbar from "@/components/mymagic/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
-import {
-  listFeed,
-  listCreators,
-  listFeedByCreator,
-} from "@/core/domain/repository";
+import { listFeed, listCreators } from "@/core/domain/repository";
 import Cockpit from "@/features/monet/Cockpit";
 
 export default function MyMagicClockPage() {
@@ -14,19 +10,33 @@ export default function MyMagicClockPage() {
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
-  // Tout le flux Amazing
+    // Tout le flux Amazing
   const all = listFeed();
 
-  // Magic Clock créés par le créateur courant
-  const created = listFeedByCreator(currentCreator.handle);
+  // Normalise les handles pour les comparer proprement
+  const normalize = (value?: string | null) =>
+    (value ?? "").trim().replace(/^@/, "").toLowerCase();
 
-  // On identifie les IDs de ses propres Magic Clock
-  const createdIds = new Set(created.map((item) => item.id));
+  const targetHandle = normalize(currentCreator.handle);
 
-  // Magic Clock débloqués = tous les autres (autres créateurs)
-  const purchased = all.filter((item) => !createdIds.has(item.id));
+  // Détermine si un Magic Clock appartient au créateur courant
+  const isOwnedByCurrent = (item: any) => {
+    const candidates = [
+      (item as any).user,
+      (item as any).handle,
+      (item as any).creatorHandle,
+    ];
 
-  const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
+    return candidates
+      .map((v) => normalize(v))
+      .includes(targetHandle);
+  };
+
+  // Mes Magic Clock créés = ceux qui appartiennent à Aiko
+  const created = all.filter((item) => isOwnedByCurrent(item));
+
+  // Magic Clock débloqués = les autres créateurs
+  const purchased = all.filter((item) => !isOwnedByCurrent(item));
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
