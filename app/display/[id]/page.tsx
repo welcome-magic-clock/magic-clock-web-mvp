@@ -31,7 +31,6 @@ export default function MagicDisplayPage({ params }: PageProps) {
           </p>
         </header>
 
-        {/* ❤️ Le cœur visuel du Magic Display */}
         <MagicDisplayViewer contentId={contentId} />
       </section>
     </main>
