@@ -1,7 +1,7 @@
-// app/magic-display/page.tsx
 "use client";
 
 import { useState } from "react";
+import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 
 type MediaType = "photo" | "video";
 
@@ -104,8 +104,6 @@ export default function MagicDisplayFacePage() {
             <div
               className="relative h-72 w-72 rounded-full border border-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.04)]"
               style={{
-                // Pour l'instant : gradient neutre. Plus tard :
-                // backgroundImage: "url('/mon-cercle-chromatique.png')",
                 background:
                   "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
               }}
@@ -240,6 +238,18 @@ export default function MagicDisplayFacePage() {
             </p>
           )}
         </div>
+      </section>
+
+      {/* 🆕 Face universelle v1 */}
+      <section className="mt-4 space-y-2">
+        <h2 className="text-sm font-semibold text-slate-900">
+          Face universelle – Prototype v1
+        </h2>
+        <p className="text-xs text-slate-500">
+          Ici on teste l&apos;éditeur d&apos;une seule face : segments,
+          notes pédagogiques et futur lien avec Studio.
+        </p>
+        <MagicDisplayFaceEditor />
       </section>
     </main>
   );
