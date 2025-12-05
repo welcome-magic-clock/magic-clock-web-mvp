@@ -14,13 +14,17 @@ export default function MyMagicClockPage() {
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
+  // Tout le flux Amazing
   const all = listFeed();
-const created = listFeedByCreator(currentCreator.handle);
-const purchased = all.filter((item) => {
-  const user = item.user ?? "";
-  const handle = currentCreator.handle ?? "";
-  return user !== handle && user !== `@${handle}`;
-});
+
+  // Magic Clock créés par le créateur courant
+  const created = listFeedByCreator(currentCreator.handle);
+
+  // On identifie les IDs de ses propres Magic Clock
+  const createdIds = new Set(created.map((item) => item.id));
+
+  // Magic Clock débloqués = tous les autres (autres créateurs)
+  const purchased = all.filter((item) => !createdIds.has(item.id));
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
@@ -54,8 +58,7 @@ const purchased = all.filter((item) => {
       </header>
 
       {/* 🔵 Toolbar bulles (messages / profil / cockpit / etc.) */}
-        <MyMagicToolbar />
-      
+      <MyMagicToolbar />
 
       {/* PROFIL + COCKPIT RÉSUMÉ */}
       <section
