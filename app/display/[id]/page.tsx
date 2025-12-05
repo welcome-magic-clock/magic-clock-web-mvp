@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { FEED } from "@/features/amazing/feed";
 import CREATORS from "@/features/meet/creators";
+import MagicDisplayViewer from "@/app/display/MagicDisplayViewer";
 
 type PageProps = {
   params: { id: string };
@@ -18,18 +19,21 @@ export default function DisplayPage({ params }: PageProps) {
   // On retrouve le créateur à partir de son handle (@sofia_rivera, etc.)
   const creator = CREATORS.find((c) => c.handle === item.user);
 
+  // On s'assure d'avoir un number pour le viewer
+  const contentId = Number(item.id) || 0;
+
   return (
     <main className="mx-auto max-w-3xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       <Link
         href="/"
-        className="text-sm text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
       >
         ← Retour au flux Amazing
       </Link>
 
-      <article className="mt-4 overflow-hidden rounded-[32px] bg-white shadow-xl border border-slate-200">
+      <article className="mt-4 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-xl">
         {/* Image avant/après en grand */}
-        <div className="relative w-full aspect-[3/4] sm:aspect-[16/9] bg-slate-100">
+        <div className="relative w-full bg-slate-100 aspect-[3/4] sm:aspect-[16/9]">
           <Image
             src={item.image}
             alt={item.title}
@@ -40,10 +44,10 @@ export default function DisplayPage({ params }: PageProps) {
 
           {/* Overlay créateur en bas de l'image */}
           {creator && (
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="relative h-10 w-10 rounded-full overflow-hidden bg-slate-300">
+                  <div className="relative h-10 w-10 overflow-hidden rounded-full bg-slate-300">
                     <Image
                       src={creator.avatar}
                       alt={creator.name}
@@ -72,20 +76,30 @@ export default function DisplayPage({ params }: PageProps) {
         </div>
 
         {/* Détails sous l'image */}
-        <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
-          <h1 className="text-lg font-semibold sm:text-xl">{item.title}</h1>
+        <div className="px-5 pb-6 pt-4 sm:px-6 sm:pb-7 sm:pt-5 space-y-3">
+          <header>
+            <h1 className="text-lg font-semibold sm:text-xl">{item.title}</h1>
 
-          {creator && (
-            <p className="mt-1 text-sm text-slate-600">
-              Par {creator.name} ({creator.city}) · Langues :{" "}
-              {creator.langs.join(", ")}
-            </p>
-          )}
+            {creator && (
+              <p className="mt-1 text-sm text-slate-600">
+                Par {creator.name}
+                {creator.city ? ` (${creator.city})` : ""} · Langues :{" "}
+                {creator.langs.join(", ")}
+              </p>
+            )}
+          </header>
 
-          <p className="mt-2 text-xs text-slate-500">
-            MVP : cette page affichera plus tard la fiche complète du Magic
-            Display (formules, temps de pose, produits utilisés, étapes, etc.).
+          <p className="text-xs text-slate-500">
+            MVP : le Magic Display ci-dessous illustre la logique pédagogique
+            de cette transformation (temps de pose, placements, neutralisation,
+            etc.). Plus tard, il sera généré à partir des vrais paramètres
+            saisis dans l’éditeur.
           </p>
+
+          {/* 💫 Magic Display Viewer (souffle de vie du Cube) */}
+          <div className="mt-4">
+            <MagicDisplayViewer contentId={contentId} />
+          </div>
         </div>
       </article>
     </main>
