@@ -4,6 +4,12 @@ import { useState } from "react";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 
+type MagicDisplayFaceEditorProps = {
+  creatorName?: string;
+  creatorAvatar?: string;
+  creatorInitials?: string;
+};
+
 type Segment = {
   id: number;
   label: string;
@@ -36,7 +42,12 @@ const segmentIcon = (status: SegmentStatus) => {
   return "＋";
 };
 
-export default function MagicDisplayFaceEditor() {
+export default function MagicDisplayFaceEditor({
+  creatorName = "Aiko Tanaka",
+  creatorAvatar,
+  creatorInitials = "AT",
+}: MagicDisplayFaceEditorProps) {
+  // 👇 état des segments + segment sélectionné
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [selectedId, setSelectedId] = useState<number>(INITIAL_SEGMENTS[0].id);
 
@@ -44,6 +55,7 @@ export default function MagicDisplayFaceEditor() {
     segments.find((s) => s.id === selectedId) ?? INITIAL_SEGMENTS[0];
 
   function markSegmentComplete() {
+    if (selectedId == null) return;
     setSegments((prev) =>
       prev.map((s) =>
         s.id === selectedId ? { ...s, status: "complete" } : s
@@ -83,11 +95,19 @@ export default function MagicDisplayFaceEditor() {
             {/* Anneau interne */}
             <div className="absolute inset-16 rounded-full border border-slate-300/70" />
 
-            {/* Noyau central = avatar créateur simplifié */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900/90 text-[10px] font-semibold leading-tight text-slate-50 shadow-[0_0_18px_rgba(15,23,42,0.6)]">
-                AT
-              </div>
+            {/* Noyau central : avatar créateur */}
+            <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-900 shadow-xl shadow-slate-900/50 overflow-hidden flex items-center justify-center">
+              {creatorAvatar ? (
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-semibold text-slate-50">
+                  {creatorInitials}
+                </span>
+              )}
             </div>
 
             {/* Points de segments */}
