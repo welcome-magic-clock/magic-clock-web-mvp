@@ -1,5 +1,6 @@
 // app/mymagic/page.tsx
 
+import Link from "next/link";
 import MyMagicToolbar from "@/components/mymagic/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
 import { listFeed, listCreators } from "@/core/domain/repository";
@@ -132,12 +133,12 @@ export default function MyMagicClockPage() {
           {purchased.map((item) => (
             <div key={item.id} className="space-y-2">
               <MediaCard item={item} />
-              <a
-                href={`/display/${item.id}`}
-                className="block text-[11px] font-medium text-brand-600 hover:underline"
-              >
-                Ouvrir le Magic Display (MVP)
-              </a>
+             <Link
+  href={`/display/${item.id}`}
+  className="block text-[11px] font-medium text-brand-600 hover:underline"
+>
+  Ouvrir le Magic Display (MVP)
+</Link>
             </div>
           ))}
         </div>
