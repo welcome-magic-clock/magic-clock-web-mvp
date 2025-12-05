@@ -18,7 +18,9 @@ type Props = {
  * (faces, cercles, segments, arcs, aiguilles, etc.).
  */
 export default function MagicDisplayViewer({ contentId }: Props) {
-  const variant = contentId % 3; // 0,1,2 → 3 motifs différents
+  // Sécurise l'ID reçu (évite NaN, valeurs bizarres, etc.)
+  const numericId = Number.isFinite(contentId) ? contentId : 0;
+  const variant = ((numericId % 3) + 3) % 3; // garantit 0,1,2
 
   const titleByVariant = [
     "Balance couleur / soin",
@@ -50,7 +52,10 @@ export default function MagicDisplayViewer({ contentId }: Props) {
     ],
   ];
 
-  const needles = segmentsByVariant[variant];
+  // Toujours un set d'aiguilles valide, même si l'ID est bizarre
+  const needles = segmentsByVariant[variant] ?? segmentsByVariant[0];
+
+  // ⬇️ et tu laisses TOUT le reste du composant tel quel (le return, etc.)
 
   return (
     <section className="rounded-3xl border border-slate-800 bg-slate-950/95 p-6 text-slate-50 shadow-[0_0_40px_rgba(15,23,42,0.8)]">
