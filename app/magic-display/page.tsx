@@ -61,7 +61,7 @@ const INITIAL_SEGMENTS: Segment[] = [
 ];
 
 export default function MagicDisplayPage() {
-  // 🔹 On réutilise Aiko comme créatrice actuelle
+  // On réutilise la même logique que MyMagic : Aiko par défaut
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
@@ -73,7 +73,6 @@ export default function MagicDisplayPage() {
     .slice(0, 2)
     .toUpperCase();
 
-  // 🔹 State pour l’ancien prototype "cube 6 faces"
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -93,28 +92,28 @@ export default function MagicDisplayPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* HEADER GLOBAL */}
-      <header className="mb-4 space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-brand-600">
-          Magic Display · Prototypes cube + face universelle
+      {/* Header général Magic Display */}
+      <header className="mb-4 space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
+          Magic Display · Prototype cube + face universelle
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Construire ton Magic Clock pédagogique
+          Construction pédagogique de ton Magic Clock
         </h1>
         <p className="text-sm text-slate-600">
-          Ici, on teste la façon dont tu vas raconter tes œuvres : d&apos;abord
-          une vue cube 6 faces, puis une face universelle détaillée avec
-          segments et notes pédagogiques.
+          Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
+          plusieurs segments pédagogiques (diagnostic, application, patine,
+          routine maison, etc.).
         </p>
       </header>
 
-      {/* 🔵 SECTION 1 — Vue cube 2D (ancienne page du haut) */}
+      {/* 🟣 Carte principale : vue cube 2D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         {/* Zone cercle + segments */}
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-stretch">
-          {/* Disque central */}
+          {/* Disque central = vue 2D du cube + avatar Aiko */}
           <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
-            {/* Fond circulaire */}
+            {/* Fond circulaire : prêt à recevoir un cercle chromatique réel plus tard */}
             <div
               className="relative h-72 w-72 rounded-full border border-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.04)]"
               style={{
@@ -122,7 +121,7 @@ export default function MagicDisplayPage() {
                   "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
               }}
             >
-              {/* Noyau central : avatar d'Aiko */}
+              {/* Noyau central : avatar créateur */}
               <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-slate-900 shadow-inner shadow-slate-400/70">
                 {currentCreator.avatar ? (
                   <img
@@ -139,7 +138,7 @@ export default function MagicDisplayPage() {
 
               {/* Boutons segments (photo / vidéo) */}
               {segments.map((seg) => {
-                const radiusPercent = 40; // distance du centre
+                const radiusPercent = 40; // distance du centre pour les pictos
                 const rad = (seg.angleDeg * Math.PI) / 180;
                 const top = 50 + Math.sin(rad) * radiusPercent;
                 const left = 50 + Math.cos(rad) * radiusPercent;
@@ -183,12 +182,12 @@ export default function MagicDisplayPage() {
           {/* Légende / liste des 6 faces */}
           <div className="flex-1 space-y-3">
             <h2 className="text-sm font-semibold text-slate-900">
-              Faces de ce cube (vue globale)
+              Faces de ce cube Magic Clock
             </h2>
             <p className="text-xs text-slate-500">
-              Chaque point deviendra une face du Magic Clock : tu peux imaginer
-              un scénario en 6 temps (diagnostic, application, patine, routine,
-              etc.).
+              Chaque ligne représente une face du cube. On reste volontairement
+              neutre : les créatrices peuvent renommer les faces comme elles
+              le souhaitent (diagnostic, patine, routine, etc.).
             </p>
             <div className="space-y-2">
               {segments.map((seg) => {
@@ -263,7 +262,7 @@ export default function MagicDisplayPage() {
             </div>
           ) : (
             <p className="text-[11px] text-slate-500">
-              Clique sur un rond autour du cercle pour sélectionner une face du
+              Clique sur un point autour du cercle pour sélectionner une face du
               cube, puis choisis si tu veux y associer une photo ou une vidéo.
               (MVP local, aucune donnée n&apos;est sauvegardée pour l&apos;instant.)
             </p>
@@ -271,7 +270,7 @@ export default function MagicDisplayPage() {
         </div>
       </section>
 
-      {/* 🔵 SECTION 2 — Face universelle v1 (nouvel éditeur avec avatar d'Aiko) */}
+      {/* 🆕 Face universelle v1 – reliée à Aiko */}
       <section className="mt-4 space-y-2">
         <h2 className="text-sm font-semibold text-slate-900">
           Face universelle – Prototype v1
@@ -289,5 +288,4 @@ export default function MagicDisplayPage() {
       </section>
     </main>
   );
-}
 }
