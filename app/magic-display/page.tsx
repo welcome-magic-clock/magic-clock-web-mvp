@@ -281,7 +281,7 @@ export default function MagicDisplayPage() {
         </div>
       </section>
 
-      {/* 🆕 Face universelle v1 – reliée à Aiko */}
+           {/* 🆕 Face universelle v1 – reliée à la face sélectionnée du cube */}
       <section className="mt-4 space-y-2">
         <h2 className="text-sm font-semibold text-slate-900">
           Face universelle – Prototype v1
@@ -290,11 +290,17 @@ export default function MagicDisplayPage() {
           Ici on teste l&apos;éditeur d&apos;une seule face : segments,
           notes pédagogiques et futur lien avec Studio, pour{" "}
           <span className="font-semibold">{currentCreator.name}</span>.
+          {" "}La face active est{" "}
+          <span className="font-semibold">
+            {selectedSegment?.label ?? "Face 1"}
+          </span>.
         </p>
         <MagicDisplayFaceEditor
           creatorName={currentCreator.name}
           creatorAvatar={currentCreator.avatar}
           creatorInitials={initials}
+          faceId={selectedSegment?.id ?? 1}
+          faceLabel={selectedSegment?.label ?? "Face 1"}
         />
       </section>
     </main>
