@@ -29,14 +29,14 @@ export default function MagicCube3D({
     const index = segments.findIndex((s) => s.id === selectedId);
     if (index === -1) return;
 
-    const presets = [
-      { x: 0, y: 0 },   // face 1 = front
-      { x: 0, y: 90 },  // face 2 = droite
-      { x: 0, y: 180 }, // face 3 = arrière
-      { x: 0, y: -90 }, // face 4 = gauche
-      { x: -90, y: 0 }, // face 5 = haut
-      { x: 90, y: 0 },  // face 6 = bas
-    ] as const;
+   const presets = [
+  { x: 0, y: 0 },    // face 1 = front
+  { x: 0, y: -90 },  // face 2 = côté "droite" visuelle
+  { x: 0, y: 180 },  // face 3 = arrière
+  { x: 0, y: 90 },   // face 4 = côté "gauche" visuelle
+  { x: -90, y: 0 },  // face 5 = haut
+  { x: 90, y: 0 },   // face 6 = bas
+] as const;
 
     setRotation(presets[index] ?? presets[0]);
   }, [selectedId, segments]);
