@@ -295,13 +295,13 @@ export default function MagicDisplayPage() {
             {selectedSegment?.label ?? "Face 1"}
           </span>.
         </p>
-        <MagicDisplayFaceEditor
-          creatorName={currentCreator.name}
-          creatorAvatar={currentCreator.avatar}
-          creatorInitials={initials}
-          faceId={selectedSegment?.id ?? 1}
-          faceLabel={selectedSegment?.label ?? "Face 1"}
-        />
+       <MagicDisplayFaceEditor
+  creatorName={currentCreator.name}
+  creatorAvatar={currentCreator.avatar}
+  creatorInitials={initials}
+  faceId={selectedSegment?.id ?? 1}
+  faceLabel={selectedSegment?.label ?? "Face 1"}
+/>
       </section>
     </main>
   );
