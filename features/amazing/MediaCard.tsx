@@ -55,12 +55,15 @@ export default function MediaCard({ item }: Props) {
 
   const avatar = creator?.avatar ?? item.image;
 
+  // 🔗 Lien direct vers Meet me pour ce créateur
+  const rawHandleForMeet = creator?.handle ?? `@${cleanUserHandle}`;
+  const meetHref = `/meet?creator=${encodeURIComponent(rawHandleForMeet)}`;
+
   // Avant / Après réels fournis par le feed (avec fallback)
   const beforeUrl = item.beforeUrl ?? item.image;
   const afterUrl = item.afterUrl ?? item.image;
 
-  // 🔗 Normalisation du mode d’accès (Studio ↔ Amazing)
-  // item.access vient du feed et peut être "FREE" | "ABO" | "PPV" | undefined
+  // Normalisation du mode d’accès (Studio ↔ Amazing)
   const publishMode: PublishMode =
     item.access === "PPV"
       ? "PPV"
@@ -149,9 +152,9 @@ export default function MediaCard({ item }: Props) {
           {/* Fine ligne blanche au centre */}
           <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
 
-          {/* Avatar centré (clic → Meet me) */}
+          {/* Avatar centré (clic → Meet me ciblé) */}
           <Link
-            href="/meet"
+            href={meetHref}
             className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
             aria-label={`Voir le profil de ${creator?.name ?? item.user}`}
           >
@@ -186,13 +189,13 @@ export default function MediaCard({ item }: Props) {
 
             {menuOpen && (
               <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                {/* Meet me */}
+                {/* Meet me ciblé */}
                 <button
                   type="button"
                   className="block w-full bg-transparent px-0 py-0 hover:underline"
                   onClick={() => {
                     setMenuOpen(false);
-                    window.location.href = "/meet";
+                    window.location.href = meetHref;
                   }}
                 >
                   Meet me (profil créateur)
@@ -245,10 +248,15 @@ export default function MediaCard({ item }: Props) {
       <div className="mt-3 space-y-1 text-xs">
         {/* Ligne 1 : créateur · vues · likes · statut accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-          <span className="font-medium">
+          <Link href={meetHref} className="font-medium hover:underline">
             {creator?.name ?? item.user}
-          </span>
-          <span className="text-slate-400">@{item.user}</span>
+          </Link>
+          <Link
+            href={meetHref}
+            className="text-slate-400 hover:underline"
+          >
+            @{item.user}
+          </Link>
 
           <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
