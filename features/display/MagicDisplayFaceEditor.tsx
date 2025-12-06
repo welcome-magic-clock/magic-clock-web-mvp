@@ -374,16 +374,6 @@ export default function MagicDisplayFaceEditor({
           </div>
         </div>
       </div>
-
-      {/* Petit aperçu JSON de la face active */}
-      <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-3">
-        <p className="mb-1 text-[10px] font-medium text-slate-500">
-          Aperçu JSON (face active) — pour l’horloger & Adam.
-        </p>
-        <pre className="max-h-40 overflow-auto rounded-xl bg-slate-900/95 p-2 text-[10px] text-slate-100">
-          {JSON.stringify(currentFace, null, 2)}
-        </pre>
-      </div>
     </section>
   );
 }
