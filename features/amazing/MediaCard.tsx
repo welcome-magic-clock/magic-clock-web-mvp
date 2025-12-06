@@ -11,6 +11,10 @@ type Props = {
   item: FeedCard;
 };
 
+// Mode de publication “normalisé” (aligné avec /studio)
+type PublishMode = "FREE" | "SUB" | "PPV";
+
+// Type local pour les actions de la flèche
 type AccessKind = "FREE" | "ABO" | "PPV";
 
 function isVideo(url: string) {
@@ -55,10 +59,19 @@ export default function MediaCard({ item }: Props) {
   const beforeUrl = item.beforeUrl ?? item.image;
   const afterUrl = item.afterUrl ?? item.image;
 
+  // 🔗 Normalisation du mode d’accès (Studio ↔ Amazing)
+  // item.access vient du feed et peut être "FREE" | "ABO" | "PPV" | undefined
+  const publishMode: PublishMode =
+    item.access === "PPV"
+      ? "PPV"
+      : item.access === "ABO"
+      ? "SUB"
+      : "FREE";
+
   // État d’accès local (simulation UI)
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(item.access === "FREE");
+  const [isUnlocked, setIsUnlocked] = useState(publishMode === "FREE");
   const [lastDecision, setLastDecision] = useState<string | null>(null);
 
   async function handleAccess(kind: AccessKind) {
@@ -106,23 +119,21 @@ export default function MediaCard({ item }: Props) {
   }
 
   const accessLabelBase =
-    item.access === "FREE"
+    publishMode === "FREE"
       ? "FREE"
-      : item.access === "ABO"
+      : publishMode === "SUB"
       ? "Abonnement"
-      : item.access === "PPV"
-      ? "Pay Per View"
-      : "";
+      : "Pay Per View";
 
   const accessLabel = isUnlocked
-    ? item.access === "FREE"
+    ? publishMode === "FREE"
       ? "FREE"
-      : item.access === "ABO"
+      : publishMode === "SUB"
       ? "Abonnement actif"
       : "PPV débloqué"
     : accessLabelBase;
 
-  const isLocked = !isUnlocked && item.access !== "FREE";
+  const isLocked = !isUnlocked && publishMode !== "FREE";
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
@@ -166,7 +177,11 @@ export default function MediaCard({ item }: Props) {
               }}
               aria-label="Options d’accès"
             >
-              <ArrowUpRight className="h-5 w-5" />
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ArrowUpRight className="h-5 w-5" />
+              )}
             </button>
 
             {menuOpen && (
@@ -183,8 +198,8 @@ export default function MediaCard({ item }: Props) {
                   Meet me (profil créateur)
                 </button>
 
-                {/* FREE */}
-                {item.access === "FREE" && (
+                {/* FREE – seulement si le contenu est publié en FREE */}
+                {publishMode === "FREE" && (
                   <button
                     type="button"
                     className="block w-full bg-transparent px-0 py-0 hover:underline"
@@ -197,7 +212,7 @@ export default function MediaCard({ item }: Props) {
                   </button>
                 )}
 
-                {/* Abo */}
+                {/* Abo – toujours proposé (abonnement créateur) */}
                 <button
                   type="button"
                   className="block w-full bg-transparent px-0 py-0 hover:underline"
@@ -209,7 +224,7 @@ export default function MediaCard({ item }: Props) {
                     : "Activer l’abonnement créateur"}
                 </button>
 
-                {/* PPV */}
+                {/* PPV – proposé en bas du menu */}
                 <button
                   type="button"
                   className="block w-full bg-transparent px-0 py-0 hover:underline"
