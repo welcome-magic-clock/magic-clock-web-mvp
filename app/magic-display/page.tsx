@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
+import MagicDisplayCube from "@/features/display/MagicDisplayCube";
 
 type MediaType = "photo" | "video";
 
@@ -90,6 +91,10 @@ export default function MagicDisplayPage() {
     );
   };
 
+  const handleSelectFace = (id: number | null) => {
+    setSelectedId((prev) => (prev === id ? null : id));
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Header général Magic Display */}
@@ -107,56 +112,54 @@ export default function MagicDisplayPage() {
         </p>
       </header>
 
-      {/* 🟣 Carte principale : vue cube 2D + liste de faces */}
+      {/* 🟣 Carte principale : vue cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
-        {/* Zone cercle + segments */}
-        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-stretch">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
           {/* Disque central = vue 2D du cube + avatar Aiko */}
-          <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
-            {/* Fond circulaire : prêt à recevoir un cercle chromatique réel plus tard */}
-            <div
-              className="relative h-72 w-72 rounded-full border border-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.04)]"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
-              }}
-            >
-              {/* Noyau central : avatar créateur */}
-              <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-slate-900 shadow-inner shadow-slate-400/70">
-                {currentCreator.avatar ? (
-                  <img
-                    src={currentCreator.avatar}
-                    alt={currentCreator.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-50">
-                    {initials}
-                  </span>
-                )}
-              </div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
+              {/* Fond circulaire */}
+              <div
+                className="relative h-72 w-72 rounded-full border border-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.04)]"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
+                }}
+              >
+                {/* Noyau central : avatar créateur */}
+                <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-slate-900 shadow-inner shadow-slate-400/70">
+                  {currentCreator.avatar ? (
+                    <img
+                      src={currentCreator.avatar}
+                      alt={currentCreator.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-50">
+                      {initials}
+                    </span>
+                  )}
+                </div>
 
-              {/* Boutons segments (photo / vidéo) */}
-              {segments.map((seg) => {
-                const radiusPercent = 40; // distance du centre pour les pictos
-                const rad = (seg.angleDeg * Math.PI) / 180;
-                const top = 50 + Math.sin(rad) * radiusPercent;
-                const left = 50 + Math.cos(rad) * radiusPercent;
+                {/* Boutons segments (faces) */}
+                {segments.map((seg) => {
+                  const radiusPercent = 40; // distance du centre pour les pictos
+                  const rad = (seg.angleDeg * Math.PI) / 180;
+                  const top = 50 + Math.sin(rad) * radiusPercent;
+                  const left = 50 + Math.cos(rad) * radiusPercent;
 
-                const isSelected = seg.id === selectedId;
+                  const isSelected = seg.id === selectedId;
 
-                let icon = "＋";
-                if (seg.hasMedia && seg.mediaType === "photo") icon = "📷";
-                if (seg.hasMedia && seg.mediaType === "video") icon = "🎬";
+                  let icon = "＋";
+                  if (seg.hasMedia && seg.mediaType === "photo") icon = "📷";
+                  if (seg.hasMedia && seg.mediaType === "video") icon = "🎬";
 
-                return (
-                  <button
-                    key={seg.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedId((prev) => (prev === seg.id ? null : seg.id))
-                    }
-                    className={`absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs font-semibold shadow-sm transition
+                  return (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      onClick={() => handleSelectFace(seg.id)}
+                      className={`absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs font-semibold shadow-sm transition
                     ${
                       seg.hasMedia
                         ? seg.mediaType === "photo"
@@ -166,64 +169,71 @@ export default function MagicDisplayPage() {
                     }
                     ${isSelected ? "ring-2 ring-violet-400 ring-offset-2" : ""}
                     `}
-                    style={{
-                      top: `${top}%`,
-                      left: `${left}%`,
-                    }}
-                    aria-label={`Face ${seg.label}`}
-                  >
-                    {icon}
-                  </button>
-                );
-              })}
+                      style={{
+                        top: `${top}%`,
+                        left: `${left}%`,
+                      }}
+                      aria-label={`Face ${seg.label}`}
+                    >
+                      {icon}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Légende / liste des 6 faces */}
-          <div className="flex-1 space-y-3">
-            <h2 className="text-sm font-semibold text-slate-900">
-              Faces de ce cube Magic Clock
-            </h2>
-            <p className="text-xs text-slate-500">
-              Chaque ligne représente une face du cube. On reste volontairement
-              neutre : les créatrices peuvent renommer les faces comme elles
-              le souhaitent (diagnostic, patine, routine, etc.).
-            </p>
-            <div className="space-y-2">
-              {segments.map((seg) => {
-                const isSelected = seg.id === selectedId;
-                return (
-                  <button
-                    key={seg.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedId((prev) => (prev === seg.id ? null : seg.id))
-                    }
-                    className={`flex w-full items-start justify-between gap-2 rounded-2xl px-3 py-2 text-left text-xs transition
+          {/* Colonne droite : cube 3D + liste des 6 faces */}
+          <div className="flex-1 space-y-4">
+            <MagicDisplayCube
+              segments={segments}
+              selectedId={selectedId}
+              onSelect={(id) => handleSelectFace(id)}
+            />
+
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Faces de ce cube Magic Clock
+              </h2>
+              <p className="text-xs text-slate-500">
+                Chaque ligne représente une face du cube. On reste volontairement
+                neutre : les créatrices peuvent renommer les faces comme elles
+                le souhaitent (diagnostic, patine, routine, etc.).
+              </p>
+              <div className="space-y-2">
+                {segments.map((seg) => {
+                  const isSelected = seg.id === selectedId;
+                  return (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      onClick={() => handleSelectFace(seg.id)}
+                      className={`flex w-full items-start justify-between gap-2 rounded-2xl px-3 py-2 text-left text-xs transition
                     ${
                       isSelected
                         ? "bg-violet-50 text-slate-900"
                         : "bg-slate-50 text-slate-700 hover:bg-slate-100"
                     }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold">
-                        {seg.label}
-                        {seg.hasMedia &&
-                          (seg.mediaType === "photo"
-                            ? " · Photo"
-                            : " · Vidéo")}
-                      </p>
-                      <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                        {seg.description}
-                      </p>
-                    </div>
-                    {seg.hasMedia && (
-                      <span className="ml-2 mt-0.5 flex h-2 w-2 flex-shrink-0 rounded-full bg-emerald-500" />
-                    )}
-                  </button>
-                );
-              })}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold">
+                          {seg.label}
+                          {seg.hasMedia &&
+                            (seg.mediaType === "photo"
+                              ? " · Photo"
+                              : " · Vidéo")}
+                        </p>
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                          {seg.description}
+                        </p>
+                      </div>
+                      {seg.hasMedia && (
+                        <span className="ml-2 mt-0.5 flex h-2 w-2 flex-shrink-0 rounded-full bg-emerald-500" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -262,9 +272,10 @@ export default function MagicDisplayPage() {
             </div>
           ) : (
             <p className="text-[11px] text-slate-500">
-              Clique sur un point autour du cercle pour sélectionner une face du
-              cube, puis choisis si tu veux y associer une photo ou une vidéo.
-              (MVP local, aucune donnée n&apos;est sauvegardée pour l&apos;instant.)
+              Clique sur un point autour du cercle, sur le cube 3D ou dans la
+              liste pour sélectionner une face du cube, puis choisis si tu veux
+              y associer une photo ou une vidéo. (MVP local, aucune donnée n&apos;est
+              sauvegardée pour l&apos;instant.)
             </p>
           )}
         </div>
