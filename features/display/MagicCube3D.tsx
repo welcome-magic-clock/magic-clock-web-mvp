@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type FaceLike = {
   id: number;
@@ -22,20 +22,27 @@ export default function MagicCube3D({
 }: MagicCube3DProps) {
   const [rotation, setRotation] = useState({ x: -18, y: 28 });
 
-  const handleFaceClick = (index: number, id: number) => {
-    onSelect(id);
+  // 👉 Dès qu'une face est sélectionnée (cercle, liste ou cube),
+  //    on recalcule l'orientation du cube.
+  useEffect(() => {
+    if (selectedId == null) return;
+    const index = segments.findIndex((s) => s.id === selectedId);
+    if (index === -1) return;
 
-    // Orientation simple par face (6 faces max)
     const presets = [
-      { x: 0, y: 0 },   // front
-      { x: 0, y: 90 },  // right
-      { x: 0, y: 180 }, // back
-      { x: 0, y: -90 }, // left
-      { x: -90, y: 0 }, // top
-      { x: 90, y: 0 },  // bottom
+      { x: 0, y: 0 },   // face 1 = front
+      { x: 0, y: 90 },  // face 2 = droite
+      { x: 0, y: 180 }, // face 3 = arrière
+      { x: 0, y: -90 }, // face 4 = gauche
+      { x: -90, y: 0 }, // face 5 = haut
+      { x: 90, y: 0 },  // face 6 = bas
     ] as const;
 
     setRotation(presets[index] ?? presets[0]);
+  }, [selectedId, segments]);
+
+  const handleFaceClick = (id: number) => {
+    onSelect(id); // la rotation sera gérée par le useEffect ci-dessus
   };
 
   return (
@@ -57,7 +64,7 @@ export default function MagicCube3D({
               <button
                 key={seg.id}
                 type="button"
-                onClick={() => handleFaceClick(index, seg.id)}
+                onClick={() => handleFaceClick(seg.id)}
                 className={[
                   "absolute inset-[12%] rounded-3xl border shadow-md flex items-center justify-center px-3 text-center",
                   "bg-white/90 backdrop-blur-sm transition-colors",
