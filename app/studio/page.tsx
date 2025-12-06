@@ -42,7 +42,7 @@ export default function MagicStudioPage() {
 
   // Mode de publication
   const [mode, setMode] = useState<PublishMode>("FREE");
-  const [ppvPrice, setPpvPrice] = useState<number>(9);
+  const [ppvPrice, setPpvPrice] = useState<number>(0.99);
 
   // Orientation du canevas
   const [orientation, setOrientation] = useState<Orientation>("vertical");
@@ -161,23 +161,24 @@ export default function MagicStudioPage() {
   const aspectClass =
     orientation === "vertical" ? "aspect-[4/5]" : "aspect-[16/9]";
 
-  // Layout grid + séparateur selon orientation
   const layoutGridClass =
     orientation === "vertical"
       ? "grid grid-cols-2 divide-x divide-slate-200"
       : "grid grid-rows-2 divide-y divide-slate-200";
 
   return (
-    <main className="container max-w-4xl py-6 space-y-6">
-      {/* On enlève le gros titre/texte pour une UX plus épurée */}
+    <main className="container max-w-4xl py-6 space-y-4">
+      {/* Titre simple, sans texte explicatif */}
+      <header>
+        <h1 className="text-2xl font-semibold">
+          Magic Studio — Avant / Après
+        </h1>
+      </header>
 
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
-        {/* Choix du format du canevas */}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-          <p className="text-slate-500">
-            Format du canevas (influence le rendu dans Amazing & Magic Display).
-          </p>
-          <div className="inline-flex rounded-full bg-slate-100 p-1 font-medium">
+        {/* Choix du format du canevas : uniquement les boutons */}
+        <div className="flex justify-end">
+          <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
             <button
               type="button"
               onClick={() => setOrientation("vertical")}
@@ -425,39 +426,34 @@ export default function MagicStudioPage() {
               <div className="flex items-center gap-3">
                 <input
                   type="range"
-                  min={1}
-                  max={200}
-                  step={1}
+                  min={0.99}
+                  max={999.99}
+                  step={0.5}
                   value={ppvPrice}
                   onChange={(event) =>
                     setPpvPrice(Number(event.target.value))
                   }
                   className="flex-1 accent-brand-500"
                 />
-                <div className="w-16 text-right text-xs font-semibold text-slate-700">
-                  {ppvPrice.toFixed(0)}$
+                <div className="w-20 text-right text-xs font-semibold text-slate-700">
+                  {ppvPrice.toFixed(2)} CHF
                 </div>
               </div>
             </div>
           )}
         </div>
-      </section>
 
-      {/* Barre basse ultra simple + flèche vers Magic Display */}
-      <section className="flex items-center justify-between">
-        <p className="text-[11px] text-slate-500">
-          Mode de publication actuel :{" "}
-          <span className="font-semibold">{modeLabel}</span>.
-        </p>
-
-        <button
-          type="button"
-          onClick={handleGoToDisplay}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          aria-label="Passer à Magic Display"
-        >
-          <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-        </button>
+        {/* Bouton flèche vers Magic Display, à l'intérieur de la carte */}
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleGoToDisplay}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            aria-label="Passer à Magic Display"
+          >
+            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
       </section>
     </main>
   );
