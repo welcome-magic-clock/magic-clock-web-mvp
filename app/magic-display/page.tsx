@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";              // 🆕 ajoute cette ligne
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 
@@ -94,29 +93,19 @@ export default function MagicDisplayPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Header général Magic Display */}
-     <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-  <div className="space-y-2">
-    <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
-      Magic Display · Prototype cube + face universelle
-    </p>
-    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-      Construction pédagogique de ton Magic Clock
-    </h1>
-    <p className="text-sm text-slate-600">
-      Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
-      plusieurs segments pédagogiques (diagnostic, application, patine,
-      routine maison, etc.).
-    </p>
-  </div>
-
-  {/* 🔵 Lien vers le cube 3D */}
-  <Link
-    href="/magic-display/3d"
-    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700"
-  >
-    🎲 Voir le cube 3D (proto)
-  </Link>
-</header>
+      <header className="mb-4 space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
+          Magic Display · Prototype cube + face universelle
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Construction pédagogique de ton Magic Clock
+        </h1>
+        <p className="text-sm text-slate-600">
+          Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
+          plusieurs segments pédagogiques (diagnostic, application, patine,
+          routine maison, etc.).
+        </p>
+      </header>
 
       {/* 🟣 Carte principale : vue cube 2D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">

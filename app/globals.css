@@ -6,27 +6,3 @@ body { @apply bg-slate-50 text-slate-900; }
 .card { @apply rounded-2xl bg-white shadow-soft border; }
 .badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border; }
 .link { @apply text-brand-600 hover:underline; }
-
-/* === Magic Display v0.6 === */
-:root {
-  --bg:#0e1015;
-  --panel:#151a23;
-  --line:#242b36;
-  --text:#e6eaf3;
-  --muted:#95a0b2;
-  --accent:#8ab4ff;
-  --pos:#9ff6c0;
-}
-
-/* On scope le style du proto sur le conteneur .magic-display-v06 */
-.magic-display-v06 {
-  background: var(--bg);
-  color: var(--text);
-}
-
-/* Quand tu colles le CSS de la balise <style> du v0.6 :
-   → remplace "body" par ".magic-display-v06"
-   → remplace ".wrap" par ".magic-display-v06 .wrap"
-   → remplace ".card" par ".magic-display-v06 .card"
-   → etc.
-*/
