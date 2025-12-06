@@ -18,6 +18,9 @@ type MediaState = {
 type PublishMode = "FREE" | "SUB" | "PPV";
 type Side = "before" | "after";
 
+// 🆕 Orientation du canevas (portrait / horizontal)
+type Orientation = "vertical" | "horizontal";
+
 export default function MagicStudioPage() {
   const router = useRouter();
 
@@ -42,6 +45,9 @@ export default function MagicStudioPage() {
   // Mode de publication
   const [mode, setMode] = useState<PublishMode>("FREE");
   const [ppvPrice, setPpvPrice] = useState<number>(9); // prix indicatif pour PPV
+
+  // 🆕 Orientation du canevas (par défaut portrait)
+  const [orientation, setOrientation] = useState<Orientation>("vertical");
 
   // Sélection couverture vidéo
   const [selectingCoverFor, setSelectingCoverFor] = useState<Side | null>(null);
@@ -154,6 +160,10 @@ export default function MagicStudioPage() {
     { value: "PPV", label: "PPV" },
   ];
 
+  // 🆕 Classe d’aspect selon l’orientation choisie
+  const aspectClass =
+    orientation === "vertical" ? "aspect-[4/5]" : "aspect-[16/9]";
+
   return (
     <main className="container max-w-4xl py-8 space-y-6">
       <header className="space-y-1">
@@ -166,9 +176,40 @@ export default function MagicStudioPage() {
       </header>
 
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
-        {/* CANEVAS AVANT / APRÈS (même ratio visuel que dans Amazing) */}
+        {/* 🆕 Choix du format du canevas */}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <p className="text-slate-500">
+            Format du canevas (influence le rendu dans Amazing & Magic Display).
+          </p>
+          <div className="inline-flex rounded-full bg-slate-100 p-1 font-medium">
+            <button
+              type="button"
+              onClick={() => setOrientation("vertical")}
+              className={`rounded-full px-3 py-1 transition ${
+                orientation === "vertical"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500"
+              }`}
+            >
+              Portrait
+            </button>
+            <button
+              type="button"
+              onClick={() => setOrientation("horizontal")}
+              className={`rounded-full px-3 py-1 transition ${
+                orientation === "horizontal"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500"
+              }`}
+            >
+              Horizontal
+            </button>
+          </div>
+        </div>
+
+        {/* CANEVAS AVANT / APRÈS (même logique que dans Amazing) */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+          <div className={`relative mx-auto ${aspectClass} w-full max-w-xl`}>
             {/* Grille 2 colonnes qui remplit tout le canevas */}
             <div className="absolute inset-0 grid grid-cols-2 divide-x divide-slate-200">
               {/* AVANT */}
