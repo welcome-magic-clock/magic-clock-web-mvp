@@ -92,18 +92,12 @@ export default function MagicStudioPage() {
     updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
-  function cycleMode() {
-    setMode((prev) =>
-      prev === "FREE" ? "SUB" : prev === "SUB" ? "PPV" : "FREE"
-    );
-  }
-
   function handlePublishClick() {
     // MVP : on simule la publication et on renvoie vers My Magic Clock
     router.push("/mymagic");
   }
 
-  const modeLabel =
+  const modeLabel: string =
     mode === "FREE"
       ? "FREE"
       : mode === "SUB"
@@ -153,6 +147,12 @@ export default function MagicStudioPage() {
   })();
 
   // =================================================================
+
+  const publishModes: { value: PublishMode; label: string }[] = [
+    { value: "FREE", label: "FREE" },
+    { value: "SUB", label: "Abonnement" },
+    { value: "PPV", label: "PPV" },
+  ];
 
   return (
     <main className="container max-w-4xl py-8 space-y-6">
@@ -282,16 +282,6 @@ export default function MagicStudioPage() {
                 className="h-[72px] w-[72px] rounded-full object-cover"
               />
             </div>
-
-            {/* Flèche pour changer FREE / Abonnement / PPV */}
-            <button
-              type="button"
-              onClick={cycleMode}
-              className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900/85 text-white shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-              aria-label="Changer le mode de publication"
-            >
-              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </button>
           </div>
         </div>
 
@@ -299,10 +289,8 @@ export default function MagicStudioPage() {
         {selectingCoverFor && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-600">
             <p className="font-medium text-slate-700">
-              Choisir la couverture vidéo ({selectingCoverFor === "before"
-                ? "Avant"
-                : "Après"}
-              )
+              Choisir la couverture vidéo (
+              {selectingCoverFor === "before" ? "Avant" : "Après"})
             </p>
             <p>
               Fais glisser le curseur pour choisir l&apos;image qui servira de
@@ -329,7 +317,7 @@ export default function MagicStudioPage() {
           </div>
         )}
 
-        {/* TITRE & HASHTAGS SOUS LE CANEVAS */}
+        {/* TITRE, HASHTAGS & MODE SOUS LE CANEVAS */}
         <div className="space-y-3">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700">
@@ -360,6 +348,38 @@ export default function MagicStudioPage() {
               Les hashtags s&apos;afficheront en bas de la carte dans le flux
               Amazing (MVP).
             </p>
+          </div>
+
+          {/* Mode de publication */}
+          <div className="space-y-1 pt-1">
+            <label className="text-xs font-medium text-slate-700">
+              Mode de publication
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
+                {publishModes.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setMode(opt.value)}
+                    className={`rounded-full px-3 py-1 transition ${
+                      mode === opt.value
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {mode === "FREE"
+                  ? "Accessible à tous les utilisateurs."
+                  : mode === "SUB"
+                  ? "Réservé à tes abonnés payants."
+                  : "Débloqué à l’achat pour chaque spectateur (PPV)."}
+              </p>
+            </div>
           </div>
 
           {/* Sélecteur de prix PPV */}
@@ -396,17 +416,16 @@ export default function MagicStudioPage() {
       <section className="space-y-2">
         <p className="text-[11px] text-slate-500">
           Mode de publication actuel :{" "}
-          <span className="font-semibold">{modeLabel}</span>{" "}
-          (appuie sur la flèche du canevas pour changer entre FREE /
-          Abonnement / PPV).
+          <span className="font-semibold">{modeLabel}</span>.
         </p>
 
         <button
           type="button"
           onClick={handlePublishClick}
-          className="mt-1 w-full rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
-          Publier ce Magic Clock (MVP)
+          <span>Publier ce Magic Clock (MVP)</span>
+          <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </button>
 
         <p className="text-[11px] text-slate-500">
@@ -415,9 +434,9 @@ export default function MagicStudioPage() {
           apparaîtra aussi dans{" "}
           <span className="font-semibold">
             My Magic Clock → Mes Magic Clock
-          </span>{" "}
-          créés. Le routing et la sauvegarde réelle seront branchés quand le
-          backend sera prêt.
+          </span>
+          . Le routing et la sauvegarde réelle seront branchés quand le backend
+          sera prêt.
         </p>
       </section>
     </main>
