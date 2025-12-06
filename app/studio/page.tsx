@@ -12,13 +12,11 @@ type MediaState = {
   kind: MediaKind | null;
   url: string | null;
   duration?: number | null;
-  coverTime?: number | null; // temps choisi pour la couverture vidéo (en secondes)
+  coverTime?: number | null;
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type Side = "before" | "after";
-
-// 🆕 Orientation du canevas (portrait / horizontal)
 type Orientation = "vertical" | "horizontal";
 
 export default function MagicStudioPage() {
@@ -44,9 +42,9 @@ export default function MagicStudioPage() {
 
   // Mode de publication
   const [mode, setMode] = useState<PublishMode>("FREE");
-  const [ppvPrice, setPpvPrice] = useState<number>(9); // prix indicatif pour PPV
+  const [ppvPrice, setPpvPrice] = useState<number>(9);
 
-  // 🆕 Orientation du canevas (par défaut portrait)
+  // Orientation du canevas
   const [orientation, setOrientation] = useState<Orientation>("vertical");
 
   // Sélection couverture vidéo
@@ -98,9 +96,9 @@ export default function MagicStudioPage() {
     updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
-  function handlePublishClick() {
-    // MVP : on simule la publication et on renvoie vers My Magic Clock
-    router.push("/mymagic");
+  // Passer à Magic Display
+  function handleGoToDisplay() {
+    router.push("/magic-display");
   }
 
   const modeLabel: string =
@@ -110,7 +108,7 @@ export default function MagicStudioPage() {
       ? "Abonnement"
       : "Pay Per View (PPV)";
 
-  // === Couverture vidéo façon TikTok (MVP) ==========================
+  // === Couverture vidéo (MVP) ======================================
 
   function openCoverSelection(side: Side, event?: React.MouseEvent) {
     if (event) event.stopPropagation();
@@ -134,7 +132,7 @@ export default function MagicStudioPage() {
 
   function handleCoverSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
     if (!selectingCoverFor) return;
-    const percent = Number(event.target.value); // 0 → 100
+    const percent = Number(event.target.value);
     const { media, videoRef } = currentMediaForCover();
     if (!media || media.kind !== "video" || !media.duration || !videoRef.current)
       return;
@@ -152,7 +150,7 @@ export default function MagicStudioPage() {
     return (media.coverTime / media.duration) * 100;
   })();
 
-  // =================================================================
+  // ================================================================
 
   const publishModes: { value: PublishMode; label: string }[] = [
     { value: "FREE", label: "FREE" },
@@ -160,23 +158,21 @@ export default function MagicStudioPage() {
     { value: "PPV", label: "PPV" },
   ];
 
-  // 🆕 Classe d’aspect selon l’orientation choisie
   const aspectClass =
     orientation === "vertical" ? "aspect-[4/5]" : "aspect-[16/9]";
 
+  // Layout grid + séparateur selon orientation
+  const layoutGridClass =
+    orientation === "vertical"
+      ? "grid grid-cols-2 divide-x divide-slate-200"
+      : "grid grid-rows-2 divide-y divide-slate-200";
+
   return (
-    <main className="container max-w-4xl py-8 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">Magic Studio — Avant / Après</h1>
-        <p className="text-sm text-slate-600">
-          Crée ta vitrine : importe ton Avant / Après directement sur le
-          canevas, ajoute un titre et tes hashtags. Le Magic Display
-          pédagogique sera connecté plus tard.
-        </p>
-      </header>
+    <main className="container max-w-4xl py-6 space-y-6">
+      {/* On enlève le gros titre/texte pour une UX plus épurée */}
 
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
-        {/* 🆕 Choix du format du canevas */}
+        {/* Choix du format du canevas */}
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
           <p className="text-slate-500">
             Format du canevas (influence le rendu dans Amazing & Magic Display).
@@ -207,11 +203,10 @@ export default function MagicStudioPage() {
           </div>
         </div>
 
-        {/* CANEVAS AVANT / APRÈS (même logique que dans Amazing) */}
+        {/* CANEVAS AVANT / APRÈS */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
           <div className={`relative mx-auto ${aspectClass} w-full max-w-xl`}>
-            {/* Grille 2 colonnes qui remplit tout le canevas */}
-            <div className="absolute inset-0 grid grid-cols-2 divide-x divide-slate-200">
+            <div className={`absolute inset-0 ${layoutGridClass}`}>
               {/* AVANT */}
               <button
                 type="button"
@@ -251,7 +246,6 @@ export default function MagicStudioPage() {
                   onChange={(event) => handleFileChange(event, "before")}
                 />
 
-                {/* Bouton choisir couverture pour la vidéo AVANT */}
                 {before.kind === "video" && before.url && (
                   <button
                     type="button"
@@ -302,7 +296,6 @@ export default function MagicStudioPage() {
                   onChange={(event) => handleFileChange(event, "after")}
                 />
 
-                {/* Bouton choisir couverture pour la vidéo APRÈS */}
                 {after.kind === "video" && after.url && (
                   <button
                     type="button"
@@ -326,7 +319,7 @@ export default function MagicStudioPage() {
           </div>
         </div>
 
-        {/* Panneau choix couverture vidéo (MVP) */}
+        {/* Panneau choix couverture vidéo */}
         {selectingCoverFor && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-600">
             <p className="font-medium text-slate-700">
@@ -445,16 +438,13 @@ export default function MagicStudioPage() {
                   {ppvPrice.toFixed(0)}$
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
-                MVP : le prix est indicatif, la facturation réelle sera gérée
-                par le module Monétisation.
-              </p>
             </div>
           )}
         </div>
       </section>
 
-      <section className="space-y-2">
+      {/* Barre basse ultra simple + flèche vers Magic Display */}
+      <section className="flex items-center justify-between">
         <p className="text-[11px] text-slate-500">
           Mode de publication actuel :{" "}
           <span className="font-semibold">{modeLabel}</span>.
@@ -462,23 +452,12 @@ export default function MagicStudioPage() {
 
         <button
           type="button"
-          onClick={handlePublishClick}
-          className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          onClick={handleGoToDisplay}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          aria-label="Passer à Magic Display"
         >
-          <span>Publier ce Magic Clock (MVP)</span>
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </button>
-
-        <p className="text-[11px] text-slate-500">
-          MVP : ce bouton simule la publication. À terme, ton Magic Studio sera
-          envoyé dans le flux <span className="font-semibold">Amazing</span> et
-          apparaîtra aussi dans{" "}
-          <span className="font-semibold">
-            My Magic Clock → Mes Magic Clock
-          </span>
-          . Le routing et la sauvegarde réelle seront branchés quand le backend
-          sera prêt.
-        </p>
       </section>
     </main>
   );
