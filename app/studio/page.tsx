@@ -12,15 +12,18 @@ type MediaState = {
   kind: MediaKind | null;
   url: string | null;
   duration?: number | null;
-  coverTime?: number | null;
+  coverTime?: number | null; // temps choisi pour la couverture vidéo (en secondes)
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type Side = "before" | "after";
-type Orientation = "vertical" | "horizontal";
+type Orientation = "portrait" | "horizontal";
 
 export default function MagicStudioPage() {
   const router = useRouter();
+
+  // Orientation du canevas
+  const [orientation, setOrientation] = useState<Orientation>("portrait");
 
   // Import médias
   const [before, setBefore] = useState<MediaState>({
@@ -42,10 +45,7 @@ export default function MagicStudioPage() {
 
   // Mode de publication
   const [mode, setMode] = useState<PublishMode>("FREE");
-  const [ppvPrice, setPpvPrice] = useState<number>(0.99);
-
-  // Orientation du canevas
-  const [orientation, setOrientation] = useState<Orientation>("vertical");
+  const [ppvPrice, setPpvPrice] = useState<number>(0.99); // prix indicatif pour PPV
 
   // Sélection couverture vidéo
   const [selectingCoverFor, setSelectingCoverFor] = useState<Side | null>(null);
@@ -98,17 +98,11 @@ export default function MagicStudioPage() {
 
   // Passer à Magic Display
   function handleGoToDisplay() {
+    // Plus tard: on passera les infos (orientation, mode, etc.) au backend
     router.push("/magic-display");
   }
 
-  const modeLabel: string =
-    mode === "FREE"
-      ? "FREE"
-      : mode === "SUB"
-      ? "Abonnement"
-      : "Pay Per View (PPV)";
-
-  // === Couverture vidéo (MVP) ======================================
+  // === Couverture vidéo façon TikTok (MVP) ==========================
 
   function openCoverSelection(side: Side, event?: React.MouseEvent) {
     if (event) event.stopPropagation();
@@ -132,7 +126,7 @@ export default function MagicStudioPage() {
 
   function handleCoverSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
     if (!selectingCoverFor) return;
-    const percent = Number(event.target.value);
+    const percent = Number(event.target.value); // 0 → 100
     const { media, videoRef } = currentMediaForCover();
     if (!media || media.kind !== "video" || !media.duration || !videoRef.current)
       return;
@@ -150,42 +144,32 @@ export default function MagicStudioPage() {
     return (media.coverTime / media.duration) * 100;
   })();
 
-  // ================================================================
+  // =================================================================
 
   const publishModes: { value: PublishMode; label: string }[] = [
     { value: "FREE", label: "FREE" },
     { value: "SUB", label: "Abonnement" },
-    { value: "PPV", label: "PPV" },
+    { value: "PPV", label: "PayPerView" },
   ];
 
-  const aspectClass =
-    orientation === "vertical" ? "aspect-[4/5]" : "aspect-[16/9]";
-
-  const layoutGridClass =
-    orientation === "vertical"
-      ? "grid grid-cols-2 divide-x divide-slate-200"
-      : "grid grid-rows-2 divide-y divide-slate-200";
+  const isPortrait = orientation === "portrait";
+  const canvasAspect = isPortrait ? "aspect-[4/5]" : "aspect-[16/9]";
 
   return (
-    <main className="container max-w-4xl py-6 space-y-4">
-      {/* Titre simple, sans texte explicatif */}
+    <main className="container max-w-4xl py-8 space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">
-          Magic Studio — Avant / Après
-        </h1>
+        <h1 className="text-2xl font-semibold">Magic Studio — Avant / Après</h1>
       </header>
 
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
-        {/* Choix du format du canevas : uniquement les boutons */}
+        {/* Switch Portrait / Horizontal */}
         <div className="flex justify-end">
           <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
             <button
               type="button"
-              onClick={() => setOrientation("vertical")}
+              onClick={() => setOrientation("portrait")}
               className={`rounded-full px-3 py-1 transition ${
-                orientation === "vertical"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500"
+                isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
               }`}
             >
               Portrait
@@ -194,9 +178,7 @@ export default function MagicStudioPage() {
               type="button"
               onClick={() => setOrientation("horizontal")}
               className={`rounded-full px-3 py-1 transition ${
-                orientation === "horizontal"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500"
+                !isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
               }`}
             >
               Horizontal
@@ -204,10 +186,15 @@ export default function MagicStudioPage() {
           </div>
         </div>
 
-        {/* CANEVAS AVANT / APRÈS */}
+        {/* CANEVAS AVANT / APRÈS (même logique qu’Amazing) */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          <div className={`relative mx-auto ${aspectClass} w-full max-w-xl`}>
-            <div className={`absolute inset-0 ${layoutGridClass}`}>
+          <div className={`relative mx-auto ${canvasAspect} w-full max-w-xl`}>
+            {/* Grille : portrait = 2 colonnes, horizontal = 2 lignes */}
+            <div
+              className={`absolute inset-0 grid ${
+                isPortrait ? "grid-cols-2" : "grid-rows-2"
+              }`}
+            >
               {/* AVANT */}
               <button
                 type="button"
@@ -247,6 +234,7 @@ export default function MagicStudioPage() {
                   onChange={(event) => handleFileChange(event, "before")}
                 />
 
+                {/* Bouton choisir couverture pour la vidéo AVANT */}
                 {before.kind === "video" && before.url && (
                   <button
                     type="button"
@@ -297,6 +285,7 @@ export default function MagicStudioPage() {
                   onChange={(event) => handleFileChange(event, "after")}
                 />
 
+                {/* Bouton choisir couverture pour la vidéo APRÈS */}
                 {after.kind === "video" && after.url && (
                   <button
                     type="button"
@@ -309,6 +298,13 @@ export default function MagicStudioPage() {
               </button>
             </div>
 
+            {/* Trait séparateur : vertical en portrait, horizontal en paysage */}
+            {isPortrait ? (
+              <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-white/80" />
+            ) : (
+              <div className="pointer-events-none absolute inset-x-4 top-1/2 h-px -translate-y-1/2 bg-white/80" />
+            )}
+
             {/* Avatar centre */}
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
               <img
@@ -320,7 +316,7 @@ export default function MagicStudioPage() {
           </div>
         </div>
 
-        {/* Panneau choix couverture vidéo */}
+        {/* Panneau choix couverture vidéo (MVP) */}
         {selectingCoverFor && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-600">
             <p className="font-medium text-slate-700">
@@ -379,18 +375,14 @@ export default function MagicStudioPage() {
               placeholder="#balayage #cheveuxblonds #magicclock"
               className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
-            <p className="text-[11px] text-slate-500">
-              Les hashtags s&apos;afficheront en bas de la carte dans le flux
-              Amazing (MVP).
-            </p>
           </div>
 
-          {/* Mode de publication */}
+          {/* Mode de publication + flèche pour passer à Magic Display */}
           <div className="space-y-1 pt-1">
             <label className="text-xs font-medium text-slate-700">
               Mode de publication
             </label>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
                 {publishModes.map((opt) => (
                   <button
@@ -407,21 +399,32 @@ export default function MagicStudioPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-500">
-                {mode === "FREE"
-                  ? "Accessible à tous les utilisateurs."
-                  : mode === "SUB"
-                  ? "Réservé à tes abonnés payants."
-                  : "Débloqué à l’achat pour chaque spectateur (PPV)."}
-              </p>
+
+              {/* Flèche pour passer à Magic Display */}
+              <button
+                type="button"
+                onClick={handleGoToDisplay}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                aria-label="Passer à Magic Display"
+              >
+                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
+
+            <p className="text-[11px] text-slate-500">
+              {mode === "FREE"
+                ? "Accessible à tous les utilisateurs."
+                : mode === "SUB"
+                ? "Réservé à tes abonnés payants."
+                : "Débloqué à l’achat pour chaque spectateur (PayPerView)."}
+            </p>
           </div>
 
           {/* Sélecteur de prix PPV */}
           {mode === "PPV" && (
             <div className="space-y-1 pt-2">
               <label className="text-xs font-medium text-slate-700">
-                Prix Pay Per View (PPV)
+                Prix PayPerView
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -441,18 +444,6 @@ export default function MagicStudioPage() {
               </div>
             </div>
           )}
-        </div>
-
-        {/* Bouton flèche vers Magic Display, à l'intérieur de la carte */}
-        <div className="flex justify-end pt-2">
-          <button
-            type="button"
-            onClick={handleGoToDisplay}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-            aria-label="Passer à Magic Display"
-          >
-            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-          </button>
         </div>
       </section>
     </main>
