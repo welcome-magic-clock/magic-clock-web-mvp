@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
-import MagicDisplayCube from "@/features/display/MagicCube3D";
+import MagicCube3D from "@/features/display/MagicCube3D";
 
 type MediaType = "photo" | "video";
 
@@ -186,10 +186,10 @@ export default function MagicDisplayPage() {
           {/* Colonne droite : cube 3D + liste des 6 faces */}
           <div className="flex-1 space-y-4">
             <MagicCube3D
-              segments={segments}
-              selectedId={selectedId}
-              onSelect={(id) => handleSelectFace(id)}
-            />
+  segments={segments}
+  selectedId={selectedId}
+  onSelect={(id) => handleSelectFace(id)}
+/>
 
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-slate-900">
