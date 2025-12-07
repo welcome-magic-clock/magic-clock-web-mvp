@@ -88,22 +88,23 @@ export default function MagicCube3D({
                   {/* 🎥 / 📸 FULL MEDIA : la face entière devient l’image / la vidéo */}
                   {isVisualMedia ? (
                     <div className="absolute inset-0 overflow-hidden rounded-3xl">
-                      {seg.mediaType === "photo" ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={seg.mediaUrl!}
-                          alt={seg.description}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <video
-                          src={seg.mediaUrl!}
-                          className="h-full w-full object-cover"
-                          muted
-                          loop
-                          playsInline
-                        />
-                      )}
+                     {seg.mediaType === "photo" ? (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src={seg.mediaUrl!}
+    alt={seg.description}
+    className="h-full w-full object-cover"
+  />
+) : (
+  <video
+    src={seg.mediaUrl!}
+    className="h-full w-full object-cover"
+    muted
+    playsInline
+    loop
+    autoPlay           // 👈 petit plus pour la prévisualisation
+  />
+)}
                     </div>
                   ) : (
                     /* 🧾 Variante texte (sans média, ou fichier) */
