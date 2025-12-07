@@ -67,10 +67,12 @@ export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
 
   const titleFromStudio = searchParams.get("title") ?? "";
-  const modeFromStudio = searchParams.get("mode") ?? "FREE";
-  const formatFromStudio = searchParams.get("format") ?? "portrait";
-  const ppvPriceFromStudio = searchParams.get("ppvPrice");
+const modeFromStudio = searchParams.get("mode") ?? "FREE";
+const formatFromStudio = searchParams.get("format") ?? "portrait";
+const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
+const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
+  
   const modeLabel =
     modeFromStudio === "SUB"
       ? "Abonnement"
@@ -131,24 +133,38 @@ export default function MagicDisplayClient() {
 {titleFromStudio && (
   <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
     <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+      {/* Origine */}
       <span className="font-semibold">Magic Studio</span>
       <span>✅</span>
 
       <span className="text-slate-300">·</span>
 
+      {/* Titre du Magic Clock */}
       <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
         {titleFromStudio}
       </span>
 
       <span className="text-slate-300">·</span>
 
+      {/* Mode (FREE / Abonnement / PayPerView) */}
       <span className="font-medium">{modeLabel}</span>
 
+      {/* Prix PPV envoyé depuis Magic Studio */}
       {modeFromStudio === "PPV" && ppvPriceFromStudio && (
         <>
           <span className="text-slate-300">·</span>
           <span className="font-mono">
             {Number(ppvPriceFromStudio).toFixed(2)} CHF
+          </span>
+        </>
+      )}
+
+      {/* Prix d'abonnement simulé (Cockpit) */}
+      {modeFromStudio === "SUB" && (
+        <>
+          <span className="text-slate-300">·</span>
+          <span className="font-mono">
+            {subscriptionPriceMock.toFixed(2)} CHF / mois
           </span>
         </>
       )}
