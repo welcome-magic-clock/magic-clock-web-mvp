@@ -7,7 +7,6 @@ import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
 
 type MediaType = "photo" | "video";
-type SegmentStatus = "idle" | "in-progress" | "done" | "error";
 
 type Segment = {
   id: number;
@@ -16,8 +15,7 @@ type Segment = {
   angleDeg: number; // angle du centre du segment (en degrés)
   hasMedia: boolean;
   mediaType?: MediaType;
-  mediaUrl?: string | null;
-  status: SegmentStatus;
+  mediaUrl?: string | null; // URL locale pour prévisualiser le fichier
 };
 
 const INITIAL_SEGMENTS: Segment[] = [
@@ -27,7 +25,6 @@ const INITIAL_SEGMENTS: Segment[] = [
     description: "Diagnostic / point de départ",
     angleDeg: -90,
     hasMedia: false,
-    status: "idle",
   },
   {
     id: 2,
@@ -35,7 +32,6 @@ const INITIAL_SEGMENTS: Segment[] = [
     description: "Préparation / sectionnement",
     angleDeg: -30,
     hasMedia: false,
-    status: "idle",
   },
   {
     id: 3,
@@ -43,7 +39,6 @@ const INITIAL_SEGMENTS: Segment[] = [
     description: "Application principale",
     angleDeg: 30,
     hasMedia: false,
-    status: "idle",
   },
   {
     id: 4,
@@ -51,7 +46,6 @@ const INITIAL_SEGMENTS: Segment[] = [
     description: "Patine / correction",
     angleDeg: 90,
     hasMedia: false,
-    status: "idle",
   },
   {
     id: 5,
@@ -59,7 +53,6 @@ const INITIAL_SEGMENTS: Segment[] = [
     description: "Finition / coiffage",
     angleDeg: 150,
     hasMedia: false,
-    status: "idle",
   },
   {
     id: 6,
@@ -67,16 +60,16 @@ const INITIAL_SEGMENTS: Segment[] = [
     description: "Résultat / conseils maison",
     angleDeg: 210,
     hasMedia: false,
-    status: "idle",
   },
 ];
+
 export default function MagicDisplayClient() {
   // 🔍 lecture des params envoyés depuis Magic Studio
   const searchParams = useSearchParams();
 
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
-  const formatFromStudio = searchParams.get("format") ?? "portrait"; // gardé pour la suite si besoin
+  const formatFromStudio = searchParams.get("format") ?? "portrait"; // on le garde au cas où pour la suite
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
@@ -101,67 +94,52 @@ export default function MagicDisplayClient() {
     .toUpperCase();
 
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(1);
+
+  const selectedSegment =
+    segments.find((s) => s.id === selectedId) ?? segments[0] ?? null;
 
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
 
-  const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
+  const handleSelectFace = (id: number | null) => {
+    setSelectedId((prev) => (prev === id ? null : id));
+  };
 
-  // Ouvre la bonne fenêtre de fichier
- const handleChooseMedia = (type: MediaType) => {
-  if (!selectedSegment) return;
+  const handleChooseMedia = (type: MediaType) => {
+    if (!selectedSegment) return;
 
-  // statut visuel : on signale que la face est en cours
-  setSegments((prev) =>
-    prev.map((seg) =>
-      seg.id === selectedSegment.id
-        ? { ...seg, status: "in-progress" }
-        : seg
-    )
-  );
+    if (type === "photo") {
+      photoInputRef.current?.click();
+    } else {
+      videoInputRef.current?.click();
+    }
+  };
 
-  if (type === "photo") {
-    photoInputRef.current?.click();
-  } else {
-    videoInputRef.current?.click();
-  }
-};
+  const handleMediaFileChange = (
+    event: ChangeEvent<HTMLInputElement>,
+    type: MediaType
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedSegment) return;
 
-  // Gère le fichier choisi + sauvegarde URL locale
- const handleMediaFileChange = (
-  event: ChangeEvent<HTMLInputElement>,
-  type: MediaType
-) => {
-  const file = event.target.files?.[0];
-  if (!file || !selectedSegment) return;
+    const url = URL.createObjectURL(file); // prévisu locale
 
-  const url = URL.createObjectURL(file); // prévisualisation locale
-
-  setSegments((prev) =>
-    prev.map((seg) =>
-      seg.id === selectedSegment.id
-        ? {
-            ...seg,
-            hasMedia: true,
-            mediaType: type,
-            mediaUrl: url,
-            status: "done",
-          }
-        : seg
-    )
-  );
-
-  // pour pouvoir ré-uploader le même fichier si besoin
-  event.target.value = "";
-};
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === selectedSegment.id
+          ? {
+              ...seg,
+              hasMedia: true,
+              mediaType: type,
+              mediaUrl: url,
+            }
+          : seg
+      )
+    );
 
     // reset pour pouvoir ré-uploader le même fichier si besoin
     event.target.value = "";
-  };
-
-  const handleSelectFace = (id: number | null) => {
-    setSelectedId((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -175,9 +153,9 @@ export default function MagicDisplayClient() {
           Construction pédagogique de ton Magic Clock
         </h1>
         <p className="text-sm text-slate-600">
-          Le cube représente l&apos;œuvre complète (6 faces). Chaque face
-          contient plusieurs segments pédagogiques (diagnostic, application,
-          patine, routine maison, etc.).
+          Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
+          plusieurs segments pédagogiques (diagnostic, application, patine,
+          routine maison, etc.).
         </p>
       </header>
 
@@ -185,19 +163,23 @@ export default function MagicDisplayClient() {
       {titleFromStudio && (
         <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
           <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            {/* Origine */}
             <span className="font-semibold">Magic Studio</span>
             <span>✅</span>
 
             <span className="text-slate-300">·</span>
 
+            {/* Titre du Magic Clock */}
             <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
               {titleFromStudio}
             </span>
 
             <span className="text-slate-300">·</span>
 
+            {/* Mode (FREE / Abonnement / PayPerView) */}
             <span className="font-medium">{modeLabel}</span>
 
+            {/* Prix PPV envoyé depuis Magic Studio */}
             {modeFromStudio === "PPV" && ppvPriceFromStudio && (
               <>
                 <span className="text-slate-300">·</span>
@@ -207,6 +189,7 @@ export default function MagicDisplayClient() {
               </>
             )}
 
+            {/* Prix d'abonnement simulé (Cockpit) */}
             {modeFromStudio === "SUB" && (
               <>
                 <span className="text-slate-300">·</span>
@@ -215,6 +198,11 @@ export default function MagicDisplayClient() {
                 </span>
               </>
             )}
+
+            {/* On garde le format en "sr-only" pour que la variable soit utilisée mais invisible */}
+            <span className="sr-only">
+              Format : {formatFromStudio === "horizontal" ? "Horizontal" : "Portrait"}
+            </span>
           </p>
         </section>
       )}
@@ -282,6 +270,11 @@ export default function MagicDisplayClient() {
                       aria-label={`Face ${seg.label}`}
                     >
                       {icon}
+
+                      {/* mini pastille statut */}
+                      {seg.hasMedia && (
+                        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+                      )}
                     </button>
                   );
                 })}
@@ -302,10 +295,9 @@ export default function MagicDisplayClient() {
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne représente une face du cube. On reste
-                volontairement neutre : les créatrices peuvent renommer les
-                faces comme elles le souhaitent (diagnostic, patine, routine,
-                etc.).
+                Chaque ligne représente une face du cube. On reste volontairement
+                neutre : les créatrices peuvent renommer les faces comme elles le
+                souhaitent (diagnostic, patine, routine, etc.).
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
@@ -345,87 +337,70 @@ export default function MagicDisplayClient() {
           </div>
         </div>
 
-     {/* Panneau d’action face sélectionnée */}
-<div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-xs text-slate-700 sm:px-4">
-  {selectedSegment ? (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-            Face sélectionnée
-          </p>
-          <p className="text-sm font-semibold text-slate-900">
-            {selectedSegment.label}
-          </p>
-          <p className="text-[11px] text-slate-500">
-            {selectedSegment.description}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => handleChooseMedia("photo")}
-            className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
-          >
-            📷 Ajouter une photo
-          </button>
-          <button
-            type="button"
-            onClick={() => handleChooseMedia("video")}
-            className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
-          >
-            🎬 Ajouter une vidéo
-          </button>
-        </div>
-      </div>
+        {/* Panneau d’action face sélectionnée */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-xs text-slate-700 sm:px-4">
+          {selectedSegment ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Face sélectionnée
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {selectedSegment.label}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {selectedSegment.description}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-2 sm:items-start">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("photo")}
+                    className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
+                  >
+                    📷 Ajouter une photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("video")}
+                    className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
+                  >
+                    🎬 Ajouter une vidéo
+                  </button>
+                </div>
 
-      {/* Preview média + pastille de statut */}
-      {selectedSegment.mediaUrl && (
-        <div className="flex items-center gap-3">
-          <div className="relative h-24 w-40 overflow-hidden rounded-2xl bg-slate-200">
-            {selectedSegment.mediaType === "photo" ? (
-              <img
-                src={selectedSegment.mediaUrl}
-                alt="Prévisualisation"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <video
-                src={selectedSegment.mediaUrl}
-                className="h-full w-full object-cover"
-                controls
-              />
-            )}
-
-            {/* Pastille statut en bas à droite */}
-            <span
-              className={`absolute bottom-1 right-1 h-2 w-2 rounded-full border border-white ${
-                selectedSegment.status === "done"
-                  ? "bg-emerald-500"
-                  : selectedSegment.status === "in-progress"
-                  ? "bg-amber-400"
-                  : selectedSegment.status === "error"
-                  ? "bg-rose-500"
-                  : "bg-slate-300"
-              }`}
-            />
-          </div>
-          <p className="text-[10px] text-slate-500">
-            Prévisualisation locale — le média n&apos;est pas encore stocké dans
-            le backend (MVP).
-          </p>
+                {/* Prévisualisation du média pour cette face */}
+                {selectedSegment.mediaUrl && (
+                  <div className="mt-2 w-full max-w-xs">
+                    {selectedSegment.mediaType === "photo" ? (
+                      <img
+                        src={selectedSegment.mediaUrl}
+                        alt="Prévisualisation"
+                        className="h-32 w-full rounded-xl object-cover"
+                      />
+                    ) : (
+                      <video
+                        src={selectedSegment.mediaUrl}
+                        className="h-32 w-full rounded-xl object-cover"
+                        controls
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-500">
+              Clique sur un point autour du cercle, sur le cube 3D ou dans la
+              liste pour sélectionner une face du cube, puis choisis si tu veux
+              y associer une photo ou une vidéo. (MVP local, aucune donnée
+              n&apos;est sauvegardée pour l&apos;instant.)
+            </p>
+          )}
         </div>
-      )}
-    </div>
-  ) : (
-    <p className="text-[11px] text-slate-500">
-      Clique sur un point autour du cercle, sur le cube 3D ou dans la liste
-      pour sélectionner une face du cube, puis choisis si tu veux y associer
-      une photo ou une vidéo. (MVP local, aucune donnée n&apos;est sauvegardée
-      pour l&apos;instant.)
-    </p>
-  )}
-</div>
+      </section>
+
       {/* Face universelle reliée à la face sélectionnée */}
       <section className="mt-4 space-y-2">
         <h2 className="text-sm font-semibold text-slate-900">
