@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Camera, Video, FileText, Plus } from "lucide-react";
+import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
@@ -63,6 +63,33 @@ const INITIAL_SEGMENTS: Segment[] = [
     hasMedia: false,
   },
 ];
+
+// petit helper pour le dot de statut (comme Face universelle)
+function statusDotClass(hasMedia: boolean) {
+  return hasMedia ? "bg-emerald-500" : "bg-slate-300";
+}
+
+// label affiché dans la liste
+function mediaTypeLabel(type?: MediaType) {
+  if (type === "photo") return "Photo";
+  if (type === "video") return "Vidéo";
+  if (type === "file") return "Fichier";
+  return "";
+}
+
+// même logique que segmentIcon dans MagicDisplayFaceEditor
+function renderSegmentIcon(seg: Segment) {
+  if (seg.mediaType === "photo") {
+    return <Camera className="h-3.5 w-3.5" />;
+  }
+  if (seg.mediaType === "video") {
+    return <Clapperboard className="h-3.5 w-3.5" />;
+  }
+  if (seg.mediaType === "file") {
+    return <FileText className="h-3.5 w-3.5" />;
+  }
+  return <Plus className="h-3.5 w-3.5" />;
+}
 
 export default function MagicDisplayClient() {
   // 🔍 lecture des params envoyés depuis Magic Studio
@@ -149,33 +176,6 @@ export default function MagicDisplayClient() {
     event.target.value = "";
   }
 
-  // Helper pour le label média dans la liste de faces
-  function mediaTypeLabel(type?: MediaType) {
-    if (type === "photo") return "Photo";
-    if (type === "video") return "Vidéo";
-    if (type === "file") return "Fichier";
-    return "";
-  }
-
-  // Helper icône pour les points autour du cercle
-  function renderSegmentIcon(seg: Segment) {
-    if (!seg.hasMedia) {
-      return <Plus className="h-3.5 w-3.5" />;
-    }
-
-    if (seg.mediaType === "photo") {
-      return <Camera className="h-3.5 w-3.5" />;
-    }
-    if (seg.mediaType === "video") {
-      return <Video className="h-3.5 w-3.5" />;
-    }
-    if (seg.mediaType === "file") {
-      return <FileText className="h-3.5 w-3.5" />;
-    }
-
-    return <Plus className="h-3.5 w-3.5" />;
-  }
-
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Header général Magic Display */}
@@ -234,7 +234,7 @@ export default function MagicDisplayClient() {
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-          {/* Disque central */}
+          {/* Disque central (style aligné sur Face universelle) */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
               <div
@@ -245,7 +245,7 @@ export default function MagicDisplayClient() {
                 }}
               >
                 {/* Avatar central */}
-                <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-slate-900 shadow-inner shadow-slate-400/70">
+                <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
                   {currentCreator.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -260,7 +260,7 @@ export default function MagicDisplayClient() {
                   )}
                 </div>
 
-                {/* Boutons segments (faces) */}
+                {/* Boutons segments (faces) – même logique que Face universelle */}
                 {segments.map((seg) => {
                   const radiusPercent = 40;
                   const rad = (seg.angleDeg * Math.PI) / 180;
@@ -274,28 +274,21 @@ export default function MagicDisplayClient() {
                       key={seg.id}
                       type="button"
                       onClick={() => handleSelectFace(seg.id)}
-                      className={`absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs font-semibold shadow-sm transition
-                        ${
-                          seg.hasMedia
-                            ? seg.mediaType === "photo"
-                              ? "border-violet-200 bg-violet-50 text-violet-700"
-                              : seg.mediaType === "video"
-                              ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                              : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-white text-slate-500"
-                        }
+                      className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                         ${
                           isSelected
-                            ? "ring-2 ring-violet-400 ring-offset-2"
-                            : ""
+                            ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
+                            : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
                         }`}
                       style={{ top: `${top}%`, left: `${left}%` }}
                       aria-label={`Face ${seg.label}`}
                     >
                       {renderSegmentIcon(seg)}
-                      {seg.hasMedia && (
-                        <span className="absolute -right-1 -bottom-1 h-2 w-2 rounded-full border border-white bg-emerald-500" />
-                      )}
+                      <span
+                        className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
+                          seg.hasMedia
+                        )}`}
+                      />
                     </button>
                   );
                 })}
@@ -323,34 +316,34 @@ export default function MagicDisplayClient() {
               <div className="space-y-2">
                 {segments.map((seg) => {
                   const isSelected = seg.id === selectedId;
-                  const mediaLabel = mediaTypeLabel(seg.mediaType);
+                  const label = mediaTypeLabel(seg.mediaType);
 
                   return (
                     <button
                       key={seg.id}
                       type="button"
                       onClick={() => handleSelectFace(seg.id)}
-                      className={`flex w-full items-start justify-between gap-2 rounded-2xl px-3 py-2 text-left text-xs transition
+                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
                         ${
                           isSelected
-                            ? "bg-violet-50 text-slate-900"
-                            : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                            ? "border-brand-500 bg-brand-50/70"
+                            : "border-transparent bg-slate-50 hover:border-slate-200"
                         }`}
                     >
                       <div className="min-w-0">
-                        <p className="font-semibold">
+                        <p className="font-medium text-slate-800">
                           {seg.label}
-                          {seg.hasMedia && mediaLabel
-                            ? ` · ${mediaLabel}`
-                            : ""}
+                          {seg.hasMedia && label ? ` · ${label}` : ""}
                         </p>
                         <p className="mt-0.5 truncate text-[11px] text-slate-500">
                           {seg.description}
                         </p>
                       </div>
-                      {seg.hasMedia && (
-                        <span className="ml-2 mt-0.5 flex h-2 w-2 flex-shrink-0 rounded-full bg-emerald-500" />
-                      )}
+                      <span
+                        className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
+                          seg.hasMedia
+                        )}`}
+                      />
                     </button>
                   );
                 })}
@@ -359,67 +352,57 @@ export default function MagicDisplayClient() {
           </div>
         </div>
 
-      {/* Panneau d’action face sélectionnée – aligné sur Face universelle */}
-<div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
-  {selectedSegment ? (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="space-y-1">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Face sélectionnée
-        </p>
-        <p className="text-sm font-semibold text-slate-900">
-          {selectedSegment.label}
-        </p>
-        <p className="text-[11px] text-slate-500">
-          {selectedSegment.description}
-        </p>
-      </div>
+        {/* Panneau d’action face sélectionnée – même style que Face universelle */}
+        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+          {selectedSegment ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Face sélectionnée
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {selectedSegment.label}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {selectedSegment.description}
+                </p>
+              </div>
 
-      {/* 🟣 Boutons médias – même style que Face universelle */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("photo")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <span className="inline-flex h-3.5 w-3.5 items-center justify-center">
-            {/* même pictogramme que sur Face universelle */}
-            📷
-          </span>
-          <span>Ajouter une photo</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("video")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <span className="inline-flex h-3.5 w-3.5 items-center justify-center">
-            🎬
-          </span>
-          <span>Ajouter une vidéo</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("file")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <span className="inline-flex h-3.5 w-3.5 items-center justify-center">
-            📄
-          </span>
-          <span>Ajouter un fichier</span>
-        </button>
-      </div>
-    </div>
-  ) : (
-    <p className="text-[11px] text-slate-500">
-      Clique sur une face du cube pour la sélectionner, puis ajoute une photo,
-      une vidéo ou un fichier pour documenter cette face. (MVP local, aucune
-      donnée n&apos;est encore sauvegardée côté serveur.)
-    </p>
-  )}
-</div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("photo")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Ajouter une photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("video")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Clapperboard className="h-3.5 w-3.5" />
+                  <span>Ajouter une vidéo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("file")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Ajouter un fichier</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-500">
+              Clique sur une face du cube pour la sélectionner, puis ajoute une
+              photo, une vidéo ou un fichier pour documenter cette face. (MVP
+              local, aucune donnée n&apos;est encore sauvegardée côté serveur.)
+            </p>
+          )}
+        </div>
       </section>
 
       {/* Face universelle reliée à la face sélectionnée */}
