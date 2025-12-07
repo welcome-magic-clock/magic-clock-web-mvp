@@ -71,11 +71,16 @@ const statusDotClass = (status: SegmentStatus) => {
   return "bg-slate-300";
 };
 
-const segmentIcon = (status: SegmentStatus, mediaType?: MediaType | null) => {
-  if (status === "complete") return "✅";
+const statusLabel = (status: SegmentStatus) => {
+  if (status === "complete") return "terminé";
+  if (status === "in-progress") return "en cours";
+  return "vide";
+};
+
+// Icône = type de média (toujours gris), le rond colore le statut
+const segmentIcon = (mediaType?: MediaType | null) => {
   if (mediaType === "photo") return "📷";
   if (mediaType === "video") return "🎬";
-  if (status === "in-progress") return "✏️";
   return "＋";
 };
 
@@ -86,11 +91,7 @@ export default function MagicDisplayFaceEditor({
   faceId = 1,
   faceLabel = "Face 1",
 }: MagicDisplayFaceEditorProps) {
-  // 🧠 1 état par face (cube) : {
-  //   1: { faceId: 1, segments: [...] },
-  //   2: { faceId: 2, segments: [...] },
-  //   ...
-  // }
+  // 🧠 1 état par face (cube)
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
     [faceId]: {
       faceId,
@@ -127,7 +128,8 @@ export default function MagicDisplayFaceEditor({
   ) {
     setFaces((prev) => {
       const existing =
-        prev[faceId] ?? ({
+        prev[faceId] ??
+        ({
           faceId,
           segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
         } as FaceState);
@@ -151,7 +153,7 @@ export default function MagicDisplayFaceEditor({
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       mediaType: type,
-      // on considère qu’un média choisi = étape en cours
+      // un média choisi = étape en cours (si elle était vide)
       status: prev.status === "empty" ? "in-progress" : prev.status,
     }));
   }
@@ -218,7 +220,7 @@ export default function MagicDisplayFaceEditor({
       </header>
 
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        {/* Cercle principal (on garde EXACTEMENT ton halo + disque + avatar) */}
+        {/* Cercle principal */}
         <div className="flex items-center justify-center">
           <div className="relative h-64 w-64 max-w-full">
             {/* Halo */}
@@ -228,7 +230,7 @@ export default function MagicDisplayFaceEditor({
             {/* Anneau interne */}
             <div className="absolute inset-16 rounded-full border border-slate-300/70" />
 
-            {/* Noyau central : avatar créateur */}
+            {/* Avatar central */}
             <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -244,7 +246,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* Points de segments (positionClasses + statut + média) */}
+            {/* Points de segments */}
             {segments.map((seg, index) => {
               const isSelected = seg.id === selectedId;
               const pos =
@@ -263,7 +265,7 @@ export default function MagicDisplayFaceEditor({
                         : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
                     }`}
                 >
-                  <span>{segmentIcon(seg.status, seg.mediaType)}</span>
+                  <span>{segmentIcon(seg.mediaType)}</span>
                   <span
                     className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
                       seg.status
@@ -275,7 +277,7 @@ export default function MagicDisplayFaceEditor({
           </div>
         </div>
 
-        {/* Liste des segments + détail du segment sélectionné */}
+        {/* Liste des segments + détail */}
         <div className="space-y-4">
           {/* Liste */}
           <div className="space-y-2">
@@ -325,7 +327,9 @@ export default function MagicDisplayFaceEditor({
               </p>
               <p className="mt-1 text-[10px] text-slate-400">
                 Statut :{" "}
-                <span className="font-semibold">{selectedSegment.status}</span>
+                <span className="font-semibold">
+                  {statusLabel(selectedSegment.status)}
+                </span>
               </p>
             </div>
 
