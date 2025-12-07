@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
@@ -15,6 +15,7 @@ type Segment = {
   angleDeg: number; // angle du centre du segment (en degrés)
   hasMedia: boolean;
   mediaType?: MediaType;
+  mediaUrl?: string | null; // URL locale pour prévisualiser le fichier
 };
 
 const INITIAL_SEGMENTS: Segment[] = [
@@ -67,12 +68,12 @@ export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
 
   const titleFromStudio = searchParams.get("title") ?? "";
-const modeFromStudio = searchParams.get("mode") ?? "FREE";
-const formatFromStudio = searchParams.get("format") ?? "portrait";
-const ppvPriceFromStudio = searchParams.get("ppvPrice");
+  const modeFromStudio = searchParams.get("mode") ?? "FREE";
+  const formatFromStudio = searchParams.get("format") ?? "portrait"; // gardé pour la suite si besoin
+  const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
-const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
-  
+  const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
+
   const modeLabel =
     modeFromStudio === "SUB"
       ? "Abonnement"
@@ -95,18 +96,47 @@ const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
+
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
+  // Ouvre la bonne fenêtre de fichier
   const handleChooseMedia = (type: MediaType) => {
     if (!selectedSegment) return;
+
+    if (type === "photo") {
+      photoInputRef.current?.click();
+    } else {
+      videoInputRef.current?.click();
+    }
+  };
+
+  // Gère le fichier choisi + sauvegarde URL locale
+  const handleMediaFileChange = (
+    event: ChangeEvent<HTMLInputElement>,
+    type: MediaType
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedSegment) return;
+
+    const url = URL.createObjectURL(file); // prévisu locale
 
     setSegments((prev) =>
       prev.map((seg) =>
         seg.id === selectedSegment.id
-          ? { ...seg, hasMedia: true, mediaType: type }
+          ? {
+              ...seg,
+              hasMedia: true,
+              mediaType: type,
+              mediaUrl: url,
+            }
           : seg
       )
     );
+
+    // reset pour pouvoir ré-uploader le même fichier si besoin
+    event.target.value = "";
   };
 
   const handleSelectFace = (id: number | null) => {
@@ -124,53 +154,50 @@ const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
           Construction pédagogique de ton Magic Clock
         </h1>
         <p className="text-sm text-slate-600">
-          Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
-          plusieurs segments pédagogiques (diagnostic, application, patine,
-          routine maison, etc.).
+          Le cube représente l&apos;œuvre complète (6 faces). Chaque face
+          contient plusieurs segments pédagogiques (diagnostic, application,
+          patine, routine maison, etc.).
         </p>
       </header>
-{/* Panneau venant de Magic Studio */}
-{titleFromStudio && (
-  <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      {/* Origine */}
-      <span className="font-semibold">Magic Studio</span>
-      <span>✅</span>
 
-      <span className="text-slate-300">·</span>
+      {/* Panneau venant de Magic Studio */}
+      {titleFromStudio && (
+        <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
+          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            <span className="font-semibold">Magic Studio</span>
+            <span>✅</span>
 
-      {/* Titre du Magic Clock */}
-      <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
-        {titleFromStudio}
-      </span>
+            <span className="text-slate-300">·</span>
 
-      <span className="text-slate-300">·</span>
+            <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
+              {titleFromStudio}
+            </span>
 
-      {/* Mode (FREE / Abonnement / PayPerView) */}
-      <span className="font-medium">{modeLabel}</span>
+            <span className="text-slate-300">·</span>
 
-      {/* Prix PPV envoyé depuis Magic Studio */}
-      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono">
-            {Number(ppvPriceFromStudio).toFixed(2)} CHF
-          </span>
-        </>
+            <span className="font-medium">{modeLabel}</span>
+
+            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono">
+                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                </span>
+              </>
+            )}
+
+            {modeFromStudio === "SUB" && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono">
+                  {subscriptionPriceMock.toFixed(2)} CHF / mois
+                </span>
+              </>
+            )}
+          </p>
+        </section>
       )}
 
-      {/* Prix d'abonnement simulé (Cockpit) */}
-      {modeFromStudio === "SUB" && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono">
-            {subscriptionPriceMock.toFixed(2)} CHF / mois
-          </span>
-        </>
-      )}
-    </p>
-  </section>
-)}
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
@@ -254,9 +281,10 @@ const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne représente une face du cube. On reste volontairement
-                neutre : les créatrices peuvent renommer les faces comme elles le
-                souhaitent (diagnostic, patine, routine, etc.).
+                Chaque ligne représente une face du cube. On reste
+                volontairement neutre : les créatrices peuvent renommer les
+                faces comme elles le souhaitent (diagnostic, patine, routine,
+                etc.).
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
@@ -299,7 +327,7 @@ const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
         {/* Panneau d’action face sélectionnée */}
         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-xs text-slate-700 sm:px-4">
           {selectedSegment ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                   Face sélectionnée
@@ -311,21 +339,42 @@ const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
                   {selectedSegment.description}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("photo")}
-                  className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
-                >
-                  📷 Ajouter une photo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("video")}
-                  className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
-                >
-                  🎬 Ajouter une vidéo
-                </button>
+
+              <div className="flex flex-1 flex-col items-start gap-2 sm:items-end">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("photo")}
+                    className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
+                  >
+                    📷 Ajouter une photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("video")}
+                    className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
+                  >
+                    🎬 Ajouter une vidéo
+                  </button>
+                </div>
+
+                {selectedSegment.mediaUrl && (
+                  <div className="mt-1 w-full max-w-xs">
+                    {selectedSegment.mediaType === "photo" ? (
+                      <img
+                        src={selectedSegment.mediaUrl}
+                        alt="Prévisualisation"
+                        className="h-32 w-full rounded-xl object-cover"
+                      />
+                    ) : (
+                      <video
+                        src={selectedSegment.mediaUrl}
+                        className="h-32 w-full rounded-xl object-cover"
+                        controls
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -362,6 +411,22 @@ const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
           faceLabel={selectedSegment?.label ?? "Face 1"}
         />
       </section>
+
+      {/* Inputs cachés pour l’upload local des médias */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "photo")}
+      />
+      <input
+        ref={videoInputRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "video")}
+      />
     </main>
   );
 }
