@@ -17,13 +17,13 @@ type MediaState = {
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type Side = "before" | "after";
-type Orientation = "portrait" | "horizontal";
+type CanvasFormat = "portrait" | "horizontal";
 
 export default function MagicStudioPage() {
   const router = useRouter();
 
-  // Orientation du canevas
-  const [orientation, setOrientation] = useState<Orientation>("portrait");
+  // Format du canevas
+  const [canvasFormat, setCanvasFormat] = useState<CanvasFormat>("portrait");
 
   // Import médias
   const [before, setBefore] = useState<MediaState>({
@@ -45,7 +45,7 @@ export default function MagicStudioPage() {
 
   // Mode de publication
   const [mode, setMode] = useState<PublishMode>("FREE");
-  const [ppvPrice, setPpvPrice] = useState<number>(0.99); // prix indicatif pour PPV
+  const [ppvPrice, setPpvPrice] = useState<number>(0.99); // 0.99 → 999.99 CHF
 
   // Sélection couverture vidéo
   const [selectingCoverFor, setSelectingCoverFor] = useState<Side | null>(null);
@@ -96,11 +96,29 @@ export default function MagicStudioPage() {
     updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
-  // Passer à Magic Display
+  // Aller vers Magic Display avec les infos du Studio
   function handleGoToDisplay() {
-    // Plus tard: on passera les infos (orientation, mode, etc.) au backend
-    router.push("/magic-display");
+    const params = new URLSearchParams();
+
+    if (title.trim()) params.set("title", title.trim());
+    if (hashtags.trim()) params.set("hashtags", hashtags.trim());
+
+    params.set("mode", mode);
+    params.set("format", canvasFormat);
+
+    if (mode === "PPV") {
+      params.set("ppvPrice", ppvPrice.toFixed(2)); // ex: "0.99"
+    }
+
+    router.push(`/magic-display?${params.toString()}`);
   }
+
+  const modeDescription =
+    mode === "FREE"
+      ? "Accessible à tous les utilisateurs."
+      : mode === "SUB"
+      ? "Réservé à tes abonnés payants."
+      : "Débloqué à l’achat pour chaque spectateur (PayPerView).";
 
   // === Couverture vidéo façon TikTok (MVP) ==========================
 
@@ -144,31 +162,30 @@ export default function MagicStudioPage() {
     return (media.coverTime / media.duration) * 100;
   })();
 
-  // =================================================================
-
   const publishModes: { value: PublishMode; label: string }[] = [
     { value: "FREE", label: "FREE" },
     { value: "SUB", label: "Abonnement" },
     { value: "PPV", label: "PayPerView" },
   ];
 
-  const isPortrait = orientation === "portrait";
-  const canvasAspect = isPortrait ? "aspect-[4/5]" : "aspect-[16/9]";
+  const isPortrait = canvasFormat === "portrait";
 
   return (
     <main className="container max-w-4xl py-8 space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Magic Studio — Avant / Après</h1>
+        <h1 className="text-2xl font-semibold">
+          Magic Studio — Avant / Après
+        </h1>
       </header>
 
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
-        {/* Switch Portrait / Horizontal */}
-        <div className="flex justify-end">
-          <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
+        {/* Toggle Portrait / Horizontal */}
+        <div className="flex justify-center">
+          <div className="inline-flex rounded-full bg-slate-100 p-1 text-xs font-medium">
             <button
               type="button"
-              onClick={() => setOrientation("portrait")}
-              className={`rounded-full px-3 py-1 transition ${
+              onClick={() => setCanvasFormat("portrait")}
+              className={`rounded-full px-4 py-1 transition ${
                 isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
               }`}
             >
@@ -176,9 +193,11 @@ export default function MagicStudioPage() {
             </button>
             <button
               type="button"
-              onClick={() => setOrientation("horizontal")}
-              className={`rounded-full px-3 py-1 transition ${
-                !isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+              onClick={() => setCanvasFormat("horizontal")}
+              className={`rounded-full px-4 py-1 transition ${
+                !isPortrait
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500"
               }`}
             >
               Horizontal
@@ -186,13 +205,19 @@ export default function MagicStudioPage() {
           </div>
         </div>
 
-        {/* CANEVAS AVANT / APRÈS (même logique qu’Amazing) */}
+        {/* CANEVAS AVANT / APRÈS */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          <div className={`relative mx-auto ${canvasAspect} w-full max-w-xl`}>
-            {/* Grille : portrait = 2 colonnes, horizontal = 2 lignes */}
+          <div
+            className={`relative mx-auto w-full max-w-xl ${
+              isPortrait ? "aspect-[4/5]" : "aspect-[16/9]"
+            }`}
+          >
+            {/* Grille 2 zones qui remplit tout le canevas */}
             <div
-              className={`absolute inset-0 grid ${
-                isPortrait ? "grid-cols-2" : "grid-rows-2"
+              className={`absolute inset-0 ${
+                isPortrait
+                  ? "grid grid-cols-2 divide-x divide-slate-200"
+                  : "grid grid-rows-2 divide-y divide-slate-200"
               }`}
             >
               {/* AVANT */}
@@ -298,13 +323,6 @@ export default function MagicStudioPage() {
               </button>
             </div>
 
-            {/* Trait séparateur : vertical en portrait, horizontal en paysage */}
-            {isPortrait ? (
-              <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-white/80" />
-            ) : (
-              <div className="pointer-events-none absolute inset-x-4 top-1/2 h-px -translate-y-1/2 bg-white/80" />
-            )}
-
             {/* Avatar centre */}
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
               <img
@@ -377,47 +395,41 @@ export default function MagicStudioPage() {
             />
           </div>
 
-          {/* Mode de publication + flèche pour passer à Magic Display */}
+          {/* Mode de publication + bouton vers Magic Display */}
           <div className="space-y-1 pt-1">
             <label className="text-xs font-medium text-slate-700">
               Mode de publication
             </label>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
-                {publishModes.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setMode(opt.value)}
-                    className={`rounded-full px-3 py-1 transition ${
-                      mode === opt.value
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
+                  {publishModes.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setMode(opt.value)}
+                      className={`rounded-full px-3 py-1 transition ${
+                        mode === opt.value
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-500">{modeDescription}</p>
               </div>
 
-              {/* Flèche pour passer à Magic Display */}
               <button
                 type="button"
                 onClick={handleGoToDisplay}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 aria-label="Passer à Magic Display"
               >
                 <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-
-            <p className="text-[11px] text-slate-500">
-              {mode === "FREE"
-                ? "Accessible à tous les utilisateurs."
-                : mode === "SUB"
-                ? "Réservé à tes abonnés payants."
-                : "Débloqué à l’achat pour chaque spectateur (PayPerView)."}
-            </p>
           </div>
 
           {/* Sélecteur de prix PPV */}
