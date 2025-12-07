@@ -2,11 +2,12 @@
 
 import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import { Camera, Video, FileText, Plus } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
 
-type MediaType = "photo" | "video";
+type MediaType = "photo" | "video" | "file";
 
 type Segment = {
   id: number;
@@ -69,8 +70,9 @@ export default function MagicDisplayClient() {
 
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
-  const formatFromStudio = searchParams.get("format") ?? "portrait"; // on le garde au cas où pour la suite
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
+  // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
+  // const formatFromStudio = searchParams.get("format") ?? "portrait";
 
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
@@ -94,32 +96,37 @@ export default function MagicDisplayClient() {
     .toUpperCase();
 
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
-  const [selectedId, setSelectedId] = useState<number | null>(1);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const selectedSegment =
-    segments.find((s) => s.id === selectedId) ?? segments[0] ?? null;
+  const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
+  // Inputs cachés pour upload par face
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSelectFace = (id: number | null) => {
+  // --- Gestion média sur les FACES (cube) -----------------------------------
+
+  function handleSelectFace(id: number | null) {
     setSelectedId((prev) => (prev === id ? null : id));
-  };
+  }
 
-  const handleChooseMedia = (type: MediaType) => {
+  function handleChooseMedia(type: MediaType) {
     if (!selectedSegment) return;
 
     if (type === "photo") {
       photoInputRef.current?.click();
-    } else {
+    } else if (type === "video") {
       videoInputRef.current?.click();
+    } else {
+      fileInputRef.current?.click();
     }
-  };
+  }
 
-  const handleMediaFileChange = (
+  function handleMediaFileChange(
     event: ChangeEvent<HTMLInputElement>,
     type: MediaType
-  ) => {
+  ) {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
 
@@ -140,7 +147,34 @@ export default function MagicDisplayClient() {
 
     // reset pour pouvoir ré-uploader le même fichier si besoin
     event.target.value = "";
-  };
+  }
+
+  // Helper pour le label média dans la liste de faces
+  function mediaTypeLabel(type?: MediaType) {
+    if (type === "photo") return "Photo";
+    if (type === "video") return "Vidéo";
+    if (type === "file") return "Fichier";
+    return "";
+  }
+
+  // Helper icône pour les points autour du cercle
+  function renderSegmentIcon(seg: Segment) {
+    if (!seg.hasMedia) {
+      return <Plus className="h-3.5 w-3.5" />;
+    }
+
+    if (seg.mediaType === "photo") {
+      return <Camera className="h-3.5 w-3.5" />;
+    }
+    if (seg.mediaType === "video") {
+      return <Video className="h-3.5 w-3.5" />;
+    }
+    if (seg.mediaType === "file") {
+      return <FileText className="h-3.5 w-3.5" />;
+    }
+
+    return <Plus className="h-3.5 w-3.5" />;
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -163,23 +197,19 @@ export default function MagicDisplayClient() {
       {titleFromStudio && (
         <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
           <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            {/* Origine */}
             <span className="font-semibold">Magic Studio</span>
             <span>✅</span>
 
             <span className="text-slate-300">·</span>
 
-            {/* Titre du Magic Clock */}
             <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
               {titleFromStudio}
             </span>
 
             <span className="text-slate-300">·</span>
 
-            {/* Mode (FREE / Abonnement / PayPerView) */}
             <span className="font-medium">{modeLabel}</span>
 
-            {/* Prix PPV envoyé depuis Magic Studio */}
             {modeFromStudio === "PPV" && ppvPriceFromStudio && (
               <>
                 <span className="text-slate-300">·</span>
@@ -189,7 +219,6 @@ export default function MagicDisplayClient() {
               </>
             )}
 
-            {/* Prix d'abonnement simulé (Cockpit) */}
             {modeFromStudio === "SUB" && (
               <>
                 <span className="text-slate-300">·</span>
@@ -198,11 +227,6 @@ export default function MagicDisplayClient() {
                 </span>
               </>
             )}
-
-            {/* On garde le format en "sr-only" pour que la variable soit utilisée mais invisible */}
-            <span className="sr-only">
-              Format : {formatFromStudio === "horizontal" ? "Horizontal" : "Portrait"}
-            </span>
           </p>
         </section>
       )}
@@ -223,6 +247,7 @@ export default function MagicDisplayClient() {
                 {/* Avatar central */}
                 <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-slate-900 shadow-inner shadow-slate-400/70">
                   {currentCreator.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={currentCreator.avatar}
                       alt={currentCreator.name}
@@ -244,10 +269,6 @@ export default function MagicDisplayClient() {
 
                   const isSelected = seg.id === selectedId;
 
-                  let icon = "＋";
-                  if (seg.hasMedia && seg.mediaType === "photo") icon = "📷";
-                  if (seg.hasMedia && seg.mediaType === "video") icon = "🎬";
-
                   return (
                     <button
                       key={seg.id}
@@ -258,7 +279,9 @@ export default function MagicDisplayClient() {
                           seg.hasMedia
                             ? seg.mediaType === "photo"
                               ? "border-violet-200 bg-violet-50 text-violet-700"
-                              : "border-indigo-200 bg-indigo-50 text-indigo-700"
+                              : seg.mediaType === "video"
+                              ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-700"
                             : "border-slate-200 bg-white text-slate-500"
                         }
                         ${
@@ -269,11 +292,9 @@ export default function MagicDisplayClient() {
                       style={{ top: `${top}%`, left: `${left}%` }}
                       aria-label={`Face ${seg.label}`}
                     >
-                      {icon}
-
-                      {/* mini pastille statut */}
+                      {renderSegmentIcon(seg)}
                       {seg.hasMedia && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+                        <span className="absolute -right-1 -bottom-1 h-2 w-2 rounded-full border border-white bg-emerald-500" />
                       )}
                     </button>
                   );
@@ -302,6 +323,8 @@ export default function MagicDisplayClient() {
               <div className="space-y-2">
                 {segments.map((seg) => {
                   const isSelected = seg.id === selectedId;
+                  const mediaLabel = mediaTypeLabel(seg.mediaType);
+
                   return (
                     <button
                       key={seg.id}
@@ -317,10 +340,9 @@ export default function MagicDisplayClient() {
                       <div className="min-w-0">
                         <p className="font-semibold">
                           {seg.label}
-                          {seg.hasMedia &&
-                            (seg.mediaType === "photo"
-                              ? " · Photo"
-                              : " · Vidéo")}
+                          {seg.hasMedia && mediaLabel
+                            ? ` · ${mediaLabel}`
+                            : ""}
                         </p>
                         <p className="mt-0.5 truncate text-[11px] text-slate-500">
                           {seg.description}
@@ -352,39 +374,56 @@ export default function MagicDisplayClient() {
                   {selectedSegment.description}
                 </p>
               </div>
-              <div className="flex flex-col items-end gap-2 sm:items-start">
-                <div className="flex flex-wrap gap-2 pt-1">
+
+              <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => handleChooseMedia("photo")}
-                    className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
                   >
-                    📷 Ajouter une photo
+                    <Camera className="h-3.5 w-3.5" />
+                    <span>Ajouter une photo</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleChooseMedia("video")}
-                    className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
                   >
-                    🎬 Ajouter une vidéo
+                    <Video className="h-3.5 w-3.5" />
+                    <span>Ajouter une vidéo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("file")}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>Ajouter un fichier</span>
                   </button>
                 </div>
 
-                {/* Prévisualisation du média pour cette face */}
                 {selectedSegment.mediaUrl && (
-                  <div className="mt-2 w-full max-w-xs">
-                    {selectedSegment.mediaType === "photo" ? (
+                  <div className="mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-slate-900/5">
+                    {selectedSegment.mediaType === "video" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <video
+                        src={selectedSegment.mediaUrl}
+                        className="h-24 w-full object-cover"
+                        controls
+                      />
+                    ) : selectedSegment.mediaType === "photo" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={selectedSegment.mediaUrl}
                         alt="Prévisualisation"
-                        className="h-32 w-full rounded-xl object-cover"
+                        className="h-24 w-full object-cover"
                       />
                     ) : (
-                      <video
-                        src={selectedSegment.mediaUrl}
-                        className="h-32 w-full rounded-xl object-cover"
-                        controls
-                      />
+                      <div className="flex h-24 w-full items-center justify-center gap-2 text-[11px] text-slate-600">
+                        <FileText className="h-4 w-4" />
+                        <span>Fichier associé</span>
+                      </div>
                     )}
                   </div>
                 )}
@@ -394,8 +433,8 @@ export default function MagicDisplayClient() {
             <p className="text-[11px] text-slate-500">
               Clique sur un point autour du cercle, sur le cube 3D ou dans la
               liste pour sélectionner une face du cube, puis choisis si tu veux
-              y associer une photo ou une vidéo. (MVP local, aucune donnée
-              n&apos;est sauvegardée pour l&apos;instant.)
+              y associer une photo, une vidéo ou un fichier. (MVP local, aucune
+              donnée n&apos;est sauvegardée pour l&apos;instant.)
             </p>
           )}
         </div>
@@ -425,7 +464,7 @@ export default function MagicDisplayClient() {
         />
       </section>
 
-      {/* Inputs cachés pour l’upload local des médias */}
+      {/* Inputs cachés pour upload local des médias de face */}
       <input
         ref={photoInputRef}
         type="file"
@@ -439,6 +478,14 @@ export default function MagicDisplayClient() {
         accept="video/*"
         className="hidden"
         onChange={(e) => handleMediaFileChange(e, "video")}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        // on accepte tout, mais l’usage typique sera PDF / docs
+        accept="*/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "file")}
       />
     </main>
   );
