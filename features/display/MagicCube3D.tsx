@@ -63,6 +63,10 @@ export default function MagicCube3D({
         >
           {segments.slice(0, 6).map((seg, index) => {
             const isActive = seg.id === selectedId;
+            const isVisualMedia =
+              seg.hasMedia &&
+              seg.mediaUrl &&
+              (seg.mediaType === "photo" || seg.mediaType === "video");
 
             return (
               <button
@@ -72,69 +76,68 @@ export default function MagicCube3D({
                 style={{ transform: faceTransform(index) }}
                 className="absolute inset-[14%] [transform-style:preserve-3d]"
               >
-                {/* Carte de la face */}
+                {/* 🧊 Carte de la face */}
                 <div
                   className={[
-                    "relative flex h-full w-full flex-col items-center justify-center rounded-3xl border px-3 text-center text-xs",
-                    "bg-white/90 backdrop-blur-sm shadow-md transition",
+                    "relative flex h-full w-full items-center justify-center rounded-3xl border bg-white/90 px-3 text-center text-xs backdrop-blur-sm shadow-md transition",
                     isActive
                       ? "border-violet-400 shadow-violet-200"
                       : "border-slate-200 hover:border-violet-200",
                   ].join(" ")}
                 >
-                  {/* 🖼 Fond média si photo / vidéo */}
-                  {seg.hasMedia &&
-                    seg.mediaUrl &&
-                    (seg.mediaType === "photo" ||
-                      seg.mediaType === "video") && (
-                      <div className="absolute inset-0 overflow-hidden rounded-3xl">
-                        {seg.mediaType === "photo" ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={seg.mediaUrl}
-                            alt={seg.description}
-                            className="h-full w-full object-cover opacity-30"
-                          />
-                        ) : (
-                          <video
-                            src={seg.mediaUrl}
-                            className="h-full w-full object-cover opacity-30"
-                            muted
-                            loop
-                          />
-                        )}
-                        {/* voile blanc très doux */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/80 via-white/75 to-white/90" />
-                      </div>
-                    )}
-
-                  {/* Contenu au-dessus du fond */}
-                  <div className="relative z-10 space-y-1">
-                    {/* icône centrale dans un petit cercle, style Face universelle */}
-                    <div
-                      className={[
-                        "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
-                        seg.hasMedia
-                          ? "border-violet-400 text-violet-600"
-                          : "border-slate-200 text-slate-600",
-                      ].join(" ")}
-                    >
-                      {faceMediaIcon(seg)}
+                  {/* 🎥 / 📸 FULL MEDIA : la face entière devient l’image / la vidéo */}
+                  {isVisualMedia ? (
+                    <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                      {seg.mediaType === "photo" ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={seg.mediaUrl!}
+                          alt={seg.description}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={seg.mediaUrl!}
+                          className="h-full w-full object-cover"
+                          muted
+                          loop
+                          playsInline
+                        />
+                      )}
                     </div>
+                  ) : (
+                    /* 🧾 Variante texte (sans média, ou fichier) */
+                    <div className="relative z-10 space-y-1">
+                      {/* Petit cercle + icône comme sur Face universelle */}
+                      <div
+                        className={[
+                          "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
+                          seg.hasMedia && seg.mediaType === "file"
+                            ? "border-violet-400 text-violet-600"
+                            : "border-slate-200 text-slate-600",
+                        ].join(" ")}
+                      >
+                        {faceMediaIcon(seg)}
+                      </div>
 
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
-                      Face {seg.id}
-                    </p>
-                    <p className="text-xs font-semibold text-slate-900">
-                      {seg.description}
-                    </p>
-
-                    {seg.hasMedia && (
-                      <p className="text-[11px] text-emerald-600">
-                        Média associé
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                        Face {seg.id}
                       </p>
-                    )}
-                  </div>
+                      <p className="text-xs font-semibold text-slate-900">
+                        {seg.description}
+                      </p>
+                      {seg.hasMedia && seg.mediaType === "file" && (
+                        <p className="text-[11px] text-emerald-600">
+                          Média associé
+                        </p>
+                      )}
+                      {!seg.hasMedia && (
+                        <p className="text-[11px] text-slate-400">
+                          Aucun média associé pour l&apos;instant
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </button>
             );
@@ -174,7 +177,7 @@ function faceTransform(index: number): string {
   }
 }
 
-// Icône centrale en fonction du type de média
+// Icône centrale quand on n’est pas en full photo / vidéo
 function faceMediaIcon(face: FaceLike) {
   if (!face.hasMedia || !face.mediaType) {
     return <Plus className="h-3.5 w-3.5" />;
