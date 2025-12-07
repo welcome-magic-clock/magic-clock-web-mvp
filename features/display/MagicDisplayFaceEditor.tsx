@@ -6,10 +6,10 @@ import {
   useRef,
   type ChangeEvent,
 } from "react";
-import { Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { Camera, Clapperboard, FileText } from "lucide-react";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
-type MediaType = "photo" | "video";
+type MediaType = "photo" | "video" | "file";
 
 type MagicDisplayFaceEditorProps = {
   creatorName?: string;
@@ -30,9 +30,14 @@ type Segment = {
 
 type FaceState = {
   faceId: number;
+  segmentCount: number; // 1 → 12
   segments: Segment[];
 };
 
+const MAX_SEGMENTS = 12;
+const DEFAULT_SEGMENTS = 4;
+
+// 12 segments possibles (labels par défaut)
 const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 1,
@@ -66,14 +71,70 @@ const INITIAL_SEGMENTS: Segment[] = [
     mediaUrl: null,
     notes: "",
   },
-];
-
-// Même positions que ton ancien code (haut, droite, bas, gauche)
-const positionClasses = [
-  "top-3 left-1/2 -translate-x-1/2", // segment 1
-  "top-1/2 right-3 -translate-y-1/2", // segment 2
-  "bottom-3 left-1/2 -translate-x-1/2", // segment 3
-  "top-1/2 left-3 -translate-y-1/2", // segment 4
+  {
+    id: 5,
+    label: "Finition / coiffage",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 6,
+    label: "Routine maison",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 7,
+    label: "Astuces pro",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 8,
+    label: "Erreurs à éviter",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 9,
+    label: "Produits utilisés",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 10,
+    label: "Temps / timing",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 11,
+    label: "Variantes possibles",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 12,
+    label: "Résumé final",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
 ];
 
 const statusDotClass = (status: SegmentStatus) => {
@@ -88,13 +149,16 @@ const statusLabel = (status: SegmentStatus) => {
   return "vide";
 };
 
-// Icône = type de média (style vectoriel, rond de couleur = statut)
+// Icône centrale dans le rond
 const segmentIcon = (mediaType?: MediaType | null) => {
   if (mediaType === "photo") {
-    return <ImageIcon className="h-3.5 w-3.5" />;
+    return <Camera className="h-3.5 w-3.5" />;
   }
   if (mediaType === "video") {
-    return <VideoIcon className="h-3.5 w-3.5" />;
+    return <Clapperboard className="h-3.5 w-3.5" />;
+  }
+  if (mediaType === "file") {
+    return <FileText className="h-3.5 w-3.5" />;
   }
   return <span className="text-xs">＋</span>;
 };
@@ -106,21 +170,23 @@ export default function MagicDisplayFaceEditor({
   faceId = 1,
   faceLabel = "Face 1",
 }: MagicDisplayFaceEditorProps) {
-  // 🧠 1 état par face (cube)
+  // 🧠 1 état par face
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
     [faceId]: {
       faceId,
+      segmentCount: DEFAULT_SEGMENTS,
       segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
     },
   }));
 
-  const [selectedId, setSelectedId] = useState<number>(INITIAL_SEGMENTS[0].id);
+  const [selectedId, setSelectedId] = useState<number>(1);
 
-  // Inputs cachés pour upload par segment
+  // Inputs cachés pour les médias
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Quand la face active change (clic dans Magic Display), on s’assure qu’elle a un état
+  // Initialiser la face si nécessaire
   useEffect(() => {
     setFaces((prev) => {
       if (prev[faceId]) return prev;
@@ -128,56 +194,83 @@ export default function MagicDisplayFaceEditor({
         ...prev,
         [faceId]: {
           faceId,
+          segmentCount: DEFAULT_SEGMENTS,
           segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
         },
       };
     });
-    setSelectedId(INITIAL_SEGMENTS[0].id);
+    setSelectedId(1);
   }, [faceId]);
 
-  const currentFace =
-    faces[faceId] ?? { faceId, segments: INITIAL_SEGMENTS.map((s) => ({ ...s })) };
+  const fallbackFace: FaceState = {
+    faceId,
+    segmentCount: DEFAULT_SEGMENTS,
+    segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
+  };
+
+  const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
+  const segmentCount = Math.min(
+    MAX_SEGMENTS,
+    Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS)
+  );
+
   const selectedSegment =
     segments.find((s) => s.id === selectedId) ?? segments[0];
+
+  function updateFace(updater: (prev: FaceState) => FaceState) {
+    setFaces((prev) => {
+      const existing = prev[faceId] ?? fallbackFace;
+      const updated = updater(existing);
+      return {
+        ...prev,
+        [faceId]: updated,
+      };
+    });
+  }
 
   function updateSegment(
     segmentId: number,
     updater: (prev: Segment) => Segment
   ) {
-    setFaces((prev) => {
-      const existing =
-        prev[faceId] ??
-        ({
-          faceId,
-          segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
-        } as FaceState);
-
+    updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
         s.id === segmentId ? updater(s) : s
       );
-
       return {
-        ...prev,
-        [faceId]: {
-          faceId,
-          segments: updatedSegments,
-        },
+        ...existing,
+        segments: updatedSegments,
       };
     });
   }
 
-  // Ouverture de l’input correspondant
+  // 🔢 Changer le nombre de segments (1 → 12)
+  function handleSegmentCountChange(count: number) {
+    const clamped = Math.min(MAX_SEGMENTS, Math.max(1, count));
+    updateFace((existing) => ({
+      ...existing,
+      segmentCount: clamped,
+    }));
+
+    setSelectedId((prevId) => {
+      // ids = 1..12 → si prevId > clamped, on revient à 1
+      return prevId > clamped ? 1 : prevId;
+    });
+  }
+
+  // Ouverture des inputs
   function handleChooseMedia(type: MediaType) {
     if (!selectedSegment) return;
     if (type === "photo") {
       photoInputRef.current?.click();
-    } else {
+    } else if (type === "video") {
       videoInputRef.current?.click();
+    } else {
+      fileInputRef.current?.click();
     }
   }
 
-  // Upload local : dès qu’un fichier est attaché → statut "complete" (vert)
+  // Upload local → statut "complete"
   function handleMediaFileChange(
     event: ChangeEvent<HTMLInputElement>,
     type: MediaType
@@ -194,7 +287,6 @@ export default function MagicDisplayFaceEditor({
       status: "complete",
     }));
 
-    // pour pouvoir ré-upload le même fichier si besoin
     event.target.value = "";
   }
 
@@ -209,6 +301,24 @@ export default function MagicDisplayFaceEditor({
       status:
         prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
     }));
+  }
+
+  // Calcul de la position des segments comme une horloge (12 heures)
+  function getSegmentPositionStyle(index: number) {
+    const count = segmentCount || 1;
+    const radiusPercent = 42; // distance du centre
+    const angleStep = 360 / count;
+    const startAngleDeg = -90; // 12h en haut
+    const angleDeg = startAngleDeg + angleStep * index;
+    const rad = (angleDeg * Math.PI) / 180;
+
+    const top = 50 + Math.sin(rad) * radiusPercent;
+    const left = 50 + Math.cos(rad) * radiusPercent;
+
+    return {
+      top: `${top}%`,
+      left: `${left}%`,
+    };
   }
 
   return (
@@ -233,22 +343,40 @@ export default function MagicDisplayFaceEditor({
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
-          <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-            {creatorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
-                alt={creatorName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold">
-                {creatorInitials}
-              </span>
-            )}
-          </span>
-          <span className="font-medium">{creatorName}</span>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
+            <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+              {creatorAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-semibold">
+                  {creatorInitials}
+                </span>
+              )}
+            </span>
+            <span className="font-medium">{creatorName}</span>
+          </div>
+
+          {/* Contrôle nombre de segments (1 → 12) */}
+          <div className="flex items-center gap-2 text-[11px] text-slate-600">
+            <span>Segments sur cette face</span>
+            <span className="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-800">
+              {segmentCount}
+            </span>
+            <input
+              type="range"
+              min={1}
+              max={MAX_SEGMENTS}
+              value={segmentCount}
+              onChange={(e) => handleSegmentCountChange(Number(e.target.value))}
+              className="w-28 accent-brand-500"
+            />
+          </div>
         </div>
       </header>
 
@@ -279,24 +407,22 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* Points de segments */}
-            {segments.map((seg, index) => {
+            {/* Points de segments (1 → segmentCount) */}
+            {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
-              const pos =
-                positionClasses[index] ??
-                "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2";
 
               return (
                 <button
                   key={seg.id}
                   type="button"
                   onClick={() => setSelectedId(seg.id)}
-                  className={`absolute ${pos} flex h-10 w-10 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
+                  className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                     ${
                       isSelected
                         ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
                         : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
                     }`}
+                  style={getSegmentPositionStyle(index)}
                 >
                   {segmentIcon(seg.mediaType)}
                   <span
@@ -310,11 +436,11 @@ export default function MagicDisplayFaceEditor({
           </div>
         </div>
 
-        {/* Liste des segments + détail */}
+        {/* Liste + détail */}
         <div className="space-y-4">
           {/* Liste */}
           <div className="space-y-2">
-            {segments.map((seg) => {
+            {segments.slice(0, segmentCount).map((seg) => {
               const isSelected = seg.id === selectedId;
               return (
                 <button
@@ -333,6 +459,7 @@ export default function MagicDisplayFaceEditor({
                       Segment {seg.id} – {seg.label}
                       {seg.mediaType === "photo" && " · Photo"}
                       {seg.mediaType === "video" && " · Vidéo"}
+                      {seg.mediaType === "file" && " · Fichier"}
                     </p>
                     <p className="text-[11px] text-slate-500">
                       Chapitre de cette face (diagnostic, application, etc.).
@@ -372,7 +499,7 @@ export default function MagicDisplayFaceEditor({
                 onClick={() => handleChooseMedia("photo")}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
               >
-                <ImageIcon className="h-3.5 w-3.5" />
+                <Camera className="h-3.5 w-3.5" />
                 <span>Ajouter une photo</span>
               </button>
               <button
@@ -380,12 +507,20 @@ export default function MagicDisplayFaceEditor({
                 onClick={() => handleChooseMedia("video")}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
               >
-                <VideoIcon className="h-3.5 w-3.5" />
+                <Clapperboard className="h-3.5 w-3.5" />
                 <span>Ajouter une vidéo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChooseMedia("file")}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>Ajouter un fichier</span>
               </button>
             </div>
 
-            {/* Preview média si présent */}
+            {/* Preview média */}
             {selectedSegment.mediaUrl && (
               <div className="mt-1 w-full">
                 {selectedSegment.mediaType === "photo" ? (
@@ -395,12 +530,17 @@ export default function MagicDisplayFaceEditor({
                     alt="Prévisualisation"
                     className="h-40 w-full rounded-2xl object-cover"
                   />
-                ) : (
+                ) : selectedSegment.mediaType === "video" ? (
                   <video
                     src={selectedSegment.mediaUrl}
                     className="h-40 w-full rounded-2xl object-cover"
                     controls
                   />
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
+                    <FileText className="h-4 w-4" />
+                    <span>Fichier ajouté pour ce segment.</span>
+                  </div>
                 )}
               </div>
             )}
@@ -427,7 +567,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* Inputs cachés pour l’upload local des médias */}
+      {/* Inputs cachés pour l’upload local */}
       <input
         ref={photoInputRef}
         type="file"
@@ -441,6 +581,13 @@ export default function MagicDisplayFaceEditor({
         accept="video/*"
         className="hidden"
         onChange={(e) => handleMediaFileChange(e, "video")}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.txt,application/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "file")}
       />
     </section>
   );
