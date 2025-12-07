@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
+
+type FaceMediaType = "photo" | "video" | "file" | undefined;
 
 type FaceLike = {
   id: number;
   label: string;
   description: string;
   hasMedia: boolean;
+  mediaType?: FaceMediaType; // on récupère l’info depuis MagicDisplayClient
 };
 
 type MagicCube3DProps = {
@@ -44,6 +48,22 @@ export default function MagicCube3D({
     onSelect(id);
   };
 
+  function renderFaceIcon(face: FaceLike) {
+    if (!face.hasMedia) {
+      return <Plus className="h-4 w-4 text-slate-400" />;
+    }
+    if (face.mediaType === "photo") {
+      return <Camera className="h-4 w-4 text-violet-500" />;
+    }
+    if (face.mediaType === "video") {
+      return <Clapperboard className="h-4 w-4 text-violet-500" />;
+    }
+    if (face.mediaType === "file") {
+      return <FileText className="h-4 w-4 text-violet-500" />;
+    }
+    return <Plus className="h-4 w-4 text-slate-400" />;
+  }
+
   return (
     <div className="w-full">
       <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -66,34 +86,47 @@ export default function MagicCube3D({
                 type="button"
                 onClick={() => handleFaceClick(seg.id)}
                 className={[
-                  "absolute inset-[14%] flex items-center justify-center rounded-3xl border px-3 text-center text-xs",
-                  "bg-white/90 backdrop-blur-sm shadow-md transition",
-                  // état sélectionné
+                  "absolute inset-[12%] flex items-center justify-center rounded-[2.1rem] border px-3 text-center text-xs",
+                  "bg-white/92 backdrop-blur-sm shadow-[0_18px_45px_rgba(15,23,42,0.15)] transition-[transform,box-shadow,border]",
                   isActive
-                    ? "border-violet-400 shadow-violet-200"
+                    ? "border-violet-400 shadow-violet-200/70"
                     : "border-slate-200 hover:border-violet-200",
-                  // état complété (média associé)
-                  isCompleted ? "ring-1 ring-emerald-300/80" : "",
                 ].join(" ")}
                 style={{ transform: faceTransform(index) }}
               >
-                {/* Pastille complétée */}
-                {isCompleted && (
-                  <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-500" />
-                )}
+                <div className="space-y-2">
+                  {/* Cercle central + icône */}
+                  <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
+                    {/* anneau externe fin */}
+                    <div className="absolute inset-0 rounded-full border border-violet-300/80" />
+                    {/* anneau interne */}
+                    <div className="absolute inset-2 rounded-full border border-violet-500/80 bg-violet-50/40" />
+                    {/* noyau blanc avec l’icône */}
+                    <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+                      {renderFaceIcon(seg)}
+                    </div>
+                    {/* pastille verte quand média associé */}
+                    {isCompleted && (
+                      <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
+                    )}
+                  </div>
 
-                <div className="space-y-1">
+                  {/* Texte face */}
                   <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
                     Face {seg.id}
                   </p>
                   <p className="text-xs font-semibold text-slate-900">
                     {seg.description}
                   </p>
-                  {seg.hasMedia && (
-                    <p className="text-[11px] text-emerald-600">
-                      Média associé
-                    </p>
-                  )}
+                  <p
+                    className={`text-[11px] ${
+                      isCompleted ? "text-emerald-600" : "text-slate-300"
+                    }`}
+                  >
+                    {isCompleted
+                      ? "Média associé"
+                      : "Aucun média associé pour l'instant"}
+                  </p>
                 </div>
               </button>
             );
