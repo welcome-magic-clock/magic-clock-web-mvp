@@ -129,7 +129,7 @@ export default function MagicDisplayClient() {
       </header>
 
       {/* Panneau venant de Magic Studio */}
-     {titleFromStudio && (
+    {titleFromStudio && (
   <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
     <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
       <span className="font-semibold">Magic Studio</span>
@@ -152,7 +152,7 @@ export default function MagicDisplayClient() {
             {Number(ppvPriceFromStudio).toFixed(2)} CHF
           </span>
     </p>
-     </section>
+  </section>
 )}
 
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
