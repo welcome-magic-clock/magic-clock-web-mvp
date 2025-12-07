@@ -129,7 +129,7 @@ export default function MagicDisplayClient() {
       </header>
 
       {/* Panneau venant de Magic Studio */}
-    {titleFromStudio && (
+   {titleFromStudio && (
   <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
     <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
       <span className="font-semibold">Magic Studio</span>
@@ -151,10 +151,17 @@ export default function MagicDisplayClient() {
           <span className="font-mono">
             {Number(ppvPriceFromStudio).toFixed(2)} CHF
           </span>
+        </>
+      )}
+
+      <span className="text-slate-300">·</span>
+
+      <span className="font-medium">
+        {formatFromStudio === "horizontal" ? "Horizontal" : "Portrait"}
+      </span>
     </p>
   </section>
 )}
-
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
