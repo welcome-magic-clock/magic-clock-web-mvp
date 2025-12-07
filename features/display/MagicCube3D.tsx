@@ -58,47 +58,64 @@ export default function MagicCube3D({
           }}
         >
           {segments.slice(0, 6).map((seg, index) => {
-            const isActive = seg.id === selectedId;
-            const isCompleted = seg.hasMedia;
+  const isActive = seg.id === selectedId;
+  const hasBackground = seg.hasMedia && seg.mediaUrl;
 
-            return (
-              <button
-                key={seg.id}
-                type="button"
-                onClick={() => handleFaceClick(seg.id)}
-                className={[
-                  "absolute inset-[14%] flex items-center justify-center rounded-3xl border px-3 text-center text-xs",
-                  "bg-white/90 backdrop-blur-sm shadow-md transition",
-                  // état sélectionné
-                  isActive
-                    ? "border-violet-400 shadow-violet-200"
-                    : "border-slate-200 hover:border-violet-200",
-                  // état complété (média associé)
-                  isCompleted ? "ring-1 ring-emerald-300/80" : "",
-                ].join(" ")}
-                style={{ transform: faceTransform(index) }}
-              >
-                {/* Pastille complétée */}
-                {isCompleted && (
-                  <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-500" />
-                )}
+  const classes = [
+    "absolute inset-[14%] rounded-3xl border shadow-md flex items-center justify-center px-3 text-center",
+    "transition-colors",
+    hasBackground ? "" : "bg-white/90 backdrop-blur-sm",
+    isActive ? "border-violet-400 shadow-violet-200" : "border-slate-200 hover:border-violet-200",
+  ].join(" ");
 
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
-                    Face {seg.id}
-                  </p>
-                  <p className="text-xs font-semibold text-slate-900">
-                    {seg.description}
-                  </p>
-                  {seg.hasMedia && (
-                    <p className="text-[11px] text-emerald-600">
-                      Média associé
-                    </p>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+  const style: React.CSSProperties = {
+    transform: faceTransform(index),
+    ...(hasBackground
+      ? {
+          backgroundImage: `linear-gradient(to bottom, rgba(15,23,42,0.18), rgba(15,23,42,0.7)), url(${seg.mediaUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }
+      : {}),
+  };
+
+  return (
+    <button
+      key={seg.id}
+      type="button"
+      onClick={() => handleFaceClick(seg.id)}
+      className={classes}
+      style={style}
+    >
+      <div
+        className={[
+          "space-y-1",
+          hasBackground
+            ? "text-slate-50 drop-shadow-[0_1px_2px_rgba(15,23,42,0.7)]"
+            : "",
+        ].join(" ")}
+      >
+        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+          Face {seg.id}
+        </p>
+        <p className="text-xs font-semibold">
+          {seg.description}
+        </p>
+        {seg.hasMedia && (
+          <p
+            className={
+              hasBackground
+                ? "text-[11px] font-medium text-emerald-200"
+                : "text-[11px] text-emerald-600"
+            }
+          >
+            Média associé
+          </p>
+        )}
+      </div>
+    </button>
+  );
+})}
         </div>
 
         {/* Halo léger global */}
