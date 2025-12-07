@@ -7,6 +7,7 @@ type FaceLike = {
   label: string;
   description: string;
   hasMedia: boolean;
+  mediaUrl?: string | null; // 🆕 fond visuel éventuel
 };
 
 type MagicCube3DProps = {
