@@ -127,9 +127,8 @@ export default function MagicDisplayClient() {
           routine maison, etc.).
         </p>
       </header>
-
-      {/* Panneau venant de Magic Studio */}
-   {titleFromStudio && (
+{/* Panneau venant de Magic Studio */}
+{titleFromStudio && (
   <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
     <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
       <span className="font-semibold">Magic Studio</span>
@@ -153,12 +152,6 @@ export default function MagicDisplayClient() {
           </span>
         </>
       )}
-
-      <span className="text-slate-300">·</span>
-
-      <span className="font-medium">
-        {formatFromStudio === "horizontal" ? "Horizontal" : "Portrait"}
-      </span>
     </p>
   </section>
 )}
