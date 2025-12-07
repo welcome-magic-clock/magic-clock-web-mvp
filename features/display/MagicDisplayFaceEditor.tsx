@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type ChangeEvent,
+} from "react";
+import { Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video";
@@ -18,6 +24,7 @@ type Segment = {
   label: string;
   status: SegmentStatus;
   mediaType?: MediaType | null;
+  mediaUrl?: string | null;
   notes: string;
 };
 
@@ -32,6 +39,7 @@ const INITIAL_SEGMENTS: Segment[] = [
     label: "Diagnostic / observation",
     status: "empty",
     mediaType: null,
+    mediaUrl: null,
     notes: "",
   },
   {
@@ -39,6 +47,7 @@ const INITIAL_SEGMENTS: Segment[] = [
     label: "Préparation / sectionnement",
     status: "empty",
     mediaType: null,
+    mediaUrl: null,
     notes: "",
   },
   {
@@ -46,6 +55,7 @@ const INITIAL_SEGMENTS: Segment[] = [
     label: "Application principale",
     status: "empty",
     mediaType: null,
+    mediaUrl: null,
     notes: "",
   },
   {
@@ -53,6 +63,7 @@ const INITIAL_SEGMENTS: Segment[] = [
     label: "Patine / correction",
     status: "empty",
     mediaType: null,
+    mediaUrl: null,
     notes: "",
   },
 ];
@@ -77,11 +88,15 @@ const statusLabel = (status: SegmentStatus) => {
   return "vide";
 };
 
-// Icône = type de média (toujours gris), le rond colore le statut
+// Icône = type de média (style vectoriel, rond de couleur = statut)
 const segmentIcon = (mediaType?: MediaType | null) => {
-  if (mediaType === "photo") return "📷";
-  if (mediaType === "video") return "🎬";
-  return "＋";
+  if (mediaType === "photo") {
+    return <ImageIcon className="h-3.5 w-3.5" />;
+  }
+  if (mediaType === "video") {
+    return <VideoIcon className="h-3.5 w-3.5" />;
+  }
+  return <span className="text-xs">＋</span>;
 };
 
 export default function MagicDisplayFaceEditor({
@@ -100,6 +115,10 @@ export default function MagicDisplayFaceEditor({
   }));
 
   const [selectedId, setSelectedId] = useState<number>(INITIAL_SEGMENTS[0].id);
+
+  // Inputs cachés pour upload par segment
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
 
   // Quand la face active change (clic dans Magic Display), on s’assure qu’elle a un état
   useEffect(() => {
@@ -148,14 +167,35 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
+  // Ouverture de l’input correspondant
   function handleChooseMedia(type: MediaType) {
     if (!selectedSegment) return;
+    if (type === "photo") {
+      photoInputRef.current?.click();
+    } else {
+      videoInputRef.current?.click();
+    }
+  }
+
+  // Upload local : dès qu’un fichier est attaché → statut "complete" (vert)
+  function handleMediaFileChange(
+    event: ChangeEvent<HTMLInputElement>,
+    type: MediaType
+  ) {
+    const file = event.target.files?.[0];
+    if (!file || !selectedSegment) return;
+
+    const url = URL.createObjectURL(file);
+
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       mediaType: type,
-      // un média choisi = étape en cours (si elle était vide)
-      status: prev.status === "empty" ? "in-progress" : prev.status,
+      mediaUrl: url,
+      status: "complete",
     }));
+
+    // pour pouvoir ré-upload le même fichier si besoin
+    event.target.value = "";
   }
 
   function handleNotesChange(
@@ -166,15 +206,8 @@ export default function MagicDisplayFaceEditor({
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
-      status: prev.status === "empty" ? "in-progress" : prev.status,
-    }));
-  }
-
-  function markSegmentComplete() {
-    if (!selectedSegment) return;
-    updateSegment(selectedSegment.id, (prev) => ({
-      ...prev,
-      status: "complete",
+      status:
+        prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
     }));
   }
 
@@ -265,7 +298,7 @@ export default function MagicDisplayFaceEditor({
                         : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
                     }`}
                 >
-                  <span>{segmentIcon(seg.mediaType)}</span>
+                  {segmentIcon(seg.mediaType)}
                   <span
                     className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
                       seg.status
@@ -339,23 +372,38 @@ export default function MagicDisplayFaceEditor({
                 onClick={() => handleChooseMedia("photo")}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
               >
-                📷 Ajouter une photo
+                <ImageIcon className="h-3.5 w-3.5" />
+                <span>Ajouter une photo</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleChooseMedia("video")}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
               >
-                🎬 Ajouter une vidéo
-              </button>
-              <button
-                type="button"
-                onClick={markSegmentComplete}
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-medium text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100"
-              >
-                ✅ Marquer comme terminé
+                <VideoIcon className="h-3.5 w-3.5" />
+                <span>Ajouter une vidéo</span>
               </button>
             </div>
+
+            {/* Preview média si présent */}
+            {selectedSegment.mediaUrl && (
+              <div className="mt-1 w-full">
+                {selectedSegment.mediaType === "photo" ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedSegment.mediaUrl}
+                    alt="Prévisualisation"
+                    className="h-40 w-full rounded-2xl object-cover"
+                  />
+                ) : (
+                  <video
+                    src={selectedSegment.mediaUrl}
+                    className="h-40 w-full rounded-2xl object-cover"
+                    controls
+                  />
+                )}
+              </div>
+            )}
 
             <div className="space-y-1">
               <label className="text-[11px] font-medium text-slate-600">
@@ -378,6 +426,22 @@ export default function MagicDisplayFaceEditor({
           </div>
         </div>
       </div>
+
+      {/* Inputs cachés pour l’upload local des médias */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "photo")}
+      />
+      <input
+        ref={videoInputRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "video")}
+      />
     </section>
   );
 }
