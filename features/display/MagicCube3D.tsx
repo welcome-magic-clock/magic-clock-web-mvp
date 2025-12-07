@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
 
-type FaceMediaType = "photo" | "video" | "file" | undefined;
+type MediaType = "photo" | "video" | "file";
 
 type FaceLike = {
   id: number;
   label: string;
   description: string;
   hasMedia: boolean;
-  mediaType?: FaceMediaType; // on récupère l’info depuis MagicDisplayClient
+  mediaType?: MediaType;
+  mediaUrl?: string | null;
 };
 
 type MagicCube3DProps = {
@@ -26,7 +27,7 @@ export default function MagicCube3D({
 }: MagicCube3DProps) {
   const [rotation, setRotation] = useState({ x: -18, y: 28 });
 
-  // 🔁 Orientation automatique en fonction de la face sélectionnée
+  // 🔁 Orientation auto selon la face sélectionnée
   useEffect(() => {
     if (selectedId == null) return;
     const index = segments.findIndex((s) => s.id === selectedId);
@@ -48,22 +49,6 @@ export default function MagicCube3D({
     onSelect(id);
   };
 
-  function renderFaceIcon(face: FaceLike) {
-    if (!face.hasMedia) {
-      return <Plus className="h-4 w-4 text-slate-400" />;
-    }
-    if (face.mediaType === "photo") {
-      return <Camera className="h-4 w-4 text-violet-500" />;
-    }
-    if (face.mediaType === "video") {
-      return <Clapperboard className="h-4 w-4 text-violet-500" />;
-    }
-    if (face.mediaType === "file") {
-      return <FileText className="h-4 w-4 text-violet-500" />;
-    }
-    return <Plus className="h-4 w-4 text-slate-400" />;
-  }
-
   return (
     <div className="w-full">
       <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -78,62 +63,85 @@ export default function MagicCube3D({
         >
           {segments.slice(0, 6).map((seg, index) => {
             const isActive = seg.id === selectedId;
-            const isCompleted = seg.hasMedia;
 
             return (
               <button
                 key={seg.id}
                 type="button"
                 onClick={() => handleFaceClick(seg.id)}
-                className={[
-                  "absolute inset-[12%] flex items-center justify-center rounded-[2.1rem] border px-3 text-center text-xs",
-                  "bg-white/92 backdrop-blur-sm shadow-[0_18px_45px_rgba(15,23,42,0.15)] transition-[transform,box-shadow,border]",
-                  isActive
-                    ? "border-violet-400 shadow-violet-200/70"
-                    : "border-slate-200 hover:border-violet-200",
-                ].join(" ")}
                 style={{ transform: faceTransform(index) }}
+                className="absolute inset-[14%] [transform-style:preserve-3d]"
               >
-                <div className="space-y-2">
-                  {/* Cercle central + icône */}
-                  <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
-                    {/* anneau externe fin */}
-                    <div className="absolute inset-0 rounded-full border border-violet-300/80" />
-                    {/* anneau interne */}
-                    <div className="absolute inset-2 rounded-full border border-violet-500/80 bg-violet-50/40" />
-                    {/* noyau blanc avec l’icône */}
-                    <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
-                      {renderFaceIcon(seg)}
+                {/* Carte de la face */}
+                <div
+                  className={[
+                    "relative flex h-full w-full flex-col items-center justify-center rounded-3xl border px-3 text-center text-xs",
+                    "bg-white/90 backdrop-blur-sm shadow-md transition",
+                    isActive
+                      ? "border-violet-400 shadow-violet-200"
+                      : "border-slate-200 hover:border-violet-200",
+                  ].join(" ")}
+                >
+                  {/* 🖼 Fond média si photo / vidéo */}
+                  {seg.hasMedia &&
+                    seg.mediaUrl &&
+                    (seg.mediaType === "photo" ||
+                      seg.mediaType === "video") && (
+                      <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                        {seg.mediaType === "photo" ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={seg.mediaUrl}
+                            alt={seg.description}
+                            className="h-full w-full object-cover opacity-30"
+                          />
+                        ) : (
+                          <video
+                            src={seg.mediaUrl}
+                            className="h-full w-full object-cover opacity-30"
+                            muted
+                            loop
+                          />
+                        )}
+                        {/* voile blanc très doux */}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/80 via-white/75 to-white/90" />
+                      </div>
+                    )}
+
+                  {/* Contenu au-dessus du fond */}
+                  <div className="relative z-10 space-y-1">
+                    {/* icône centrale dans un petit cercle, style Face universelle */}
+                    <div
+                      className={[
+                        "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
+                        seg.hasMedia
+                          ? "border-violet-400 text-violet-600"
+                          : "border-slate-200 text-slate-600",
+                      ].join(" ")}
+                    >
+                      {faceMediaIcon(seg)}
                     </div>
-                    {/* pastille verte quand média associé */}
-                    {isCompleted && (
-                      <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
+
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                      Face {seg.id}
+                    </p>
+                    <p className="text-xs font-semibold text-slate-900">
+                      {seg.description}
+                    </p>
+
+                    {seg.hasMedia && (
+                      <p className="text-[11px] text-emerald-600">
+                        Média associé
+                      </p>
                     )}
                   </div>
-
-                  {/* Texte face */}
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
-                    Face {seg.id}
-                  </p>
-                  <p className="text-xs font-semibold text-slate-900">
-                    {seg.description}
-                  </p>
-                  <p
-                    className={`text-[11px] ${
-                      isCompleted ? "text-emerald-600" : "text-slate-300"
-                    }`}
-                  >
-                    {isCompleted
-                      ? "Média associé"
-                      : "Aucun média associé pour l'instant"}
-                  </p>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Halo léger global */}
+        {/* Halo global */}
         <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
       </div>
       <p className="mt-2 text-center text-[11px] text-slate-500">
@@ -144,7 +152,7 @@ export default function MagicCube3D({
   );
 }
 
-// Placement physique des faces dans l'espace 3D
+// Placement des faces dans l'espace 3D
 function faceTransform(index: number): string {
   const depth = "6.5rem";
 
@@ -164,4 +172,18 @@ function faceTransform(index: number): string {
     default:
       return `translateZ(${depth})`;
   }
+}
+
+// Icône centrale en fonction du type de média
+function faceMediaIcon(face: FaceLike) {
+  if (!face.hasMedia || !face.mediaType) {
+    return <Plus className="h-3.5 w-3.5" />;
+  }
+  if (face.mediaType === "photo") {
+    return <Camera className="h-3.5 w-3.5" />;
+  }
+  if (face.mediaType === "video") {
+    return <Clapperboard className="h-3.5 w-3.5" />;
+  }
+  return <FileText className="h-3.5 w-3.5" />;
 }
