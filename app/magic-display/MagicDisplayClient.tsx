@@ -359,85 +359,67 @@ export default function MagicDisplayClient() {
           </div>
         </div>
 
-        {/* Panneau d’action face sélectionnée */}
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-xs text-slate-700 sm:px-4">
-          {selectedSegment ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Face sélectionnée
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {selectedSegment.label}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {selectedSegment.description}
-                </p>
-              </div>
+      {/* Panneau d’action face sélectionnée – aligné sur Face universelle */}
+<div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+  {selectedSegment ? (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-1">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Face sélectionnée
+        </p>
+        <p className="text-sm font-semibold text-slate-900">
+          {selectedSegment.label}
+        </p>
+        <p className="text-[11px] text-slate-500">
+          {selectedSegment.description}
+        </p>
+      </div>
 
-              <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleChooseMedia("photo")}
-                    className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-medium text-violet-700 hover:bg-violet-50"
-                  >
-                    <Camera className="h-3.5 w-3.5" />
-                    <span>Ajouter une photo</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleChooseMedia("video")}
-                    className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50"
-                  >
-                    <Video className="h-3.5 w-3.5" />
-                    <span>Ajouter une vidéo</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleChooseMedia("file")}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    <span>Ajouter un fichier</span>
-                  </button>
-                </div>
+      {/* 🟣 Boutons médias – même style que Face universelle */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => handleChooseMedia("photo")}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+        >
+          <span className="inline-flex h-3.5 w-3.5 items-center justify-center">
+            {/* même pictogramme que sur Face universelle */}
+            📷
+          </span>
+          <span>Ajouter une photo</span>
+        </button>
 
-                {selectedSegment.mediaUrl && (
-                  <div className="mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-slate-900/5">
-                    {selectedSegment.mediaType === "video" ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <video
-                        src={selectedSegment.mediaUrl}
-                        className="h-24 w-full object-cover"
-                        controls
-                      />
-                    ) : selectedSegment.mediaType === "photo" ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={selectedSegment.mediaUrl}
-                        alt="Prévisualisation"
-                        className="h-24 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-24 w-full items-center justify-center gap-2 text-[11px] text-slate-600">
-                        <FileText className="h-4 w-4" />
-                        <span>Fichier associé</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-[11px] text-slate-500">
-              Clique sur un point autour du cercle, sur le cube 3D ou dans la
-              liste pour sélectionner une face du cube, puis choisis si tu veux
-              y associer une photo, une vidéo ou un fichier. (MVP local, aucune
-              donnée n&apos;est sauvegardée pour l&apos;instant.)
-            </p>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => handleChooseMedia("video")}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+        >
+          <span className="inline-flex h-3.5 w-3.5 items-center justify-center">
+            🎬
+          </span>
+          <span>Ajouter une vidéo</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleChooseMedia("file")}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+        >
+          <span className="inline-flex h-3.5 w-3.5 items-center justify-center">
+            📄
+          </span>
+          <span>Ajouter un fichier</span>
+        </button>
+      </div>
+    </div>
+  ) : (
+    <p className="text-[11px] text-slate-500">
+      Clique sur une face du cube pour la sélectionner, puis ajoute une photo,
+      une vidéo ou un fichier pour documenter cette face. (MVP local, aucune
+      donnée n&apos;est encore sauvegardée côté serveur.)
+    </p>
+  )}
+</div>
       </section>
 
       {/* Face universelle reliée à la face sélectionnée */}
