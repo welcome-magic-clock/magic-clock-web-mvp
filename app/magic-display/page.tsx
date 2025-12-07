@@ -4,6 +4,7 @@ import { useState } from "react";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
+import { useSearchParams } from "next/navigation";
 
 type MediaType = "photo" | "video";
 
@@ -62,6 +63,19 @@ const INITIAL_SEGMENTS: Segment[] = [
 ];
 
 export default function MagicDisplayPage() {
+    const searchParams = useSearchParams();
+
+  const titleFromStudio = searchParams.get("title") ?? "";
+  const modeFromStudio = searchParams.get("mode") ?? "FREE";
+  const formatFromStudio = searchParams.get("format") ?? "portrait";
+  const ppvPriceFromStudio = searchParams.get("ppvPrice");
+
+  const modeLabel =
+    modeFromStudio === "SUB"
+      ? "Abonnement"
+      : modeFromStudio === "PPV"
+      ? "PayPerView"
+      : "FREE";
   // On réutilise la même logique que MyMagic : Aiko par défaut
   const creators = listCreators();
   const currentCreator =
@@ -111,6 +125,38 @@ export default function MagicDisplayPage() {
           routine maison, etc.).
         </p>
       </header>
+          {titleFromStudio && (
+  <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-600">
+    <p className="text-[11px] font-semibold text-slate-800">
+      Depuis Magic Studio
+    </p>
+    <p className="mt-1">
+      <span className="font-medium">{titleFromStudio}</span>
+    </p>
+    <p className="mt-1">
+      Mode : <span className="font-medium">{modeLabel}</span>
+      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+        <>
+          {" "}
+          · Prix indicatif{" "}
+          <span className="font-mono">
+            {Number(ppvPriceFromStudio).toFixed(2)} CHF
+          </span>
+        </>
+      )}
+      {" · "}
+      Format :{" "}
+      <span className="font-medium">
+        {formatFromStudio === "horizontal" ? "Horizontal" : "Portrait"}
+      </span>
+      .
+    </p>
+    <p className="mt-1 text-[10px] text-slate-500">
+      Ces informations viendront compléter la publication finale de ton
+      Magic Clock (MVP).
+    </p>
+  </section>
+)}
 
       {/* 🟣 Carte principale : vue cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
