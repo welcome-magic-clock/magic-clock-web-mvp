@@ -151,9 +151,9 @@ export default function MagicDisplayClient() {
           <span className="font-mono">
             {Number(ppvPriceFromStudio).toFixed(2)} CHF
           </span>
-        </>
-      )}
     </p>
+     </section>
+)}
 
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
