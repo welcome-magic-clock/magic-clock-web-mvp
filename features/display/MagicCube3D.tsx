@@ -1,113 +1,134 @@
 "use client";
 
-import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 
-type MediaType = "photo" | "video" | "file";
-
-type Segment = {
+type FaceLike = {
   id: number;
   label: string;
   description: string;
-  angleDeg: number;
   hasMedia: boolean;
-  mediaType?: MediaType;
-  mediaUrl?: string | null;
 };
 
 type MagicCube3DProps = {
-  segments: Segment[];
+  segments: FaceLike[];
   selectedId: number | null;
-  onSelect: (id: number | null) => void;
+  onSelect: (id: number) => void;
 };
-
-// Icône centrale dans le petit cercle
-function mediaIcon(seg?: Segment) {
-  if (!seg || !seg.hasMedia || !seg.mediaType) {
-    return <Plus className="h-4 w-4" />;
-  }
-  if (seg.mediaType === "photo") return <Camera className="h-4 w-4" />;
-  if (seg.mediaType === "video") return <Clapperboard className="h-4 w-4" />;
-  if (seg.mediaType === "file") return <FileText className="h-4 w-4" />;
-  return <Plus className="h-4 w-4" />;
-}
-
-function mediaLabel(seg?: Segment) {
-  if (!seg || !seg.hasMedia || !seg.mediaType) return null;
-  if (seg.mediaType === "photo") return "Photo";
-  if (seg.mediaType === "video") return "Vidéo";
-  if (seg.mediaType === "file") return "Fichier";
-  return null;
-}
 
 export default function MagicCube3D({
   segments,
   selectedId,
   onSelect,
 }: MagicCube3DProps) {
-  const active =
-    segments.find((s) => s.id === selectedId) ?? segments[0] ?? null;
+  const [rotation, setRotation] = useState({ x: -18, y: 28 });
 
-  const hasMedia = !!active?.hasMedia;
-  const mLabel = mediaLabel(active);
+  // 🔁 Orientation automatique en fonction de la face sélectionnée
+  useEffect(() => {
+    if (selectedId == null) return;
+    const index = segments.findIndex((s) => s.id === selectedId);
+    if (index === -1) return;
+
+    const presets = [
+      { x: -90, y: 0 }, // Face 1 (top)
+      { x: 0, y: 0 }, // Face 2 (front)
+      { x: 0, y: -90 }, // Face 3 (right)
+      { x: 0, y: -180 }, // Face 4 (back)
+      { x: 0, y: -270 }, // Face 5 (left)
+      { x: 90, y: 0 }, // Face 6 (bottom)
+    ] as const;
+
+    setRotation(presets[index] ?? presets[1]);
+  }, [selectedId, segments]);
+
+  const handleFaceClick = (id: number) => {
+    onSelect(id);
+  };
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-slate-100/80 px-4 py-5 shadow-sm">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+    <div className="w-full">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
         Vue 3D du cube (proto React)
       </p>
-
-      <div className="relative mx-auto flex max-w-xl flex-col items-center justify-center">
-        {/* Demi-disque arrière pour le volume du cube */}
-        <div className="pointer-events-none absolute inset-x-4 -top-20 bottom-4 -z-10 rounded-[40px] bg-[radial-gradient(circle_at_50%_0%,#e5e7eb,transparent_60%)]" />
-
-        {/* Face du cube */}
-        <button
-          type="button"
-          onClick={() => active && onSelect(active.id)}
-          className="relative flex w-full flex-col items-center justify-center rounded-[32px] border border-brand-300/70 bg-[radial-gradient(circle_at_50%_0%,#f9fafb,#eef2ff)] px-6 py-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition hover:border-brand-400 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]"
+      <div className="relative mx-auto aspect-square w-full max-w-xs [perspective:1100px] sm:max-w-sm">
+        <div
+          className="absolute inset-0 transition-transform duration-150 ease-out [transform-style:preserve-3d]"
+          style={{
+            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+          }}
         >
-          {/* Double cercle + icône média */}
-          <div className="relative mb-4 h-16 w-16">
-            {/* Anneau externe */}
-            <div className="absolute inset-0 rounded-full border-[2px] border-brand-500/80 bg-white/40 backdrop-blur-sm" />
-            {/* Anneau interne */}
-            <div className="absolute inset-1 rounded-full border border-brand-200/70 bg-[radial-gradient(circle_at_30%_20%,#ffffff,#e5e7eb)]" />
-            {/* Icône */}
-            <div className="relative flex h-full w-full items-center justify-center">
-              <div className="text-brand-600">{mediaIcon(active)}</div>
-            </div>
-            {/* Pastille verte si média */}
-            {hasMedia && (
-              <span className="absolute -right-1 bottom-1 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
-            )}
-          </div>
+          {segments.slice(0, 6).map((seg, index) => {
+            const isActive = seg.id === selectedId;
+            const isCompleted = seg.hasMedia;
 
-          {/* Label face */}
-          {active && (
-            <>
-              <p className="text-[11px] font-semibold tracking-[0.22em] text-slate-400">
-                FACE {active.id}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {active.description}
-              </p>
-            </>
-          )}
+            return (
+              <button
+                key={seg.id}
+                type="button"
+                onClick={() => handleFaceClick(seg.id)}
+                className={[
+                  "absolute inset-[14%] flex items-center justify-center rounded-3xl border px-3 text-center text-xs",
+                  "bg-white/90 backdrop-blur-sm shadow-md transition",
+                  // état sélectionné
+                  isActive
+                    ? "border-violet-400 shadow-violet-200"
+                    : "border-slate-200 hover:border-violet-200",
+                  // état complété (média associé)
+                  isCompleted ? "ring-1 ring-emerald-300/80" : "",
+                ].join(" ")}
+                style={{ transform: faceTransform(index) }}
+              >
+                {/* Pastille complétée */}
+                {isCompleted && (
+                  <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-500" />
+                )}
 
-          {/* État média */}
-          <p
-            className={`mt-1 text-[11px] ${
-              hasMedia ? "text-emerald-600" : "text-slate-400"
-            }`}
-          >
-            {hasMedia
-              ? mLabel
-                ? `Média associé · ${mLabel}`
-                : "Média associé"
-              : "Aucun média associé pour l'instant"}
-          </p>
-        </button>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                    Face {seg.id}
+                  </p>
+                  <p className="text-xs font-semibold text-slate-900">
+                    {seg.description}
+                  </p>
+                  {seg.hasMedia && (
+                    <p className="text-[11px] text-emerald-600">
+                      Média associé
+                    </p>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Halo léger global */}
+        <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
       </div>
-    </section>
+      <p className="mt-2 text-center text-[11px] text-slate-500">
+        Clique sur une face du cube pour la sélectionner. La liste et le cercle
+        se synchronisent automatiquement.
+      </p>
+    </div>
   );
+}
+
+// Placement physique des faces dans l'espace 3D
+function faceTransform(index: number): string {
+  const depth = "6.5rem";
+
+  switch (index) {
+    case 0: // Face 1 = TOP
+      return `rotateX(90deg) translateZ(${depth})`;
+    case 1: // Face 2 = FRONT
+      return `translateZ(${depth})`;
+    case 2: // Face 3 = RIGHT
+      return `rotateY(90deg) translateZ(${depth})`;
+    case 3: // Face 4 = BACK
+      return `rotateY(180deg) translateZ(${depth})`;
+    case 4: // Face 5 = LEFT
+      return `rotateY(-90deg) translateZ(${depth})`;
+    case 5: // Face 6 = BOTTOM
+      return `rotateX(-90deg) translateZ(${depth})`;
+    default:
+      return `translateZ(${depth})`;
+  }
 }
