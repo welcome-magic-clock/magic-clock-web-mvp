@@ -136,7 +136,8 @@ export default function MagicDisplayClient() {
     .toUpperCase();
 
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // ✅ Face 1 sélectionnée par défaut
+  const [selectedId, setSelectedId] = useState<number | null>(1);
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
@@ -151,16 +152,7 @@ export default function MagicDisplayClient() {
   // --- Gestion des faces ----------------------------------------------------
 
   function handleSelectFace(id: number | null) {
-    setSelectedId((prev) => (prev === id ? null : id));
-  }
-
-  // Clic sur une face du cercle : sélection + éventuel upload photo direct
-  function handleCircleFaceClick(seg: Segment) {
-    setSelectedId(seg.id);
-
-    if (!seg.hasMedia && photoInputRef.current) {
-      photoInputRef.current.click();
-    }
+    setSelectedId(id);
   }
 
   // Mise à jour du nom ou du texte court de la face sélectionnée
@@ -326,7 +318,7 @@ export default function MagicDisplayClient() {
                     <button
                       key={seg.id}
                       type="button"
-                      onClick={() => handleCircleFaceClick(seg)}
+                      onClick={() => handleSelectFace(seg.id)}
                       className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                         ${
                           isSelected
