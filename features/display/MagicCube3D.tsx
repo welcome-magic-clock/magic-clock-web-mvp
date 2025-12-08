@@ -124,16 +124,16 @@ export default function MagicCube3D({
                       )}
 
                       {/* Petit cercle + icône comme sur Face universelle */}
-                      <div
-                        className={[
-                          "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
-                          seg.hasMedia && seg.mediaType === "file"
-                            ? "border-violet-400 text-violet-600"
-                            : "border-slate-200 text-slate-600",
-                        ].join(" ")}
-                      >
-                        {faceMediaIcon(seg)}
-                      </div>
+                     <div
+  className={[
+    "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
+    isActive
+      ? "border-brand-500 text-slate-900"   // même logique que Face universelle sélectionnée
+      : "border-slate-300 text-slate-700",  // état neutre
+  ].join(" ")}
+>
+  {faceMediaIcon(seg)}
+</div>
 
                       <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
                         Face {seg.id}
