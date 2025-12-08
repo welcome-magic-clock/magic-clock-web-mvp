@@ -195,19 +195,31 @@ const hashtagTokens = hashtagsParam
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Header général Magic Display */}
-      <header className="mb-4 space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
-          Magic Display · Prototype cube + face universelle
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Construction pédagogique de ton Magic Clock
-        </h1>
-        <p className="text-sm text-slate-600">
-          Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
-          plusieurs segments pédagogiques (diagnostic, application, patine,
-          routine maison, etc.).
-        </p>
-      </header>
+     <header className="mb-4 space-y-3">
+  {/* Ligne du haut : BackButton + (espace futur pour actions) */}
+  <div className="flex items-center justify-between">
+    <BackButton fallbackHref="/studio" label="Retour au Studio" />
+
+    {/* Slot libre pour plus tard (ex: bouton Publier) */}
+    {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
+  </div>
+
+  {/* Titre + surtitre */}
+  <div className="space-y-1">
+    <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
+      Magic Display · Prototype cube + face universelle
+    </p>
+    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+      Construction pédagogique de ton Magic Clock
+    </h1>
+  </div>
+
+  <p className="text-sm text-slate-600">
+    Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
+    plusieurs segments pédagogiques (diagnostic, application, patine,
+    routine maison, etc.).
+  </p>
+</header>
 
       {/* Panneau venant de Magic Studio */}
     {titleFromStudio && (
