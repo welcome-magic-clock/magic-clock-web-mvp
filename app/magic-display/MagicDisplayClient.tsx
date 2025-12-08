@@ -101,8 +101,8 @@ export default function MagicDisplayClient() {
   // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
   // const formatFromStudio = searchParams.get("format") ?? "portrait";
  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
-const hashtagsParam = searchParams.get("hashtags") ?? "";
-
+const hashtagsParam =
+  searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 // On découpe en plusieurs tags : séparateurs = espace ou virgule
 const hashtagTokens = hashtagsParam
   .split(/[,\s]+/)            // coupe sur espaces / virgules
