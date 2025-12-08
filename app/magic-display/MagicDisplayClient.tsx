@@ -140,26 +140,38 @@ export default function MagicDisplayClient() {
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
+  // Overlay plein écran pour le cube
+  const [showCubeOverlay, setShowCubeOverlay] = useState(false);
+
   // Inputs cachés pour upload par face
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // --- Gestion média sur les FACES (cube + cercle) -------------------------
+  // --- Gestion des faces ----------------------------------------------------
 
   function handleSelectFace(id: number | null) {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
-  // 🔹 Nouveau : clic sur une face du cercle
-  // → sélectionne la face
-  // → si aucun média encore, ouvre directement l’upload photo
+  // Clic sur une face du cercle : sélection + éventuel upload photo direct
   function handleCircleFaceClick(seg: Segment) {
     setSelectedId(seg.id);
 
     if (!seg.hasMedia && photoInputRef.current) {
       photoInputRef.current.click();
     }
+  }
+
+  // Mise à jour du nom ou du texte court de la face sélectionnée
+  function updateSelectedFaceMeta(field: "label" | "description", value: string) {
+    if (!selectedSegment) return;
+
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === selectedSegment.id ? { ...seg, [field]: value } : seg
+      )
+    );
   }
 
   function handleChooseMedia(type: MediaType) {
@@ -229,23 +241,19 @@ export default function MagicDisplayClient() {
       {titleFromStudio && (
         <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
           <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            {/* Magic Studio = écriture un peu plus forte */}
             <span className="font-semibold text-slate-900">Magic Studio</span>
             <span>✅</span>
 
             <span className="text-slate-300">·</span>
 
-            {/* Titre : même style que Magic Studio, un peu plus dense */}
             <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
               {titleFromStudio}
             </span>
 
             <span className="text-slate-300">·</span>
 
-            {/* Mode (FREE / ABO / PPV) */}
             <span className="font-semibold text-slate-900">{modeLabel}</span>
 
-            {/* Prix PPV */}
             {modeFromStudio === "PPV" && ppvPriceFromStudio && (
               <>
                 <span className="text-slate-300">·</span>
@@ -255,7 +263,6 @@ export default function MagicDisplayClient() {
               </>
             )}
 
-            {/* Prix abonnement */}
             {modeFromStudio === "SUB" && (
               <>
                 <span className="text-slate-300">·</span>
@@ -265,7 +272,6 @@ export default function MagicDisplayClient() {
               </>
             )}
 
-            {/* Tous les hashtags envoyés par Magic Studio */}
             {hashtagTokens.map((tag) => (
               <span key={tag} className="flex items-center gap-x-1">
                 <span className="text-slate-300">·</span>
@@ -345,11 +351,20 @@ export default function MagicDisplayClient() {
 
           {/* Colonne droite : cube + liste */}
           <div className="flex-1 space-y-4">
-            <MagicCube3D
-              segments={segments}
-              selectedId={selectedId}
-              onSelect={(id) => handleSelectFace(id)}
-            />
+            {/* Cube mini, cliquable pour overlay */}
+            <div
+              className="cursor-pointer"
+              onClick={() => setShowCubeOverlay(true)}
+            >
+              <MagicCube3D
+                segments={segments}
+                selectedId={selectedId}
+                onSelect={(id) => handleSelectFace(id)}
+              />
+              <p className="mt-1 text-right text-[10px] text-slate-400">
+                Toucher pour agrandir le cube
+              </p>
+            </div>
 
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-slate-900">
@@ -398,20 +413,34 @@ export default function MagicDisplayClient() {
           </div>
         </div>
 
-        {/* Panneau d’action face sélectionnée */}
+        {/* Panneau d’action face sélectionnée – avec édition nom + texte */}
         <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
           {selectedSegment ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                   Face sélectionnée
                 </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {selectedSegment.label}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {selectedSegment.description}
-                </p>
+
+                {/* Nom de la face (éditable) */}
+                <input
+                  type="text"
+                  value={selectedSegment.label}
+                  onChange={(e) => updateSelectedFaceMeta("label", e.target.value)}
+                  className="w-full rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  placeholder="Nom de la face (ex. Diagnostic racines)"
+                />
+
+                {/* Texte court de la face (éditable) */}
+                <input
+                  type="text"
+                  value={selectedSegment.description}
+                  onChange={(e) =>
+                    updateSelectedFaceMeta("description", e.target.value)
+                  }
+                  className="w-full rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  placeholder="Texte court pour cette face"
+                />
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -473,6 +502,33 @@ export default function MagicDisplayClient() {
           faceLabel={selectedSegment?.label ?? "Face 1"}
         />
       </section>
+
+      {/* Overlay cube plein écran */}
+      {showCubeOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur">
+          <div className="relative w-full max-w-md rounded-3xl bg-white/95 p-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-slate-700">
+                Cube Magic Clock
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowCubeOverlay(false)}
+                className="inline-flex h-7 rounded-full px-3 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="mt-3">
+              <MagicCube3D
+                segments={segments}
+                selectedId={selectedId}
+                onSelect={(id) => handleSelectFace(id)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Inputs cachés pour upload local des médias de face */}
       <input
