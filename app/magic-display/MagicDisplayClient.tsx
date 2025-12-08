@@ -65,7 +65,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
-// petit helper pour le dot de statut (comme Face universelle)
+// petit helper pour le dot de statut
 function statusDotClass(hasMedia: boolean) {
   return hasMedia ? "bg-emerald-500" : "bg-slate-300";
 }
@@ -78,7 +78,7 @@ function mediaTypeLabel(type?: MediaType) {
   return "";
 }
 
-// même logique que segmentIcon dans MagicDisplayFaceEditor
+// icône dans le cercle
 function renderSegmentIcon(seg: Segment) {
   if (seg.mediaType === "photo") {
     return <Camera className="h-3.5 w-3.5" />;
@@ -100,7 +100,7 @@ export default function MagicDisplayClient() {
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
-  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
+  // Hashtags envoyés par Magic Studio
   const hashtagsParam =
     searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
@@ -141,8 +141,8 @@ export default function MagicDisplayClient() {
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
-  // Overlay plein écran pour le cube
-  const [showCubeOverlay, setShowCubeOverlay] = useState(false);
+  // Ref pour scroller jusqu'au panneau "Face sélectionnée" sur mobile
+  const facePanelRef = useRef<HTMLDivElement | null>(null);
 
   // Inputs cachés pour upload par face
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -153,6 +153,14 @@ export default function MagicDisplayClient() {
 
   function handleSelectFace(id: number | null) {
     setSelectedId(id);
+
+    // Sur mobile : on descend vers le panneau Face sélectionnée
+    if (id && facePanelRef.current) {
+      facePanelRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   }
 
   // Mise à jour du nom ou du texte court de la face sélectionnée
@@ -216,17 +224,15 @@ export default function MagicDisplayClient() {
         </div>
 
         {/* Ligne 2 & 3 : Magic Display + titre venant du Studio */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Magic Display
-          </h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Magic Display
+        </h1>
 
-          {titleFromStudio && (
-            <p className="truncate text-sm font-medium text-slate-700">
-              {titleFromStudio}
-            </p>
-          )}
-        </div>
+        {titleFromStudio && (
+          <p className="truncate text-sm font-medium text-slate-700">
+            {titleFromStudio}
+          </p>
+        )}
       </header>
 
       {/* Banderole venant de Magic Studio */}
@@ -343,28 +349,19 @@ export default function MagicDisplayClient() {
 
           {/* Colonne droite : cube + liste */}
           <div className="flex-1 space-y-4">
-            {/* Cube mini, cliquable pour overlay */}
-            <div
-              className="cursor-pointer"
-              onClick={() => setShowCubeOverlay(true)}
-            >
-              <MagicCube3D
-                segments={segments}
-                selectedId={selectedId}
-                onSelect={(id) => handleSelectFace(id)}
-              />
-              <p className="mt-1 text-right text-[10px] text-slate-400">
-                Toucher pour agrandir le cube
-              </p>
-            </div>
+            {/* Cube mini, synchronisé avec la face sélectionnée */}
+            <MagicCube3D
+              segments={segments}
+              selectedId={selectedId}
+              onSelect={(id) => handleSelectFace(id)}
+            />
 
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-slate-900">
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne correspond à une face. Sélectionne une face pour
-                compléter son contenu.
+                Sélectionne une face pour compléter son contenu.
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
@@ -405,8 +402,11 @@ export default function MagicDisplayClient() {
           </div>
         </div>
 
-        {/* Panneau d’action face sélectionnée – avec édition nom + texte */}
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+        {/* Panneau d’action face sélectionnée */}
+        <div
+          ref={facePanelRef}
+          className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4"
+        >
           {selectedSegment ? (
             <div className="space-y-3">
               <div className="space-y-1">
@@ -472,7 +472,7 @@ export default function MagicDisplayClient() {
         </div>
       </section>
 
-      {/* Face universelle reliée à la face sélectionnée – version allégée */}
+      {/* Face universelle reliée à la face sélectionnée */}
       <section className="mt-4 space-y-2">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-slate-900">
@@ -494,33 +494,6 @@ export default function MagicDisplayClient() {
           faceLabel={selectedSegment?.label ?? "Face 1"}
         />
       </section>
-
-      {/* Overlay cube plein écran */}
-      {showCubeOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur">
-          <div className="relative w-full max-w-md rounded-3xl bg-white/95 p-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-slate-700">
-                Cube Magic Clock
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowCubeOverlay(false)}
-                className="inline-flex h-7 rounded-full px-3 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
-              >
-                Fermer
-              </button>
-            </div>
-            <div className="mt-3">
-              <MagicCube3D
-                segments={segments}
-                selectedId={selectedId}
-                onSelect={(id) => handleSelectFace(id)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Inputs cachés pour upload local des médias de face */}
       <input
