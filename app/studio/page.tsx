@@ -96,6 +96,7 @@ export default function MagicStudioPage() {
     updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
+
 // Aller vers Magic Display avec les infos du Studio
 function handleGoToDisplay() {
   const params = new URLSearchParams();
@@ -103,21 +104,14 @@ function handleGoToDisplay() {
   const cleanTitle = title.trim();
   const rawHashtags = hashtags.trim();
 
-  if (cleanTitle) params.set("title", cleanTitle);
+  if (cleanTitle) {
+    params.set("title", cleanTitle);
+  }
 
-  // On prend seulement le 1er hashtag pour Magic Display (MVP)
+  // 👉 On envoie toute la chaîne, avec plusieurs hashtags possibles
+  // ex: "#blond #balayage #cheveuxlongs"
   if (rawHashtags) {
-    const firstToken = rawHashtags.split(/\s+/)[0] ?? "";
-    if (firstToken) {
-      const withoutHash = firstToken.startsWith("#")
-        ? firstToken.slice(1)
-        : firstToken;
-
-      if (withoutHash) {
-        // 👇 clé UNIQUE et cohérente avec MagicDisplayClient
-        params.set("hashtag", withoutHash);
-      }
-    }
+    params.set("hashtags", rawHashtags);
   }
 
   params.set("mode", mode);
@@ -129,7 +123,7 @@ function handleGoToDisplay() {
 
   router.push(`/magic-display?${params.toString()}`);
 }
-
+  
   const modeDescription =
     mode === "FREE"
       ? "Accessible à tous les utilisateurs."
