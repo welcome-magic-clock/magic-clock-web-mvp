@@ -104,13 +104,18 @@ export default function MagicDisplayClient() {
 const hashtagsParam =
   searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
-// On découpe en plusieurs tags : séparateurs = espace ou virgule
+// On découpe en plusieurs tags : espaces / virgules,
+// et on ignore les “#” tout seuls
 const hashtagTokens = hashtagsParam
   .split(/[,\s]+/)            // coupe sur espaces / virgules
   .map((t) => t.trim())
   .filter(Boolean)
-  .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
-
+  // on enlève le # pour normaliser ( "#" → "" / "#Blond" → "Blond" )
+  .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
+  // on garde seulement les mots non vides
+  .filter((tag) => tag.length > 0)
+  // on remet un # propre devant chaque mot
+  .map((tag) => `#${tag}`);
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
   const modeLabel =
@@ -204,48 +209,52 @@ const hashtagTokens = hashtagsParam
       </header>
 
       {/* Panneau venant de Magic Studio */}
-     {titleFromStudio && (
+    {titleFromStudio && (
   <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
     <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      <span className="font-semibold">Magic Studio</span>
+      {/* Magic Studio = déjà la bonne écriture */}
+      <span className="font-semibold text-slate-900">Magic Studio</span>
       <span>✅</span>
 
       <span className="text-slate-300">·</span>
 
-      <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
+      {/* Titre : même style que Magic Studio */}
+      <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
         {titleFromStudio}
       </span>
 
       <span className="text-slate-300">·</span>
 
-      <span className="font-medium">{modeLabel}</span>
+      {/* Mode FREE / Abonnement / PayPerView */}
+      <span className="font-semibold text-slate-900">{modeLabel}</span>
 
+      {/* Prix PPV */}
       {modeFromStudio === "PPV" && ppvPriceFromStudio && (
         <>
           <span className="text-slate-300">·</span>
-          <span className="font-mono">
+          <span className="font-semibold text-slate-900 tabular-nums">
             {Number(ppvPriceFromStudio).toFixed(2)} CHF
           </span>
         </>
       )}
 
+      {/* Prix Abonnement mock */}
       {modeFromStudio === "SUB" && (
         <>
           <span className="text-slate-300">·</span>
-          <span className="font-mono">
+          <span className="font-semibold text-slate-900 tabular-nums">
             {subscriptionPriceMock.toFixed(2)} CHF / mois
           </span>
         </>
       )}
 
-      {/* 👇 ICI le hashtag, à l’intérieur du même <p> */}
-{/* Tous les hashtags envoyés par Magic Studio */}
-{hashtagTokens.map((tag) => (
-  <span key={tag} className="flex items-center gap-x-1">
-    <span className="text-slate-300">·</span>
-    <span className="font-mono text-slate-600">{tag}</span>
-  </span>
-))}
+      {/* Tous les hashtags – même écriture plus foncée */}
+      {hashtagTokens.map((tag) => (
+        <span key={tag} className="flex items-center gap-x-1">
+          <span className="text-slate-300">·</span>
+          <span className="font-semibold text-slate-900">{tag}</span>
+        </span>
+      ))}
     </p>
   </section>
 )}
