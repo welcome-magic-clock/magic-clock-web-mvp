@@ -96,22 +96,39 @@ export default function MagicStudioPage() {
     updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
-  // Aller vers Magic Display avec les infos du Studio
-  function handleGoToDisplay() {
-    const params = new URLSearchParams();
+// Aller vers Magic Display avec les infos du Studio
+function handleGoToDisplay() {
+  const params = new URLSearchParams();
 
-    if (title.trim()) params.set("title", title.trim());
-    if (hashtags.trim()) params.set("hashtags", hashtags.trim());
+  const cleanTitle = title.trim();
+  const rawHashtags = hashtags.trim();
 
-    params.set("mode", mode);
-    params.set("format", canvasFormat);
+  if (cleanTitle) params.set("title", cleanTitle);
 
-    if (mode === "PPV") {
-      params.set("ppvPrice", ppvPrice.toFixed(2)); // ex: "0.99"
+  // On prend seulement le 1er hashtag pour Magic Display (MVP)
+  if (rawHashtags) {
+    const firstToken = rawHashtags.split(/\s+/)[0] ?? "";
+    if (firstToken) {
+      const withoutHash = firstToken.startsWith("#")
+        ? firstToken.slice(1)
+        : firstToken;
+
+      if (withoutHash) {
+        // 👇 clé UNIQUE et cohérente avec MagicDisplayClient
+        params.set("hashtag", withoutHash);
+      }
     }
-
-    router.push(`/magic-display?${params.toString()}`);
   }
+
+  params.set("mode", mode);
+  params.set("format", canvasFormat);
+
+  if (mode === "PPV") {
+    params.set("ppvPrice", ppvPrice.toFixed(2)); // ex : "0.99"
+  }
+
+  router.push(`/magic-display?${params.toString()}`);
+}
 
   const modeDescription =
     mode === "FREE"
