@@ -100,7 +100,16 @@ export default function MagicDisplayClient() {
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
   // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
   // const formatFromStudio = searchParams.get("format") ?? "portrait";
-  const hashtagFromStudio = searchParams.get("hashtag") ?? "";
+  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
+const hashtagsParam =
+  searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
+
+// On découpe en plusieurs tags : séparateurs = espace ou virgule
+const hashtagTokens = hashtagsParam
+  .split(/[,\s]+/)            // coupe sur espaces / virgules
+  .map((t) => t.trim())
+  .filter(Boolean)
+  .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
@@ -230,16 +239,13 @@ export default function MagicDisplayClient() {
       )}
 
       {/* 👇 ICI le hashtag, à l’intérieur du même <p> */}
-      {hashtagFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono text-slate-600">
-            {hashtagFromStudio.startsWith("#")
-              ? hashtagFromStudio
-              : `#${hashtagFromStudio}`}
-          </span>
-        </>
-      )}
+{/* Tous les hashtags envoyés par Magic Studio */}
+{hashtagTokens.map((tag) => (
+  <span key={tag} className="flex items-center gap-x-1">
+    <span className="text-slate-300">·</span>
+    <span className="font-mono text-slate-600">{tag}</span>
+  </span>
+))}
     </p>
   </section>
 )}
