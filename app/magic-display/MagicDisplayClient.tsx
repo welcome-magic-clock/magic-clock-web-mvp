@@ -6,6 +6,7 @@ import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
+import BackButton from "@/components/navigation/BackButton";
 
 type MediaType = "photo" | "video" | "file";
 
