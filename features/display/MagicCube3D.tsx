@@ -54,6 +54,7 @@ export default function MagicCube3D({
       <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
         Vue 3D du cube (proto React)
       </p>
+
       <div className="relative mx-auto aspect-square w-full max-w-xs [perspective:1100px] sm:max-w-sm">
         <div
           className="absolute inset-0 transition-transform duration-150 ease-out [transform-style:preserve-3d]"
@@ -63,9 +64,10 @@ export default function MagicCube3D({
         >
           {segments.slice(0, 6).map((seg, index) => {
             const isActive = seg.id === selectedId;
+
             const isVisualMedia =
               seg.hasMedia &&
-              seg.mediaUrl &&
+              !!seg.mediaUrl &&
               (seg.mediaType === "photo" || seg.mediaType === "video");
 
             return (
@@ -79,36 +81,48 @@ export default function MagicCube3D({
                 {/* 🧊 Carte de la face */}
                 <div
                   className={[
-                    "relative flex h-full w-full items-center justify-center rounded-3xl border bg-white/90 px-3 text-center text-xs backdrop-blur-sm shadow-md transition",
+                    "relative h-full w-full rounded-[2.4rem] border bg-white/90 text-xs shadow-md backdrop-blur-sm transition",
                     isActive
                       ? "border-violet-400 shadow-violet-200"
                       : "border-slate-200 hover:border-violet-200",
+                    seg.hasMedia ? "ring-1 ring-emerald-300/80" : "",
+                    isVisualMedia
+                      ? "overflow-hidden"
+                      : "flex items-center justify-center px-3 text-center",
                   ].join(" ")}
                 >
                   {/* 🎥 / 📸 FULL MEDIA : la face entière devient l’image / la vidéo */}
                   {isVisualMedia ? (
-                    <div className="absolute inset-0 overflow-hidden rounded-3xl">
-                     {seg.mediaType === "photo" ? (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img
-    src={seg.mediaUrl!}
-    alt={seg.description}
-    className="h-full w-full object-cover"
-  />
-) : (
-  <video
-    src={seg.mediaUrl!}
-    className="h-full w-full object-cover"
-    muted
-    playsInline
-    loop
-    autoPlay           // 👈 petit plus pour la prévisualisation
-  />
-)}
-                    </div>
+                    <>
+                      {seg.mediaType === "photo" ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={seg.mediaUrl!}
+                          alt={seg.description}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={seg.mediaUrl!}
+                          className="h-full w-full object-cover"
+                          muted
+                          playsInline
+                          loop
+                          autoPlay
+                        />
+                      )}
+
+                      {/* Pastille complété en bas à droite */}
+                      <span className="absolute bottom-3 right-3 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
+                    </>
                   ) : (
-                    /* 🧾 Variante texte (sans média, ou fichier) */
+                    /* 🧾 Variante texte (fichier ou aucun média) */
                     <div className="relative z-10 space-y-1">
+                      {/* Pastille complété en haut à droite si fichier */}
+                      {seg.hasMedia && seg.mediaType === "file" && (
+                        <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-500" />
+                      )}
+
                       {/* Petit cercle + icône comme sur Face universelle */}
                       <div
                         className={[
@@ -127,14 +141,16 @@ export default function MagicCube3D({
                       <p className="text-xs font-semibold text-slate-900">
                         {seg.description}
                       </p>
+
                       {seg.hasMedia && seg.mediaType === "file" && (
                         <p className="text-[11px] text-emerald-600">
                           Média associé
                         </p>
                       )}
+
                       {!seg.hasMedia && (
                         <p className="text-[11px] text-slate-400">
-                          Aucun média associé pour l&apos;instant
+                          Aucun média associé pour l’instant
                         </p>
                       )}
                     </div>
@@ -148,6 +164,7 @@ export default function MagicCube3D({
         {/* Halo global */}
         <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
       </div>
+
       <p className="mt-2 text-center text-[11px] text-slate-500">
         Clique sur une face du cube pour la sélectionner. La liste et le cercle
         se synchronisent automatiquement.
