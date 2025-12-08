@@ -100,6 +100,7 @@ export default function MagicDisplayClient() {
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
   // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
   // const formatFromStudio = searchParams.get("format") ?? "portrait";
+  const hashtagFromStudio = searchParams.get("hashtag") ?? "";
 
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
@@ -194,43 +195,55 @@ export default function MagicDisplayClient() {
       </header>
 
       {/* Panneau venant de Magic Studio */}
-      {titleFromStudio && (
-        <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
-          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            <span className="font-semibold">Magic Studio</span>
-            <span>✅</span>
+     {titleFromStudio && (
+  <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
+    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+      <span className="font-semibold">Magic Studio</span>
+      <span>✅</span>
 
-            <span className="text-slate-300">·</span>
+      <span className="text-slate-300">·</span>
 
-            <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
-              {titleFromStudio}
-            </span>
+      <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
+        {titleFromStudio}
+      </span>
 
-            <span className="text-slate-300">·</span>
+      <span className="text-slate-300">·</span>
 
-            <span className="font-medium">{modeLabel}</span>
+      <span className="font-medium">{modeLabel}</span>
 
-            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="font-mono">
-                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
-                </span>
-              </>
-            )}
-
-            {modeFromStudio === "SUB" && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="font-mono">
-                  {subscriptionPriceMock.toFixed(2)} CHF / mois
-                </span>
-              </>
-            )}
-          </p>
-        </section>
+      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+        <>
+          <span className="text-slate-300">·</span>
+          <span className="font-mono">
+            {Number(ppvPriceFromStudio).toFixed(2)} CHF
+          </span>
+        </>
       )}
 
+      {modeFromStudio === "SUB" && (
+        <>
+          <span className="text-slate-300">·</span>
+          <span className="font-mono">
+            {subscriptionPriceMock.toFixed(2)} CHF / mois
+          </span>
+        </>
+      )}
+
+      {/* 👇 ICI le hashtag, à l’intérieur du même <p> */}
+      {hashtagFromStudio && (
+        <>
+          <span className="text-slate-300">·</span>
+          <span className="font-mono text-slate-600">
+            {hashtagFromStudio.startsWith("#")
+              ? hashtagFromStudio
+              : `#${hashtagFromStudio}`}
+          </span>
+        </>
+      )}
+    </p>
+  </section>
+)}
+      
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
