@@ -100,7 +100,15 @@ export default function MagicDisplayClient() {
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
   // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
   // const formatFromStudio = searchParams.get("format") ?? "portrait";
-  const hashtagFromStudio = searchParams.get("hashtag") ?? "";
+ // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
+const hashtagsParam = searchParams.get("hashtags") ?? "";
+
+// On découpe en plusieurs tags : séparateurs = espace ou virgule
+const hashtagTokens = hashtagsParam
+  .split(/[,\s]+/)            // coupe sur espaces / virgules
+  .map((t) => t.trim())
+  .filter(Boolean)
+  .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
@@ -195,52 +203,58 @@ export default function MagicDisplayClient() {
       </header>
 
       {/* Panneau venant de Magic Studio */}
-     {titleFromStudio && (
+    
+{titleFromStudio && (
   <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      <span className="font-semibold">Magic Studio</span>
-      <span>✅</span>
+    <div className="flex flex-wrap items-start justify-between gap-2">
+      {/* Ligne principale : titre + mode + prix */}
+      <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+        <span className="font-semibold">Magic Studio</span>
+        <span>✅</span>
 
-      <span className="text-slate-300">·</span>
+        <span className="text-slate-300">·</span>
 
-      <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
-        {titleFromStudio}
-      </span>
+        <span className="font-medium truncate max-w-[11rem] sm:max-w-[18rem]">
+          {titleFromStudio}
+        </span>
 
-      <span className="text-slate-300">·</span>
+        <span className="text-slate-300">·</span>
 
-      <span className="font-medium">{modeLabel}</span>
+        <span className="font-medium">{modeLabel}</span>
 
-      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono">
-            {Number(ppvPriceFromStudio).toFixed(2)} CHF
-          </span>
-        </>
+        {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+          <>
+            <span className="text-slate-300">·</span>
+            <span className="font-mono">
+              {Number(ppvPriceFromStudio).toFixed(2)} CHF
+            </span>
+          </>
+        )}
+
+        {modeFromStudio === "SUB" && (
+          <>
+            <span className="text-slate-300">·</span>
+            <span className="font-mono">
+              {subscriptionPriceMock.toFixed(2)} CHF / mois
+            </span>
+          </>
+        )}
+      </p>
+
+      {/* Hashtags en chips arrondies */}
+      {hashtagTokens.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {hashtagTokens.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 whitespace-nowrap"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
       )}
-
-      {modeFromStudio === "SUB" && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono">
-            {subscriptionPriceMock.toFixed(2)} CHF / mois
-          </span>
-        </>
-      )}
-
-      {/* 👇 ICI le hashtag, à l’intérieur du même <p> */}
-      {hashtagFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono text-slate-600">
-            {hashtagFromStudio.startsWith("#")
-              ? hashtagFromStudio
-              : `#${hashtagFromStudio}`}
-          </span>
-        </>
-      )}
-    </p>
+    </div>
   </section>
 )}
       
