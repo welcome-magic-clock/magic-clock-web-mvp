@@ -7,6 +7,7 @@ import { listCreators } from "@/core/domain/repository";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
 import BackButton from "@/components/navigation/BackButton";
+import { MoreHorizontal } from "lucide-react";
 
 type MediaType = "photo" | "video" | "file";
 
@@ -194,32 +195,34 @@ const hashtagTokens = hashtagsParam
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* Header général Magic Display */}
-     <header className="mb-4 space-y-3">
-  {/* Ligne du haut : BackButton + (espace futur pour actions) */}
-  <div className="flex items-center justify-between">
-    <BackButton fallbackHref="/studio" label="Retour au Studio" />
+            {/* Header général Magic Display */}
+      <header className="mb-4 space-y-3">
+        {/* Ligne 1 : BackButton + options avancées */}
+        <div className="flex items-center justify-between">
+          <BackButton
+            fallbackHref="/studio"
+            label="Retour au Studio"
+          />
 
-    {/* Slot libre pour plus tard (ex: bouton Publier) */}
-    {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
-  </div>
+          <button
+            type="button"
+            aria-label="Options avancées"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-500 shadow-sm hover:text-slate-900"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
 
-  {/* Titre + surtitre */}
-  <div className="space-y-1">
-    <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
-      Magic Display · Prototype cube + face universelle
-    </p>
-    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-      Construction pédagogique de ton Magic Clock
-    </h1>
-  </div>
+        {/* Ligne 2 : Magic Display seul */}
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
+          Magic Display
+        </p>
 
-  <p className="text-sm text-slate-600">
-    Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
-    plusieurs segments pédagogiques (diagnostic, application, patine,
-    routine maison, etc.).
-  </p>
-</header>
+        {/* Ligne 3 : titre venant du Studio (ou fallback par défaut) */}
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          {titleFromStudio || "Construction pédagogique de ton Magic Clock"}
+        </h1>
+      </header>
 
       {/* Panneau venant de Magic Studio */}
     {titleFromStudio && (
