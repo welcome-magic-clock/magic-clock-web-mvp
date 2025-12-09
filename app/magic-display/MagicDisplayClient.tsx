@@ -20,7 +20,7 @@ type Segment = {
   id: number;
   label: string;
   description: string;
-  angleDeg: number; // angle du centre du segment (en degrés)
+  angleDeg: number;
   hasMedia: boolean;
   mediaType?: MediaType;
   mediaUrl?: string | null;
@@ -96,6 +96,7 @@ function renderSegmentIcon(seg: Segment) {
 }
 
 export default function MagicDisplayClient() {
+  // 🔍 paramètres envoyés par Magic Studio
   const searchParams = useSearchParams();
 
   const titleFromStudio = searchParams.get("title") ?? "";
@@ -122,6 +123,7 @@ export default function MagicDisplayClient() {
       ? "PayPerView"
       : "FREE";
 
+  // 👩‍🎨 créateur (Aiko par défaut)
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
@@ -133,33 +135,35 @@ export default function MagicDisplayClient() {
     .slice(0, 2)
     .toUpperCase();
 
+  // 🧠 état local des faces
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
+  // inputs cachés pour les médias
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
- // Sélection depuis le cube 3D → ouvre directement la face universelle
-function handleCubeFaceSelect(id: number | null) {
-  if (id == null) {
-    setSelectedId(null);
-    setIsFaceDetailOpen(false);
-    return;
+  // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
+  function handleCubeFaceSelect(id: number | null) {
+    if (id == null) {
+      setSelectedId(null);
+      setIsFaceDetailOpen(false);
+      return;
+    }
+    setSelectedId(id);
+    setIsFaceDetailOpen(true);
   }
-  setSelectedId(id);
-  setIsFaceDetailOpen(true);
-}
 
-// Sélection depuis la liste → ne fait que sélectionner
-function handleListFaceSelect(id: number | null) {
-  setSelectedId((prev) => (prev === id ? null : id));
-}
+  // 🎯 Sélection depuis la liste → juste sélectionner
+  function handleListFaceSelect(id: number | null) {
+    setSelectedId((prev) => (prev === id ? null : id));
+  }
 
-  // Clic sur le cercle -> sélection + éventuel upload
+  // 🎯 Clic sur le cercle → sélection + éventuel upload
   function handleCircleFaceClick(seg: Segment) {
     setSelectedId(seg.id);
     if (!seg.hasMedia && photoInputRef.current) {
@@ -240,50 +244,50 @@ function handleListFaceSelect(id: number | null) {
           </button>
         </div>
 
-        {/* Bandeau Magic Studio dans la même carte */}
-       {titleFromStudio && (
-  <p className="mb-4 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-slate-700">
-    <span className="font-semibold text-slate-900">Magic Studio</span>
-    <span>✅</span>
+        {/* Bandeau Magic Studio (sans encadré séparé) */}
+        {titleFromStudio && (
+          <p className="mb-4 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-slate-700">
+            <span className="font-semibold text-slate-900">Magic Studio</span>
+            <span>✅</span>
 
-    <span className="text-slate-300">·</span>
+            <span className="text-slate-300">·</span>
 
-    <span className="max-w-[11rem] truncate font-semibold text-slate-900 sm:max-w-[18rem]">
-      {titleFromStudio}
-    </span>
+            <span className="max-w-[11rem] truncate font-semibold text-slate-900 sm:max-w-[18rem]">
+              {titleFromStudio}
+            </span>
 
-    <span className="text-slate-300">·</span>
+            <span className="text-slate-300">·</span>
 
-    <span className="font-semibold text-slate-900">{modeLabel}</span>
+            <span className="font-semibold text-slate-900">{modeLabel}</span>
 
-    {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-      <>
-        <span className="text-slate-300">·</span>
-        <span className="font-mono font-semibold text-slate-900">
-          {Number(ppvPriceFromStudio).toFixed(2)} CHF
-        </span>
-      </>
-    )}
+            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                </span>
+              </>
+            )}
 
-    {modeFromStudio === "SUB" && (
-      <>
-        <span className="text-slate-300">·</span>
-        <span className="font-mono font-semibold text-slate-900">
-          {subscriptionPriceMock.toFixed(2)} CHF / mois
-        </span>
-      </>
-    )}
+            {modeFromStudio === "SUB" && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {subscriptionPriceMock.toFixed(2)} CHF / mois
+                </span>
+              </>
+            )}
 
-    {hashtagTokens.map((tag) => (
-      <span key={tag} className="flex items-center gap-x-1">
-        <span className="text-slate-300">·</span>
-        <span className="font-mono font-semibold text-slate-900">
-          {tag}
-        </span>
-      </span>
-    ))}
-  </p>
-)}
+            {hashtagTokens.map((tag) => (
+              <span key={tag} className="flex items-center gap-x-1">
+                <span className="text-slate-300">·</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {tag}
+                </span>
+              </span>
+            ))}
+          </p>
+        )}
 
         {/* Bloc cercle + cube + liste */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
@@ -348,60 +352,62 @@ function handleListFaceSelect(id: number | null) {
             </div>
           </div>
 
-         {/* Colonne droite : cube 3D + liste */}
-<div className="flex-1 space-y-4">
-  {/* Cube 3D : clic = ouvre directement la Face universelle */}
-  <MagicCube3D
-    segments={segments}
-    selectedId={selectedId}
-    onSelect={(id) => handleCubeFaceSelect(id)}
-  />
-
-  {/* Liste : clic = ne fait que sélectionner */}
-  <div className="space-y-3">
-    <h2 className="text-sm font-semibold text-slate-900">
-      Faces de ce cube Magic Clock
-    </h2>
-    <p className="text-xs text-slate-500">
-      Chaque ligne correspond à une face. Sélectionne une face pour compléter son contenu.
-    </p>
-    <div className="space-y-2">
-      {segments.map((seg) => {
-        const isSelected = seg.id === selectedId;
-        const label = mediaTypeLabel(seg.mediaType);
-
-        return (
-          <button
-            key={seg.id}
-            type="button"
-            onClick={() => handleListFaceSelect(seg.id)}
-            className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-              ${
-                isSelected
-                  ? "border-brand-500 bg-brand-50/70"
-                  : "border-transparent bg-slate-50 hover:border-slate-200"
-              }`}
-          >
-            <div className="min-w-0">
-              <p className="font-medium text-slate-800">
-                {seg.label}
-                {seg.hasMedia && label ? ` · ${label}` : ""}
-              </p>
-              <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                {seg.description}
-              </p>
-            </div>
-            <span
-              className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-                seg.hasMedia
-              )}`}
+          {/* Colonne droite : cube 3D + liste */}
+          <div className="flex-1 space-y-4">
+            {/* Cube 3D : clic = ouvre directement la Face universelle */}
+            <MagicCube3D
+              segments={segments}
+              selectedId={selectedId}
+              onSelect={(id) => handleCubeFaceSelect(id)}
             />
-          </button>
-        );
-      })}
-    </div>
-  </div>
-</div>
+
+            {/* Liste : clic = sélection seulement */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Faces de ce cube Magic Clock
+              </h2>
+              <p className="text-xs text-slate-500">
+                Chaque ligne correspond à une face. Sélectionne une face pour
+                compléter son contenu.
+              </p>
+              <div className="space-y-2">
+                {segments.map((seg) => {
+                  const isSelected = seg.id === selectedId;
+                  const label = mediaTypeLabel(seg.mediaType);
+
+                  return (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      onClick={() => handleListFaceSelect(seg.id)}
+                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
+                        ${
+                          isSelected
+                            ? "border-brand-500 bg-brand-50/70"
+                            : "border-transparent bg-slate-50 hover:border-slate-200"
+                        }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-800">
+                          {seg.label}
+                          {seg.hasMedia && label ? ` · ${label}` : ""}
+                        </p>
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                          {seg.description}
+                        </p>
+                      </div>
+                      <span
+                        className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
+                          seg.hasMedia
+                        )}`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Panneau d’action face sélectionnée */}
         <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
