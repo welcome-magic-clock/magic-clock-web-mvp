@@ -328,8 +328,8 @@ export default function MagicDisplayFaceEditor({
     };
   }
 
-   return (
-  <section className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm sm:p-6">
+return (
+  <section className="h-full w-full bg-white p-5 sm:p-6">
       {/* Ligne 1 : Back + Face x/6 + titre + bouton options */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
