@@ -348,75 +348,60 @@ function handleListFaceSelect(id: number | null) {
             </div>
           </div>
 
-          {/* Colonne droite : cube 3D + liste */}
-          <div className="flex-1 space-y-4">
-           {segments.map((seg) => {
-  const isSelected = seg.id === selectedId;
-  const label = mediaTypeLabel(seg.mediaType);
+         {/* Colonne droite : cube 3D + liste */}
+<div className="flex-1 space-y-4">
+  {/* Cube 3D : clic = ouvre directement la Face universelle */}
+  <MagicCube3D
+    segments={segments}
+    selectedId={selectedId}
+    onSelect={(id) => handleCubeFaceSelect(id)}
+  />
 
-  return (
-    <button
-      key={seg.id}
-      type="button"
-      onClick={() => handleListFaceSelect(seg.id)}
-      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-        ${
-          isSelected
-            ? "border-brand-500 bg-brand-50/70"
-            : "border-transparent bg-slate-50 hover:border-slate-200"
-        }`}
-    >
-      {/* ... contenu identique ... */}
-    </button>
-  );
-})}
+  {/* Liste : clic = ne fait que sélectionner */}
+  <div className="space-y-3">
+    <h2 className="text-sm font-semibold text-slate-900">
+      Faces de ce cube Magic Clock
+    </h2>
+    <p className="text-xs text-slate-500">
+      Chaque ligne correspond à une face. Sélectionne une face pour compléter son contenu.
+    </p>
+    <div className="space-y-2">
+      {segments.map((seg) => {
+        const isSelected = seg.id === selectedId;
+        const label = mediaTypeLabel(seg.mediaType);
 
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Faces de ce cube Magic Clock
-              </h2>
-              <p className="text-xs text-slate-500">
-                Chaque ligne correspond à une face. Sélectionne une face pour
-                compléter son contenu.
+        return (
+          <button
+            key={seg.id}
+            type="button"
+            onClick={() => handleListFaceSelect(seg.id)}
+            className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
+              ${
+                isSelected
+                  ? "border-brand-500 bg-brand-50/70"
+                  : "border-transparent bg-slate-50 hover:border-slate-200"
+              }`}
+          >
+            <div className="min-w-0">
+              <p className="font-medium text-slate-800">
+                {seg.label}
+                {seg.hasMedia && label ? ` · ${label}` : ""}
               </p>
-              <div className="space-y-2">
-                {segments.map((seg) => {
-                  const isSelected = seg.id === selectedId;
-                  const label = mediaTypeLabel(seg.mediaType);
-
-                  return (
-                    <button
-                      key={seg.id}
-                      type="button"
-                      onClick={() => handleSelectFace(seg.id)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-                        ${
-                          isSelected
-                            ? "border-brand-500 bg-brand-50/70"
-                            : "border-transparent bg-slate-50 hover:border-slate-200"
-                        }`}
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium text-slate-800">
-                          {seg.label}
-                          {seg.hasMedia && label ? ` · ${label}` : ""}
-                        </p>
-                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                          {seg.description}
-                        </p>
-                      </div>
-                      <span
-                        className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-                          seg.hasMedia
-                        )}`}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                {seg.description}
+              </p>
             </div>
-          </div>
-        </div>
+            <span
+              className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
+                seg.hasMedia
+              )}`}
+            />
+          </button>
+        );
+      })}
+    </div>
+  </div>
+</div>
 
         {/* Panneau d’action face sélectionnée */}
         <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
