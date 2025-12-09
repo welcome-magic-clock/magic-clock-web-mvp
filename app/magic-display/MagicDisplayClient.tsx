@@ -169,7 +169,6 @@ export default function MagicDisplayClient() {
   }
 
   // 🔹 Clic sur une face du cercle
-  // Cercle = gère le cube, mais ne force pas l'ouverture de la Face universelle
   function handleCircleFaceClick(seg: Segment) {
     handleSelectFace(seg.id);
   }
@@ -484,25 +483,7 @@ export default function MagicDisplayClient() {
         <section className="fixed inset-0 z-40 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
           <div className="flex h-full w-full max-w-5xl flex-col bg-white/98 pb-6 pt-3 shadow-[0_10px_40px_rgba(15,23,42,0.45)] sm:my-6 sm:rounded-3xl">
             <div className="flex h-full flex-col gap-3 px-4 sm:px-6">
-              {/* Header de l'overlay */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsFaceDetailOpen(false)}
-                  className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
-                    <ArrowLeft className="h-4 w-4" />
-                  </span>
-                  <span className="hidden sm:inline">Retour au cube</span>
-                </button>
-
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  Magic Display · Face {selectedSegment.id} / {segments.length}
-                </p>
-              </div>
-
-              {/* Sous-titre + méta face */}
+              {/* Méta face au-dessus de la carte */}
               <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
@@ -514,7 +495,6 @@ export default function MagicDisplayClient() {
                 </div>
 
                 <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                  {/* Mini avatar créateur */}
                   <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-[10px] font-semibold text-slate-50">
                     {currentCreator.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -533,15 +513,41 @@ export default function MagicDisplayClient() {
                 </div>
               </div>
 
-              {/* Editeur détaillé : prend tout le reste de la hauteur */}
-              <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2">
-                <MagicDisplayFaceEditor
-                  creatorName={currentCreator.name}
-                  creatorAvatar={currentCreator.avatar}
-                  creatorInitials={initials}
-                  faceId={selectedSegment.id}
-                  faceLabel={selectedSegment.label}
-                />
+              {/* Editeur détaillé : carte plein écran avec Back en haut */}
+              <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60">
+                {/* Header de carte : Back + Face X / 6 + titre */}
+                <div className="flex items-center justify-between border-b border-slate-200 bg-white/95 px-3 py-2 sm:px-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsFaceDetailOpen(false)}
+                    className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
+                      <ArrowLeft className="h-4 w-4" />
+                    </span>
+                    <span className="hidden sm:inline">Retour au cube</span>
+                  </button>
+
+                  <div className="flex flex-col items-end gap-0.5 text-right">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Face {selectedSegment.id} / {segments.length}
+                    </p>
+                    <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900 sm:max-w-xs">
+                      {selectedSegment.label}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contenu scrollable */}
+                <div className="h-full overflow-y-auto px-1 py-2 sm:px-2">
+                  <MagicDisplayFaceEditor
+                    creatorName={currentCreator.name}
+                    creatorAvatar={currentCreator.avatar}
+                    creatorInitials={initials}
+                    faceId={selectedSegment.id}
+                    faceLabel={selectedSegment.label}
+                  />
+                </div>
               </div>
             </div>
           </div>
