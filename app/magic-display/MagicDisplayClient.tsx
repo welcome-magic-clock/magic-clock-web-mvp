@@ -2,7 +2,13 @@
 
 import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Camera, Clapperboard, FileText, Plus, MoreHorizontal } from "lucide-react";
+import {
+  Camera,
+  Clapperboard,
+  FileText,
+  Plus,
+  MoreHorizontal,
+} from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
@@ -17,7 +23,7 @@ type Segment = {
   angleDeg: number; // angle du centre du segment (en degrés)
   hasMedia: boolean;
   mediaType?: MediaType;
-  mediaUrl?: string | null; // URL locale pour prévisualiser le fichier
+  mediaUrl?: string | null;
 };
 
 const INITIAL_SEGMENTS: Segment[] = [
@@ -65,12 +71,10 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
-// petit helper pour le dot de statut (comme Face universelle)
 function statusDotClass(hasMedia: boolean) {
   return hasMedia ? "bg-emerald-500" : "bg-slate-300";
 }
 
-// label affiché dans la liste
 function mediaTypeLabel(type?: MediaType) {
   if (type === "photo") return "Photo";
   if (type === "video") return "Vidéo";
@@ -78,7 +82,6 @@ function mediaTypeLabel(type?: MediaType) {
   return "";
 }
 
-// même logique que segmentIcon dans MagicDisplayFaceEditor
 function renderSegmentIcon(seg: Segment) {
   if (seg.mediaType === "photo") {
     return <Camera className="h-3.5 w-3.5" />;
@@ -93,14 +96,12 @@ function renderSegmentIcon(seg: Segment) {
 }
 
 export default function MagicDisplayClient() {
-  // 🔍 lecture des params envoyés depuis Magic Studio
   const searchParams = useSearchParams();
 
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
-  // Hashtags envoyés par Magic Studio
   const hashtagsParam =
     searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
@@ -112,7 +113,7 @@ export default function MagicDisplayClient() {
     .filter((tag) => tag.length > 0)
     .map((tag) => `#${tag}`);
 
-  const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
+  const subscriptionPriceMock = 19.9;
 
   const modeLabel =
     modeFromStudio === "SUB"
@@ -121,7 +122,6 @@ export default function MagicDisplayClient() {
       ? "PayPerView"
       : "FREE";
 
-  // Avatar créateur (Aiko par défaut, comme My Magic)
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
@@ -139,18 +139,15 @@ export default function MagicDisplayClient() {
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
-  // Inputs cachés pour upload par face
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // --- Gestion média sur les FACES (cube + cercle) -------------------------
 
   function handleSelectFace(id: number | null) {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
-  // clic sur une face du cercle → sélectionne + (optionnel) upload
+  // Clic sur le cercle -> sélection + éventuel upload
   function handleCircleFaceClick(seg: Segment) {
     setSelectedId(seg.id);
     if (!seg.hasMedia && photoInputRef.current) {
@@ -177,7 +174,7 @@ export default function MagicDisplayClient() {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
 
-    const url = URL.createObjectURL(file); // prévisu locale
+    const url = URL.createObjectURL(file);
 
     setSegments((prev) =>
       prev.map((seg) =>
@@ -206,12 +203,12 @@ export default function MagicDisplayClient() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* 🧾 Carte entête Magic Display (Back + titre + options + bandeau Studio) */}
-      <section className="mb-4 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm sm:p-5">
+      {/* ⭐️ Une seule grande carte Magic Display */}
+      <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+        {/* Ligne 1 : Back + titre + Options */}
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BackButton fallbackHref="/studio" label="Retour" />
-
             <div className="flex flex-col">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 Magic Clock
@@ -231,8 +228,9 @@ export default function MagicDisplayClient() {
           </button>
         </div>
 
+        {/* Bandeau Magic Studio dans la même carte */}
         {titleFromStudio && (
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] text-slate-700 sm:px-4 sm:py-2.5">
+          <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] text-slate-700 sm:px-4 sm:py-2.5">
             <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
               <span className="font-semibold text-slate-900">
                 Magic Studio
@@ -278,12 +276,10 @@ export default function MagicDisplayClient() {
             </p>
           </div>
         )}
-      </section>
 
-      {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
-      <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+        {/* Bloc cercle + cube + liste */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-          {/* Disque central (contrôle des faces) */}
+          {/* Cercle de contrôle des faces */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
               <div
@@ -309,13 +305,12 @@ export default function MagicDisplayClient() {
                   )}
                 </div>
 
-                {/* Boutons segments (faces) */}
+                {/* Boutons-faces autour du cercle */}
                 {segments.map((seg) => {
                   const radiusPercent = 40;
                   const rad = (seg.angleDeg * Math.PI) / 180;
                   const top = 50 + Math.sin(rad) * radiusPercent;
                   const left = 50 + Math.cos(rad) * radiusPercent;
-
                   const isSelected = seg.id === selectedId;
 
                   return (
@@ -345,7 +340,7 @@ export default function MagicDisplayClient() {
             </div>
           </div>
 
-          {/* Colonne droite : cube + liste */}
+          {/* Colonne droite : cube 3D + liste */}
           <div className="flex-1 space-y-4">
             <MagicCube3D
               segments={segments}
@@ -460,7 +455,7 @@ export default function MagicDisplayClient() {
         </div>
       </section>
 
-      {/* 📚 Face universelle – plein écran dans une carte, avec Back dans la carte */}
+      {/* Overlay Face universelle plein écran */}
       {isFaceDetailOpen && selectedSegment && (
         <div className="fixed inset-0 z-30 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
           <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
@@ -478,7 +473,7 @@ export default function MagicDisplayClient() {
         </div>
       )}
 
-      {/* Inputs cachés pour upload local des médias de face */}
+      {/* Inputs cachés upload */}
       <input
         ref={photoInputRef}
         type="file"
