@@ -183,13 +183,14 @@ function handleGoToDisplay() {
 
   return (
     <main className="container max-w-4xl py-8 space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">
-          Magic Studio — Avant / Après
-        </h1>
-      </header>
-
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
+        {/* Titre à l'intérieur de la carte */}
+        <header className="mb-2 sm:mb-3">
+          <h1 className="text-2xl font-semibold">
+            Magic Studio — Avant / Après
+          </h1>
+        </header>
+
         {/* Toggle Portrait / Horizontal */}
         <div className="flex justify-center">
           <div className="inline-flex rounded-full bg-slate-100 p-1 text-xs font-medium">
