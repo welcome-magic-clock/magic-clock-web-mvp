@@ -173,8 +173,7 @@ export default function MagicDisplayClient() {
     handleSelectFace(seg.id);
   }
 
-  // 🔹 Clic sur une face du cube
-  // Cube = ouvre la Face universelle pour cette face
+  // 🔹 Clic sur une face du cube = ouvre la Face universelle
   function handleCubeFaceClick(id: number | null) {
     if (id === null) return;
     setSelectedId(id);
@@ -483,70 +482,48 @@ export default function MagicDisplayClient() {
         <section className="fixed inset-0 z-40 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
           <div className="flex h-full w-full max-w-5xl flex-col bg-white/98 pb-6 pt-3 shadow-[0_10px_40px_rgba(15,23,42,0.45)] sm:my-6 sm:rounded-3xl">
             <div className="flex h-full flex-col gap-3 px-4 sm:px-6">
-              {/* Méta face au-dessus de la carte */}
-              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
+              {/* En-tête : Back + Face X / 6 + titre */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsFaceDetailOpen(false)}
+                  className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
+                    <ArrowLeft className="h-4 w-4" />
+                  </span>
+                  <span className="hidden sm:inline">Retour au cube</span>
+                </button>
+
+                <div className="flex flex-col items-end gap-0.5 text-right">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Face {selectedSegment.id} / {segments.length}
+                  </p>
+                  <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900 sm:max-w-xs">
                     {selectedSegment.label}
                   </p>
-                  <p className="text-[11px] text-slate-500">
-                    {selectedSegment.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                  <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-[10px] font-semibold text-slate-50">
-                    {currentCreator.avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={currentCreator.avatar}
-                        alt={currentCreator.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      initials
-                    )}
-                  </div>
-                  <span className="truncate max-w-[10rem] sm:max-w-xs">
-                    {currentCreator.name}
-                  </span>
                 </div>
               </div>
 
-              {/* Editeur détaillé : carte plein écran avec Back en haut */}
+              {/* Carte plein écran : on garde seulement "Segments + cercle + liste" */}
               <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60">
-                {/* Header de carte : Back + Face X / 6 + titre */}
-                <div className="flex items-center justify-between border-b border-slate-200 bg-white/95 px-3 py-2 sm:px-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsFaceDetailOpen(false)}
-                    className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-                  >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
-                      <ArrowLeft className="h-4 w-4" />
-                    </span>
-                    <span className="hidden sm:inline">Retour au cube</span>
-                  </button>
-
-                  <div className="flex flex-col items-end gap-0.5 text-right">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      Face {selectedSegment.id} / {segments.length}
-                    </p>
-                    <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900 sm:max-w-xs">
-                      {selectedSegment.label}
-                    </p>
-                  </div>
-                </div>
-
                 {/* Contenu scrollable */}
                 <div className="h-full overflow-y-auto px-1 py-2 sm:px-2">
-                  <MagicDisplayFaceEditor
-                    creatorName={currentCreator.name}
-                    creatorAvatar={currentCreator.avatar}
-                    creatorInitials={initials}
-                    faceId={selectedSegment.id}
-                    faceLabel={selectedSegment.label}
-                  />
+                  {/* On décale MagicDisplayFaceEditor pour cacher son header
+                      (Magic Display, Face universelle, texte, etc.)
+                      et ne laisser visible que :
+                      - Segments sur cette face + slider
+                      - le cercle
+                      - la liste des segments */}
+                  <div className="-mt-24 pb-24">
+                    <MagicDisplayFaceEditor
+                      creatorName={currentCreator.name}
+                      creatorAvatar={currentCreator.avatar}
+                      creatorInitials={initials}
+                      faceId={selectedSegment.id}
+                      faceLabel={selectedSegment.label}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
