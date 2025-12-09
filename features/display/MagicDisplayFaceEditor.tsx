@@ -253,7 +253,6 @@ export default function MagicDisplayFaceEditor({
     }));
 
     setSelectedId((prevId) => {
-      // ids = 1..12 → si prevId > clamped, on revient à 1
       return prevId > clamped ? 1 : prevId;
     });
   }
@@ -306,9 +305,9 @@ export default function MagicDisplayFaceEditor({
   // Calcul de la position des segments comme une horloge (12 heures)
   function getSegmentPositionStyle(index: number) {
     const count = segmentCount || 1;
-    const radiusPercent = 42; // distance du centre
+    const radiusPercent = 42;
     const angleStep = 360 / count;
-    const startAngleDeg = -90; // 12h en haut
+    const startAngleDeg = -90;
     const angleDeg = startAngleDeg + angleStep * index;
     const rad = (angleDeg * Math.PI) / 180;
 
@@ -323,62 +322,43 @@ export default function MagicDisplayFaceEditor({
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm sm:p-6">
-      {/* En-tête face */}
-      <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
-            Magic Display · Face {faceId} / 6
-          </p>
-          <h2 className="text-lg font-semibold sm:text-xl">
-            Face universelle – Étapes pédagogiques
-          </h2>
-          <p className="text-xs text-slate-500">
-            Chaque point autour du cercle est un segment (chapitre) de cette
-            face : diagnostic, application, patine, etc.
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Face active :{" "}
-            <span className="font-semibold">
-              Face {faceId} – {faceLabel}
-            </span>
-          </p>
+      {/* Ligne haute : Segments + slider (à gauche) + avatar (à droite) */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Segments sur cette face */}
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+          <span>Segments sur cette face</span>
+          <span className="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-800">
+            {segmentCount}
+          </span>
+          <input
+            type="range"
+            min={1}
+            max={MAX_SEGMENTS}
+            value={segmentCount}
+            onChange={(e) => handleSegmentCountChange(Number(e.target.value))}
+            className="w-28 accent-brand-500"
+          />
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
-            <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-              {creatorAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={creatorAvatar}
-                  alt={creatorName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-xs font-semibold">
-                  {creatorInitials}
-                </span>
-              )}
-            </span>
-            <span className="font-medium">{creatorName}</span>
-          </div>
 
-          {/* Contrôle nombre de segments (1 → 12) */}
-          <div className="flex items-center gap-2 text-[11px] text-slate-600">
-            <span>Segments sur cette face</span>
-            <span className="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-800">
-              {segmentCount}
-            </span>
-            <input
-              type="range"
-              min={1}
-              max={MAX_SEGMENTS}
-              value={segmentCount}
-              onChange={(e) => handleSegmentCountChange(Number(e.target.value))}
-              className="w-28 accent-brand-500"
-            />
-          </div>
+        {/* Avatar créateur */}
+        <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
+          <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+            {creatorAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={creatorAvatar}
+                alt={creatorName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-xs font-semibold">
+                {creatorInitials}
+              </span>
+            )}
+          </span>
+          <span className="font-medium">{creatorName}</span>
         </div>
-      </header>
+      </div>
 
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         {/* Cercle principal */}
@@ -407,7 +387,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* Points de segments (1 → segmentCount) */}
+            {/* Points de segments */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
@@ -438,7 +418,7 @@ export default function MagicDisplayFaceEditor({
 
         {/* Liste + détail */}
         <div className="space-y-4">
-          {/* Liste */}
+          {/* Liste des segments */}
           <div className="space-y-2">
             {segments.slice(0, segmentCount).map((seg) => {
               const isSelected = seg.id === selectedId;
@@ -520,7 +500,6 @@ export default function MagicDisplayFaceEditor({
               </button>
             </div>
 
-            {/* Preview média */}
             {selectedSegment.mediaUrl && (
               <div className="mt-1 w-full">
                 {selectedSegment.mediaType === "photo" ? (
