@@ -472,22 +472,21 @@ export default function MagicDisplayClient() {
       </section>
 
       {/* 📚 Face universelle – plein écran dans une carte, avec Back dans la carte */}
-     {isFaceDetailOpen && selectedSegment && (
-  <div className="fixed inset-0 z-30 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
-    <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
-      {/* 👇 ajout de overscroll-contain ici */}
-      <div className="flex-1 overflow-y-auto pb-4 overscroll-contain">
-        <MagicDisplayFaceEditor
-          creatorName={currentCreator.name}
-          creatorAvatar={currentCreator.avatar}
-          creatorInitials={initials}
-          faceId={selectedSegment.id}
-          faceLabel={selectedSegment.label}
-          onBack={handleCloseFaceDetail}
-        />
-      </div>
+    {isFaceDetailOpen && selectedSegment && (
+  <section
+    className="fixed inset-0 z-30 overflow-y-auto overscroll-contain bg-white"
+  >
+    <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
+      <MagicDisplayFaceEditor
+        creatorName={currentCreator.name}
+        creatorAvatar={currentCreator.avatar}
+        creatorInitials={initials}
+        faceId={selectedSegment.id}
+        faceLabel={selectedSegment.label}
+        onBack={handleCloseFaceDetail}
+      />
     </div>
-  </div>
+  </section>
 )}
 
       {/* Inputs cachés pour upload local des médias de face */}
