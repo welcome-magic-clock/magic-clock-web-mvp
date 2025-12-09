@@ -104,8 +104,7 @@ export default function MagicDisplayClient() {
   const hashtagsParam =
     searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
-  // On découpe en plusieurs tags : espaces / virgules,
-  // on nettoie et on remet un # propre devant chaque mot
+  // On découpe en plusieurs tags : espaces / virgules, on nettoie et on remet un # propre
   const hashtagTokens = hashtagsParam
     .split(/[,\s]+/)
     .map((t) => t.trim())
@@ -173,7 +172,6 @@ export default function MagicDisplayClient() {
   // Cercle = gère le cube, mais ne force pas l'ouverture de la Face universelle
   function handleCircleFaceClick(seg: Segment) {
     handleSelectFace(seg.id);
-    // On laisse la Face universelle fermée pour garder l'écran très clean.
   }
 
   // 🔹 Clic sur une face du cube
@@ -251,23 +249,19 @@ export default function MagicDisplayClient() {
       {titleFromStudio && (
         <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
           <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            {/* Magic Studio = écriture un peu plus forte */}
             <span className="font-semibold text-slate-900">Magic Studio</span>
             <span>✅</span>
 
             <span className="text-slate-300">·</span>
 
-            {/* Titre : même style que Magic Studio, un peu plus dense */}
             <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
               {titleFromStudio}
             </span>
 
             <span className="text-slate-300">·</span>
 
-            {/* Mode (FREE / ABO / PPV) */}
             <span className="font-semibold text-slate-900">{modeLabel}</span>
 
-            {/* Prix PPV */}
             {modeFromStudio === "PPV" && ppvPriceFromStudio && (
               <>
                 <span className="text-slate-300">·</span>
@@ -277,7 +271,6 @@ export default function MagicDisplayClient() {
               </>
             )}
 
-            {/* Prix abonnement */}
             {modeFromStudio === "SUB" && (
               <>
                 <span className="text-slate-300">·</span>
@@ -287,7 +280,6 @@ export default function MagicDisplayClient() {
               </>
             )}
 
-            {/* Tous les hashtags envoyés par Magic Studio */}
             {hashtagTokens.map((tag) => (
               <span key={tag} className="flex items-center gap-x-1">
                 <span className="text-slate-300">·</span>
@@ -468,7 +460,7 @@ export default function MagicDisplayClient() {
                 </div>
               </div>
 
-              {/* Bouton alternatif pour ouvrir la face universelle */}
+              {/* Bouton pour ouvrir la face universelle */}
               <button
                 type="button"
                 onClick={() => setIsFaceDetailOpen(true)}
@@ -487,68 +479,70 @@ export default function MagicDisplayClient() {
         </div>
       </section>
 
-      {/* 📚 Face universelle en bottom sheet (masquée tant qu'on ne l'ouvre pas) */}
+      {/* 📚 Face universelle en plein écran */}
       {isFaceDetailOpen && selectedSegment && (
-        <section className="fixed inset-x-0 bottom-0 z-40 rounded-t-3xl border border-slate-200 bg-white/98 pb-6 pt-3 shadow-[0_-10px_40px_rgba(15,23,42,0.35)] backdrop-blur">
-          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 sm:px-6">
-            {/* Header de la sheet */}
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setIsFaceDetailOpen(false)}
-                className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
-                  <ArrowLeft className="h-4 w-4" />
-                </span>
-                <span className="hidden sm:inline">Retour au cube</span>
-              </button>
+        <section className="fixed inset-0 z-40 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="flex h-full w-full max-w-5xl flex-col bg-white/98 pb-6 pt-3 shadow-[0_10px_40px_rgba(15,23,42,0.45)] sm:my-6 sm:rounded-3xl">
+            <div className="flex h-full flex-col gap-3 px-4 sm:px-6">
+              {/* Header de l'overlay */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsFaceDetailOpen(false)}
+                  className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
+                    <ArrowLeft className="h-4 w-4" />
+                  </span>
+                  <span className="hidden sm:inline">Retour au cube</span>
+                </button>
 
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Magic Display · Face {selectedSegment.id} / {segments.length}
-              </p>
-            </div>
-
-            {/* Sous-titre + méta face */}
-            <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {selectedSegment.label}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {selectedSegment.description}
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Magic Display · Face {selectedSegment.id} / {segments.length}
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                {/* Mini avatar créateur */}
-                <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-[10px] font-semibold text-slate-50">
-                  {currentCreator.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={currentCreator.avatar}
-                      alt={currentCreator.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    initials
-                  )}
+              {/* Sous-titre + méta face */}
+              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {selectedSegment.label}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {selectedSegment.description}
+                  </p>
                 </div>
-                <span className="truncate max-w-[10rem] sm:max-w-xs">
-                  {currentCreator.name}
-                </span>
-              </div>
-            </div>
 
-            {/* Editeur détaillé */}
-            <div className="max-h-[60vh] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2">
-              <MagicDisplayFaceEditor
-                creatorName={currentCreator.name}
-                creatorAvatar={currentCreator.avatar}
-                creatorInitials={initials}
-                faceId={selectedSegment.id}
-                faceLabel={selectedSegment.label}
-              />
+                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  {/* Mini avatar créateur */}
+                  <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-[10px] font-semibold text-slate-50">
+                    {currentCreator.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={currentCreator.avatar}
+                        alt={currentCreator.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      initials
+                    )}
+                  </div>
+                  <span className="truncate max-w-[10rem] sm:max-w-xs">
+                    {currentCreator.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* Editeur détaillé : prend tout le reste de la hauteur */}
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2">
+                <MagicDisplayFaceEditor
+                  creatorName={currentCreator.name}
+                  creatorAvatar={currentCreator.avatar}
+                  creatorInitials={initials}
+                  faceId={selectedSegment.id}
+                  faceLabel={selectedSegment.label}
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -572,7 +566,6 @@ export default function MagicDisplayClient() {
       <input
         ref={fileInputRef}
         type="file"
-        // on accepte tout, mais l’usage typique sera PDF / docs
         accept="*/*"
         className="hidden"
         onChange={(e) => handleMediaFileChange(e, "file")}
