@@ -135,9 +135,9 @@ export default function MagicDisplayClient() {
     .toUpperCase();
 
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
-  // ✅ Face 1 active par défaut
+  // Face 1 active par défaut
   const [selectedId, setSelectedId] = useState<number | null>(1);
-  // ✅ Face universelle cachée au départ
+  // Face universelle ouverte / fermée
   const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
 
   const selectedSegment =
@@ -168,12 +168,12 @@ export default function MagicDisplayClient() {
     }
   }
 
-  // 🔹 Clic sur une face du cercle
+  // Clic sur une face du cercle
   function handleCircleFaceClick(seg: Segment) {
     handleSelectFace(seg.id);
   }
 
-  // 🔹 Clic sur une face du cube = ouvre la Face universelle
+  // Clic sur une face du cube = ouverture directe de la Face universelle
   function handleCubeFaceClick(id: number | null) {
     if (id === null) return;
     setSelectedId(id);
@@ -225,7 +225,6 @@ export default function MagicDisplayClient() {
         {/* Ligne 1 : BackButton + slot actions */}
         <div className="flex items-center justify-between">
           <BackButton fallbackHref="/studio" label="Retour au Studio" />
-          {/* Slot pour actions futures (Publier, etc.) */}
           {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
         </div>
 
@@ -477,56 +476,41 @@ export default function MagicDisplayClient() {
         </div>
       </section>
 
-      {/* 📚 Face universelle en plein écran */}
+      {/* 📚 Face universelle plein écran simple */}
       {isFaceDetailOpen && selectedSegment && (
-        <section className="fixed inset-0 z-40 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
-          <div className="flex h-full w-full max-w-5xl flex-col bg-white/98 pb-6 pt-3 shadow-[0_10px_40px_rgba(15,23,42,0.45)] sm:my-6 sm:rounded-3xl">
-            <div className="flex h-full flex-col gap-3 px-4 sm:px-6">
-              {/* En-tête : Back + Face X / 6 + titre */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsFaceDetailOpen(false)}
-                  className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
-                    <ArrowLeft className="h-4 w-4" />
-                  </span>
-                  <span className="hidden sm:inline">Retour au cube</span>
-                </button>
+        <section className="fixed inset-0 z-40 flex flex-col bg-white">
+          {/* Barre du haut : Back + Face X / 6 + titre */}
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 pt-4 pb-2 sm:px-6">
+            <button
+              type="button"
+              onClick={() => setIsFaceDetailOpen(false)}
+              className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+                <ArrowLeft className="h-4 w-4" />
+              </span>
+              <span className="hidden sm:inline">Retour</span>
+            </button>
 
-                <div className="flex flex-col items-end gap-0.5 text-right">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Face {selectedSegment.id} / {segments.length}
-                  </p>
-                  <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900 sm:max-w-xs">
-                    {selectedSegment.label}
-                  </p>
-                </div>
-              </div>
-
-              {/* Carte plein écran : on garde seulement "Segments + cercle + liste" */}
-              <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60">
-                {/* Contenu scrollable */}
-                <div className="h-full overflow-y-auto px-1 py-2 sm:px-2">
-                  {/* On décale MagicDisplayFaceEditor pour cacher son header
-                      (Magic Display, Face universelle, texte, etc.)
-                      et ne laisser visible que :
-                      - Segments sur cette face + slider
-                      - le cercle
-                      - la liste des segments */}
-                  <div className="-mt-24 pb-24">
-                    <MagicDisplayFaceEditor
-                      creatorName={currentCreator.name}
-                      creatorAvatar={currentCreator.avatar}
-                      creatorInitials={initials}
-                      faceId={selectedSegment.id}
-                      faceLabel={selectedSegment.label}
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className="flex flex-col items-end gap-0.5 text-right">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Face {selectedSegment.id} / {segments.length}
+              </p>
+              <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900 sm:max-w-xs">
+                {selectedSegment.label}
+              </p>
             </div>
+          </div>
+
+          {/* Contenu scrollable : MagicDisplayFaceEditor complet */}
+          <div className="flex-1 overflow-y-auto px-2 pb-6 pt-2 sm:px-4">
+            <MagicDisplayFaceEditor
+              creatorName={currentCreator.name}
+              creatorAvatar={currentCreator.avatar}
+              creatorInitials={initials}
+              faceId={selectedSegment.id}
+              faceLabel={selectedSegment.label}
+            />
           </div>
         </section>
       )}
