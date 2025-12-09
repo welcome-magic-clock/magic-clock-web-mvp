@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
+import { Camera, Clapperboard, FileText, Plus, ArrowLeft } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
@@ -136,8 +136,10 @@ export default function MagicDisplayClient() {
     .toUpperCase();
 
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
-  // ✅ Face 1 active par défaut (option B)
+  // ✅ Face 1 active par défaut
   const [selectedId, setSelectedId] = useState<number | null>(1);
+  // ✅ Face universelle cachée au départ
+  const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
 
   const selectedSegment =
     segments.find((s) => s.id === selectedId) ?? segments[0] ?? null;
@@ -149,10 +151,8 @@ export default function MagicDisplayClient() {
 
   // Panneau "Face sélectionnée"
   const facePanelRef = useRef<HTMLDivElement | null>(null);
-  // Panneau Face universelle (éditeur en bas)
-  const faceDetailRef = useRef<HTMLDivElement | null>(null);
 
-  // --- Gestion sélection de face (cercle + cube + liste) -------------------
+  // --- Gestion sélection de face (cercle + liste) --------------------------
 
   function handleSelectFace(id: number | null) {
     if (id === null) return;
@@ -170,14 +170,18 @@ export default function MagicDisplayClient() {
   }
 
   // 🔹 Clic sur une face du cercle
-  // → sélectionne la face
-  // → si aucun média encore, ouvre directement l’upload photo
+  // Cercle = gère le cube, mais ne force pas l'ouverture de la Face universelle
   function handleCircleFaceClick(seg: Segment) {
     handleSelectFace(seg.id);
+    // On laisse la Face universelle fermée pour garder l'écran très clean.
+  }
 
-    if (!seg.hasMedia && photoInputRef.current) {
-      photoInputRef.current.click();
-    }
+  // 🔹 Clic sur une face du cube
+  // Cube = ouvre la Face universelle pour cette face
+  function handleCubeFaceClick(id: number | null) {
+    if (id === null) return;
+    setSelectedId(id);
+    setIsFaceDetailOpen(true);
   }
 
   function handleChooseMedia(type: MediaType) {
@@ -366,7 +370,7 @@ export default function MagicDisplayClient() {
             <MagicCube3D
               segments={segments}
               selectedId={selectedId}
-              onSelect={(id) => handleSelectFace(id)}
+              onSelect={handleCubeFaceClick}
             />
 
             <div className="space-y-3">
@@ -464,17 +468,10 @@ export default function MagicDisplayClient() {
                 </div>
               </div>
 
-              {/* Bouton pour ouvrir la face universelle (éditeur détaillé en bas) */}
+              {/* Bouton alternatif pour ouvrir la face universelle */}
               <button
                 type="button"
-                onClick={() => {
-                  if (faceDetailRef.current) {
-                    faceDetailRef.current.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }
-                }}
+                onClick={() => setIsFaceDetailOpen(true)}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-100"
               >
                 <span>Ouvrir la face universelle</span>
@@ -490,28 +487,72 @@ export default function MagicDisplayClient() {
         </div>
       </section>
 
-      {/* Face universelle reliée à la face sélectionnée – version allégée */}
-      <section ref={faceDetailRef} className="mt-4 space-y-2">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Face universelle
-          </h2>
-          <p className="text-[11px] text-slate-500">
-            Face active :{" "}
-            <span className="font-semibold">
-              {selectedSegment?.label ?? "Face 1"}
-            </span>
-          </p>
-        </div>
+      {/* 📚 Face universelle en bottom sheet (masquée tant qu'on ne l'ouvre pas) */}
+      {isFaceDetailOpen && selectedSegment && (
+        <section className="fixed inset-x-0 bottom-0 z-40 rounded-t-3xl border border-slate-200 bg-white/98 pb-6 pt-3 shadow-[0_-10px_40px_rgba(15,23,42,0.35)] backdrop-blur">
+          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 sm:px-6">
+            {/* Header de la sheet */}
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsFaceDetailOpen(false)}
+                className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 shadow-sm">
+                  <ArrowLeft className="h-4 w-4" />
+                </span>
+                <span className="hidden sm:inline">Retour au cube</span>
+              </button>
 
-        <MagicDisplayFaceEditor
-          creatorName={currentCreator.name}
-          creatorAvatar={currentCreator.avatar}
-          creatorInitials={initials}
-          faceId={selectedSegment?.id ?? 1}
-          faceLabel={selectedSegment?.label ?? "Face 1"}
-        />
-      </section>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Magic Display · Face {selectedSegment.id} / {segments.length}
+              </p>
+            </div>
+
+            {/* Sous-titre + méta face */}
+            <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {selectedSegment.label}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {selectedSegment.description}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                {/* Mini avatar créateur */}
+                <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-[10px] font-semibold text-slate-50">
+                  {currentCreator.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={currentCreator.avatar}
+                      alt={currentCreator.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </div>
+                <span className="truncate max-w-[10rem] sm:max-w-xs">
+                  {currentCreator.name}
+                </span>
+              </div>
+            </div>
+
+            {/* Editeur détaillé */}
+            <div className="max-h-[60vh] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2">
+              <MagicDisplayFaceEditor
+                creatorName={currentCreator.name}
+                creatorAvatar={currentCreator.avatar}
+                creatorInitials={initials}
+                faceId={selectedSegment.id}
+                faceLabel={selectedSegment.label}
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Inputs cachés pour upload local des médias de face */}
       <input
