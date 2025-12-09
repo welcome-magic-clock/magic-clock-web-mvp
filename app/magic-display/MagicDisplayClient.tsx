@@ -241,14 +241,11 @@ export default function MagicDisplayClient() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BackButton fallbackHref="/studio" label="Retour" />
-            <div className="flex flex-col">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Magic Clock
-              </span>
-              <h1 className="text-lg font-semibold leading-tight text-slate-900 sm:text-xl">
-                Magic Display
-              </h1>
-            </div>
+           <div className="flex flex-col">
+  <h1 className="text-lg font-semibold leading-tight text-slate-900 sm:text-xl">
+    Magic Display
+  </h1>
+</div>
           </div>
 
           <button
