@@ -476,31 +476,23 @@ export default function MagicDisplayClient() {
         </div>
       </section>
 
-      {/* 📚 Face universelle plein écran simple */}
-      {isFaceDetailOpen && selectedSegment && (
-        <section className="fixed inset-0 z-40 flex flex-col bg-white">
-          {/* Barre du haut : Back + Face X / 6 + titre */}
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 pt-4 pb-2 sm:px-6">
-            <button
-              type="button"
-              onClick={() => setIsFaceDetailOpen(false)}
-              className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
-                <ArrowLeft className="h-4 w-4" />
-              </span>
-              <span className="hidden sm:inline">Retour</span>
-            </button>
-
-            <div className="flex flex-col items-end gap-0.5 text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Face {selectedSegment.id} / {segments.length}
-              </p>
-              <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900 sm:max-w-xs">
-                {selectedSegment.label}
-              </p>
-            </div>
-          </div>
+     {/* 📚 Face universelle – carte plein écran avec Back dans la carte */}
+{isFaceDetailOpen && selectedSegment && (
+  <div className="fixed inset-0 z-30 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
+    <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
+      <div className="flex-1 overflow-y-auto pb-4">
+        <MagicDisplayFaceEditor
+          creatorName={currentCreator.name}
+          creatorAvatar={currentCreator.avatar}
+          creatorInitials={initials}
+          faceId={selectedSegment.id}
+          faceLabel={selectedSegment.label}
+          onBack={() => setIsFaceDetailOpen(false)} // ⬅️ retour vers MagicDisplayClient
+        />
+      </div>
+    </div>
+  </div>
+)}
 
           {/* Contenu scrollable : MagicDisplayFaceEditor complet */}
           <div className="flex-1 overflow-y-auto px-2 pb-6 pt-2 sm:px-4">
