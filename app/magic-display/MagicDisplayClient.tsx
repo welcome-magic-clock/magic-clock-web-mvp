@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
+import { Camera, Clapperboard, FileText, Plus, MoreHorizontal } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
@@ -100,12 +100,10 @@ export default function MagicDisplayClient() {
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
-  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
+  // Hashtags envoyés par Magic Studio
   const hashtagsParam =
     searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
-  // On découpe en plusieurs tags : espaces / virgules,
-  // on nettoie et on remet un # propre devant chaque mot
   const hashtagTokens = hashtagsParam
     .split(/[,\s]+/)
     .map((t) => t.trim())
@@ -152,10 +150,9 @@ export default function MagicDisplayClient() {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
-  // clic sur une face du cercle
+  // clic sur une face du cercle → sélectionne + (optionnel) upload
   function handleCircleFaceClick(seg: Segment) {
     setSelectedId(seg.id);
-    // Option B : si pas de média, on propose d'emblée la photo
     if (!seg.hasMedia && photoInputRef.current) {
       photoInputRef.current.click();
     }
@@ -195,7 +192,6 @@ export default function MagicDisplayClient() {
       )
     );
 
-    // reset pour pouvoir ré-uploader le même fichier si besoin
     event.target.value = "";
   }
 
@@ -210,81 +206,79 @@ export default function MagicDisplayClient() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* Header Magic Display ultra minimal */}
-      <header className="mb-4 space-y-3">
-        {/* Ligne 1 : BackButton + slot actions */}
-        <div className="flex items-center justify-between">
-          <BackButton fallbackHref="/studio" label="Retour au Studio" />
-          {/* Slot pour actions futures (Publier, etc.) */}
-          {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
-        </div>
+      {/* 🧾 Carte entête Magic Display (Back + titre + options + bandeau Studio) */}
+      <section className="mb-4 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm sm:p-5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <BackButton fallbackHref="/studio" label="Retour" />
 
-        {/* Ligne 2 & 3 : Magic Display + titre venant du Studio */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Magic Display
-          </h1>
-
-          {titleFromStudio && (
-            <p className="truncate text-sm font-medium text-slate-700">
-              {titleFromStudio}
-            </p>
-          )}
-        </div>
-      </header>
-
-      {/* Banderole venant de Magic Studio */}
-      {titleFromStudio && (
-        <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
-          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            {/* Magic Studio = écriture un peu plus forte */}
-            <span className="font-semibold text-slate-900">Magic Studio</span>
-            <span>✅</span>
-
-            <span className="text-slate-300">·</span>
-
-            {/* Titre : même style que Magic Studio, un peu plus dense */}
-            <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
-              {titleFromStudio}
-            </span>
-
-            <span className="text-slate-300">·</span>
-
-            {/* Mode (FREE / ABO / PPV) */}
-            <span className="font-semibold text-slate-900">{modeLabel}</span>
-
-            {/* Prix PPV */}
-            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="font-mono font-semibold text-slate-900">
-                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
-                </span>
-              </>
-            )}
-
-            {/* Prix abonnement */}
-            {modeFromStudio === "SUB" && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="font-mono font-semibold text-slate-900">
-                  {subscriptionPriceMock.toFixed(2)} CHF / mois
-                </span>
-              </>
-            )}
-
-            {/* Tous les hashtags envoyés par Magic Studio */}
-            {hashtagTokens.map((tag) => (
-              <span key={tag} className="flex items-center gap-x-1">
-                <span className="text-slate-300">·</span>
-                <span className="font-mono font-semibold text-slate-900">
-                  {tag}
-                </span>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Magic Clock
               </span>
-            ))}
-          </p>
-        </section>
-      )}
+              <h1 className="text-lg font-semibold leading-tight text-slate-900 sm:text-xl">
+                Magic Display
+              </h1>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="inline-flex h-8 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-600 shadow-sm"
+          >
+            <MoreHorizontal className="mr-1 h-3.5 w-3.5" />
+            Options
+          </button>
+        </div>
+
+        {titleFromStudio && (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] text-slate-700 sm:px-4 sm:py-2.5">
+            <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+              <span className="font-semibold text-slate-900">
+                Magic Studio
+              </span>
+              <span>✅</span>
+
+              <span className="text-slate-300">·</span>
+
+              <span className="max-w-[11rem] truncate font-semibold text-slate-900 sm:max-w-[18rem]">
+                {titleFromStudio}
+              </span>
+
+              <span className="text-slate-300">·</span>
+
+              <span className="font-semibold text-slate-900">{modeLabel}</span>
+
+              {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                  </span>
+                </>
+              )}
+
+              {modeFromStudio === "SUB" && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {subscriptionPriceMock.toFixed(2)} CHF / mois
+                  </span>
+                </>
+              )}
+
+              {hashtagTokens.map((tag) => (
+                <span key={tag} className="flex items-center gap-x-1">
+                  <span className="text-slate-300">·</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {tag}
+                  </span>
+                </span>
+              ))}
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
@@ -353,17 +347,12 @@ export default function MagicDisplayClient() {
 
           {/* Colonne droite : cube + liste */}
           <div className="flex-1 space-y-4">
-           <MagicCube3D
-  segments={segments}
-  selectedId={selectedId}
-  onSelect={(id) => {
-    if (id == null) return;
-    // 1) on sélectionne la face pour synchroniser cercle + liste
-    handleSelectFace(id);
-    // 2) on ouvre la face universelle en plein écran
-    setIsFaceDetailOpen(true);
-  }}
-/>
+            <MagicCube3D
+              segments={segments}
+              selectedId={selectedId}
+              onSelect={(id) => handleSelectFace(id)}
+            />
+
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-slate-900">
                 Faces de ce cube Magic Clock
@@ -472,22 +461,22 @@ export default function MagicDisplayClient() {
       </section>
 
       {/* 📚 Face universelle – plein écran dans une carte, avec Back dans la carte */}
-    {isFaceDetailOpen && selectedSegment && (
-  <section
-    className="fixed inset-0 z-30 overflow-y-auto overscroll-contain bg-white"
-  >
-    <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
-      <MagicDisplayFaceEditor
-        creatorName={currentCreator.name}
-        creatorAvatar={currentCreator.avatar}
-        creatorInitials={initials}
-        faceId={selectedSegment.id}
-        faceLabel={selectedSegment.label}
-        onBack={handleCloseFaceDetail}
-      />
-    </div>
-  </section>
-)}
+      {isFaceDetailOpen && selectedSegment && (
+        <div className="fixed inset-0 z-30 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
+            <div className="flex-1 overflow-y-auto pb-4">
+              <MagicDisplayFaceEditor
+                creatorName={currentCreator.name}
+                creatorAvatar={currentCreator.avatar}
+                creatorInitials={initials}
+                faceId={selectedSegment.id}
+                faceLabel={selectedSegment.label}
+                onBack={handleCloseFaceDetail}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Inputs cachés pour upload local des médias de face */}
       <input
@@ -507,7 +496,6 @@ export default function MagicDisplayClient() {
       <input
         ref={fileInputRef}
         type="file"
-        // on accepte tout, mais l’usage typique sera PDF / docs
         accept="*/*"
         className="hidden"
         onChange={(e) => handleMediaFileChange(e, "file")}
