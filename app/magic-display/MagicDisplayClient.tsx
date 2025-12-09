@@ -4,6 +4,7 @@ import { useState, useRef, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
+import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
 
@@ -98,24 +99,21 @@ export default function MagicDisplayClient() {
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
-  // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
-  // const formatFromStudio = searchParams.get("format") ?? "portrait";
-  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
-const hashtagsParam =
-  searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
-// On découpe en plusieurs tags : espaces / virgules,
-// et on ignore les “#” tout seuls
-const hashtagTokens = hashtagsParam
-  .split(/[,\s]+/)            // coupe sur espaces / virgules
-  .map((t) => t.trim())
-  .filter(Boolean)
-  // on enlève le # pour normaliser ( "#" → "" / "#Blond" → "Blond" )
-  .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
-  // on garde seulement les mots non vides
-  .filter((tag) => tag.length > 0)
-  // on remet un # propre devant chaque mot
-  .map((tag) => `#${tag}`);
+  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
+  const hashtagsParam =
+    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
+
+  // On découpe en plusieurs tags : espaces / virgules,
+  // on nettoie et on remet un # propre devant chaque mot
+  const hashtagTokens = hashtagsParam
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
+    .filter((tag) => tag.length > 0)
+    .map((tag) => `#${tag}`);
+
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
   const modeLabel =
@@ -147,10 +145,21 @@ const hashtagTokens = hashtagsParam
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // --- Gestion média sur les FACES (cube) -----------------------------------
+  // --- Gestion média sur les FACES (cube + cercle) -------------------------
 
   function handleSelectFace(id: number | null) {
     setSelectedId((prev) => (prev === id ? null : id));
+  }
+
+  // 🔹 Nouveau : clic sur une face du cercle
+  // → sélectionne la face
+  // → si aucun média encore, ouvre directement l’upload photo
+  function handleCircleFaceClick(seg: Segment) {
+    setSelectedId(seg.id);
+
+    if (!seg.hasMedia && photoInputRef.current) {
+      photoInputRef.current.click();
+    }
   }
 
   function handleChooseMedia(type: MediaType) {
@@ -193,76 +202,86 @@ const hashtagTokens = hashtagsParam
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* Header général Magic Display */}
-      <header className="mb-4 space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
-          Magic Display · Prototype cube + face universelle
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Construction pédagogique de ton Magic Clock
-        </h1>
-        <p className="text-sm text-slate-600">
-          Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
-          plusieurs segments pédagogiques (diagnostic, application, patine,
-          routine maison, etc.).
-        </p>
+      {/* Header Magic Display ultra minimal */}
+      <header className="mb-4 space-y-3">
+        {/* Ligne 1 : BackButton + slot actions */}
+        <div className="flex items-center justify-between">
+          <BackButton fallbackHref="/studio" label="Retour au Studio" />
+          {/* Slot pour actions futures (Publier, etc.) */}
+          {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
+        </div>
+
+        {/* Ligne 2 & 3 : Magic Display + titre venant du Studio */}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Magic Display
+          </h1>
+
+          {titleFromStudio && (
+            <p className="truncate text-sm font-medium text-slate-700">
+              {titleFromStudio}
+            </p>
+          )}
+        </div>
       </header>
 
-      {/* Panneau venant de Magic Studio */}
-    {titleFromStudio && (
-  <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      {/* Magic Studio = déjà la bonne écriture */}
-      <span className="font-semibold text-slate-900">Magic Studio</span>
-      <span>✅</span>
+      {/* Banderole venant de Magic Studio */}
+      {titleFromStudio && (
+        <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
+          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            {/* Magic Studio = écriture un peu plus forte */}
+            <span className="font-semibold text-slate-900">Magic Studio</span>
+            <span>✅</span>
 
-      <span className="text-slate-300">·</span>
+            <span className="text-slate-300">·</span>
 
-      {/* Titre : même style que Magic Studio */}
-      <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
-        {titleFromStudio}
-      </span>
+            {/* Titre : même style que Magic Studio, un peu plus dense */}
+            <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
+              {titleFromStudio}
+            </span>
 
-      <span className="text-slate-300">·</span>
+            <span className="text-slate-300">·</span>
 
-      {/* Mode FREE / Abonnement / PayPerView */}
-      <span className="font-semibold text-slate-900">{modeLabel}</span>
+            {/* Mode (FREE / ABO / PPV) */}
+            <span className="font-semibold text-slate-900">{modeLabel}</span>
 
-      {/* Prix PPV */}
-      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-semibold text-slate-900 tabular-nums">
-            {Number(ppvPriceFromStudio).toFixed(2)} CHF
-          </span>
-        </>
+            {/* Prix PPV */}
+            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                </span>
+              </>
+            )}
+
+            {/* Prix abonnement */}
+            {modeFromStudio === "SUB" && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {subscriptionPriceMock.toFixed(2)} CHF / mois
+                </span>
+              </>
+            )}
+
+            {/* Tous les hashtags envoyés par Magic Studio */}
+            {hashtagTokens.map((tag) => (
+              <span key={tag} className="flex items-center gap-x-1">
+                <span className="text-slate-300">·</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {tag}
+                </span>
+              </span>
+            ))}
+          </p>
+        </section>
       )}
 
-      {/* Prix Abonnement mock */}
-      {modeFromStudio === "SUB" && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-semibold text-slate-900 tabular-nums">
-            {subscriptionPriceMock.toFixed(2)} CHF / mois
-          </span>
-        </>
-      )}
-
-      {/* Tous les hashtags – même écriture plus foncée */}
-      {hashtagTokens.map((tag) => (
-        <span key={tag} className="flex items-center gap-x-1">
-          <span className="text-slate-300">·</span>
-          <span className="font-semibold text-slate-900">{tag}</span>
-        </span>
-      ))}
-    </p>
-  </section>
-)}
-      
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-          {/* Disque central (style aligné sur Face universelle) */}
+          {/* Disque central (contrôle des faces) */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
               <div
@@ -288,7 +307,7 @@ const hashtagTokens = hashtagsParam
                   )}
                 </div>
 
-                {/* Boutons segments (faces) – même logique que Face universelle */}
+                {/* Boutons segments (faces) */}
                 {segments.map((seg) => {
                   const radiusPercent = 40;
                   const rad = (seg.angleDeg * Math.PI) / 180;
@@ -301,7 +320,7 @@ const hashtagTokens = hashtagsParam
                     <button
                       key={seg.id}
                       type="button"
-                      onClick={() => handleSelectFace(seg.id)}
+                      onClick={() => handleCircleFaceClick(seg)}
                       className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                         ${
                           isSelected
@@ -337,9 +356,8 @@ const hashtagTokens = hashtagsParam
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne représente une face du cube. On reste volontairement
-                neutre : les créatrices peuvent renommer les faces comme elles le
-                souhaitent (diagnostic, patine, routine, etc.).
+                Chaque ligne correspond à une face. Sélectionne une face pour
+                compléter son contenu.
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
@@ -380,7 +398,7 @@ const hashtagTokens = hashtagsParam
           </div>
         </div>
 
-        {/* Panneau d’action face sélectionnée – même style que Face universelle */}
+        {/* Panneau d’action face sélectionnée */}
         <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
           {selectedSegment ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -425,29 +443,28 @@ const hashtagTokens = hashtagsParam
             </div>
           ) : (
             <p className="text-[11px] text-slate-500">
-              Clique sur une face du cube pour la sélectionner, puis ajoute une
-              photo, une vidéo ou un fichier pour documenter cette face. (MVP
-              local, aucune donnée n&apos;est encore sauvegardée côté serveur.)
+              Sélectionne une face via le cercle ou la liste, puis ajoute une
+              photo, une vidéo ou un fichier. (MVP local, aucune donnée n&apos;est
+              encore sauvegardée côté serveur.)
             </p>
           )}
         </div>
       </section>
 
-      {/* Face universelle reliée à la face sélectionnée */}
+      {/* Face universelle reliée à la face sélectionnée – version allégée */}
       <section className="mt-4 space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">
-          Face universelle – Prototype v1
-        </h2>
-        <p className="text-xs text-slate-500">
-          Ici on teste l&apos;éditeur d&apos;une seule face : segments, notes
-          pédagogiques et futur lien avec Studio, pour{" "}
-          <span className="font-semibold">{currentCreator.name}</span>. La face
-          active est{" "}
-          <span className="font-semibold">
-            {selectedSegment?.label ?? "Face 1"}
-          </span>
-          .
-        </p>
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Face universelle
+          </h2>
+          <p className="text-[11px] text-slate-500">
+            Face active :{" "}
+            <span className="font-semibold">
+              {selectedSegment?.label ?? "Face 1"}
+            </span>
+          </p>
+        </div>
+
         <MagicDisplayFaceEditor
           creatorName={currentCreator.name}
           creatorAvatar={currentCreator.avatar}
