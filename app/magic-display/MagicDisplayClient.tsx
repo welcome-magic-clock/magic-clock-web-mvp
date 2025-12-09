@@ -220,7 +220,7 @@ export default function MagicDisplayClient() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* ⭐️ Une seule grande carte Magic Display */}
-      <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+      <section className="mb-6 flex min-h-[calc(100vh-7rem)] flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         {/* Ligne 1 : Back + titre + Options */}
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
