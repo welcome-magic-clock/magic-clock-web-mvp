@@ -213,8 +213,24 @@ export default function MagicDisplayClient() {
     setIsFaceDetailOpen(true);
   }
 
-  function handleCloseFaceDetail() {
+   function handleCloseFaceDetail() {
     setIsFaceDetailOpen(false);
+  }
+
+  // 🔄 Quand la Face universelle est ouverte, on affiche UNIQUEMENT l'éditeur
+  if (isFaceDetailOpen && selectedSegment) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+        <MagicDisplayFaceEditor
+          creatorName={currentCreator.name}
+          creatorAvatar={currentCreator.avatar}
+          creatorInitials={initials}
+          faceId={selectedSegment.id}
+          faceLabel={selectedSegment.label}
+          onBack={handleCloseFaceDetail}
+        />
+      </main>
+    );
   }
 
   return (
@@ -468,24 +484,6 @@ export default function MagicDisplayClient() {
           )}
         </div>
       </section>
-
-      {/* Overlay Face universelle plein écran */}
-     {isFaceDetailOpen && selectedSegment && (
-  <div className="fixed inset-0 z-30 flex items-stretch justify-center bg-slate-900/40 backdrop-blur-sm">
-    <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pt-6 sm:px-6">
-      <div className="flex-1 overflow-y-auto">
-              <MagicDisplayFaceEditor
-                creatorName={currentCreator.name}
-                creatorAvatar={currentCreator.avatar}
-                creatorInitials={initials}
-                faceId={selectedSegment.id}
-                faceLabel={selectedSegment.label}
-                onBack={handleCloseFaceDetail}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Inputs cachés upload */}
       <input
