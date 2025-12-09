@@ -18,6 +18,7 @@ type Segment = {
   hasMedia: boolean;
   mediaType?: MediaType;
   mediaUrl?: string | null; // URL locale pour prévisualiser le fichier
+  faceNotes?: string; // notes globales pour cette face
 };
 
 const INITIAL_SEGMENTS: Segment[] = [
@@ -99,24 +100,24 @@ export default function MagicDisplayClient() {
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudio = searchParams.get("mode") ?? "FREE";
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
-  // formatFromStudio est lu mais plus affiché (on garde pour plus tard)
-  // const formatFromStudio = searchParams.get("format") ?? "portrait";
-  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
-const hashtagsParam =
-  searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
-// On découpe en plusieurs tags : espaces / virgules,
-// et on ignore les “#” tout seuls
-const hashtagTokens = hashtagsParam
-  .split(/[,\s]+/)            // coupe sur espaces / virgules
-  .map((t) => t.trim())
-  .filter(Boolean)
-  // on enlève le # pour normaliser ( "#" → "" / "#Blond" → "Blond" )
-  .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
-  // on garde seulement les mots non vides
-  .filter((tag) => tag.length > 0)
-  // on remet un # propre devant chaque mot
-  .map((tag) => `#${tag}`);
+  // Hashtags envoyés par Magic Studio (ex: "#1 #2 #3" ou "balayage blond")
+  const hashtagsParam =
+    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
+
+  // On découpe en plusieurs tags : espaces / virgules,
+  // et on ignore les “#” tout seuls
+  const hashtagTokens = hashtagsParam
+    .split(/[,\s]+/) // coupe sur espaces / virgules
+    .map((t) => t.trim())
+    .filter(Boolean)
+    // on enlève le # pour normaliser ( "#" → "" / "#Blond" → "Blond" )
+    .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
+    // on garde seulement les mots non vides
+    .filter((tag) => tag.length > 0)
+    // on remet un # propre devant chaque mot
+    .map((tag) => `#${tag}`);
+
   const subscriptionPriceMock = 19.9; // CHF / mois (MVP)
 
   const modeLabel =
@@ -139,7 +140,7 @@ const hashtagTokens = hashtagsParam
     .toUpperCase();
 
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(1); // Face 1 active par défaut
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
@@ -148,11 +149,38 @@ const hashtagTokens = hashtagsParam
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // --- Gestion média sur les FACES (cube) -----------------------------------
+  // Référence pour scroller la zone "Face active" sur mobile
+  const facePanelRef = useRef<HTMLDivElement | null>(null);
+
+  // --- Helpers pour mettre à jour la face active ---------------------
+
+  function updateSelectedSegment(partial: Partial<Segment>) {
+    if (!selectedSegment) return;
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === selectedSegment.id ? { ...seg, ...partial } : seg
+      )
+    );
+  }
+
+  // --- Gestion sélection de face (cercle + liste + cube) ------------
 
   function handleSelectFace(id: number | null) {
-    setSelectedId((prev) => (prev === id ? null : id));
+    if (id === null) return;
+    setSelectedId(id);
+
+    // Sur mobile : on scrolle vers le panneau "Face active"
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      if (facePanelRef.current) {
+        facePanelRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }
   }
+
+  // --- Gestion média sur les FACES (cube) ----------------------------
 
   function handleChooseMedia(type: MediaType) {
     if (!selectedSegment) return;
@@ -195,83 +223,83 @@ const hashtagTokens = hashtagsParam
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Header général Magic Display */}
-     <header className="mb-4 space-y-3">
-  {/* Ligne du haut : BackButton + (espace futur pour actions) */}
-  <div className="flex items-center justify-between">
-    <BackButton fallbackHref="/studio" label="Retour au Studio" />
+      <header className="mb-4 space-y-3">
+        {/* Ligne du haut : BackButton + (espace futur pour actions) */}
+        <div className="flex items-center justify-between">
+          <BackButton fallbackHref="/studio" label="Retour au Studio" />
 
-    {/* Slot libre pour plus tard (ex: bouton Publier) */}
-    {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
-  </div>
+          {/* Slot libre pour plus tard (ex: bouton Publier) */}
+          {/* <button className="text-xs font-medium text-brand-600">Publier</button> */}
+        </div>
 
-  {/* Titre + surtitre */}
-  <div className="space-y-1">
-    <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
-      Magic Display · Prototype cube + face universelle
-    </p>
-    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-      Construction pédagogique de ton Magic Clock
-    </h1>
-  </div>
+        {/* Titre + surtitre */}
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">
+            Magic Display · Prototype cube + face universelle
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Construction pédagogique de ton Magic Clock
+          </h1>
+        </div>
 
-  <p className="text-sm text-slate-600">
-    Le cube représente l&apos;œuvre complète (6 faces). Chaque face contient
-    plusieurs segments pédagogiques (diagnostic, application, patine,
-    routine maison, etc.).
-  </p>
-</header>
+        <p className="text-sm text-slate-600">
+          Le cube représente l&apos;œuvre complète (6 faces). Chaque face
+          contient plusieurs segments pédagogiques (diagnostic, application,
+          patine, routine maison, etc.).
+        </p>
+      </header>
 
       {/* Panneau venant de Magic Studio */}
-    {titleFromStudio && (
-  <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      {/* Magic Studio = déjà la bonne écriture */}
-      <span className="font-semibold text-slate-900">Magic Studio</span>
-      <span>✅</span>
+      {titleFromStudio && (
+        <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
+          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            {/* Magic Studio = déjà la bonne écriture */}
+            <span className="font-semibold text-slate-900">Magic Studio</span>
+            <span>✅</span>
 
-      <span className="text-slate-300">·</span>
+            <span className="text-slate-300">·</span>
 
-      {/* Titre : même style que Magic Studio */}
-      <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
-        {titleFromStudio}
-      </span>
+            {/* Titre : même style que Magic Studio */}
+            <span className="font-semibold text-slate-900 truncate max-w-[11rem] sm:max-w-[18rem]">
+              {titleFromStudio}
+            </span>
 
-      <span className="text-slate-300">·</span>
+            <span className="text-slate-300">·</span>
 
-      {/* Mode FREE / Abonnement / PayPerView */}
-      <span className="font-semibold text-slate-900">{modeLabel}</span>
+            {/* Mode FREE / Abonnement / PayPerView */}
+            <span className="font-semibold text-slate-900">{modeLabel}</span>
 
-      {/* Prix PPV */}
-      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-semibold text-slate-900 tabular-nums">
-            {Number(ppvPriceFromStudio).toFixed(2)} CHF
-          </span>
-        </>
+            {/* Prix PPV */}
+            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-semibold text-slate-900 tabular-nums">
+                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                </span>
+              </>
+            )}
+
+            {/* Prix Abonnement mock */}
+            {modeFromStudio === "SUB" && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-semibold text-slate-900 tabular-nums">
+                  {subscriptionPriceMock.toFixed(2)} CHF / mois
+                </span>
+              </>
+            )}
+
+            {/* Tous les hashtags – même écriture plus foncée */}
+            {hashtagTokens.map((tag) => (
+              <span key={tag} className="flex items-center gap-x-1">
+                <span className="text-slate-300">·</span>
+                <span className="font-semibold text-slate-900">{tag}</span>
+              </span>
+            ))}
+          </p>
+        </section>
       )}
 
-      {/* Prix Abonnement mock */}
-      {modeFromStudio === "SUB" && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-semibold text-slate-900 tabular-nums">
-            {subscriptionPriceMock.toFixed(2)} CHF / mois
-          </span>
-        </>
-      )}
-
-      {/* Tous les hashtags – même écriture plus foncée */}
-      {hashtagTokens.map((tag) => (
-        <span key={tag} className="flex items-center gap-x-1">
-          <span className="text-slate-300">·</span>
-          <span className="font-semibold text-slate-900">{tag}</span>
-        </span>
-      ))}
-    </p>
-  </section>
-)}
-      
       {/* 🟣 Carte principale : cercle + cube 3D + liste de faces */}
       <section className="mb-6 flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
@@ -350,9 +378,10 @@ const hashtagTokens = hashtagsParam
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne représente une face du cube. On reste volontairement
-                neutre : les créatrices peuvent renommer les faces comme elles le
-                souhaitent (diagnostic, patine, routine, etc.).
+                Chaque ligne représente une face du cube. On reste
+                volontairement neutre : les créatrices peuvent renommer les
+                faces comme elles le souhaitent (diagnostic, patine, routine,
+                etc.).
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
@@ -393,54 +422,125 @@ const hashtagTokens = hashtagsParam
           </div>
         </div>
 
-        {/* Panneau d’action face sélectionnée – même style que Face universelle */}
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+        {/* Panneau "Face active" – média principal + titre + notes */}
+        <div
+          ref={facePanelRef}
+          className="mt-4 rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4"
+        >
           {selectedSegment ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Face sélectionnée
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {selectedSegment.label}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {selectedSegment.description}
-                </p>
+            <div className="space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                    Face active
+                  </p>
+                  <div className="space-y-1">
+                    {/* Renommage de la face */}
+                    <input
+                      type="text"
+                      value={selectedSegment.label}
+                      onChange={(e) =>
+                        updateSelectedSegment({ label: e.target.value })
+                      }
+                      className="w-full rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                    {/* Petit texte de face */}
+                    <input
+                      type="text"
+                      value={selectedSegment.description}
+                      onChange={(e) =>
+                        updateSelectedSegment({ description: e.target.value })
+                      }
+                      className="w-full rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      placeholder="Petit texte pour décrire cette face (ex: Diagnostic / point de départ)"
+                    />
+                  </div>
+                </div>
+
+                {/* Actions média principal de la face */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("photo")}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                    <span>Ajouter une photo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("video")}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                  >
+                    <Clapperboard className="h-3.5 w-3.5" />
+                    <span>Ajouter une vidéo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChooseMedia("file")}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>Ajouter un fichier</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("photo")}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  <span>Ajouter une photo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("video")}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <Clapperboard className="h-3.5 w-3.5" />
-                  <span>Ajouter une vidéo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("file")}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  <span>Ajouter un fichier</span>
-                </button>
+              {/* Prévisualisation du média principal */}
+              {selectedSegment.mediaUrl && (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2">
+                  <p className="mb-1 text-[11px] font-medium text-slate-600">
+                    Média principal de cette face
+                  </p>
+                  <div className="overflow-hidden rounded-lg">
+                    {selectedSegment.mediaType === "photo" && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selectedSegment.mediaUrl}
+                        alt={selectedSegment.label}
+                        className="max-h-60 w-full object-cover"
+                      />
+                    )}
+                    {selectedSegment.mediaType === "video" && (
+                      <video
+                        src={selectedSegment.mediaUrl}
+                        className="max-h-60 w-full object-contain"
+                        controls
+                      />
+                    )}
+                    {selectedSegment.mediaType === "file" && (
+                      <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[11px] text-slate-700">
+                        <FileText className="h-4 w-4 text-slate-500" />
+                        <span>
+                          Fichier associé à cette face (aperçu local).
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes globales pour cette face */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-slate-700">
+                  Notes globales pour cette face
+                </label>
+                <textarea
+                  value={selectedSegment.faceNotes ?? ""}
+                  onChange={(e) =>
+                    updateSelectedSegment({ faceNotes: e.target.value })
+                  }
+                  rows={3}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[11px] text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  placeholder="Produits utilisés, temps de pause, astuces principales..."
+                />
               </div>
             </div>
           ) : (
             <p className="text-[11px] text-slate-500">
-              Clique sur une face du cube pour la sélectionner, puis ajoute une
-              photo, une vidéo ou un fichier pour documenter cette face. (MVP
-              local, aucune donnée n&apos;est encore sauvegardée côté serveur.)
+              Sélectionne une face sur le cercle ou dans la liste pour
+              commencer à la documenter : média principal, texte de la face et
+              notes globales.
             </p>
           )}
         </div>
@@ -449,17 +549,12 @@ const hashtagTokens = hashtagsParam
       {/* Face universelle reliée à la face sélectionnée */}
       <section className="mt-4 space-y-2">
         <h2 className="text-sm font-semibold text-slate-900">
-          Face universelle – Prototype v1
+          Segments pédagogiques de cette face
         </h2>
         <p className="text-xs text-slate-500">
-          Ici on teste l&apos;éditeur d&apos;une seule face : segments, notes
-          pédagogiques et futur lien avec Studio, pour{" "}
-          <span className="font-semibold">{currentCreator.name}</span>. La face
-          active est{" "}
-          <span className="font-semibold">
-            {selectedSegment?.label ?? "Face 1"}
-          </span>
-          .
+          Ici tu découpes la face active en plusieurs segments : diagnostic
+          précis, étapes d&apos;application, produits, corrections, etc. Chaque
+          segment pourra accueillir son propre média et ses notes.
         </p>
         <MagicDisplayFaceEditor
           creatorName={currentCreator.name}
