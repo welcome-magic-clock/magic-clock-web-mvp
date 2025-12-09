@@ -353,12 +353,17 @@ export default function MagicDisplayClient() {
 
           {/* Colonne droite : cube + liste */}
           <div className="flex-1 space-y-4">
-            <MagicCube3D
-              segments={segments}
-              selectedId={selectedId}
-              onSelect={(id) => handleSelectFace(id)}
-            />
-
+           <MagicCube3D
+  segments={segments}
+  selectedId={selectedId}
+  onSelect={(id) => {
+    if (id == null) return;
+    // 1) on sélectionne la face pour synchroniser cercle + liste
+    handleSelectFace(id);
+    // 2) on ouvre la face universelle en plein écran
+    setIsFaceDetailOpen(true);
+  }}
+/>
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-slate-900">
                 Faces de ce cube Magic Clock
