@@ -145,21 +145,10 @@ export default function MagicDisplayClient() {
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // --- Gestion média sur les FACES (cube + cercle) -------------------------
+  // --- Gestion média sur les FACES (cube) -----------------------------------
 
   function handleSelectFace(id: number | null) {
     setSelectedId((prev) => (prev === id ? null : id));
-  }
-
-  // 🔹 Nouveau : clic sur une face du cercle
-  // → sélectionne la face
-  // → si aucun média encore, ouvre directement l’upload photo
-  function handleCircleFaceClick(seg: Segment) {
-    setSelectedId(seg.id);
-
-    if (!seg.hasMedia && photoInputRef.current) {
-      photoInputRef.current.click();
-    }
   }
 
   function handleChooseMedia(type: MediaType) {
@@ -225,7 +214,7 @@ export default function MagicDisplayClient() {
         </div>
       </header>
 
-      {/* Banderole venant de Magic Studio */}
+      {/* Panneau venant de Magic Studio */}
       {titleFromStudio && (
         <section className="mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] text-slate-700">
           <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
@@ -320,7 +309,7 @@ export default function MagicDisplayClient() {
                     <button
                       key={seg.id}
                       type="button"
-                      onClick={() => handleCircleFaceClick(seg)}
+                      onClick={() => handleSelectFace(seg.id)}
                       className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                         ${
                           isSelected
@@ -356,8 +345,8 @@ export default function MagicDisplayClient() {
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne correspond à une face. Sélectionne une face pour
-                compléter son contenu.
+                Chaque ligne représente une face du cube. Tu peux documenter
+                chaque étape (diagnostic, patine, routine maison, etc.).
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
@@ -443,28 +432,29 @@ export default function MagicDisplayClient() {
             </div>
           ) : (
             <p className="text-[11px] text-slate-500">
-              Sélectionne une face via le cercle ou la liste, puis ajoute une
-              photo, une vidéo ou un fichier. (MVP local, aucune donnée n&apos;est
-              encore sauvegardée côté serveur.)
+              Clique sur une face du cube ou du cercle pour la sélectionner, puis
+              ajoute une photo, une vidéo ou un fichier pour documenter cette
+              étape. (MVP local, aucune donnée n&apos;est encore sauvegardée côté
+              serveur.)
             </p>
           )}
         </div>
       </section>
 
-      {/* Face universelle reliée à la face sélectionnée – version allégée */}
+      {/* Face universelle reliée à la face sélectionnée */}
       <section className="mt-4 space-y-2">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Face universelle
-          </h2>
-          <p className="text-[11px] text-slate-500">
-            Face active :{" "}
-            <span className="font-semibold">
-              {selectedSegment?.label ?? "Face 1"}
-            </span>
-          </p>
-        </div>
-
+        <h2 className="text-sm font-semibold text-slate-900">
+          Face universelle – Prototype v1
+        </h2>
+        <p className="text-xs text-slate-500">
+          Ici tu complètes le détail pédagogique pour{" "}
+          <span className="font-semibold">{currentCreator.name}</span>. La face
+          active est{" "}
+          <span className="font-semibold">
+            {selectedSegment?.label ?? "Face 1"}
+          </span>
+          .
+        </p>
         <MagicDisplayFaceEditor
           creatorName={currentCreator.name}
           creatorAvatar={currentCreator.avatar}
