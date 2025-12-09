@@ -6,7 +6,13 @@ import {
   useRef,
   type ChangeEvent,
 } from "react";
-import { Camera, Clapperboard, FileText } from "lucide-react";
+import {
+  Camera,
+  Clapperboard,
+  FileText,
+  ChevronLeft,
+  MoreHorizontal,
+} from "lucide-react";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video" | "file";
@@ -17,6 +23,7 @@ type MagicDisplayFaceEditorProps = {
   creatorInitials?: string;
   faceId?: number;
   faceLabel?: string;
+  onBack?: () => void; // ⬅️ nouveau
 };
 
 type Segment = {
@@ -169,6 +176,7 @@ export default function MagicDisplayFaceEditor({
   creatorInitials = "AT",
   faceId = 1,
   faceLabel = "Face 1",
+  onBack,
 }: MagicDisplayFaceEditorProps) {
   // 🧠 1 état par face
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
@@ -322,9 +330,41 @@ export default function MagicDisplayFaceEditor({
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm sm:p-6">
-      {/* Ligne haute : Segments + slider (à gauche) + avatar (à droite) */}
+      {/* Ligne 1 : Back + Face x/6 + titre + bouton options */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+              aria-label="Revenir au cube"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Face {faceId} / 6
+            </span>
+            <span className="text-sm font-semibold text-slate-900">
+              {faceLabel}
+            </span>
+          </div>
+        </div>
+
+        {/* Bouton placeholder pour futures options */}
+        <button
+          type="button"
+          className="inline-flex h-8 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-600 shadow-sm"
+        >
+          <MoreHorizontal className="mr-1 h-3.5 w-3.5" />
+          Options
+        </button>
+      </div>
+
+      {/* Ligne 2 : Segments + slider + avatar */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Segments sur cette face */}
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
           <span>Segments sur cette face</span>
           <span className="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-800">
@@ -340,7 +380,6 @@ export default function MagicDisplayFaceEditor({
           />
         </div>
 
-        {/* Avatar créateur */}
         <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
           <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
             {creatorAvatar ? (
