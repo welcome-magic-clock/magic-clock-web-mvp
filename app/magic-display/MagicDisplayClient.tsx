@@ -260,50 +260,57 @@ export default function MagicDisplayClient() {
           </button>
         </div>
 
-        {/* Bandeau Magic Studio (sans encadré séparé) */}
-        {titleFromStudio && (
-          <p className="mb-4 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-slate-700">
-            <span className="font-semibold text-slate-900">Magic Studio</span>
-            <span>✅</span>
+    {/* Bandeau Magic Studio – style “hashtag Instagram” */}
+{titleFromStudio && (
+  <div className="mb-4 space-y-0.5">
+    {/* Ligne 1 : titre principal, plus gros et foncé */}
+    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
+      <span>Magic Studio</span>
+      <span>✅</span>
 
-            <span className="text-slate-300">·</span>
+      <span className="text-slate-300">·</span>
 
-            <span className="max-w-[11rem] truncate font-semibold text-slate-900 sm:max-w-[18rem]">
-              {titleFromStudio}
+      <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
+        {titleFromStudio}
+      </span>
+    </p>
+
+    {/* Ligne 2 : mode + prix + hashtags, plus petite et grise */}
+    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
+      <span>{modeLabel}</span>
+
+      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+        <>
+          <span className="text-slate-300">·</span>
+          <span className="font-mono">
+            {Number(ppvPriceFromStudio).toFixed(2)} CHF
+          </span>
+        </>
+      )}
+
+      {modeFromStudio === "SUB" && (
+        <>
+          <span className="text-slate-300">·</span>
+          <span className="font-mono">
+            {subscriptionPriceMock.toFixed(2)} CHF / mois
+          </span>
+        </>
+      )}
+
+      {hashtagTokens.length > 0 && (
+        <>
+          <span className="text-slate-300">·</span>
+          {hashtagTokens.map((tag, index) => (
+            <span key={tag} className="flex items-center gap-x-1">
+              {index > 0 && <span className="text-slate-300">·</span>}
+              <span className="font-medium text-slate-600">{tag}</span>
             </span>
-
-            <span className="text-slate-300">·</span>
-
-            <span className="font-semibold text-slate-900">{modeLabel}</span>
-
-            {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="font-mono font-semibold text-slate-900">
-                  {Number(ppvPriceFromStudio).toFixed(2)} CHF
-                </span>
-              </>
-            )}
-
-            {modeFromStudio === "SUB" && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="font-mono font-semibold text-slate-900">
-                  {subscriptionPriceMock.toFixed(2)} CHF / mois
-                </span>
-              </>
-            )}
-
-            {hashtagTokens.map((tag) => (
-              <span key={tag} className="flex items-center gap-x-1">
-                <span className="text-slate-300">·</span>
-                <span className="font-mono font-semibold text-slate-900">
-                  {tag}
-                </span>
-              </span>
-            ))}
-          </p>
-        )}
+          ))}
+        </>
+      )}
+    </p>
+  </div>
+)}
 
         {/* Bloc cercle + cube + liste */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
