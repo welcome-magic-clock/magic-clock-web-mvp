@@ -139,7 +139,8 @@ export default function MagicDisplayClient() {
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
- 
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
   // inputs cachés pour les médias
@@ -248,14 +249,15 @@ export default function MagicDisplayClient() {
             </div>
           </div>
 
-        <button
-  type="button"
-  onClick={() => setIsOptionsOpen(true)}
-  aria-label="Ouvrir les options du cube"
-  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
->
-  <MoreHorizontal className="h-4 w-4" />
-</button>
+          <button
+            type="button"
+            onClick={() => setIsOptionsOpen(true)}
+            aria-label="Ouvrir les options du cube"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
 
         {/* Bandeau Magic Studio – style “hashtags Instagram” */}
         {titleFromStudio && (
@@ -264,9 +266,7 @@ export default function MagicDisplayClient() {
             <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
               <span>Magic Studio</span>
               <span>✅</span>
-
               <span className="text-slate-300">·</span>
-
               <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
                 {titleFromStudio}
               </span>
@@ -479,6 +479,145 @@ export default function MagicDisplayClient() {
                 >
                   <span>Ouvrir la face en détail</span>
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Menu Options (bottom sheet, contenu seulement) */}
+        {isOptionsOpen && (
+          <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center">
+            {/* Overlay */}
+            <button
+              type="button"
+              aria-label="Fermer le menu Options"
+              onClick={() => setIsOptionsOpen(false)}
+              className="absolute inset-0 bg-slate-900/40"
+            />
+
+            {/* Bottom sheet */}
+            <div className="relative z-10 w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6">
+              {/* En-tête */}
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Options du cube
+                  </p>
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Magic Clock affichage &amp; structure
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsOptionsOpen(false)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
+                >
+                  <span className="text-xs">✕</span>
+                </button>
+              </div>
+
+              <div className="space-y-5 text-xs text-slate-700">
+                {/* Bloc 1 – Modèles pré-conçus */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Modèles pré-conçus
+                  </p>
+
+                  <p className="text-[11px] text-slate-500">
+                    Applique une structure prête pour gagner du temps. Tu pourras
+                    toujours modifier les titres et descriptions de chaque face.
+                  </p>
+
+                  <div className="space-y-1.5">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          Balayage en 4 étapes
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Diagnostic, préparation, application, patine / finition.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          Couleur complète en 3 étapes
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Racines, longueurs / pointes, finition &amp; conseils maison.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          Blond signature (6 faces)
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Idéal pour les transformations premium et contenus pédagogiques.
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bloc 2 – Gestion du cube */}
+                <div className="space-y-2 border-top border-slate-100 pt-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Gestion du cube
+                  </p>
+
+                  <div className="space-y-1.5">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          Dupliquer depuis un autre Magic Clock
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Reprend la structure d’un cube existant (faces &amp; titres).
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-left text-rose-700 hover:border-rose-300 hover:bg-rose-100"
+                    >
+                      <div>
+                        <p className="font-medium">Réinitialiser ce cube</p>
+                        <p className="text-[11px]">
+                          Effacer tous les médias et le contenu des faces. Action
+                          définitive.
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bloc 3 – Astuce */}
+                <div className="space-y-1 border-t border-slate-100 pt-3">
+                  <p className="text-[11px] text-slate-500">
+                    Astuce : commence par préparer un modèle, puis ajoute les photos /
+                    vidéos face par face. Tu peux ensuite affiner chaque face en détail
+                    depuis le panneau “Face sélectionnée”.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
