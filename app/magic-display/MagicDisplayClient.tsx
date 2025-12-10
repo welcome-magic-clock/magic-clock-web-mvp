@@ -75,6 +75,33 @@ const INITIAL_SEGMENTS: Segment[] = [
 
 const STORAGE_KEY = "mc-display-draft-v1";
 
+// 🔹 Mocks de “vrais” Magic Clock (sera branché sur My Magic Clock plus tard)
+const MOCK_CUBES: {
+  id: TemplateId;
+  title: string;
+  subtitle: string;
+  meta: string;
+}[] = [
+  {
+    id: "BALAYAGE_4",
+    title: "MC — Balayage caramel (4 étapes)",
+    subtitle: "Diagnostic, préparation, application, patine / finition.",
+    meta: "4/6 faces structurées",
+  },
+  {
+    id: "COULEUR_3",
+    title: "MC — Couleur complète",
+    subtitle: "Racines, longueurs / pointes, gloss & conseils maison.",
+    meta: "3 étapes clés",
+  },
+  {
+    id: "BLOND_6",
+    title: "MC — Blond signature",
+    subtitle: "Diagnostic, éclaircissement, patine, résultat & entretien.",
+    meta: "6/6 faces structurées",
+  },
+];
+
 function buildTemplateSegments(template: TemplateId): Segment[] {
   switch (template) {
     case "BALAYAGE_4":
@@ -279,11 +306,12 @@ export default function MagicDisplayClient() {
     .slice(0, 2)
     .toUpperCase();
 
-  // 🧠 état local des faces
+  // 🧠 état local des faces & menus
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
@@ -410,11 +438,12 @@ export default function MagicDisplayClient() {
     setIsFaceDetailOpen(false);
   }
 
-  // 🎛 Appliquer un modèle pré-conçu (depuis le menu Options)
+  // 🎛 Appliquer un modèle pré-conçu (ou un cube mock) depuis le menu Options
   function handleApplyTemplate(template: TemplateId) {
     const next = buildTemplateSegments(template);
     setSegments(next);
     setSelectedId(null);
+    setIsDuplicateOpen(false);
     setIsOptionsOpen(false);
   }
 
@@ -422,6 +451,7 @@ export default function MagicDisplayClient() {
   function handleResetCube() {
     setSegments(INITIAL_SEGMENTS);
     setSelectedId(null);
+    setIsDuplicateOpen(false);
     setIsOptionsOpen(false);
   }
 
@@ -458,7 +488,10 @@ export default function MagicDisplayClient() {
 
           <button
             type="button"
-            onClick={() => setIsOptionsOpen(true)}
+            onClick={() => {
+              setIsOptionsOpen(true);
+              setIsDuplicateOpen(false);
+            }}
             aria-label="Ouvrir les options du cube"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
           >
@@ -698,14 +731,17 @@ export default function MagicDisplayClient() {
             <button
               type="button"
               aria-label="Fermer le menu Options"
-              onClick={() => setIsOptionsOpen(false)}
+              onClick={() => {
+                setIsOptionsOpen(false);
+                setIsDuplicateOpen(false);
+              }}
               className="absolute inset-0 bg-slate-900/40"
             />
 
             {/* Bottom sheet */}
             <div className="relative z-10 w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6">
               {/* En-tête */}
-              <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="mb-3 flex items-center justify_between gap-2">
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Options du cube
@@ -717,7 +753,10 @@ export default function MagicDisplayClient() {
 
                 <button
                   type="button"
-                  onClick={() => setIsOptionsOpen(false)}
+                  onClick={() => {
+                    setIsOptionsOpen(false);
+                    setIsDuplicateOpen(false);
+                  }}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
                 >
                   <span className="text-xs">✕</span>
@@ -755,7 +794,7 @@ export default function MagicDisplayClient() {
                     <button
                       type="button"
                       onClick={() => handleApplyTemplate("COULEUR_3")}
-                      className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
+                      className="flex w_full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
                         <p className="font-medium text-slate-900">
@@ -791,8 +830,10 @@ export default function MagicDisplayClient() {
                   </p>
 
                   <div className="space-y-1.5">
+                    {/* Bouton qui ouvre la “seconde modale” (liste de Magic Clock mockés) */}
                     <button
                       type="button"
+                      onClick={() => setIsDuplicateOpen((prev) => !prev)}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
                     >
                       <div>
@@ -804,6 +845,35 @@ export default function MagicDisplayClient() {
                         </p>
                       </div>
                     </button>
+
+                    {isDuplicateOpen && (
+                      <div className="mt-2 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-[11px] font-semibold text-slate-600">
+                          Choisis un Magic Clock d&apos;exemple
+                        </p>
+
+                        {MOCK_CUBES.map((cube) => (
+                          <button
+                            key={cube.id}
+                            type="button"
+                            onClick={() => handleApplyTemplate(cube.id)}
+                            className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
+                          >
+                            <div>
+                              <p className="font-medium text-slate-900">
+                                {cube.title}
+                              </p>
+                              <p className="text-[11px] text-slate-500">
+                                {cube.subtitle}
+                              </p>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-500">
+                              {cube.meta}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     <button
                       type="button"
