@@ -71,6 +71,65 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
+type TemplateId = "BALAYAGE_4" | "COULEUR_3" | "BLOND_6";
+
+function buildTemplateSegments(template: TemplateId): Segment[] {
+  switch (template) {
+    case "BALAYAGE_4":
+      return [
+        {
+          id: 1,
+          label: "Face 1",
+          description: "Diagnostic",
+          angleDeg: -90,
+          hasMedia: false,
+        },
+        {
+          id: 2,
+          label: "Face 2",
+          description: "Préparation / sectionnement",
+          angleDeg: -30,
+          hasMedia: false,
+        },
+        {
+          id: 3,
+          label: "Face 3",
+          description: "Application",
+          angleDeg: 30,
+          hasMedia: false,
+        },
+        {
+          id: 4,
+          label: "Face 4",
+          description: "Patine / finition",
+          angleDeg: 90,
+          hasMedia: false,
+        },
+        {
+          id: 5,
+          label: "Face 5",
+          description: "–",
+          angleDeg: 150,
+          hasMedia: false,
+        },
+        {
+          id: 6,
+          label: "Face 6",
+          description: "Conseils maison",
+          angleDeg: 210,
+          hasMedia: false,
+        },
+      ];
+    case "COULEUR_3":
+      // Pour l’instant : même base que le cube standard
+      return INITIAL_SEGMENTS;
+    case "BLOND_6":
+      return INITIAL_SEGMENTS;
+    default:
+      return INITIAL_SEGMENTS;
+  }
+}
+
 function statusDotClass(hasMedia: boolean) {
   return hasMedia ? "bg-emerald-500" : "bg-slate-300";
 }
@@ -147,6 +206,26 @@ export default function MagicDisplayClient() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 🎯 helpers pour le menu Options
+  function applyTemplate(template: TemplateId) {
+    setSegments(buildTemplateSegments(template));
+    setSelectedId(null);
+    setIsOptionsOpen(false);
+  }
+
+  function handleDuplicateFromOther() {
+    // Mock : on repart sur la structure standard
+    setSegments(INITIAL_SEGMENTS);
+    setSelectedId(null);
+    setIsOptionsOpen(false);
+  }
+
+  function handleResetCube() {
+    setSegments(INITIAL_SEGMENTS);
+    setSelectedId(null);
+    setIsOptionsOpen(false);
+  }
 
   // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
   function handleCubeFaceSelect(id: number | null) {
@@ -484,7 +563,7 @@ export default function MagicDisplayClient() {
           </div>
         )}
 
-        {/* Menu Options (bottom sheet, contenu seulement) */}
+        {/* Menu Options (bottom sheet) */}
         {isOptionsOpen && (
           <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center">
             {/* Overlay */}
@@ -532,6 +611,7 @@ export default function MagicDisplayClient() {
                   <div className="space-y-1.5">
                     <button
                       type="button"
+                      onClick={() => applyTemplate("BALAYAGE_4")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -546,6 +626,7 @@ export default function MagicDisplayClient() {
 
                     <button
                       type="button"
+                      onClick={() => applyTemplate("COULEUR_3")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -560,6 +641,7 @@ export default function MagicDisplayClient() {
 
                     <button
                       type="button"
+                      onClick={() => applyTemplate("BLOND_6")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -575,7 +657,7 @@ export default function MagicDisplayClient() {
                 </div>
 
                 {/* Bloc 2 – Gestion du cube */}
-                <div className="space-y-2 border-top border-slate-100 pt-3">
+                <div className="space-y-2 border-t border-slate-100 pt-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Gestion du cube
                   </p>
@@ -583,6 +665,7 @@ export default function MagicDisplayClient() {
                   <div className="space-y-1.5">
                     <button
                       type="button"
+                      onClick={handleDuplicateFromOther}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
                     >
                       <div>
@@ -597,6 +680,7 @@ export default function MagicDisplayClient() {
 
                     <button
                       type="button"
+                      onClick={handleResetCube}
                       className="flex w-full items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-left text-rose-700 hover:border-rose-300 hover:bg-rose-100"
                     >
                       <div>
