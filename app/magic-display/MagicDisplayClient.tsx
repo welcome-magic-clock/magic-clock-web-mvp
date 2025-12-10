@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Camera,
@@ -73,7 +73,8 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
-// Modèles pré-conçus : uniquement structure / descriptions
+const STORAGE_KEY = "mc-display-draft-v1";
+
 function buildTemplateSegments(template: TemplateId): Segment[] {
   switch (template) {
     case "BALAYAGE_4":
@@ -81,7 +82,7 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
         {
           id: 1,
           label: "Face 1",
-          description: "Diagnostic / point de départ",
+          description: "Diagnostic",
           angleDeg: -90,
           hasMedia: false,
         },
@@ -95,21 +96,21 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
         {
           id: 3,
           label: "Face 3",
-          description: "Application / placement",
+          description: "Application",
           angleDeg: 30,
           hasMedia: false,
         },
         {
           id: 4,
           label: "Face 4",
-          description: "Patine / gloss",
+          description: "Patine / finition",
           angleDeg: 90,
           hasMedia: false,
         },
         {
           id: 5,
           label: "Face 5",
-          description: "Finition / coiffage",
+          description: "—",
           angleDeg: 150,
           hasMedia: false,
         },
@@ -121,13 +122,12 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
           hasMedia: false,
         },
       ];
-
     case "COULEUR_3":
       return [
         {
           id: 1,
           label: "Face 1",
-          description: "Diagnostic / choix de la formule",
+          description: "Diagnostic & choix de la teinte",
           angleDeg: -90,
           hasMedia: false,
         },
@@ -148,69 +148,66 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
         {
           id: 4,
           label: "Face 4",
-          description: "Temps de pause & contrôles",
+          description: "Finition & gloss",
           angleDeg: 90,
           hasMedia: false,
         },
         {
           id: 5,
           label: "Face 5",
-          description: "Rinçage / soin",
+          description: "Photo finale",
           angleDeg: 150,
           hasMedia: false,
         },
         {
           id: 6,
           label: "Face 6",
-          description: "Finition & conseils maison",
+          description: "Conseils maison",
           angleDeg: 210,
           hasMedia: false,
         },
       ];
-
     case "BLOND_6":
-    default:
-      // Version premium détaillée
       return [
         {
           id: 1,
           label: "Face 1",
-          description: "Consultation / historique couleur",
+          description: "Diagnostic & historique",
           angleDeg: -90,
           hasMedia: false,
         },
         {
           id: 2,
           label: "Face 2",
-          description: "Pré-lightening / sectionnement",
+          description: "Pré-lightening / éclaircissement",
           angleDeg: -30,
           hasMedia: false,
         },
         {
           id: 3,
           label: "Face 3",
-          description: "Application technique blond",
+          description: "Neutralisation / patine",
           angleDeg: 30,
           hasMedia: false,
         },
         {
           id: 4,
           label: "Face 4",
-          description: "Contrôle / équilibre des reflets",
+          description: "Finition coiffage",
           angleDeg: 90,
           hasMedia: false,
         },
         {
           id: 5,
           label: "Face 5",
-          description: "Patine / neutralisation",
+          description: "Résultat final",
           angleDeg: 150,
           hasMedia: false,
         },
         {
           id: 6,
           label: "Face 6",
-          description: "Finition & routine maison",
+          description: "Routine maison & entretien",
           angleDeg: 210,
           hasMedia: false,
         },
@@ -290,30 +287,58 @@ export default function MagicDisplayClient() {
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
-  // inputs cachés pour les médias
+  // 📥 inputs cachés pour les médias
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 🔧 logiques liées au cube / templates
-  function applyTemplate(template: TemplateId) {
-    setSegments(buildTemplateSegments(template));
-    setSelectedId(null);
-    setIsFaceDetailOpen(false);
-    setIsOptionsOpen(false);
-  }
+  // 🧬 Charger le draft du cube depuis localStorage (structure uniquement)
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
 
-  function handleResetCube() {
-    setSegments(INITIAL_SEGMENTS);
-    setSelectedId(null);
-    setIsFaceDetailOpen(false);
-    setIsOptionsOpen(false);
-  }
+      const parsed = JSON.parse(raw) as Partial<Segment>[];
+      if (!Array.isArray(parsed)) return;
 
-  function handleDuplicateFromOther() {
-    // 👉 plus tard : ouvrir une modale de sélection d’un autre Magic Clock
-    setIsOptionsOpen(false);
-  }
+      const merged: Segment[] = INITIAL_SEGMENTS.map((defaultSeg) => {
+        const fromStore = parsed.find((s) => s.id === defaultSeg.id);
+        if (!fromStore) return defaultSeg;
+
+        return {
+          ...defaultSeg,
+          label: fromStore.label ?? defaultSeg.label,
+          description: fromStore.description ?? defaultSeg.description,
+          // On ne recharge pas les medias (blob: URLs), seulement la structure
+          hasMedia: false,
+          mediaType: undefined,
+          mediaUrl: null,
+        };
+      });
+
+      setSegments(merged);
+      setSelectedId(null);
+    } catch (error) {
+      console.error("Failed to load Magic Display draft from storage", error);
+    }
+  }, []);
+
+  // 💾 Sauvegarder la structure du cube à chaque modification
+  useEffect(() => {
+    try {
+      const toPersist = segments.map((seg) => ({
+        id: seg.id,
+        label: seg.label,
+        description: seg.description,
+        angleDeg: seg.angleDeg,
+        hasMedia: seg.hasMedia,
+        mediaType: seg.mediaType ?? undefined,
+      }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
+    } catch (error) {
+      console.error("Failed to save Magic Display draft to storage", error);
+    }
+  }, [segments]);
 
   // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
   function handleCubeFaceSelect(id: number | null) {
@@ -383,6 +408,21 @@ export default function MagicDisplayClient() {
 
   function handleCloseFaceDetail() {
     setIsFaceDetailOpen(false);
+  }
+
+  // 🎛 Appliquer un modèle pré-conçu (depuis le menu Options)
+  function handleApplyTemplate(template: TemplateId) {
+    const next = buildTemplateSegments(template);
+    setSegments(next);
+    setSelectedId(null);
+    setIsOptionsOpen(false);
+  }
+
+  // ♻️ Réinitialiser entièrement le cube
+  function handleResetCube() {
+    setSegments(INITIAL_SEGMENTS);
+    setSelectedId(null);
+    setIsOptionsOpen(false);
   }
 
   // 🔄 Quand la Face universelle est ouverte, on affiche UNIQUEMENT l'éditeur
@@ -699,7 +739,7 @@ export default function MagicDisplayClient() {
                   <div className="space-y-1.5">
                     <button
                       type="button"
-                      onClick={() => applyTemplate("BALAYAGE_4")}
+                      onClick={() => handleApplyTemplate("BALAYAGE_4")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -714,7 +754,7 @@ export default function MagicDisplayClient() {
 
                     <button
                       type="button"
-                      onClick={() => applyTemplate("COULEUR_3")}
+                      onClick={() => handleApplyTemplate("COULEUR_3")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -729,7 +769,7 @@ export default function MagicDisplayClient() {
 
                     <button
                       type="button"
-                      onClick={() => applyTemplate("BLOND_6")}
+                      onClick={() => handleApplyTemplate("BLOND_6")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -753,7 +793,6 @@ export default function MagicDisplayClient() {
                   <div className="space-y-1.5">
                     <button
                       type="button"
-                      onClick={handleDuplicateFromOther}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
                     >
                       <div>
