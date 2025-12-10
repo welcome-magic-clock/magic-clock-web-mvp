@@ -26,6 +26,8 @@ type Segment = {
   mediaUrl?: string | null;
 };
 
+type TemplateId = "BALAYAGE_4" | "COULEUR_3" | "BLOND_6";
+
 const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 1,
@@ -71,8 +73,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
-type TemplateId = "BALAYAGE_4" | "COULEUR_3" | "BLOND_6";
-
+// Modèles pré-conçus : uniquement structure / descriptions
 function buildTemplateSegments(template: TemplateId): Segment[] {
   switch (template) {
     case "BALAYAGE_4":
@@ -80,7 +81,7 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
         {
           id: 1,
           label: "Face 1",
-          description: "Diagnostic",
+          description: "Diagnostic / point de départ",
           angleDeg: -90,
           hasMedia: false,
         },
@@ -94,21 +95,21 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
         {
           id: 3,
           label: "Face 3",
-          description: "Application",
+          description: "Application / placement",
           angleDeg: 30,
           hasMedia: false,
         },
         {
           id: 4,
           label: "Face 4",
-          description: "Patine / finition",
+          description: "Patine / gloss",
           angleDeg: 90,
           hasMedia: false,
         },
         {
           id: 5,
           label: "Face 5",
-          description: "–",
+          description: "Finition / coiffage",
           angleDeg: 150,
           hasMedia: false,
         },
@@ -120,13 +121,100 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
           hasMedia: false,
         },
       ];
+
     case "COULEUR_3":
-      // Pour l’instant : même base que le cube standard
-      return INITIAL_SEGMENTS;
+      return [
+        {
+          id: 1,
+          label: "Face 1",
+          description: "Diagnostic / choix de la formule",
+          angleDeg: -90,
+          hasMedia: false,
+        },
+        {
+          id: 2,
+          label: "Face 2",
+          description: "Application racines",
+          angleDeg: -30,
+          hasMedia: false,
+        },
+        {
+          id: 3,
+          label: "Face 3",
+          description: "Longueurs / pointes",
+          angleDeg: 30,
+          hasMedia: false,
+        },
+        {
+          id: 4,
+          label: "Face 4",
+          description: "Temps de pause & contrôles",
+          angleDeg: 90,
+          hasMedia: false,
+        },
+        {
+          id: 5,
+          label: "Face 5",
+          description: "Rinçage / soin",
+          angleDeg: 150,
+          hasMedia: false,
+        },
+        {
+          id: 6,
+          label: "Face 6",
+          description: "Finition & conseils maison",
+          angleDeg: 210,
+          hasMedia: false,
+        },
+      ];
+
     case "BLOND_6":
-      return INITIAL_SEGMENTS;
     default:
-      return INITIAL_SEGMENTS;
+      // Version premium détaillée
+      return [
+        {
+          id: 1,
+          label: "Face 1",
+          description: "Consultation / historique couleur",
+          angleDeg: -90,
+          hasMedia: false,
+        },
+        {
+          id: 2,
+          label: "Face 2",
+          description: "Pré-lightening / sectionnement",
+          angleDeg: -30,
+          hasMedia: false,
+        },
+        {
+          id: 3,
+          label: "Face 3",
+          description: "Application technique blond",
+          angleDeg: 30,
+          hasMedia: false,
+        },
+        {
+          id: 4,
+          label: "Face 4",
+          description: "Contrôle / équilibre des reflets",
+          angleDeg: 90,
+          hasMedia: false,
+        },
+        {
+          id: 5,
+          label: "Face 5",
+          description: "Patine / neutralisation",
+          angleDeg: 150,
+          hasMedia: false,
+        },
+        {
+          id: 6,
+          label: "Face 6",
+          description: "Finition & routine maison",
+          angleDeg: 210,
+          hasMedia: false,
+        },
+      ];
   }
 }
 
@@ -207,23 +295,23 @@ export default function MagicDisplayClient() {
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 🎯 helpers pour le menu Options
+  // 🔧 logiques liées au cube / templates
   function applyTemplate(template: TemplateId) {
     setSegments(buildTemplateSegments(template));
     setSelectedId(null);
-    setIsOptionsOpen(false);
-  }
-
-  function handleDuplicateFromOther() {
-    // Mock : on repart sur la structure standard
-    setSegments(INITIAL_SEGMENTS);
-    setSelectedId(null);
+    setIsFaceDetailOpen(false);
     setIsOptionsOpen(false);
   }
 
   function handleResetCube() {
     setSegments(INITIAL_SEGMENTS);
     setSelectedId(null);
+    setIsFaceDetailOpen(false);
+    setIsOptionsOpen(false);
+  }
+
+  function handleDuplicateFromOther() {
+    // 👉 plus tard : ouvrir une modale de sélection d’un autre Magic Clock
     setIsOptionsOpen(false);
   }
 
