@@ -213,7 +213,7 @@ export default function MagicDisplayClient() {
     setIsFaceDetailOpen(true);
   }
 
-   function handleCloseFaceDetail() {
+  function handleCloseFaceDetail() {
     setIsFaceDetailOpen(false);
   }
 
@@ -241,11 +241,11 @@ export default function MagicDisplayClient() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BackButton fallbackHref="/studio" label="Retour" />
-           <div className="flex flex-col">
-  <h1 className="text-lg font-semibold leading-tight text-slate-900 sm:text-xl">
-    Magic Display
-  </h1>
-</div>
+            <div className="flex flex-col">
+              <h1 className="text-lg font-semibold leading-tight text-slate-900 sm:text-xl">
+                Magic Display
+              </h1>
+            </div>
           </div>
 
           <button
@@ -257,57 +257,61 @@ export default function MagicDisplayClient() {
           </button>
         </div>
 
-    {/* Bandeau Magic Studio – style “hashtag Instagram” */}
-{titleFromStudio && (
-  <div className="mb-4 space-y-0.5">
-    {/* Ligne 1 : titre principal, plus gros et foncé */}
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
-      <span>Magic Studio</span>
-      <span>✅</span>
+        {/* Bandeau Magic Studio – style “hashtags Instagram” */}
+        {titleFromStudio && (
+          <div className="mb-4 space-y-0.5">
+            {/* Ligne 1 : titre principal */}
+            <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
+              <span>Magic Studio</span>
+              <span>✅</span>
 
-      <span className="text-slate-300">·</span>
+              <span className="text-slate-300">·</span>
 
-      <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
-        {titleFromStudio}
-      </span>
-    </p>
+              <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
+                {titleFromStudio}
+              </span>
+            </p>
 
-    {/* Ligne 2 : mode + prix + hashtags, plus petite et grise */}
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
-      <span>{modeLabel}</span>
+            {/* Ligne 2 : mode + prix + hashtags */}
+            <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
+              <span>{modeLabel}</span>
 
-      {modeFromStudio === "PPV" && ppvPriceFromStudio && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono">
-            {Number(ppvPriceFromStudio).toFixed(2)} CHF
-          </span>
-        </>
-      )}
+              {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span className="font-mono">
+                    {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                  </span>
+                </>
+              )}
 
-      {modeFromStudio === "SUB" && (
-        <>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono">
-            {subscriptionPriceMock.toFixed(2)} CHF / mois
-          </span>
-        </>
-      )}
+              {modeFromStudio === "SUB" && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span className="font-mono">
+                    {subscriptionPriceMock.toFixed(2)} CHF / mois
+                  </span>
+                </>
+              )}
 
-      {hashtagTokens.length > 0 && (
-        <>
-          <span className="text-slate-300">·</span>
-          {hashtagTokens.map((tag, index) => (
-            <span key={tag} className="flex items-center gap-x-1">
-              {index > 0 && <span className="text-slate-300">·</span>}
-              <span className="font-medium text-slate-600">{tag}</span>
-            </span>
-          ))}
-        </>
-      )}
-    </p>
-  </div>
-)}
+              {hashtagTokens.length > 0 && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  {hashtagTokens.map((tag, index) => (
+                    <span key={tag} className="flex items-center gap-x-1">
+                      {index > 0 && (
+                        <span className="text-slate-300">·</span>
+                      )}
+                      <span className="font-medium text-slate-600">
+                        {tag}
+                      </span>
+                    </span>
+                  ))}
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Bloc cercle + cube + liste */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
@@ -350,12 +354,11 @@ export default function MagicDisplayClient() {
                       key={seg.id}
                       type="button"
                       onClick={() => handleCircleFaceClick(seg)}
-                      className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
-                        ${
-                          isSelected
-                            ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
-                            : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
-                        }`}
+                      className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
+                        isSelected
+                          ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
+                          : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
+                      }`}
                       style={{ top: `${top}%`, left: `${left}%` }}
                       aria-label={`Face ${seg.label}`}
                     >
@@ -400,12 +403,11 @@ export default function MagicDisplayClient() {
                       key={seg.id}
                       type="button"
                       onClick={() => handleListFaceSelect(seg.id)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-                        ${
-                          isSelected
-                            ? "border-brand-500 bg-brand-50/70"
-                            : "border-transparent bg-slate-50 hover:border-slate-200"
-                        }`}
+                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition ${
+                        isSelected
+                          ? "border-brand-500 bg-brand-50/70"
+                          : "border-transparent bg-slate-50 hover:border-slate-200"
+                      }`}
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-slate-800">
@@ -429,58 +431,59 @@ export default function MagicDisplayClient() {
           </div>
         </div>
 
-       {/* Panneau d’action face sélectionnée */}
-{selectedSegment && (
-  <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="space-y-1">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Face sélectionnée
-        </p>
-        <p className="text-sm font-semibold text-slate-900">
-          {selectedSegment.label}
-        </p>
-        <p className="text-[11px] text-slate-500">
-          {selectedSegment.description}
-        </p>
-      </div>
+        {/* Panneau d’action face sélectionnée (uniquement si une face est choisie) */}
+        {selectedSegment && (
+          <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Face sélectionnée
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {selectedSegment.label}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {selectedSegment.description}
+                </p>
+              </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("photo")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <Camera className="h-3.5 w-3.5" />
-          <span>Ajouter une photo</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("video")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <Clapperboard className="h-3.5 w-3.5" />
-          <span>Ajouter une vidéo</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("file")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <FileText className="h-3.5 w-3.5" />
-          <span>Ajouter un fichier</span>
-        </button>
-        <button
-          type="button"
-          onClick={handleOpenFaceDetail}
-          className="inline-flex items-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
-        >
-          <span>Ouvrir la face en détail</span>
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("photo")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Ajouter une photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("video")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Clapperboard className="h-3.5 w-3.5" />
+                  <span>Ajouter une vidéo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("file")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Ajouter un fichier</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenFaceDetail}
+                  className="inline-flex items-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
+                >
+                  <span>Ouvrir la face en détail</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Inputs cachés upload */}
       <input
