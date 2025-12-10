@@ -51,10 +51,9 @@ export default function MagicCube3D({
 
   return (
     <div className="w-full">
-      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
-        Vue 3D du cube (proto React)
-      </p>
-
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+  VUE 3D DE MAGIC CLOCK
+</p>
       <div className="relative mx-auto aspect-square w-full max-w-xs [perspective:1100px] sm:max-w-sm">
         <div
           className="absolute inset-0 transition-transform duration-150 ease-out [transform-style:preserve-3d]"
@@ -161,16 +160,11 @@ export default function MagicCube3D({
           })}
         </div>
 
-        {/* Halo global */}
-        <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
-      </div>
-
-      <p className="mt-2 text-center text-[11px] text-slate-500">
-        Clique sur une face du cube pour la sélectionner. La liste et le cercle
-        se synchronisent automatiquement.
-      </p>
+             {/* Halo global */}
+      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
     </div>
-  );
+  </div>
+);
 }
 
 // Placement des faces dans l'espace 3D
