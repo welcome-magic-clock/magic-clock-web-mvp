@@ -1,7 +1,7 @@
 // app/studio/page.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Hash, ArrowUpRight } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
@@ -23,6 +23,25 @@ type PublishMode = "FREE" | "SUB" | "PPV";
 type Side = "before" | "after";
 type CanvasFormat = "portrait" | "horizontal";
 
+type StudioDraft = {
+  canvasFormat: CanvasFormat;
+  before: MediaState;
+  after: MediaState;
+  title: string;
+  hashtags: string;
+  mode: PublishMode;
+  ppvPrice: number;
+};
+
+const EMPTY_MEDIA: MediaState = {
+  kind: null,
+  url: null,
+  duration: null,
+  coverTime: null,
+};
+
+const STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
+
 export default function MagicStudioPage() {
   const router = useRouter();
 
@@ -30,18 +49,8 @@ export default function MagicStudioPage() {
   const [canvasFormat, setCanvasFormat] = useState<CanvasFormat>("portrait");
 
   // Import médias
-  const [before, setBefore] = useState<MediaState>({
-    kind: null,
-    url: null,
-    duration: null,
-    coverTime: null,
-  });
-  const [after, setAfter] = useState<MediaState>({
-    kind: null,
-    url: null,
-    duration: null,
-    coverTime: null,
-  });
+  const [before, setBefore] = useState<MediaState>(EMPTY_MEDIA);
+  const [after, setAfter] = useState<MediaState>(EMPTY_MEDIA);
 
   // Titre & hashtags
   const [title, setTitle] = useState("");
@@ -65,6 +74,49 @@ export default function MagicStudioPage() {
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const avatar = currentCreator.avatar;
+
+  // 🧬 Charger le brouillon Magic Studio depuis localStorage
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as StudioDraft;
+      if (!parsed) return;
+
+      setCanvasFormat(parsed.canvasFormat ?? "portrait");
+      setBefore(parsed.before ?? EMPTY_MEDIA);
+      setAfter(parsed.after ?? EMPTY_MEDIA);
+      setTitle(parsed.title ?? "");
+      setHashtags(parsed.hashtags ?? "");
+      setMode(parsed.mode ?? "FREE");
+      setPpvPrice(
+        typeof parsed.ppvPrice === "number" ? parsed.ppvPrice : 0.99
+      );
+    } catch (error) {
+      console.error("Failed to load Magic Studio draft", error);
+    }
+  }, []);
+
+  // 💾 Sauvegarder le brouillon Magic Studio à chaque modification
+  useEffect(() => {
+    try {
+      const draft: StudioDraft = {
+        canvasFormat,
+        before,
+        after,
+        title,
+        hashtags,
+        mode,
+        ppvPrice,
+      };
+      window.localStorage.setItem(STUDIO_DRAFT_KEY, JSON.stringify(draft));
+    } catch (error) {
+      console.error("Failed to save Magic Studio draft", error);
+    }
+  }, [canvasFormat, before, after, title, hashtags, mode, ppvPrice]);
+
+  // ------------- Gestion des médias -----------------
 
   function updateMedia(side: Side, updater: (prev: MediaState) => MediaState) {
     if (side === "before") {
@@ -100,68 +152,68 @@ export default function MagicStudioPage() {
     updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
+  // ------------- Pont vers Magic Display -----------------
 
-// Aller vers Magic Display avec les infos du Studio
-function handleGoToDisplay() {
-  const params = new URLSearchParams();
+  function handleGoToDisplay() {
+    const params = new URLSearchParams();
 
-  const cleanTitle = title.trim();
-  const rawHashtags = hashtags.trim();
+    const cleanTitle = title.trim();
+    const rawHashtags = hashtags.trim();
 
-  // On prépare un tableau de hashtags pour le payload (pour plus tard)
-  const hashtagArray =
-    rawHashtags.length === 0
-      ? []
-      : rawHashtags
-          .split(/[,\s]+/)
-          .map((t) => t.trim())
-          .filter(Boolean)
-          .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+    // tableau de hashtags pour le payload
+    const hashtagArray =
+      rawHashtags.length === 0
+        ? []
+        : rawHashtags
+            .split(/[,\s]+/)
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-  // Petit helper pour convertir MediaState -> média pour Magic Display
-  const mapMedia = (
-    media: MediaState
-  ): StudioForwardPayload["before"] => {
-    if (!media.url || !media.kind) return null;
-    const type = media.kind === "video" ? "video" : "photo";
-    return { type, url: media.url };
-  };
+    // helper MediaState -> payload
+    const mapMedia = (
+      media: MediaState
+    ): StudioForwardPayload["before"] => {
+      if (!media.url || !media.kind) return null;
+      const type = media.kind === "video" ? "video" : "photo";
+      return { type, url: media.url };
+    };
 
-  // 1) Construire le payload complet pour Magic Display
-  const payload: StudioForwardPayload = {
-    title: cleanTitle,
-    mode, // "FREE" | "SUB" | "PPV"
-    ppvPrice: mode === "PPV" ? Number(ppvPrice.toFixed(2)) : undefined,
-    hashtags: hashtagArray,
-    before: mapMedia(before),
-    after: mapMedia(after),
-  };
+    // 1) Payload complet pour Magic Display
+    const payload: StudioForwardPayload = {
+      title: cleanTitle,
+      mode,
+      ppvPrice: mode === "PPV" ? Number(ppvPrice.toFixed(2)) : undefined,
+      hashtags: hashtagArray,
+      before: mapMedia(before),
+      after: mapMedia(after),
+    };
 
-  // 2) Sauver dans localStorage (disponible pour Magic Display)
-  try {
-    window.localStorage.setItem(STUDIO_FORWARD_KEY, JSON.stringify(payload));
-  } catch (error) {
-    console.error("Failed to persist Magic Studio payload", error);
+    // 2) Sauvegarde dans localStorage
+    try {
+      window.localStorage.setItem(STUDIO_FORWARD_KEY, JSON.stringify(payload));
+    } catch (error) {
+      console.error("Failed to persist Magic Studio payload", error);
+    }
+
+    // 3) Query params comme avant (fallback, SEO, partage)
+    if (cleanTitle) {
+      params.set("title", cleanTitle);
+    }
+    if (rawHashtags) {
+      params.set("hashtags", rawHashtags);
+    }
+
+    params.set("mode", mode);
+    params.set("format", canvasFormat);
+
+    if (mode === "PPV") {
+      params.set("ppvPrice", ppvPrice.toFixed(2));
+    }
+
+    router.push(`/magic-display?${params.toString()}`);
   }
 
-  // 3) Continuer comme avant avec les query params
-  if (cleanTitle) {
-    params.set("title", cleanTitle);
-  }
-  if (rawHashtags) {
-    params.set("hashtags", rawHashtags);
-  }
-
-  params.set("mode", mode);
-  params.set("format", canvasFormat);
-
-  if (mode === "PPV") {
-    params.set("ppvPrice", ppvPrice.toFixed(2));
-  }
-
-  router.push(`/magic-display?${params.toString()}`);
-}
-  
   const modeDescription =
     mode === "FREE"
       ? "Accessible à tous les utilisateurs."
