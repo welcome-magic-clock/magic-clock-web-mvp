@@ -639,9 +639,9 @@ export default function MagicDisplayClient() {
 
   // Fallback images si rien venant du Studio
   const beforePreview =
-    studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
-  const afterPreview =
-    studioAfterUrl ?? studioBefore ?? FALLBACK_AFTER;
+  studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
+const afterPreview =
+  studioAfterUrl ?? studioBeforeUrl ?? FALLBACK_AFTER;
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
