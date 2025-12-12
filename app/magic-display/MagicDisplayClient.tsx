@@ -606,16 +606,16 @@ export default function MagicDisplayClient() {
           </button>
         </div>
 
-        {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = preview public */}
+              {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = My Magic Clock */}
         <section className="mb-2">
           <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-           <button
-  type="button"
-  onClick={() =>
-    router.push("/my-magic-clock?tab=creations&source=magic-display")
-  }
-  className="block w-full text-left"
->
+            <button
+              type="button"
+              onClick={() =>
+                router.push("/mymagic?tab=created&source=magic-display")
+              }
+              className="block w-full text-left"
+            >
               {/* Canevas Avant / Après */}
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
