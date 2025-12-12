@@ -5,6 +5,10 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Hash, ArrowUpRight } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
+import {
+  STUDIO_FORWARD_KEY,
+  type StudioForwardPayload,
+} from "@/core/domain/magicStudioBridge";
 
 type MediaKind = "image" | "video";
 
@@ -104,12 +108,46 @@ function handleGoToDisplay() {
   const cleanTitle = title.trim();
   const rawHashtags = hashtags.trim();
 
+  // On prépare un tableau de hashtags pour le payload (pour plus tard)
+  const hashtagArray =
+    rawHashtags.length === 0
+      ? []
+      : rawHashtags
+          .split(/[,\s]+/)
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+
+  // Petit helper pour convertir MediaState -> média pour Magic Display
+  const mapMedia = (
+    media: MediaState
+  ): StudioForwardPayload["before"] => {
+    if (!media.url || !media.kind) return null;
+    const type = media.kind === "video" ? "video" : "photo";
+    return { type, url: media.url };
+  };
+
+  // 1) Construire le payload complet pour Magic Display
+  const payload: StudioForwardPayload = {
+    title: cleanTitle,
+    mode, // "FREE" | "SUB" | "PPV"
+    ppvPrice: mode === "PPV" ? Number(ppvPrice.toFixed(2)) : undefined,
+    hashtags: hashtagArray,
+    before: mapMedia(before),
+    after: mapMedia(after),
+  };
+
+  // 2) Sauver dans localStorage (disponible pour Magic Display)
+  try {
+    window.localStorage.setItem(STUDIO_FORWARD_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.error("Failed to persist Magic Studio payload", error);
+  }
+
+  // 3) Continuer comme avant avec les query params
   if (cleanTitle) {
     params.set("title", cleanTitle);
   }
-
-  // 👉 On envoie toute la chaîne, avec plusieurs hashtags possibles
-  // ex: "#blond #balayage #cheveuxlongs"
   if (rawHashtags) {
     params.set("hashtags", rawHashtags);
   }
@@ -118,7 +156,7 @@ function handleGoToDisplay() {
   params.set("format", canvasFormat);
 
   if (mode === "PPV") {
-    params.set("ppvPrice", ppvPrice.toFixed(2)); // ex : "0.99"
+    params.set("ppvPrice", ppvPrice.toFixed(2));
   }
 
   router.push(`/magic-display?${params.toString()}`);
