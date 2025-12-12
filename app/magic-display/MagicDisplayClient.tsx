@@ -2,14 +2,13 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-
 import {
   useState,
   useRef,
   useEffect,
   type ChangeEvent,
 } from "react";
-import { useSearchParams } from "next/navigation";
+
 import {
   Camera,
   Clapperboard,
@@ -610,11 +609,13 @@ export default function MagicDisplayClient() {
         {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = preview public */}
         <section className="mb-2">
           <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setIsPublicPreviewOpen(true)}
-              className="block w-full text-left"
-            >
+           <button
+  type="button"
+  onClick={() =>
+    router.push("/my-magic-clock?tab=creations&source=magic-display")
+  }
+  className="block w-full text-left"
+>
               {/* Canevas Avant / Après */}
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
