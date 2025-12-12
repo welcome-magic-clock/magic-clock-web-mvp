@@ -17,7 +17,7 @@ import {
   ArrowUpRight,
   Lock,
   Unlock,
-  Heart,
+  Heart, // ❤️ ajouté
 } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
@@ -90,10 +90,8 @@ const INITIAL_SEGMENTS: Segment[] = [
 
 const STORAGE_KEY = "mc-display-draft-v1";
 
-const FALLBACK_BEFORE =
-  "/images/examples/balayage-before.jpg";
-const FALLBACK_AFTER =
-  "/images/examples/balayage-after.jpg";
+const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
+const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 
 function buildTemplateSegments(template: TemplateId): Segment[] {
   switch (template) {
@@ -263,17 +261,10 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-function StudioMediaSlot({
-  src,
-  alt,
-}: {
-  src: string;
-  alt: string;
-}) {
+function StudioMediaSlot({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="relative h-full w-full">
       {isVideo(src) ? (
-        // petite vidéo auto-play (MVP)
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
           src={src}
@@ -285,11 +276,7 @@ function StudioMediaSlot({
         />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={alt}
-          className="h-full w-full object-cover"
-        />
+        <img src={src} alt={alt} className="h-full w-full object-cover" />
       )}
     </div>
   );
@@ -328,13 +315,10 @@ export default function MagicDisplayClient() {
   // 🔍 Infos texte venant de Magic Studio (query params)
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudioParam =
-    (searchParams.get("mode") as PublishMode | null) ??
-    null;
+    (searchParams.get("mode") as PublishMode | null) ?? null;
   const ppvPriceFromStudio = searchParams.get("ppvPrice");
   const hashtagsParam =
-    searchParams.get("hashtags") ??
-    searchParams.get("hashtag") ??
-    "";
+    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
   // 🔗 Hashtags depuis l’URL
   const hashtagTokensFromQuery = hashtagsParam
@@ -348,8 +332,7 @@ export default function MagicDisplayClient() {
   // 👩‍🎨 créateur (Aiko par défaut)
   const creators = listCreators();
   const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ??
-    creators[0];
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const initials = currentCreator.name
     .split(" ")
     .map((part: string) => part[0] ?? "")
@@ -357,37 +340,25 @@ export default function MagicDisplayClient() {
     .slice(0, 2)
     .toUpperCase();
   const creatorAvatar = currentCreator.avatar;
-  const creatorHandleRaw =
-    (currentCreator as any).handle ?? "@aiko_tanaka";
+  const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
   const creatorHandle = creatorHandleRaw.startsWith("@")
     ? creatorHandleRaw
     : `@${creatorHandleRaw}`;
 
   // 🔁 Payload complet Magic Studio (localStorage)
-  const [studioBeforeUrl, setStudioBeforeUrl] = useState<
-    string | null
-  >(null);
-  const [studioAfterUrl, setStudioAfterUrl] = useState<
-    string | null
-  >(null);
+  const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
+  const [studioAfterUrl, setStudioAfterUrl] = useState<string | null>(null);
   const [bridgeTitle, setBridgeTitle] = useState("");
-  const [bridgeMode, setBridgeMode] =
-    useState<PublishMode | null>(null);
-  const [bridgePpvPrice, setBridgePpvPrice] = useState<
-    number | null
-  >(null);
-  const [bridgeHashtags, setBridgeHashtags] = useState<string[]>(
-    []
-  );
+  const [bridgeMode, setBridgeMode] = useState<PublishMode | null>(null);
+  const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
+  const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
   useEffect(() => {
     try {
-      const raw =
-        window.localStorage.getItem(STUDIO_FORWARD_KEY);
+      const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
       if (!raw) return;
 
-      const payload =
-        JSON.parse(raw) as StudioForwardPayload;
+      const payload = JSON.parse(raw) as StudioForwardPayload;
 
       if (payload.before?.url) {
         setStudioBeforeUrl(payload.before.url);
@@ -397,47 +368,31 @@ export default function MagicDisplayClient() {
       }
 
       if (payload.title) setBridgeTitle(payload.title);
-      if (payload.mode)
-        setBridgeMode(
-          payload.mode as PublishMode
-        );
-      if (
-        typeof payload.ppvPrice === "number"
-      ) {
+      if (payload.mode) setBridgeMode(payload.mode as PublishMode);
+      if (typeof payload.ppvPrice === "number") {
         setBridgePpvPrice(payload.ppvPrice);
       }
       if (Array.isArray(payload.hashtags)) {
         setBridgeHashtags(payload.hashtags);
       }
     } catch (error) {
-      console.error(
-        "Failed to read Magic Studio payload",
-        error
-      );
+      console.error("Failed to read Magic Studio payload", error);
     }
   }, []);
 
   // 🎯 Valeurs “effectives” (URL + localStorage)
-  const effectiveTitle =
-    (titleFromStudio || bridgeTitle).trim();
+  const effectiveTitle = (titleFromStudio || bridgeTitle).trim();
 
-  const effectiveMode: PublishMode =
-    modeFromStudioParam ??
-    bridgeMode ??
-    "FREE";
+  const effectiveMode: PublishMode = modeFromStudioParam ?? bridgeMode ?? "FREE";
 
   const effectivePpvPrice =
-    ppvPriceFromStudio != null
-      ? Number(ppvPriceFromStudio)
-      : bridgePpvPrice;
+    ppvPriceFromStudio != null ? Number(ppvPriceFromStudio) : bridgePpvPrice;
 
   const effectiveHashtags =
     hashtagTokensFromQuery.length > 0
       ? hashtagTokensFromQuery
       : bridgeHashtags
-          .map((tag) =>
-            tag.startsWith("#") ? tag.slice(1) : tag
-          )
+          .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
           .filter(Boolean)
           .map((tag) => `#${tag}`);
 
@@ -448,70 +403,49 @@ export default function MagicDisplayClient() {
       ? "Abonnement"
       : "PayPerView";
   const isLockedPreview = effectiveMode !== "FREE";
-  // Stats mockées (identique à Amazing mais en 0 pour l’instant)
-const mockViews = 0;
-const mockLikes = 0;
 
   // 🧠 état local des faces & menus
-  const [segments, setSegments] =
-    useState<Segment[]>(INITIAL_SEGMENTS);
-  const [selectedId, setSelectedId] =
-    useState<number | null>(null);
-  const [isFaceDetailOpen, setIsFaceDetailOpen] =
-    useState(false);
-  const [isOptionsOpen, setIsOptionsOpen] =
-    useState(false);
-  const [isDuplicateOpen, setIsDuplicateOpen] =
-    useState(false);
+  const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
+  const [isPublicPreviewOpen, setIsPublicPreviewOpen] = useState(false); // 🔍 nouveau
 
-  const selectedSegment =
-    segments.find((s) => s.id === selectedId) ?? null;
+  const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
   // 📥 inputs cachés pour les médias
-  const photoInputRef =
-    useRef<HTMLInputElement | null>(null);
-  const videoInputRef =
-    useRef<HTMLInputElement | null>(null);
-  const fileInputRef =
-    useRef<HTMLInputElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // 🧬 Charger le draft du cube depuis localStorage (structure uniquement)
   useEffect(() => {
     try {
-      const raw =
-        window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
 
       const parsed = JSON.parse(raw) as Partial<Segment>[];
       if (!Array.isArray(parsed)) return;
 
-      const merged: Segment[] =
-        INITIAL_SEGMENTS.map((defaultSeg) => {
-          const fromStore = parsed.find(
-            (s) => s.id === defaultSeg.id
-          );
-          if (!fromStore) return defaultSeg;
+      const merged: Segment[] = INITIAL_SEGMENTS.map((defaultSeg) => {
+        const fromStore = parsed.find((s) => s.id === defaultSeg.id);
+        if (!fromStore) return defaultSeg;
 
-          return {
-            ...defaultSeg,
-            label: fromStore.label ?? defaultSeg.label,
-            description:
-              fromStore.description ??
-              defaultSeg.description,
-            // On ne recharge pas les medias (blob: URLs), seulement la structure
-            hasMedia: false,
-            mediaType: undefined,
-            mediaUrl: null,
-          };
-        });
+        return {
+          ...defaultSeg,
+          label: fromStore.label ?? defaultSeg.label,
+          description: fromStore.description ?? defaultSeg.description,
+          hasMedia: false,
+          mediaType: undefined,
+          mediaUrl: null,
+        };
+      });
 
       setSegments(merged);
       setSelectedId(null);
     } catch (error) {
-      console.error(
-        "Failed to load Magic Display draft from storage",
-        error
-      );
+      console.error("Failed to load Magic Display draft from storage", error);
     }
   }, []);
 
@@ -526,15 +460,9 @@ const mockLikes = 0;
         hasMedia: seg.hasMedia,
         mediaType: seg.mediaType ?? undefined,
       }));
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(toPersist)
-      );
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
     } catch (error) {
-      console.error(
-        "Failed to save Magic Display draft to storage",
-        error
-      );
+      console.error("Failed to save Magic Display draft to storage", error);
     }
   }, [segments]);
 
@@ -576,7 +504,7 @@ const mockLikes = 0;
 
   function handleMediaFileChange(
     event: ChangeEvent<HTMLInputElement>,
-    type: MediaType
+    type: MediaType,
   ) {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
@@ -592,8 +520,8 @@ const mockLikes = 0;
               mediaType: type,
               mediaUrl: url,
             }
-          : seg
-      )
+          : seg,
+      ),
     );
 
     event.target.value = "";
@@ -642,10 +570,12 @@ const mockLikes = 0;
   }
 
   // Fallback images si rien venant du Studio
-  const beforePreview =
-  studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
-const afterPreview =
-  studioAfterUrl ?? studioBeforeUrl ?? FALLBACK_AFTER;
+  const beforePreview = studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
+  const afterPreview = studioAfterUrl ?? studioBeforeUrl ?? FALLBACK_AFTER;
+
+  // Stats mock pour l’aperçu public
+  const mockViews = 0;
+  const mockLikes = 0;
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -675,119 +605,109 @@ const afterPreview =
           </button>
         </div>
 
-        {/* 🔎 Carte d’aperçu Magic Studio — EXACTEMENT le format Amazing,
-            mais sans vues / likes (et avec les données du Studio). */}
+        {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = preview public */}
         <section className="mb-2">
           <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-            {/* Canevas Avant / Après */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-              <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
-                <div className="grid h-full w-full grid-cols-2">
-                  <StudioMediaSlot
-                    src={beforePreview}
-                    alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-                  />
-                  <StudioMediaSlot
-                    src={afterPreview}
-                    alt={`${effectiveTitle || "Magic Studio"} - Après`}
-                  />
-                </div>
-
-                {/* Ligne centrale */}
-                <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
-
-                {/* Avatar centré (même style qu’Amazing) */}
-                <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={creatorAvatar}
-                      alt={currentCreator.name}
-                      className="h-[72px] w-[72px] rounded-full object-cover"
+            <button
+              type="button"
+              onClick={() => setIsPublicPreviewOpen(true)}
+              className="block w-full text-left"
+            >
+              {/* Canevas Avant / Après */}
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+                  <div className="grid h-full w-full grid-cols-2">
+                    <StudioMediaSlot
+                      src={beforePreview}
+                      alt={`${effectiveTitle || "Magic Studio"} - Avant`}
+                    />
+                    <StudioMediaSlot
+                      src={afterPreview}
+                      alt={`${effectiveTitle || "Magic Studio"} - Après`}
                     />
                   </div>
-                </div>
 
-                {/* Flèche en haut à droite (décorative, comme Amazing) */}
-                <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white shadow-md">
-                  <ArrowUpRight className="h-5 w-5" />
+                  {/* Ligne centrale */}
+                  <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+
+                  {/* Avatar centré */}
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={creatorAvatar}
+                        alt={currentCreator.name}
+                        className="h-[72px] w-[72px] rounded-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Flèche en haut à droite */}
+                  <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white shadow-md">
+                    <ArrowUpRight className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Bas de carte : créateur + accès + titre + hashtags */}
-            <div className="mt-3 space-y-1 text-xs">
-              {/* Ligne 1 : créateur + statut d’accès */}
-             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-  <span className="font-medium">
-    {currentCreator.name}
-  </span>
-  <span className="text-slate-400">
-    {creatorHandle}
-  </span>
+              {/* Bas de carte : créateur + vues + likes + accès + titre + hashtags */}
+              <div className="mt-3 space-y-1 text-xs">
+                {/* Ligne 1 : créateur · vues · likes · statut accès */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
+                  <span className="font-medium">{currentCreator.name}</span>
+                  <span className="text-slate-400">{creatorHandle}</span>
 
-  <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
-  {/* Vues */}
-  <span>
-    <span className="font-medium">
-      {mockViews.toLocaleString()}
-    </span>{" "}
-    vues
-  </span>
-
-  {/* Likes */}
-  <span className="flex items-center gap-1">
-    <Heart className="h-3 w-3" />
-    <span>{mockLikes}</span>
-  </span>
-
-  {/* Statut d’accès */}
-  <span className="flex items-center gap-1">
-    {isLockedPreview ? (
-      <Lock className="h-3 w-3" />
-    ) : (
-      <Unlock className="h-3 w-3" />
-    )}
-    <span>{accessLabel}</span>
-    {effectiveMode === "PPV" &&
-      effectivePpvPrice != null && (
-        <span className="ml-1 text-[11px] text-slate-500">
-          · {effectivePpvPrice.toFixed(2)} CHF
-        </span>
-      )}
-  </span>
-</div>
-
-              {/* Ligne 2 : titre + hashtags (réels si fournis, sinon fallback) */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                {effectiveTitle && (
-                  <span className="font-medium text-slate-800">
-                    {effectiveTitle}
+                  <span>
+                    <span className="font-medium">
+                      {mockViews.toLocaleString("fr-CH")}
+                    </span>{" "}
+                    vues
                   </span>
-                )}
 
-                {effectiveHashtags.length > 0 ? (
-                  effectiveHashtags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-brand-600"
-                    >
-                      {tag}
+                  <span className="flex items-center gap-1">
+                    <Heart className="h-3 w-3" />
+                    <span>{mockLikes}</span>
+                  </span>
+
+                  <span className="flex items-center gap-1">
+                    {isLockedPreview ? (
+                      <Lock className="h-3 w-3" />
+                    ) : (
+                      <Unlock className="h-3 w-3" />
+                    )}
+                    <span>{accessLabel}</span>
+                    {effectiveMode === "PPV" && effectivePpvPrice != null && (
+                      <span className="ml-1 text-[11px] text-slate-500">
+                        · {effectivePpvPrice.toFixed(2)} CHF
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {/* Ligne 2 : titre + hashtags */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                  {effectiveTitle && (
+                    <span className="font-medium text-slate-800">
+                      {effectiveTitle}
                     </span>
-                  ))
-                ) : (
-                  <>
-                    <span className="text-brand-600">
-                      #coiffure
-                    </span>
-                    <span className="text-brand-600">
-                      #color
-                    </span>
-                  </>
-                )}
+                  )}
+
+                  {effectiveHashtags.length > 0 ? (
+                    effectiveHashtags.map((tag) => (
+                      <span key={tag} className="text-brand-600">
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      <span className="text-brand-600">#coiffure</span>
+                      <span className="text-brand-600">#color</span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            </button>
           </article>
         </section>
 
@@ -816,37 +736,28 @@ const afterPreview =
                 {/* Boutons-faces autour du cercle */}
                 {segments.map((seg) => {
                   const radiusPercent = 40;
-                  const rad =
-                    (seg.angleDeg * Math.PI) / 180;
-                  const top =
-                    50 + Math.sin(rad) * radiusPercent;
-                  const left =
-                    50 + Math.cos(rad) * radiusPercent;
-                  const isSelected =
-                    seg.id === selectedId;
+                  const rad = (seg.angleDeg * Math.PI) / 180;
+                  const top = 50 + Math.sin(rad) * radiusPercent;
+                  const left = 50 + Math.cos(rad) * radiusPercent;
+                  const isSelected = seg.id === selectedId;
 
                   return (
                     <button
                       key={seg.id}
                       type="button"
-                      onClick={() =>
-                        handleCircleFaceClick(seg)
-                      }
+                      onClick={() => handleCircleFaceClick(seg)}
                       className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
                         isSelected
                           ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
                           : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
                       }`}
-                      style={{
-                        top: `${top}%`,
-                        left: `${left}%`,
-                      }}
+                      style={{ top: `${top}%`, left: `${left}%` }}
                       aria-label={`Face ${seg.label}`}
                     >
                       {renderSegmentIcon(seg)}
                       <span
                         className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                          seg.hasMedia
+                          seg.hasMedia,
                         )}`}
                       />
                     </button>
@@ -858,7 +769,6 @@ const afterPreview =
 
           {/* Colonne droite : cube 3D + liste */}
           <div className="flex-1 space-y-4">
-            {/* Cube 3D : clic = ouvre directement la Face universelle */}
             <MagicCube3D
               segments={segments}
               selectedId={selectedId}
@@ -871,24 +781,19 @@ const afterPreview =
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne correspond à une face. Sélectionne
-                une face pour compléter son contenu.
+                Chaque ligne correspond à une face. Sélectionne une face pour
+                compléter son contenu.
               </p>
               <div className="space-y-2">
                 {segments.map((seg) => {
-                  const isSelected =
-                    seg.id === selectedId;
-                  const label = mediaTypeLabel(
-                    seg.mediaType
-                  );
+                  const isSelected = seg.id === selectedId;
+                  const label = mediaTypeLabel(seg.mediaType);
 
                   return (
                     <button
                       key={seg.id}
                       type="button"
-                      onClick={() =>
-                        handleListFaceSelect(seg.id)
-                      }
+                      onClick={() => handleListFaceSelect(seg.id)}
                       className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition ${
                         isSelected
                           ? "border-brand-500 bg-brand-50/70"
@@ -898,9 +803,7 @@ const afterPreview =
                       <div className="min-w-0">
                         <p className="font-medium text-slate-800">
                           {seg.label}
-                          {seg.hasMedia && label
-                            ? ` · ${label}`
-                            : ""}
+                          {seg.hasMedia && label ? ` · ${label}` : ""}
                         </p>
                         <p className="mt-0.5 truncate text-[11px] text-slate-500">
                           {seg.description}
@@ -908,7 +811,7 @@ const afterPreview =
                       </div>
                       <span
                         className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-                          seg.hasMedia
+                          seg.hasMedia,
                         )}`}
                       />
                     </button>
@@ -1019,17 +922,14 @@ const afterPreview =
                   </p>
 
                   <p className="text-[11px] text-slate-500">
-                    Applique une structure prête pour gagner du
-                    temps. Tu pourras toujours modifier les titres
-                    et descriptions de chaque face.
+                    Applique une structure prête pour gagner du temps. Tu pourras
+                    toujours modifier les titres et descriptions de chaque face.
                   </p>
 
                   <div className="space-y-1.5">
                     <button
                       type="button"
-                      onClick={() =>
-                        handleApplyTemplate("BALAYAGE_4")
-                      }
+                      onClick={() => handleApplyTemplate("BALAYAGE_4")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -1037,17 +937,14 @@ const afterPreview =
                           Balayage en 4 étapes
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Diagnostic, préparation, application,
-                          patine / finition.
+                          Diagnostic, préparation, application, patine / finition.
                         </p>
                       </div>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() =>
-                        handleApplyTemplate("COULEUR_3")
-                      }
+                      onClick={() => handleApplyTemplate("COULEUR_3")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -1055,17 +952,14 @@ const afterPreview =
                           Couleur complète en 3 étapes
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Racines, longueurs / pointes, finition
-                          &amp; conseils maison.
+                          Racines, longueurs / pointes, finition &amp; conseils maison.
                         </p>
                       </div>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() =>
-                        handleApplyTemplate("BLOND_6")
-                      }
+                      onClick={() => handleApplyTemplate("BLOND_6")}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
@@ -1073,8 +967,7 @@ const afterPreview =
                           Blond signature (6 faces)
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Idéal pour les transformations premium
-                          et contenus pédagogiques.
+                          Idéal pour les transformations premium et contenus pédagogiques.
                         </p>
                       </div>
                     </button>
@@ -1088,12 +981,9 @@ const afterPreview =
                   </p>
 
                   <div className="space-y-1.5">
-                    {/* Bouton qui ouvre la “seconde modale” (liste de Magic Clock mockés) */}
                     <button
                       type="button"
-                      onClick={() =>
-                        setIsDuplicateOpen((prev) => !prev)
-                      }
+                      onClick={() => setIsDuplicateOpen((prev) => !prev)}
                       className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
                     >
                       <div>
@@ -1101,8 +991,7 @@ const afterPreview =
                           Dupliquer depuis un autre Magic Clock
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Reprend la structure d’un cube existant
-                          (faces &amp; titres).
+                          Reprend la structure d’un cube existant (faces &amp; titres).
                         </p>
                       </div>
                     </button>
@@ -1117,9 +1006,7 @@ const afterPreview =
                           <button
                             key={cube.id}
                             type="button"
-                            onClick={() =>
-                              handleApplyTemplate(cube.id)
-                            }
+                            onClick={() => handleApplyTemplate(cube.id)}
                             className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
                           >
                             <div>
@@ -1144,12 +1031,9 @@ const afterPreview =
                       className="flex w-full items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-left text-rose-700 hover:border-rose-300 hover:bg-rose-100"
                     >
                       <div>
-                        <p className="font-medium">
-                          Réinitialiser ce cube
-                        </p>
+                        <p className="font-medium">Réinitialiser ce cube</p>
                         <p className="text-[11px]">
-                          Effacer tous les médias et le contenu des
-                          faces. Action définitive.
+                          Effacer tous les médias et le contenu des faces. Action définitive.
                         </p>
                       </div>
                     </button>
@@ -1159,10 +1043,9 @@ const afterPreview =
                 {/* Bloc 3 – Astuce */}
                 <div className="space-y-1 border-t border-slate-100 pt-3">
                   <p className="text-[11px] text-slate-500">
-                    Astuce : commence par préparer un modèle, puis
-                    ajoute les photos / vidéos face par face. Tu
-                    peux ensuite affiner chaque face en détail
-                    depuis le panneau “Face sélectionnée”.
+                    Astuce : commence par préparer un modèle, puis ajoute les photos / vidéos
+                    face par face. Tu peux ensuite affiner chaque face en détail depuis le
+                    panneau “Face sélectionnée”.
                   </p>
                 </div>
               </div>
@@ -1170,6 +1053,107 @@ const afterPreview =
           </div>
         )}
       </section>
+
+      {/* Overlay preview public plein écran */}
+      {isPublicPreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4">
+          <div className="relative w-full max-w-xl">
+            <button
+              type="button"
+              onClick={() => setIsPublicPreviewOpen(false)}
+              className="absolute -right-1 -top-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow"
+              aria-label="Fermer l’aperçu public"
+            >
+              ✕
+            </button>
+
+            <article className="rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl">
+              {/* On réutilise la même carte que ci-dessus, sans le bouton */}
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="relative mx-auto aspect-[4/5] w-full">
+                  <div className="grid h-full w-full grid-cols-2">
+                    <StudioMediaSlot
+                      src={beforePreview}
+                      alt={`${effectiveTitle || "Magic Studio"} - Avant`}
+                    />
+                    <StudioMediaSlot
+                      src={afterPreview}
+                      alt={`${effectiveTitle || "Magic Studio"} - Après`}
+                    />
+                  </div>
+                  <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={creatorAvatar}
+                        alt={currentCreator.name}
+                        className="h-[72px] w-[72px] rounded-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-1 text-xs">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
+                  <span className="font-medium">{currentCreator.name}</span>
+                  <span className="text-slate-400">{creatorHandle}</span>
+
+                  <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
+
+                  <span>
+                    <span className="font-medium">
+                      {mockViews.toLocaleString("fr-CH")}
+                    </span>{" "}
+                    vues
+                  </span>
+
+                  <span className="flex items-center gap-1">
+                    <Heart className="h-3 w-3" />
+                    <span>{mockLikes}</span>
+                  </span>
+
+                  <span className="flex items-center gap-1">
+                    {isLockedPreview ? (
+                      <Lock className="h-3 w-3" />
+                    ) : (
+                      <Unlock className="h-3 w-3" />
+                    )}
+                    <span>{accessLabel}</span>
+                    {effectiveMode === "PPV" && effectivePpvPrice != null && (
+                      <span className="ml-1 text-[11px] text-slate-500">
+                        · {effectivePpvPrice.toFixed(2)} CHF
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                  {effectiveTitle && (
+                    <span className="font-medium text-slate-800">
+                      {effectiveTitle}
+                    </span>
+                  )}
+
+                  {effectiveHashtags.length > 0 ? (
+                    effectiveHashtags.map((tag) => (
+                      <span key={tag} className="text-brand-600">
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      <span className="text-brand-600">#coiffure</span>
+                      <span className="text-brand-600">#color</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      )}
 
       {/* Inputs cachés upload */}
       <input
