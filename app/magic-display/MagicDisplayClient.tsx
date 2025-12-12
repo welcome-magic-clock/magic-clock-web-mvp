@@ -1,6 +1,8 @@
 // app/magic-display/MagicDisplayClient.tsx
 "use client";
 
+import { useSearchParams, useRouter } from "next/navigation";
+
 import {
   useState,
   useRef,
@@ -311,6 +313,7 @@ const MOCK_CUBES: {
 
 export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // 🔍 Infos texte venant de Magic Studio (query params)
   const titleFromStudio = searchParams.get("title") ?? "";
@@ -410,7 +413,6 @@ export default function MagicDisplayClient() {
   const [isFaceDetailOpen, setIsFaceDetailOpen] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
-  const [isPublicPreviewOpen, setIsPublicPreviewOpen] = useState(false); // 🔍 nouveau
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
@@ -1053,107 +1055,6 @@ export default function MagicDisplayClient() {
           </div>
         )}
       </section>
-
-      {/* Overlay preview public plein écran */}
-      {isPublicPreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4">
-          <div className="relative w-full max-w-xl">
-            <button
-              type="button"
-              onClick={() => setIsPublicPreviewOpen(false)}
-              className="absolute -right-1 -top-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow"
-              aria-label="Fermer l’aperçu public"
-            >
-              ✕
-            </button>
-
-            <article className="rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl">
-              {/* On réutilise la même carte que ci-dessus, sans le bouton */}
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                <div className="relative mx-auto aspect-[4/5] w-full">
-                  <div className="grid h-full w-full grid-cols-2">
-                    <StudioMediaSlot
-                      src={beforePreview}
-                      alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-                    />
-                    <StudioMediaSlot
-                      src={afterPreview}
-                      alt={`${effectiveTitle || "Magic Studio"} - Après`}
-                    />
-                  </div>
-                  <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
-                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={creatorAvatar}
-                        alt={currentCreator.name}
-                        className="h-[72px] w-[72px] rounded-full object-cover"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 space-y-1 text-xs">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-                  <span className="font-medium">{currentCreator.name}</span>
-                  <span className="text-slate-400">{creatorHandle}</span>
-
-                  <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
-
-                  <span>
-                    <span className="font-medium">
-                      {mockViews.toLocaleString("fr-CH")}
-                    </span>{" "}
-                    vues
-                  </span>
-
-                  <span className="flex items-center gap-1">
-                    <Heart className="h-3 w-3" />
-                    <span>{mockLikes}</span>
-                  </span>
-
-                  <span className="flex items-center gap-1">
-                    {isLockedPreview ? (
-                      <Lock className="h-3 w-3" />
-                    ) : (
-                      <Unlock className="h-3 w-3" />
-                    )}
-                    <span>{accessLabel}</span>
-                    {effectiveMode === "PPV" && effectivePpvPrice != null && (
-                      <span className="ml-1 text-[11px] text-slate-500">
-                        · {effectivePpvPrice.toFixed(2)} CHF
-                      </span>
-                    )}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                  {effectiveTitle && (
-                    <span className="font-medium text-slate-800">
-                      {effectiveTitle}
-                    </span>
-                  )}
-
-                  {effectiveHashtags.length > 0 ? (
-                    effectiveHashtags.map((tag) => (
-                      <span key={tag} className="text-brand-600">
-                        {tag}
-                      </span>
-                    ))
-                  ) : (
-                    <>
-                      <span className="text-brand-600">#coiffure</span>
-                      <span className="text-brand-600">#color</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      )}
 
       {/* Inputs cachés upload */}
       <input
