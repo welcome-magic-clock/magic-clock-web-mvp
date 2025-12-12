@@ -1,3 +1,4 @@
+// app/magic-display/MagicDisplayClient.tsx
 "use client";
 
 import {
@@ -5,6 +6,7 @@ import {
   useRef,
   useEffect,
   type ChangeEvent,
+  type SyntheticEvent,
 } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -13,6 +15,7 @@ import {
   FileText,
   Plus,
   MoreHorizontal,
+  ArrowUpRight,
 } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
@@ -36,6 +39,11 @@ type Segment = {
 };
 
 type TemplateId = "BALAYAGE_4" | "COULEUR_3" | "BLOND_6";
+
+type StudioMedia = {
+  type: "photo" | "video";
+  url: string;
+} | null;
 
 const INITIAL_SEGMENTS: Segment[] = [
   {
@@ -275,66 +283,198 @@ function renderSegmentIcon(seg: Segment) {
   return <Plus className="h-3.5 w-3.5" />;
 }
 
+// 🔸 Carte style Amazing pour l’aperçu Magic Studio
+function MagicStudioPreviewCard(props: {
+  before: StudioMedia;
+  after: StudioMedia;
+  title: string;
+  modeLabel: string;
+  priceLabel: string | null;
+  hashtags: string[];
+  creatorAvatar?: string;
+  creatorName: string;
+}) {
+  const {
+    before,
+    after,
+    title,
+    modeLabel,
+    priceLabel,
+    hashtags,
+    creatorAvatar,
+    creatorName,
+  } = props;
+
+  const hasMedia = !!before || !!after;
+
+  return (
+    <section className="mb-6 space-y-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+        Aperçu Magic Studio — Avant / Après
+      </p>
+
+      <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        {/* Bloc image Avant / Après */}
+        <div className="relative w-full">
+          <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[16/9]">
+            <div className="grid h-full w-full grid-cols-2">
+              {/* Avant */}
+              <div className="relative h-full w-full overflow-hidden">
+                {hasMedia && before?.url ? (
+                  before.type === "video" ? (
+                    <video
+                      src={before.url}
+                      className="h-full w-full object-cover"
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={before.url}
+                      alt="Avant"
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-slate-400">
+                    <Camera className="h-5 w-5" />
+                    <span>Avant</span>
+                  </div>
+                )}
+
+                <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-white">
+                  Avant
+                </span>
+              </div>
+
+              {/* Après */}
+              <div className="relative h-full w-full overflow-hidden">
+                {hasMedia && after?.url ? (
+                  after.type === "video" ? (
+                    <video
+                      src={after.url}
+                      className="h-full w-full object-cover"
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={after.url}
+                      alt="Après"
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-slate-400">
+                    <Camera className="h-5 w-5" />
+                    <span>Après</span>
+                  </div>
+                )}
+
+                <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-white">
+                  Après
+                </span>
+              </div>
+            </div>
+
+            {/* Ligne verticale centrale style Amazing */}
+            <div className="pointer-events-none absolute inset-y-3 left-1/2 w-px -translate-x-1/2 bg-white/80" />
+
+            {/* Avatar créateur au centre */}
+            <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-white shadow-md shadow-slate-900/20">
+              {creatorAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : null}
+            </div>
+
+            {/* Bouton d’agrandissement (même place que dans Amazing) */}
+            <button
+              type="button"
+              className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white shadow-sm backdrop-blur-sm"
+            >
+              <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Texte sous la carte (copie de la logique Amazing, sans vues/likes) */}
+        <div className="space-y-1 px-4 pb-4 pt-3">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-slate-500">
+            <span className="font-semibold text-slate-900">Magic Studio</span>
+            <span>✅</span>
+            <span className="text-slate-300">·</span>
+            <span className="font-medium text-slate-900 truncate">
+              {title || "Titre en préparation"}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-slate-500">
+            <span>{modeLabel}</span>
+            {priceLabel && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono">{priceLabel}</span>
+              </>
+            )}
+            {hashtags.length > 0 && (
+              <>
+                <span className="text-slate-300">·</span>
+                {hashtags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="font-medium text-slate-600"
+                  >{`#${tag.replace(/^#/, "")}`}</span>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      </article>
+    </section>
+  );
+}
+
 export default function MagicDisplayClient() {
-  // 🔍 paramètres envoyés par Magic Studio (query string)
+  // 🔍 paramètres envoyés par Magic Studio (texte, mode, prix, hashtags)
   const searchParams = useSearchParams();
 
-  const titleFromStudioQS = searchParams.get("title") ?? "";
-  const modeFromStudioQS = searchParams.get("mode") ?? "FREE";
-  const ppvPriceFromStudioQS = searchParams.get("ppvPrice");
+  const titleFromStudio = searchParams.get("title") ?? "";
+  const modeFromStudio = searchParams.get("mode") ?? "FREE";
+  const ppvPriceFromStudio = searchParams.get("ppvPrice");
 
   const hashtagsParam =
     searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
 
-  const hashtagTokensFromQS = hashtagsParam
+  const hashtagTokens = hashtagsParam
     .split(/[,\s]+/)
     .map((t) => t.trim())
     .filter(Boolean)
-    .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+    .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag));
 
   const subscriptionPriceMock = 19.9;
 
-  // 🧩 Payload complet depuis Magic Studio (localStorage)
-  const [studioPayload, setStudioPayload] =
-    useState<StudioForwardPayload | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as StudioForwardPayload;
-      if (!parsed || typeof parsed !== "object") return;
-      setStudioPayload(parsed);
-    } catch (error) {
-      console.error("Failed to load Magic Studio payload", error);
-    }
-  }, []);
-
-  // 🔎 Données “effectives” : payload > query string
-  const effectiveTitle =
-    studioPayload?.title?.trim() || titleFromStudioQS.trim();
-
-  const effectiveMode =
-    studioPayload?.mode || (modeFromStudioQS as StudioForwardPayload["mode"]);
-
   const modeLabel =
-    effectiveMode === "SUB"
+    modeFromStudio === "SUB"
       ? "Abonnement"
-      : effectiveMode === "PPV"
+      : modeFromStudio === "PPV"
       ? "PayPerView"
       : "FREE";
 
-  const effectivePpvPrice =
-    studioPayload?.ppvPrice ??
-    (ppvPriceFromStudioQS ? Number(ppvPriceFromStudioQS) : undefined);
-
-  const hashtagsFromPayload =
-    studioPayload?.hashtags && studioPayload.hashtags.length > 0
-      ? studioPayload.hashtags
-      : [];
-
-  const displayHashtags =
-    hashtagsFromPayload.length > 0 ? hashtagsFromPayload : hashtagTokensFromQS;
+  const priceLabel =
+    modeFromStudio === "PPV" && ppvPriceFromStudio
+      ? `${Number(ppvPriceFromStudio).toFixed(2)} CHF`
+      : modeFromStudio === "SUB"
+      ? `${subscriptionPriceMock.toFixed(2)} CHF / mois`
+      : null;
 
   // 👩‍🎨 créateur (Aiko par défaut)
   const creators = listCreators();
@@ -347,6 +487,24 @@ export default function MagicDisplayClient() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  // 📸 Médias provenant de Magic Studio (localStorage)
+  const [beforeFromStudio, setBeforeFromStudio] = useState<StudioMedia>(null);
+  const [afterFromStudio, setAfterFromStudio] = useState<StudioMedia>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StudioForwardPayload;
+
+      setBeforeFromStudio(parsed.before ?? null);
+      setAfterFromStudio(parsed.after ?? null);
+    } catch (error) {
+      console.error("Failed to load Studio payload for Magic Display", error);
+    }
+  }, []);
 
   // 🧠 état local des faces & menus
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
@@ -379,6 +537,7 @@ export default function MagicDisplayClient() {
           ...defaultSeg,
           label: fromStore.label ?? defaultSeg.label,
           description: fromStore.description ?? defaultSeg.description,
+          // On ne recharge pas les medias (blob: URLs), seulement la structure
           hasMedia: false,
           mediaType: undefined,
           mediaUrl: null,
@@ -514,7 +673,7 @@ export default function MagicDisplayClient() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      {/* ⭐️ Une seule grande carte Magic Display */}
+      {/* ⭐️ Carte principale Magic Display */}
       <section className="mb-6 flex min-h-[calc(100vh-7rem)] flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         {/* Ligne 1 : Back + titre + Options */}
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -540,127 +699,48 @@ export default function MagicDisplayClient() {
           </button>
         </div>
 
-        {/* Bandeau Magic Studio – style “hashtags Instagram” */}
-        {effectiveTitle && (
-          <div className="mb-3 space-y-0.5">
-            {/* Ligne 1 : titre principal */}
-            <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
-              <span>Magic Studio</span>
-              <span>✅</span>
-              <span className="text-slate-300">·</span>
-              <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
-                {effectiveTitle}
-              </span>
-            </p>
+        {/* Bandeau Magic Studio – style “hashtags Instagram” + carte style Amazing */}
+        <div className="mb-2 space-y-1">
+          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
+            <span>Magic Studio</span>
+            <span>✅</span>
+            <span className="text-slate-300">·</span>
+            <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
+              {titleFromStudio || "Nouveau Magic Clock"}
+            </span>
+          </p>
 
-            {/* Ligne 2 : mode + prix + hashtags */}
-            <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
-              <span>{modeLabel}</span>
-
-              {effectiveMode === "PPV" && effectivePpvPrice != null && (
-                <>
-                  <span className="text-slate-300">·</span>
-                  <span className="font-mono">
-                    {effectivePpvPrice.toFixed(2)} CHF
+          <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
+            <span>{modeLabel}</span>
+            {priceLabel && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="font-mono">{priceLabel}</span>
+              </>
+            )}
+            {hashtagTokens.length > 0 && (
+              <>
+                <span className="text-slate-300">·</span>
+                {hashtagTokens.map((tag, index) => (
+                  <span key={`${tag}-${index}`} className="font-medium text-slate-600">
+                    #{tag.replace(/^#/, "")}
                   </span>
-                </>
-              )}
+                ))}
+              </>
+            )}
+          </p>
+        </div>
 
-              {effectiveMode === "SUB" && (
-                <>
-                  <span className="text-slate-300">·</span>
-                  <span className="font-mono">
-                    {subscriptionPriceMock.toFixed(2)} CHF / mois
-                  </span>
-                </>
-              )}
-
-              {displayHashtags.length > 0 && (
-                <>
-                  <span className="text-slate-300">·</span>
-                  {displayHashtags.map((tag, index) => (
-                    <span key={`${tag}-${index}`} className="flex items-center gap-x-1">
-                      {index > 0 && (
-                        <span className="text-slate-300">·</span>
-                      )}
-                      <span className="font-medium text-slate-600">
-                        {tag}
-                      </span>
-                    </span>
-                  ))}
-                </>
-              )}
-            </p>
-          </div>
-        )}
-
-        {/* Aperçu Magic Studio — Avant / Après */}
-        {studioPayload && (
-          <section className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Aperçu Magic Studio — Avant / Après
-            </p>
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="grid grid-cols-2 divide-x divide-slate-100">
-                {/* Avant */}
-                <div className="relative aspect-[4/5]">
-                  {studioPayload.before ? (
-                    studioPayload.before.type === "video" ? (
-                      <video
-                        src={studioPayload.before.url}
-                        className="h-full w-full object-cover"
-                        playsInline
-                        muted
-                        loop
-                      />
-                    ) : (
-                      <img
-                        src={studioPayload.before.url}
-                        alt="Avant"
-                        className="h-full w-full object-cover"
-                      />
-                    )
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                      ?
-                    </div>
-                  )}
-                  <span className="pointer-events-none absolute left-3 top-3 text-xs font-semibold text-slate-900">
-                    Avant
-                  </span>
-                </div>
-
-                {/* Après */}
-                <div className="relative aspect-[4/5]">
-                  {studioPayload.after ? (
-                    studioPayload.after.type === "video" ? (
-                      <video
-                        src={studioPayload.after.url}
-                        className="h-full w-full object-cover"
-                        playsInline
-                        muted
-                        loop
-                      />
-                    ) : (
-                      <img
-                        src={studioPayload.after.url}
-                        alt="Après"
-                        className="h-full w-full object-cover"
-                      />
-                    )
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                      ?
-                    </div>
-                  )}
-                  <span className="pointer-events-none absolute left-3 top-3 text-xs font-semibold text-slate-900">
-                    Après
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
+        <MagicStudioPreviewCard
+          before={beforeFromStudio}
+          after={afterFromStudio}
+          title={titleFromStudio}
+          modeLabel={modeLabel}
+          priceLabel={priceLabel}
+          hashtags={hashtagTokens}
+          creatorAvatar={currentCreator.avatar}
+          creatorName={currentCreator.name}
+        />
 
         {/* Bloc cercle + cube + liste */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
