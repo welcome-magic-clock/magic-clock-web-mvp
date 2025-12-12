@@ -126,23 +126,41 @@ export default function MagicStudioPage() {
     }
   }
 
-  function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-    side: Side
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+ function handleFileChange(
+  event: React.ChangeEvent<HTMLInputElement>,
+  side: Side
+) {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    const url = URL.createObjectURL(file);
-    const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
+  const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
-    const state: MediaState = { kind, url, duration: null, coverTime: null };
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const result = e.target?.result;
+    if (typeof result !== "string") return;
+
+    const state: MediaState = {
+      kind,
+      url: result,          // ✅ data URL compatible partout
+      duration: null,
+      coverTime: null,
+    };
+
     if (side === "before") {
       setBefore(state);
     } else {
       setAfter(state);
     }
-  }
+  };
+
+  // On lit toujours en dataURL, que ce soit image ou vidéo (OK pour les deux)
+  reader.readAsDataURL(file);
+
+  // permet de re-sélectionner le même fichier si besoin
+  event.target.value = "";
+}
 
   function handleLoadedMetadata(
     side: Side,
