@@ -13,6 +13,10 @@ import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
+import {
+  STUDIO_FORWARD_KEY,
+  type StudioForwardPayload,
+} from "@/core/domain/magicStudioBridge";
 
 type MediaType = "photo" | "video" | "file";
 
@@ -267,44 +271,11 @@ function renderSegmentIcon(seg: Segment) {
 }
 
 export default function MagicDisplayClient() {
-  // 🔍 paramètres envoyés par Magic Studio
   const searchParams = useSearchParams();
 
-  const titleFromStudio = searchParams.get("title") ?? "";
-  const modeFromStudio = searchParams.get("mode") ?? "FREE";
-  const ppvPriceFromStudio = searchParams.get("ppvPrice");
-
-  const hashtagsParam =
-    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
-
-  const hashtagTokens = hashtagsParam
-    .split(/[,\s]+/)
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .map((tag) => (tag.startsWith("#") ? tag.slice(1) : tag))
-    .filter((tag) => tag.length > 0)
-    .map((tag) => `#${tag}`);
-
-  const subscriptionPriceMock = 19.9;
-
-  const modeLabel =
-    modeFromStudio === "SUB"
-      ? "Abonnement"
-      : modeFromStudio === "PPV"
-      ? "PayPerView"
-      : "FREE";
-
-  // 👩‍🎨 créateur (Aiko par défaut)
-  const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
-
-  const initials = currentCreator.name
-    .split(" ")
-    .map((part: string) => part[0] ?? "")
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  // 🧠 Payload complet envoyé par Magic Studio (localStorage)
+  const [studioPayload, setStudioPayload] =
+    useState<StudioForwardPayload | null>(null);
 
   // 🧠 état local des faces & menus
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
@@ -319,6 +290,71 @@ export default function MagicDisplayClient() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 👩‍🎨 créateur (Aiko par défaut)
+  const creators = listCreators();
+  const currentCreator =
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+
+  const initials = currentCreator.name
+    .split(" ")
+    .map((part: string) => part[0] ?? "")
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  // 🔄 Charger le payload Magic Studio (titre, mode, hashtags, avant/après)
+  useEffect(() => {
+    try {
+      const raw =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(STUDIO_FORWARD_KEY)
+          : null;
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StudioForwardPayload;
+      setStudioPayload(parsed);
+    } catch (error) {
+      console.error("Failed to load Magic Studio payload", error);
+    }
+  }, []);
+
+  // 🔍 Fallback : query params (lien direct / refresh)
+  const titleFromQuery = searchParams.get("title") ?? "";
+  const modeFromQuery = searchParams.get("mode") ?? "FREE";
+  const ppvPriceFromQuery = searchParams.get("ppvPrice");
+  const hashtagsParam =
+    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
+
+  // 🎛 Valeurs effectives = priorité au payload Studio, sinon query
+  const titleFromStudio = studioPayload?.title || titleFromQuery;
+  const modeFromStudio = studioPayload?.mode || modeFromQuery;
+
+  const ppvPriceFromStudio =
+    studioPayload?.ppvPrice ??
+    (ppvPriceFromQuery ? Number(ppvPriceFromQuery) : undefined);
+
+  let hashtagTokens: string[] = [];
+  if (studioPayload?.hashtags && studioPayload.hashtags.length > 0) {
+    hashtagTokens = studioPayload.hashtags;
+  } else if (hashtagsParam) {
+    hashtagTokens = hashtagsParam
+      .split(/[,\s]+/)
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+  }
+
+  const subscriptionPriceMock = 19.9;
+
+  const modeLabel =
+    modeFromStudio === "SUB"
+      ? "Abonnement"
+      : modeFromStudio === "PPV"
+      ? "PayPerView"
+      : "FREE";
+
+  const beforeMedia = studioPayload?.before ?? null;
+  const afterMedia = studioPayload?.after ?? null;
 
   // 🧬 Charger le draft du cube depuis localStorage (structure uniquement)
   useEffect(() => {
@@ -516,11 +552,11 @@ export default function MagicDisplayClient() {
             <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
               <span>{modeLabel}</span>
 
-              {modeFromStudio === "PPV" && ppvPriceFromStudio && (
+              {modeFromStudio === "PPV" && ppvPriceFromStudio != null && (
                 <>
                   <span className="text-slate-300">·</span>
                   <span className="font-mono">
-                    {Number(ppvPriceFromStudio).toFixed(2)} CHF
+                    {ppvPriceFromStudio.toFixed(2)} CHF
                   </span>
                 </>
               )}
@@ -538,7 +574,7 @@ export default function MagicDisplayClient() {
                 <>
                   <span className="text-slate-300">·</span>
                   {hashtagTokens.map((tag, index) => (
-                    <span key={tag} className="flex items-center gap-x-1">
+                    <span key={`${tag}-${index}`} className="flex items-center gap-x-1">
                       {index > 0 && (
                         <span className="text-slate-300">·</span>
                       )}
@@ -550,6 +586,65 @@ export default function MagicDisplayClient() {
                 </>
               )}
             </p>
+          </div>
+        )}
+
+        {/* Petit aperçu Magic Studio — Avant / Après */}
+        {(beforeMedia || afterMedia) && (
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="mb-2 text-[11px] font-semibold text-slate-700">
+              Aperçu Magic Studio — Avant / Après
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-slate-100">
+                {beforeMedia ? (
+                  beforeMedia.type === "video" ? (
+                    <video
+                      src={beforeMedia.url}
+                      className="h-full w-full object-cover"
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={beforeMedia.url}
+                      alt="Avant"
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
+                    Avant
+                  </div>
+                )}
+              </div>
+              <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-slate-100">
+                {afterMedia ? (
+                  afterMedia.type === "video" ? (
+                    <video
+                      src={afterMedia.url}
+                      className="h-full w-full object-cover"
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={afterMedia.url}
+                      alt="Après"
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
+                    Après
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -741,7 +836,7 @@ export default function MagicDisplayClient() {
             {/* Bottom sheet */}
             <div className="relative z-10 w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6">
               {/* En-tête */}
-              <div className="mb-3 flex items-center justify_between gap-2">
+              <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Options du cube
@@ -794,7 +889,7 @@ export default function MagicDisplayClient() {
                     <button
                       type="button"
                       onClick={() => handleApplyTemplate("COULEUR_3")}
-                      className="flex w_full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
+                      className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-100"
                     >
                       <div>
                         <p className="font-medium text-slate-900">
