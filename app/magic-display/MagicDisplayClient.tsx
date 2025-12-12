@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, type ChangeEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  type ChangeEvent,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Camera,
@@ -271,11 +276,77 @@ function renderSegmentIcon(seg: Segment) {
 }
 
 export default function MagicDisplayClient() {
+  // 🔍 paramètres envoyés par Magic Studio (query string)
   const searchParams = useSearchParams();
 
-  // 🧠 Payload complet envoyé par Magic Studio (localStorage)
+  const titleFromStudioQS = searchParams.get("title") ?? "";
+  const modeFromStudioQS = searchParams.get("mode") ?? "FREE";
+  const ppvPriceFromStudioQS = searchParams.get("ppvPrice");
+
+  const hashtagsParam =
+    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
+
+  const hashtagTokensFromQS = hashtagsParam
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+
+  const subscriptionPriceMock = 19.9;
+
+  // 🧩 Payload complet depuis Magic Studio (localStorage)
   const [studioPayload, setStudioPayload] =
     useState<StudioForwardPayload | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StudioForwardPayload;
+      if (!parsed || typeof parsed !== "object") return;
+      setStudioPayload(parsed);
+    } catch (error) {
+      console.error("Failed to load Magic Studio payload", error);
+    }
+  }, []);
+
+  // 🔎 Données “effectives” : payload > query string
+  const effectiveTitle =
+    studioPayload?.title?.trim() || titleFromStudioQS.trim();
+
+  const effectiveMode =
+    studioPayload?.mode || (modeFromStudioQS as StudioForwardPayload["mode"]);
+
+  const modeLabel =
+    effectiveMode === "SUB"
+      ? "Abonnement"
+      : effectiveMode === "PPV"
+      ? "PayPerView"
+      : "FREE";
+
+  const effectivePpvPrice =
+    studioPayload?.ppvPrice ??
+    (ppvPriceFromStudioQS ? Number(ppvPriceFromStudioQS) : undefined);
+
+  const hashtagsFromPayload =
+    studioPayload?.hashtags && studioPayload.hashtags.length > 0
+      ? studioPayload.hashtags
+      : [];
+
+  const displayHashtags =
+    hashtagsFromPayload.length > 0 ? hashtagsFromPayload : hashtagTokensFromQS;
+
+  // 👩‍🎨 créateur (Aiko par défaut)
+  const creators = listCreators();
+  const currentCreator =
+    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+
+  const initials = currentCreator.name
+    .split(" ")
+    .map((part: string) => part[0] ?? "")
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   // 🧠 état local des faces & menus
   const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
@@ -290,71 +361,6 @@ export default function MagicDisplayClient() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // 👩‍🎨 créateur (Aiko par défaut)
-  const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
-
-  const initials = currentCreator.name
-    .split(" ")
-    .map((part: string) => part[0] ?? "")
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  // 🔄 Charger le payload Magic Studio (titre, mode, hashtags, avant/après)
-  useEffect(() => {
-    try {
-      const raw =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem(STUDIO_FORWARD_KEY)
-          : null;
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as StudioForwardPayload;
-      setStudioPayload(parsed);
-    } catch (error) {
-      console.error("Failed to load Magic Studio payload", error);
-    }
-  }, []);
-
-  // 🔍 Fallback : query params (lien direct / refresh)
-  const titleFromQuery = searchParams.get("title") ?? "";
-  const modeFromQuery = searchParams.get("mode") ?? "FREE";
-  const ppvPriceFromQuery = searchParams.get("ppvPrice");
-  const hashtagsParam =
-    searchParams.get("hashtags") ?? searchParams.get("hashtag") ?? "";
-
-  // 🎛 Valeurs effectives = priorité au payload Studio, sinon query
-  const titleFromStudio = studioPayload?.title || titleFromQuery;
-  const modeFromStudio = studioPayload?.mode || modeFromQuery;
-
-  const ppvPriceFromStudio =
-    studioPayload?.ppvPrice ??
-    (ppvPriceFromQuery ? Number(ppvPriceFromQuery) : undefined);
-
-  let hashtagTokens: string[] = [];
-  if (studioPayload?.hashtags && studioPayload.hashtags.length > 0) {
-    hashtagTokens = studioPayload.hashtags;
-  } else if (hashtagsParam) {
-    hashtagTokens = hashtagsParam
-      .split(/[,\s]+/)
-      .map((t) => t.trim())
-      .filter(Boolean)
-      .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
-  }
-
-  const subscriptionPriceMock = 19.9;
-
-  const modeLabel =
-    modeFromStudio === "SUB"
-      ? "Abonnement"
-      : modeFromStudio === "PPV"
-      ? "PayPerView"
-      : "FREE";
-
-  const beforeMedia = studioPayload?.before ?? null;
-  const afterMedia = studioPayload?.after ?? null;
 
   // 🧬 Charger le draft du cube depuis localStorage (structure uniquement)
   useEffect(() => {
@@ -373,7 +379,6 @@ export default function MagicDisplayClient() {
           ...defaultSeg,
           label: fromStore.label ?? defaultSeg.label,
           description: fromStore.description ?? defaultSeg.description,
-          // On ne recharge pas les medias (blob: URLs), seulement la structure
           hasMedia: false,
           mediaType: undefined,
           mediaUrl: null,
@@ -536,15 +541,15 @@ export default function MagicDisplayClient() {
         </div>
 
         {/* Bandeau Magic Studio – style “hashtags Instagram” */}
-        {titleFromStudio && (
-          <div className="mb-4 space-y-0.5">
+        {effectiveTitle && (
+          <div className="mb-3 space-y-0.5">
             {/* Ligne 1 : titre principal */}
             <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12px] font-semibold text-slate-900">
               <span>Magic Studio</span>
               <span>✅</span>
               <span className="text-slate-300">·</span>
               <span className="max-w-[14rem] truncate sm:max-w-[22rem]">
-                {titleFromStudio}
+                {effectiveTitle}
               </span>
             </p>
 
@@ -552,16 +557,16 @@ export default function MagicDisplayClient() {
             <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-slate-500">
               <span>{modeLabel}</span>
 
-              {modeFromStudio === "PPV" && ppvPriceFromStudio != null && (
+              {effectiveMode === "PPV" && effectivePpvPrice != null && (
                 <>
                   <span className="text-slate-300">·</span>
                   <span className="font-mono">
-                    {ppvPriceFromStudio.toFixed(2)} CHF
+                    {effectivePpvPrice.toFixed(2)} CHF
                   </span>
                 </>
               )}
 
-              {modeFromStudio === "SUB" && (
+              {effectiveMode === "SUB" && (
                 <>
                   <span className="text-slate-300">·</span>
                   <span className="font-mono">
@@ -570,10 +575,10 @@ export default function MagicDisplayClient() {
                 </>
               )}
 
-              {hashtagTokens.length > 0 && (
+              {displayHashtags.length > 0 && (
                 <>
                   <span className="text-slate-300">·</span>
-                  {hashtagTokens.map((tag, index) => (
+                  {displayHashtags.map((tag, index) => (
                     <span key={`${tag}-${index}`} className="flex items-center gap-x-1">
                       {index > 0 && (
                         <span className="text-slate-300">·</span>
@@ -589,63 +594,72 @@ export default function MagicDisplayClient() {
           </div>
         )}
 
-        {/* Petit aperçu Magic Studio — Avant / Après */}
-        {(beforeMedia || afterMedia) && (
-          <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <p className="mb-2 text-[11px] font-semibold text-slate-700">
+        {/* Aperçu Magic Studio — Avant / Après */}
+        {studioPayload && (
+          <section className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Aperçu Magic Studio — Avant / Après
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-slate-100">
-                {beforeMedia ? (
-                  beforeMedia.type === "video" ? (
-                    <video
-                      src={beforeMedia.url}
-                      className="h-full w-full object-cover"
-                      muted
-                      loop
-                      playsInline
-                    />
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="grid grid-cols-2 divide-x divide-slate-100">
+                {/* Avant */}
+                <div className="relative aspect-[4/5]">
+                  {studioPayload.before ? (
+                    studioPayload.before.type === "video" ? (
+                      <video
+                        src={studioPayload.before.url}
+                        className="h-full w-full object-cover"
+                        playsInline
+                        muted
+                        loop
+                      />
+                    ) : (
+                      <img
+                        src={studioPayload.before.url}
+                        alt="Avant"
+                        className="h-full w-full object-cover"
+                      />
+                    )
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={beforeMedia.url}
-                      alt="Avant"
-                      className="h-full w-full object-cover"
-                    />
-                  )
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
+                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                      ?
+                    </div>
+                  )}
+                  <span className="pointer-events-none absolute left-3 top-3 text-xs font-semibold text-slate-900">
                     Avant
-                  </div>
-                )}
-              </div>
-              <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-slate-100">
-                {afterMedia ? (
-                  afterMedia.type === "video" ? (
-                    <video
-                      src={afterMedia.url}
-                      className="h-full w-full object-cover"
-                      muted
-                      loop
-                      playsInline
-                    />
+                  </span>
+                </div>
+
+                {/* Après */}
+                <div className="relative aspect-[4/5]">
+                  {studioPayload.after ? (
+                    studioPayload.after.type === "video" ? (
+                      <video
+                        src={studioPayload.after.url}
+                        className="h-full w-full object-cover"
+                        playsInline
+                        muted
+                        loop
+                      />
+                    ) : (
+                      <img
+                        src={studioPayload.after.url}
+                        alt="Après"
+                        className="h-full w-full object-cover"
+                      />
+                    )
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={afterMedia.url}
-                      alt="Après"
-                      className="h-full w-full object-cover"
-                    />
-                  )
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
+                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                      ?
+                    </div>
+                  )}
+                  <span className="pointer-events-none absolute left-3 top-3 text-xs font-semibold text-slate-900">
                     Après
-                  </div>
-                )}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {/* Bloc cercle + cube + liste */}
