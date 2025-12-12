@@ -75,7 +75,7 @@ export default function MyMagicClockPage() {
       {/* PROFIL + COCKPIT RÉSUMÉ */}
       <section
         id="mymagic-profile"
-        className="grid gap-6 lg:grid-cols-3 mb-8"
+        className="mb-8 grid gap-6 lg:grid-cols-3"
       >
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2">
           <h2 className="text-lg font-semibold">Profil</h2>
@@ -105,44 +105,76 @@ export default function MyMagicClockPage() {
       </section>
 
       {/* MES MAGIC CLOCK CRÉÉS */}
-      <section id="mymagic-created" className="space-y-3 mb-8">
-        <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
-        <p className="text-sm text-slate-600">
-          Ici apparaissent uniquement tes propres Magic Clock (Studio + Display).
-          Pour le MVP, nous réutilisons les contenus du flux Amazing créés par
-          ton profil.
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {created.map((item) => (
-            <MediaCard key={item.id} item={item} />
-          ))}
+      <section id="mymagic-created" className="mb-8 space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
+          <p className="text-sm text-slate-600">
+            Ici apparaissent tes propres Magic Clock (Studio + Display).
+            Pour le MVP, nous réutilisons les contenus du flux Amazing créés par
+            ton profil et nous préparons déjà les catégories &laquo; En cours &raquo; et
+            &laquo; Publiés &raquo;.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {/* Sous-section : En cours (brouillons / en travail) */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-900">
+              En cours
+            </h3>
+            <p className="text-xs text-slate-500">
+              Magic Clock en construction (MVP : même liste que les publiés, en
+              attendant le vrai statut &laquo; draft &raquo;).
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {created.map((item) => (
+                <MediaCard key={`draft-${item.id}`} item={item} />
+              ))}
+            </div>
+          </div>
+
+          {/* Sous-section : Publiés (sur Amazing) */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Publiés sur Amazing
+            </h3>
+            <p className="text-xs text-slate-500">
+              Magic Clock déjà visibles dans le flux Amazing (contenus publics
+              publiés depuis ton profil).
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {created.map((item) => (
+                <MediaCard key={`published-${item.id}`} item={item} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-     {/* MAGIC CLOCK DÉBLOQUÉS */}
-<section id="mymagic-unlocked" className="space-y-3">
-  <h2 className="text-lg font-semibold">
-    Magic Clock débloqués (Abonnements &amp; PPV)
-  </h2>
-  <p className="text-sm text-slate-600">
-    Section bibliothèque de l&apos;utilisateur : contenus accessibles
-    grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
-    ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
-  </p>
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    {purchased.map((item) => (
-      <div key={item.id} className="space-y-2">
-        <MediaCard item={item} />
-        <Link
-          href={`/display/${item.id}`}
-          className="block text-[11px] font-medium text-brand-600 hover:underline"
-        >
-          Ouvrir le Magic Display (MVP)
-        </Link>
-      </div>
-    ))}
-  </div>
-</section>
+      {/* MAGIC CLOCK DÉBLOQUÉS */}
+      <section id="mymagic-unlocked" className="space-y-3">
+        <h2 className="text-lg font-semibold">
+          Magic Clock débloqués (Abonnements &amp; PPV)
+        </h2>
+        <p className="text-sm text-slate-600">
+          Section bibliothèque de l&apos;utilisateur : contenus accessibles
+          grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
+          ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {purchased.map((item) => (
+            <div key={item.id} className="space-y-2">
+              <MediaCard item={item} />
+              <Link
+                href={`/display/${item.id}`}
+                className="block text-[11px] font-medium text-brand-600 hover:underline"
+              >
+                Ouvrir le Magic Display (MVP)
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
