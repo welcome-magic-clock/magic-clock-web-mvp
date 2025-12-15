@@ -13,12 +13,17 @@ import { uploadFileToR2 } from "@/core/storage/r2";
 
 type MediaKind = "image" | "video";
 
+type RemoteStorageRef = {
+  key: string;
+  url: string | null;
+};
+
 type MediaState = {
-  kind: MediaKind | null; // "image" | "video" | "file"
-  url: string | null;      // dataURL / blob pour la preview locale
-  storageUrl: string | null; // URL publique sur R2 (quand upload OK)
+  kind: MediaKind | null;        // "image" | "video"
+  url: string | null;            // dataURL / blob pour la preview locale
+  storageUrl: RemoteStorageRef | null; // Référence R2 (clé + URL publique)
   duration: number | null;
-  coverTime: number | null; // seconde choisie pour la vignette d’une vidéo
+  coverTime: number | null;      // seconde choisie pour la vignette d’une vidéo
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
