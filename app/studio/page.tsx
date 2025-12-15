@@ -9,14 +9,16 @@ import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
+import { uploadFileToR2 } from "@/core/storage/r2";
 
 type MediaKind = "image" | "video";
 
 type MediaState = {
-  kind: MediaKind | null;
-  url: string | null;
-  duration?: number | null;
-  coverTime?: number | null; // temps choisi pour la couverture vidéo (en secondes)
+  kind: MediaKind | null; // "image" | "video" | "file"
+  url: string | null;      // dataURL / blob pour la preview locale
+  storageUrl: string | null; // URL publique sur R2 (quand upload OK)
+  duration: number | null;
+  coverTime: number | null; // seconde choisie pour la vignette d’une vidéo
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
@@ -36,6 +38,7 @@ type StudioDraft = {
 const EMPTY_MEDIA: MediaState = {
   kind: null,
   url: null,
++ storageUrl: null,
   duration: null,
   coverTime: null,
 };
@@ -126,9 +129,9 @@ export default function MagicStudioPage() {
     }
   }
 
- function handleFileChange(
+async function handleFileChange(
   event: React.ChangeEvent<HTMLInputElement>,
-  side: Side
+  side: "before" | "after"
 ) {
   const file = event.target.files?.[0];
   if (!file) return;
@@ -136,32 +139,75 @@ export default function MagicStudioPage() {
   const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
   const reader = new FileReader();
-
-  reader.onload = (e) => {
-    const result = e.target?.result;
-    if (typeof result !== "string") return;
+  reader.onload = (event) => {
+    const result = event.target?.result;
+    const url = typeof result === "string" ? result : null;
 
     const state: MediaState = {
       kind,
-      url: result,          // ✅ data URL compatible partout
+      url,
+      storageUrl: null,
       duration: null,
       coverTime: null,
     };
 
+    // 1) Preview locale immédiate
     if (side === "before") {
       setBefore(state);
     } else {
       setAfter(state);
     }
+
+    // 2) Upload vers R2 en arrière-plan
+    (async () => {
+      try {
+        const storageUrl = await uploadFileToR2(
+          file,
+          kind === "video" ? "video" : "image"
+        );
+
+        if (side === "before") {
+          setBefore((prev) =>
+            prev
+              ? { ...prev, storageUrl }
+              : { ...state, storageUrl }
+          );
+        } else {
+          setAfter((prev) =>
+            prev
+              ? { ...prev, storageUrl }
+              : { ...state, storageUrl }
+          );
+        }
+      } catch (error) {
+        console.error("Upload vers R2 échoué", error);
+      }
+    })();
+
+    // 3) Métadonnées vidéo (inchangé)
+    if (kind === "video" && url) {
+      const tempVideo = document.createElement("video");
+      tempVideo.src = url;
+      tempVideo.addEventListener("loadedmetadata", () => {
+        const duration = tempVideo.duration;
+        if (side === "before") {
+          setBefore((prev) =>
+            prev
+              ? { ...prev, duration, coverTime: duration / 2 }
+              : { ...state, duration, coverTime: duration / 2 }
+          );
+        } else {
+          setAfter((prev) =>
+            prev
+              ? { ...prev, duration, coverTime: duration / 2 }
+              : { ...state, duration, coverTime: duration / 2 }
+          );
+        }
+      });
+    }
   };
-
-  // On lit toujours en dataURL, que ce soit image ou vidéo (OK pour les deux)
   reader.readAsDataURL(file);
-
-  // permet de re-sélectionner le même fichier si besoin
-  event.target.value = "";
 }
-
   function handleLoadedMetadata(
     side: Side,
     event: React.SyntheticEvent<HTMLVideoElement, Event>
