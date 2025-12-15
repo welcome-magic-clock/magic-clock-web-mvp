@@ -311,19 +311,37 @@ async function handleFileChange(
     return { media: null, videoRef: beforeVideoRef };
   }
 
-  function handleCoverSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
-    if (!selectingCoverFor) return;
-    const percent = Number(event.target.value); // 0 → 100
-    const { media, videoRef } = currentMediaForCover();
-    if (!media || media.kind !== "video" || !media.duration || !videoRef.current)
-      return;
+ function handleCoverSliderChange(
+  event: React.ChangeEvent<HTMLInputElement>
+) {
+  if (!selectingCoverFor) return;
 
-    const time = (media.duration * percent) / 100;
-    videoRef.current.currentTime = time;
+  const percent = Number(event.target.value); // 0 → 100
+  const { media, videoRef } = currentMediaForCover();
+  const videoEl = videoRef.current;
 
-    updateMedia(selectingCoverFor, (prev) => ({ ...prev, coverTime: time }));
+  if (!media || media.kind !== "video" || !videoEl) return;
+
+  // On récupère la durée depuis le state OU directement depuis l'élément vidéo
+  const duration = media.duration ?? videoEl.duration;
+  if (!duration || Number.isNaN(duration) || duration === Infinity) return;
+
+  const time = (duration * percent) / 100;
+
+  try {
+    // Pause pour éviter les bugs, puis seek
+    videoEl.pause();
+    videoEl.currentTime = time;
+  } catch (error) {
+    console.error("Seek vidéo pour la couverture a échoué", error);
   }
 
+  // On mémorise aussi la coverTime dans le state
+  updateMedia(selectingCoverFor, (prev) => ({
+    ...prev,
+    coverTime: time,
+  }));
+}
   const coverSliderValue = (() => {
     if (!selectingCoverFor) return 0;
     const { media } = currentMediaForCover();
