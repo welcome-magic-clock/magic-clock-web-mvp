@@ -206,6 +206,8 @@ async function handleFileChange(
       });
     }
   };
+
+  // ⬇️ ligne qui manquait
   reader.readAsDataURL(file);
 }
   function handleLoadedMetadata(
