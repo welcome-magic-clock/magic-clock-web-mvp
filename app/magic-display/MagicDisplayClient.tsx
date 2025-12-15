@@ -262,17 +262,61 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-function StudioMediaSlot({ src, alt }: { src: string; alt: string }) {
+function StudioMediaSlot({
+  src,
+  alt,
+  coverTime,
+}: {
+  src: string;
+  alt: string;
+  coverTime?: number | null;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (!isVideo(src)) return;
+    if (coverTime == null) return;
+
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+
+    const seekToCover = () => {
+      const duration = videoEl.duration;
+      let target = coverTime;
+
+      if (Number.isFinite(duration) && duration > 0) {
+        target = Math.max(0, Math.min(coverTime, duration));
+      }
+
+      try {
+        videoEl.currentTime = target;
+        videoEl.pause();
+      } catch (error) {
+        console.error("Failed to seek cover frame", error);
+      }
+    };
+
+    if (videoEl.readyState >= 1) {
+      seekToCover();
+    } else {
+      videoEl.addEventListener("loadedmetadata", seekToCover);
+      return () => {
+        videoEl.removeEventListener("loadedmetadata", seekToCover);
+      };
+    }
+  }, [src, coverTime]);
+
   return (
     <div className="relative h-full w-full">
       {isVideo(src) ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
+          ref={videoRef}
           src={src}
           className="h-full w-full object-cover"
-          autoPlay
+          autoPlay={!coverTime}
+          loop={!coverTime}
           muted
-          loop
           playsInline
         />
       ) : (
@@ -347,13 +391,16 @@ export default function MagicDisplayClient() {
     ? creatorHandleRaw
     : `@${creatorHandleRaw}`;
 
-  // 🔁 Payload complet Magic Studio (localStorage)
-  const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
-  const [studioAfterUrl, setStudioAfterUrl] = useState<string | null>(null);
-  const [bridgeTitle, setBridgeTitle] = useState("");
-  const [bridgeMode, setBridgeMode] = useState<PublishMode | null>(null);
-  const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
-  const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
+// 🔁 Payload complet Magic Studio (localStorage)
+const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
+const [studioAfterUrl, setStudioAfterUrl] = useState<string | null>(null);
+const [studioBeforeCover, setStudioBeforeCover] = useState<number | null>(null);
+const [studioAfterCover, setStudioAfterCover] = useState<number | null>(null);
+
+const [bridgeTitle, setBridgeTitle] = useState("");
+const [bridgeMode, setBridgeMode] = useState<PublishMode | null>(null);
+const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
+const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -362,12 +409,19 @@ export default function MagicDisplayClient() {
 
       const payload = JSON.parse(raw) as StudioForwardPayload;
 
-      if (payload.before?.url) {
-        setStudioBeforeUrl(payload.before.url);
-      }
-      if (payload.after?.url) {
-        setStudioAfterUrl(payload.after.url);
-      }
+     if (payload.before?.url) {
+  setStudioBeforeUrl(payload.before.url);
+  if (typeof payload.before.coverTime === "number") {
+    setStudioBeforeCover(payload.before.coverTime);
+  }
+}
+
+if (payload.after?.url) {
+  setStudioAfterUrl(payload.after.url);
+  if (typeof payload.after.coverTime === "number") {
+    setStudioAfterCover(payload.after.coverTime);
+  }
+}
 
       if (payload.title) setBridgeTitle(payload.title);
       if (payload.mode) setBridgeMode(payload.mode as PublishMode);
@@ -570,9 +624,24 @@ export default function MagicDisplayClient() {
     );
   }
 
-  // Fallback images si rien venant du Studio
-  const beforePreview = studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
-  const afterPreview = studioAfterUrl ?? studioBeforeUrl ?? FALLBACK_AFTER;
+ // Fallback images si rien venant du Studio
+const beforePreview = studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
+const afterPreview = studioAfterUrl ?? studioBeforeUrl ?? FALLBACK_AFTER;
+
+// coverTime aligné avec le média effectivement affiché
+const beforeCoverTime =
+  studioBeforeUrl && beforePreview === studioBeforeUrl
+    ? studioBeforeCover
+    : studioAfterUrl && beforePreview === studioAfterUrl
+    ? studioAfterCover
+    : null;
+
+const afterCoverTime =
+  studioAfterUrl && afterPreview === studioAfterUrl
+    ? studioAfterCover
+    : studioBeforeUrl && afterPreview === studioBeforeUrl
+    ? studioBeforeCover
+    : null;
 
   // Stats mock pour l’aperçu public
   const mockViews = 0;
@@ -620,14 +689,16 @@ export default function MagicDisplayClient() {
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
                   <div className="grid h-full w-full grid-cols-2">
-                    <StudioMediaSlot
-                      src={beforePreview}
-                      alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-                    />
-                    <StudioMediaSlot
-                      src={afterPreview}
-                      alt={`${effectiveTitle || "Magic Studio"} - Après`}
-                    />
+                   <StudioMediaSlot
+  src={beforePreview}
+  alt={`${effectiveTitle || "Magic Studio"} - Avant`}
+  coverTime={beforeCoverTime}
+/>
+<StudioMediaSlot
+  src={afterPreview}
+  alt={`${effectiveTitle || "Magic Studio"} - Après`}
+  coverTime={afterCoverTime}
+/>
                   </div>
 
                   {/* Ligne centrale */}
