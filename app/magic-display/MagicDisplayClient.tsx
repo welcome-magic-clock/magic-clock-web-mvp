@@ -259,7 +259,22 @@ function renderSegmentIcon(seg: Segment) {
 }
 
 function isVideo(url: string) {
-  return /\.(mp4|webm|ogg)$/i.test(url);
+  if (!url) return false;
+
+  // data:video/... (base64 depuis FileReader)
+  if (url.startsWith("data:video/")) return true;
+
+  // blob:... (URLs temporaires du navigateur, au cas où)
+  if (url.startsWith("blob:")) return true;
+
+  // Nettoie la query (?foo=bar) pour les URLs R2
+  const clean = url.split("?")[0].toLowerCase();
+
+  return (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".webm") ||
+    clean.endsWith(".ogg")
+  );
 }
 
 function StudioMediaSlot({
