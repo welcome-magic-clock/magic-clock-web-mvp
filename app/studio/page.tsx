@@ -161,10 +161,7 @@ async function handleFileChange(
     // 2) Upload vers R2 en arrière-plan
     (async () => {
       try {
-        const storageUrl = await uploadFileToR2(
-          file,
-          kind === "video" ? "video" : "image"
-        );
+        const storageUrl = await uploadFileToR2(file);
 
         if (side === "before") {
           setBefore((prev) =>
