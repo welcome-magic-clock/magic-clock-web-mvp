@@ -1,28 +1,21 @@
 // clé commune
-export const STUDIO_FORWARD_KEY = "mc-magic-studio-last-v1";
+// core/domain/magicStudioBridge.ts
+
+export const STUDIO_FORWARD_KEY = "mc-studio-forward-v1";
 
 export type StudioForwardMedia = {
   type: "photo" | "video";
-  url: string;                 // URL pour lecture (R2 si dispo, sinon dataURL)
-  coverTime?: number | null;   // pour les vidéos seulement
+  url: string;               // URL finale (R2 si dispo, sinon dataURL)
+  coverTime?: number | null; // pour les vidéos uniquement (seconde choisie)
 };
+
+export type PublishMode = "FREE" | "SUB" | "PPV";
 
 export type StudioForwardPayload = {
   title: string;
-  mode: "FREE" | "SUB" | "PPV";
+  mode: PublishMode;
   ppvPrice?: number;
   hashtags: string[];
   before: StudioForwardMedia | null;
   after: StudioForwardMedia | null;
-};
-
-export const STUDIO_FORWARD_KEY = "mc-studio-forward-v1";
-
-export type StudioForwardPayload = {
-  title: string;
-  mode: "FREE" | "PPV" | "SUB";
-  ppvPrice?: number;
-  hashtags: string[];
-  before?: StudioForwardMedia | null;
-  after?: StudioForwardMedia | null;
 };
