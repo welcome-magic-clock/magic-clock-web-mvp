@@ -238,14 +238,24 @@ async function handleFileChange(
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-    // helper MediaState -> payload
-    const mapMedia = (
-      media: MediaState
-    ): StudioForwardPayload["before"] => {
-      if (!media.url || !media.kind) return null;
-      const type = media.kind === "video" ? "video" : "photo";
-      return { type, url: media.url };
-    };
+   // helper MediaState -> payload (R2 + coverTime)
+const mapMedia = (
+  media: MediaState
+): StudioForwardPayload["before"] => {
+  if (!media.kind) return null;
+
+  const type = media.kind === "video" ? "video" : "photo";
+
+  // On privilégie l'URL R2 si disponible, sinon on tombe sur la dataURL locale
+  const effectiveUrl = media.storageUrl?.url ?? media.url;
+  if (!effectiveUrl) return null;
+
+  return {
+    type,
+    url: effectiveUrl,
+    coverTime: media.coverTime ?? null,
+  };
+};
 
     // 1) Payload complet pour Magic Display
     const payload: StudioForwardPayload = {
