@@ -38,7 +38,7 @@ type StudioDraft = {
 const EMPTY_MEDIA: MediaState = {
   kind: null,
   url: null,
-+ storageUrl: null,
+  storageUrl: null,
   duration: null,
   coverTime: null,
 };
