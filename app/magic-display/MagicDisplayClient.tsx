@@ -590,7 +590,7 @@ if (payload.after?.thumbnailUrl) {
       </main>
     );
   }
-
+  
 // Fallback images si rien venant du Studio
 const beforePreview =
   studioBeforeThumb ??
@@ -652,10 +652,11 @@ const afterPreview =
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
                   <div className="grid h-full w-full grid-cols-2">
-                   <StudioMediaSlot
+                  <StudioMediaSlot
   src={beforePreview}
   alt={`${effectiveTitle || "Magic Studio"} - Avant`}
 />
+
 <StudioMediaSlot
   src={afterPreview}
   alt={`${effectiveTitle || "Magic Studio"} - Après`}
