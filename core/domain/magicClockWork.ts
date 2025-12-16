@@ -238,6 +238,7 @@ export function magicClockWorkToFeedCard(
     creatorAvatar: work.creator.avatarUrl,
     hashtags: [],
     isCertified: !!work.creator.isCertified,
+    isSystemFeatured: !!work.access.isSystemFeatured, // ⭐ NEW
   };
 }
 
