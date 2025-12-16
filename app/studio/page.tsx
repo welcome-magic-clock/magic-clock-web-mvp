@@ -197,25 +197,26 @@ export default function MagicStudioPage() {
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-    // helper MediaState -> payload (avec coverTime + thumbnailUrl)
-    const mapMedia = (
-      media: MediaState
-    ): StudioForwardPayload["before"] => {
-      if (!media.url || !media.kind) return null;
-      const type = media.kind === "video" ? "video" : "photo";
+   // helper MediaState -> payload (avec coverTime + thumbnailUrl)
+const mapMedia = (
+  media: MediaState
+): StudioForwardPayload["before"] => {
+  if (!media.url || !media.kind) return null;
 
-      const thumbnailUrl =
-        media.kind === "photo"
-          ? media.url
-          : media.thumbnailUrl ?? null;
+  const type = media.kind === "video" ? "video" : "photo";
 
-      return {
-        type,
-        url: media.url,
-        coverTime: media.coverTime ?? null,
-        thumbnailUrl,
-      };
-    };
+  const thumbnailUrl =
+    media.kind === "image"
+      ? media.url
+      : media.thumbnailUrl ?? null;
+
+  return {
+    type,
+    url: media.url,
+    coverTime: media.coverTime ?? null,
+    thumbnailUrl,
+  };
+};
 
     // 1) Payload complet pour Magic Display
     const payload: StudioForwardPayload = {
