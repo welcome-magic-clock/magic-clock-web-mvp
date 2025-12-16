@@ -3,11 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ArrowUpRight, Lock, Unlock, Loader2 } from "lucide-react";
+import {
+  Heart,
+  ArrowUpRight,
+  Lock,
+  Unlock,
+  Loader2,
+  BadgeCheck,
+} from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 
+// Mode de publication “normalisé” (aligné avec /studio)
 type PublishMode = "FREE" | "SUB" | "PPV";
+
+// Type local pour les actions de la flèche
 type AccessKind = "FREE" | "ABO" | "PPV";
 
 type Props = {
@@ -117,11 +127,23 @@ export default function MediaCard({ item }: Props) {
       return cleanCreatorHandle === cleanUserHandle;
     }) ?? null;
 
-  const creatorName = creator?.name ?? item.user;
-  const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
-  const avatar = creator?.avatar ?? item.image;
+  const creatorName = creator?.name ?? item.creatorName ?? item.user;
+  const creatorHandle =
+    creator?.handle ??
+    item.creatorHandle ??
+    (item.user.startsWith("@") ? item.user : `@${cleanUserHandle}`);
+  const avatar =
+    creator?.avatar ??
+    item.creatorAvatar ??
+    item.image ??
+    "/images/examples/aiko-avatar.jpg";
 
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
+
+  // ---------- Compte certifié ----------
+  const isCertified =
+    (item as any).isCertified === true ||
+    (creator && (creator as any).isCertified === true);
 
   // ---------- Mode, prix, hashtags, stats ----------
   const modeFromItem = (item as any).mode as PublishMode | undefined;
@@ -167,14 +189,14 @@ export default function MediaCard({ item }: Props) {
   const beforeThumb: string =
     ((item as any).beforeThumbnail as string | undefined) ??
     ((item as any).beforeThumb as string | undefined) ??
-    item.beforeUrl ??
+    (item.beforeUrl as string | undefined) ??
     item.image ??
     FALLBACK_BEFORE;
 
   const afterThumb: string =
     ((item as any).afterThumbnail as string | undefined) ??
     ((item as any).afterThumb as string | undefined) ??
-    item.afterUrl ??
+    (item.afterUrl as string | undefined) ??
     item.image ??
     FALLBACK_AFTER;
 
@@ -405,8 +427,9 @@ export default function MediaCard({ item }: Props) {
         </Link>
       </div>
 
-      {/* Bas de carte : créateur + stats + hashtags + statut accès */}
+      {/* Bas de carte : créateur + stats + hashtags */}
       <div className="mt-3 space-y-1 text-xs">
+        {/* Ligne 1 : créateur · pastille certifié · vues · likes */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
           <Link href={meetHref} className="font-medium hover:underline">
             {creatorName}
@@ -414,6 +437,13 @@ export default function MediaCard({ item }: Props) {
           <Link href={meetHref} className="text-slate-400 hover:underline">
             {creatorHandle}
           </Link>
+
+          {isCertified && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+              <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+              <span>Certifié</span>
+            </span>
+          )}
 
           <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
@@ -431,25 +461,27 @@ export default function MediaCard({ item }: Props) {
 
           <span className="flex items-center gap-1">
             {isLocked ? (
-              <Lock className="h-3 w-3" aria-hidden="true" />
+              <Lock className="h-3 w-3" />
             ) : (
-              <Unlock className="h-3 w-3" aria-hidden="true" />
+              <Unlock className="h-3 w-3" />
             )}
             <span>{accessLabel}</span>
             {mode === "PPV" && ppvPrice != null && (
-              <span className="text-[11px] text-slate-500">
+              <span className="ml-1 text-[11px] text-slate-500">
                 · {ppvPrice.toFixed(2)} CHF
               </span>
             )}
           </span>
         </div>
 
+        {/* Ligne 2 : titre + hashtags */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
           {title && (
             <span className="font-medium text-slate-800 line-clamp-2">
               {title}
             </span>
           )}
+
           {displayHashtags.map((tag) => (
             <span key={tag} className="text-brand-600">
               {tag}
