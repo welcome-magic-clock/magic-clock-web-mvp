@@ -277,67 +277,11 @@ function isVideo(url: string) {
   );
 }
 
-function StudioMediaSlot({
-  src,
-  alt,
-  coverTime,
-}: {
-  src: string;
-  alt: string;
-  coverTime?: number | null;
-}) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    if (!isVideo(src)) return;
-    if (coverTime == null) return;
-
-    const videoEl = videoRef.current;
-    if (!videoEl) return;
-
-    const seekToCover = () => {
-      const duration = videoEl.duration;
-      let target = coverTime;
-
-      if (Number.isFinite(duration) && duration > 0) {
-        target = Math.max(0, Math.min(coverTime, duration));
-      }
-
-      try {
-        videoEl.currentTime = target;
-        videoEl.pause();
-      } catch (error) {
-        console.error("Failed to seek cover frame", error);
-      }
-    };
-
-    if (videoEl.readyState >= 1) {
-      seekToCover();
-    } else {
-      videoEl.addEventListener("loadedmetadata", seekToCover);
-      return () => {
-        videoEl.removeEventListener("loadedmetadata", seekToCover);
-      };
-    }
-  }, [src, coverTime]);
-
+function StudioMediaSlot({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="relative h-full w-full">
-      {isVideo(src) ? (
-        // eslint-disable-next-line jsx-a11y/media-has-caption
-        <video
-          ref={videoRef}
-          src={src}
-          className="h-full w-full object-cover"
-          autoPlay={!coverTime}
-          loop={!coverTime}
-          muted
-          playsInline
-        />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt} className="h-full w-full object-cover" />
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="h-full w-full object-cover" />
     </div>
   );
 }
@@ -411,6 +355,8 @@ const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
 const [studioAfterUrl, setStudioAfterUrl] = useState<string | null>(null);
 const [studioBeforeCover, setStudioBeforeCover] = useState<number | null>(null);
 const [studioAfterCover, setStudioAfterCover] = useState<number | null>(null);
+const [studioBeforeThumb, setStudioBeforeThumb] = useState<string | null>(null);
+const [studioAfterThumb, setStudioAfterThumb] = useState<string | null>(null);
 
 const [bridgeTitle, setBridgeTitle] = useState("");
 const [bridgeMode, setBridgeMode] = useState<PublishMode | null>(null);
@@ -430,12 +376,18 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
     setStudioBeforeCover(payload.before.coverTime);
   }
 }
+    if (payload.before?.thumbnailUrl) {
+  setStudioBeforeThumb(payload.before.thumbnailUrl);
+}
 
 if (payload.after?.url) {
   setStudioAfterUrl(payload.after.url);
   if (typeof payload.after.coverTime === "number") {
     setStudioAfterCover(payload.after.coverTime);
   }
+}
+if (payload.after?.thumbnailUrl) {
+  setStudioAfterThumb(payload.after.thumbnailUrl);
 }
 
       if (payload.title) setBridgeTitle(payload.title);
@@ -639,24 +591,20 @@ if (payload.after?.url) {
     );
   }
 
- // Fallback images si rien venant du Studio
-const beforePreview = studioBeforeUrl ?? studioAfterUrl ?? FALLBACK_BEFORE;
-const afterPreview = studioAfterUrl ?? studioBeforeUrl ?? FALLBACK_AFTER;
+// Fallback images si rien venant du Studio
+const beforePreview =
+  studioBeforeThumb ??
+  studioAfterThumb ??
+  studioBeforeUrl ??
+  studioAfterUrl ??
+  FALLBACK_BEFORE;
 
-// coverTime aligné avec le média effectivement affiché
-const beforeCoverTime =
-  studioBeforeUrl && beforePreview === studioBeforeUrl
-    ? studioBeforeCover
-    : studioAfterUrl && beforePreview === studioAfterUrl
-    ? studioAfterCover
-    : null;
-
-const afterCoverTime =
-  studioAfterUrl && afterPreview === studioAfterUrl
-    ? studioAfterCover
-    : studioBeforeUrl && afterPreview === studioBeforeUrl
-    ? studioBeforeCover
-    : null;
+const afterPreview =
+  studioAfterThumb ??
+  studioBeforeThumb ??
+  studioAfterUrl ??
+  studioBeforeUrl ??
+  FALLBACK_AFTER;
 
   // Stats mock pour l’aperçu public
   const mockViews = 0;
@@ -707,12 +655,10 @@ const afterCoverTime =
                    <StudioMediaSlot
   src={beforePreview}
   alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-  coverTime={beforeCoverTime}
 />
 <StudioMediaSlot
   src={afterPreview}
   alt={`${effectiveTitle || "Magic Studio"} - Après`}
-  coverTime={afterCoverTime}
 />
                   </div>
 
