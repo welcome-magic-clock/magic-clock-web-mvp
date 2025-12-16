@@ -1,13 +1,12 @@
 // core/domain/magicStudioBridge.ts
 
-// clé commune
 export const STUDIO_FORWARD_KEY = "mc-studio-forward-v1";
 
 export type StudioForwardMedia = {
   type: "photo" | "video";
-  url: string;                // URL finale (R2 si dispo, sinon dataURL)
-  coverTime?: number | null;  // seconde choisie pour la vidéo
-  thumbnailUrl?: string | null; // image de couverture (dataURL ou R2)
+  url: string;               // URL finale (dataURL ou R2 plus tard)
+  coverTime?: number | null; // seconde choisie dans la vidéo
+  thumbnailUrl?: string | null; // ✅ image de couverture (dataURL)
 };
 
 export type PublishMode = "FREE" | "SUB" | "PPV";
