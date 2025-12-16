@@ -1,4 +1,5 @@
 // core/domain/magicClockWork.ts
+import type { FeedCard, FeedAccess } from "./types";
 
 export type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -191,3 +192,55 @@ export const ONBOARDING_MAGIC_CLOCK_WORK: MagicClockWork = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
+
+// 🔁 Adaptateur MagicClockWork → FeedCard (flux Amazing)
+export function magicClockWorkToFeedCard(
+  work: MagicClockWork
+): FeedCard {
+  const access: FeedAccess =
+    work.access.mode === "PPV"
+      ? "PPV"
+      : work.access.mode === "SUB"
+      ? "ABO"
+      : "FREE";
+
+  const image =
+    work.studio.after?.thumbnailUrl ??
+    work.studio.after?.url ??
+    work.studio.before?.thumbnailUrl ??
+    work.studio.before?.url ??
+    "/images/examples/balayage-after.jpg";
+
+  const beforeUrl =
+    work.studio.before?.thumbnailUrl ??
+    work.studio.before?.url ??
+    null;
+
+  const afterUrl =
+    work.studio.after?.thumbnailUrl ??
+    work.studio.after?.url ??
+    null;
+
+  return {
+    id: work.id,                         // id string OK
+    title: work.title,
+    image,
+    beforeUrl,
+    afterUrl,
+    user: work.creator.handle,          // handle avec @ → nettoyé dans MediaCard
+    access,
+    views: work.stats.views,
+
+    // champs optionnels
+    likes: work.stats.likes,
+    creatorName: work.creator.name,
+    creatorHandle: work.creator.handle,
+    creatorAvatar: work.creator.avatarUrl,
+    hashtags: [],
+    isCertified: !!work.creator.isCertified,
+  };
+}
+
+// 🧩 FeedCard pré-calculé pour le flux Amazing
+export const ONBOARDING_MAGIC_CLOCK_FEED_CARD: FeedCard =
+  magicClockWorkToFeedCard(ONBOARDING_MAGIC_CLOCK_WORK);
