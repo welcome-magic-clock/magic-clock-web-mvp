@@ -317,21 +317,6 @@ export default function MediaCard({ item }: MediaCardProps) {
             </div>
           </Link>
 
-          {/* Badge mode en haut à gauche */}
-          <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-1 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-            {isLocked ? (
-              <Lock className="h-3 w-3" aria-hidden="true" />
-            ) : (
-              <Unlock className="h-3 w-3" aria-hidden="true" />
-            )}
-            <span>{accessLabel}</span>
-            {publishMode === "PPV" && ppvPrice != null && (
-              <span className="text-[9px] text-slate-200">
-                · {ppvPrice.toFixed(2)} CHF
-              </span>
-            )}
-          </div>
-
           {/* Flèche + mini-menu FREE / Abo / PPV */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
             <button
@@ -407,8 +392,9 @@ export default function MediaCard({ item }: MediaCardProps) {
         </div>
       </div>
 
-      {/* Bas de carte : créateur + stats + hashtags */}
+           {/* Bas de carte : créateur + stats + hashtags */}
       <div className="mt-3 space-y-1 text-xs">
+        {/* Ligne 1 : créateur · vues · likes · statut accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
           <Link href={meetHref} className="font-medium hover:underline">
             {creatorName}
@@ -430,8 +416,24 @@ export default function MediaCard({ item }: MediaCardProps) {
             <Heart className="h-3 w-3" />
             <span>{likes.toLocaleString("fr-CH")}</span>
           </span>
+
+          {/* Statut d’accès (FREE / Abonnement / PPV) */}
+          <span className="flex items-center gap-1">
+            {isLocked ? (
+              <Lock className="h-3 w-3" />
+            ) : (
+              <Unlock className="h-3 w-3" />
+            )}
+            <span>{accessLabel}</span>
+            {mode === "PPV" && ppvPrice != null && (
+              <span className="text-[11px] text-slate-500">
+                · {ppvPrice.toFixed(2)} CHF
+              </span>
+            )}
+          </span>
         </div>
 
+        {/* Ligne 2 : titre + hashtags */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
           {title && (
             <span className="font-medium text-slate-800 line-clamp-2">
@@ -445,6 +447,7 @@ export default function MediaCard({ item }: MediaCardProps) {
           ))}
         </div>
 
+        {/* Debug accès (on garde comme avant) */}
         {lastDecision && (
           <p className="mt-1 text-[10px] text-slate-400">
             Décision accès : {lastDecision}
