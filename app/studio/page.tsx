@@ -9,21 +9,14 @@ import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
-import { uploadFileToR2 } from "@/core/storage/r2";
 
 type MediaKind = "image" | "video";
 
-type RemoteStorageRef = {
-  key: string;
-  url: string | null;
-};
-
 type MediaState = {
-  kind: MediaKind | null;        // "image" | "video"
-  url: string | null;            // dataURL / blob pour la preview locale
-  storageUrl: RemoteStorageRef | null; // Référence R2 (clé + URL publique)
-  duration: number | null;
-  coverTime: number | null;      // seconde choisie pour la vignette d’une vidéo
+  kind: MediaKind | null;
+  url: string | null;
+  duration?: number | null;
+  coverTime?: number | null; // temps choisi pour la couverture vidéo (en secondes)
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
@@ -43,7 +36,6 @@ type StudioDraft = {
 const EMPTY_MEDIA: MediaState = {
   kind: null,
   url: null,
-  storageUrl: null,
   duration: null,
   coverTime: null,
 };
@@ -134,9 +126,9 @@ export default function MagicStudioPage() {
     }
   }
 
-async function handleFileChange(
+ function handleFileChange(
   event: React.ChangeEvent<HTMLInputElement>,
-  side: "before" | "after"
+  side: Side
 ) {
   const file = event.target.files?.[0];
   if (!file) return;
@@ -144,74 +136,32 @@ async function handleFileChange(
   const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
   const reader = new FileReader();
-  reader.onload = (event) => {
-    const result = event.target?.result;
-    const url = typeof result === "string" ? result : null;
+
+  reader.onload = (e) => {
+    const result = e.target?.result;
+    if (typeof result !== "string") return;
 
     const state: MediaState = {
       kind,
-      url,
-      storageUrl: null,
+      url: result,          // ✅ data URL compatible partout
       duration: null,
       coverTime: null,
     };
 
-    // 1) Preview locale immédiate
     if (side === "before") {
       setBefore(state);
     } else {
       setAfter(state);
     }
-
-    // 2) Upload vers R2 en arrière-plan
-    (async () => {
-      try {
-        const storageUrl = await uploadFileToR2(file);
-
-        if (side === "before") {
-          setBefore((prev) =>
-            prev
-              ? { ...prev, storageUrl }
-              : { ...state, storageUrl }
-          );
-        } else {
-          setAfter((prev) =>
-            prev
-              ? { ...prev, storageUrl }
-              : { ...state, storageUrl }
-          );
-        }
-      } catch (error) {
-        console.error("Upload vers R2 échoué", error);
-      }
-    })();
-
-    // 3) Métadonnées vidéo (inchangé)
-    if (kind === "video" && url) {
-      const tempVideo = document.createElement("video");
-      tempVideo.src = url;
-      tempVideo.addEventListener("loadedmetadata", () => {
-        const duration = tempVideo.duration;
-        if (side === "before") {
-          setBefore((prev) =>
-            prev
-              ? { ...prev, duration, coverTime: duration / 2 }
-              : { ...state, duration, coverTime: duration / 2 }
-          );
-        } else {
-          setAfter((prev) =>
-            prev
-              ? { ...prev, duration, coverTime: duration / 2 }
-              : { ...state, duration, coverTime: duration / 2 }
-          );
-        }
-      });
-    }
   };
 
-  // ⬇️ ligne qui manquait
+  // On lit toujours en dataURL, que ce soit image ou vidéo (OK pour les deux)
   reader.readAsDataURL(file);
+
+  // permet de re-sélectionner le même fichier si besoin
+  event.target.value = "";
 }
+
   function handleLoadedMetadata(
     side: Side,
     event: React.SyntheticEvent<HTMLVideoElement, Event>
@@ -238,24 +188,14 @@ async function handleFileChange(
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-   // helper MediaState -> payload (R2 + coverTime)
-const mapMedia = (
-  media: MediaState
-): StudioForwardPayload["before"] => {
-  if (!media.kind) return null;
-
-  const type = media.kind === "video" ? "video" : "photo";
-
-  // On privilégie l'URL R2 si disponible, sinon on tombe sur la dataURL locale
-  const effectiveUrl = media.storageUrl?.url ?? media.url;
-  if (!effectiveUrl) return null;
-
-  return {
-    type,
-    url: effectiveUrl,
-    coverTime: media.coverTime ?? null,
-  };
-};
+    // helper MediaState -> payload
+    const mapMedia = (
+      media: MediaState
+    ): StudioForwardPayload["before"] => {
+      if (!media.url || !media.kind) return null;
+      const type = media.kind === "video" ? "video" : "photo";
+      return { type, url: media.url };
+    };
 
     // 1) Payload complet pour Magic Display
     const payload: StudioForwardPayload = {
@@ -321,37 +261,19 @@ const mapMedia = (
     return { media: null, videoRef: beforeVideoRef };
   }
 
- function handleCoverSliderChange(
-  event: React.ChangeEvent<HTMLInputElement>
-) {
-  if (!selectingCoverFor) return;
+  function handleCoverSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
+    if (!selectingCoverFor) return;
+    const percent = Number(event.target.value); // 0 → 100
+    const { media, videoRef } = currentMediaForCover();
+    if (!media || media.kind !== "video" || !media.duration || !videoRef.current)
+      return;
 
-  const percent = Number(event.target.value); // 0 → 100
-  const { media, videoRef } = currentMediaForCover();
-  const videoEl = videoRef.current;
+    const time = (media.duration * percent) / 100;
+    videoRef.current.currentTime = time;
 
-  if (!media || media.kind !== "video" || !videoEl) return;
-
-  // On récupère la durée depuis le state OU directement depuis l'élément vidéo
-  const duration = media.duration ?? videoEl.duration;
-  if (!duration || Number.isNaN(duration) || duration === Infinity) return;
-
-  const time = (duration * percent) / 100;
-
-  try {
-    // Pause pour éviter les bugs, puis seek
-    videoEl.pause();
-    videoEl.currentTime = time;
-  } catch (error) {
-    console.error("Seek vidéo pour la couverture a échoué", error);
+    updateMedia(selectingCoverFor, (prev) => ({ ...prev, coverTime: time }));
   }
 
-  // On mémorise aussi la coverTime dans le state
-  updateMedia(selectingCoverFor, (prev) => ({
-    ...prev,
-    coverTime: time,
-  }));
-}
   const coverSliderValue = (() => {
     if (!selectingCoverFor) return 0;
     const { media } = currentMediaForCover();
