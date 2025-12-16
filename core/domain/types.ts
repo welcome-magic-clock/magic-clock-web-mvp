@@ -41,4 +41,5 @@ export type FeedCard = {
   creatorAvatar?: string;
   hashtags?: string[];
   isCertified?: boolean;      // ✅ pastille compte certifié
+  isSystemFeatured?: boolean; // ⭐ contenu système (ours onboarding, etc.)
 };
