@@ -14,10 +14,7 @@ import {
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 
-// Mode de publication “normalisé” (aligné avec /studio)
 type PublishMode = "FREE" | "SUB" | "PPV";
-
-// Type local pour les actions de la flèche
 type AccessKind = "FREE" | "ABO" | "PPV";
 
 type Props = {
@@ -30,13 +27,9 @@ const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 function isVideo(url: string | null | undefined) {
   if (!url) return false;
 
-  // data:video/... (base64 depuis FileReader)
   if (url.startsWith("data:video/")) return true;
-
-  // blob:... (URLs temporaires du navigateur)
   if (url.startsWith("blob:")) return true;
 
-  // Nettoie la query (?foo=bar) pour les URLs R2 ou CDN
   const clean = url.split("?")[0].toLowerCase();
 
   return (
@@ -61,7 +54,6 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
     const containerEl = containerRef.current;
     if (!videoEl || !containerEl) return;
 
-    // Toujours muet pour autoriser l’autoplay
     videoEl.muted = true;
     videoEl.playsInline = true;
 
@@ -71,14 +63,8 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
           if (!videoEl) return;
 
           if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            // Dans le viewport → play
-            videoEl
-              .play()
-              .catch(() => {
-                // certains navigateurs peuvent bloquer, on ignore
-              });
+            videoEl.play().catch(() => {});
           } else {
-            // Hors viewport → pause + retour début
             videoEl.pause();
             try {
               videoEl.currentTime = 0;
@@ -127,23 +113,11 @@ export default function MediaCard({ item }: Props) {
       return cleanCreatorHandle === cleanUserHandle;
     }) ?? null;
 
-  const creatorName = creator?.name ?? item.creatorName ?? item.user;
-  const creatorHandle =
-    creator?.handle ??
-    item.creatorHandle ??
-    (item.user.startsWith("@") ? item.user : `@${cleanUserHandle}`);
-  const avatar =
-    creator?.avatar ??
-    item.creatorAvatar ??
-    item.image ??
-    "/images/examples/aiko-avatar.jpg";
+  const creatorName = creator?.name ?? item.user;
+  const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
+  const avatar = creator?.avatar ?? item.image;
 
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
-
-  // ---------- Compte certifié ----------
-  const isCertified =
-    (item as any).isCertified === true ||
-    (creator && (creator as any).isCertified === true);
 
   // ---------- Mode, prix, hashtags, stats ----------
   const modeFromItem = (item as any).mode as PublishMode | undefined;
@@ -184,11 +158,6 @@ export default function MediaCard({ item }: Props) {
       : typeof (item as any).stats?.likes === "number"
       ? ((item as any).stats.likes as number)
       : 0;
-  
-    // Contenu système (ex : Magic Clock onboarding)
-  const isSystemFeatured =
-    (item as any).isSystemFeatured === true ||
-    item.id === "mcw-onboarding-bear-001";
 
   // ---------- Médias : thumbnails + vidéo éventuelle ----------
   const beforeThumb: string =
@@ -213,6 +182,15 @@ export default function MediaCard({ item }: Props) {
     : isVideo(beforeUrl)
     ? (beforeUrl as string)
     : null;
+
+  // ---------- Flags système & certifié ----------
+  const isSystemFeatured =
+    (item as any).isSystemFeatured === true ||
+    item.id === "mcw-onboarding-bear-001";
+
+  const isCertified =
+    (item as any).isCertified === true ||
+    (creator && (creator as any).isCertified === true);
 
   // ---------- Monétisation & accès ----------
   const [menuOpen, setMenuOpen] = useState(false);
@@ -360,81 +338,86 @@ export default function MediaCard({ item }: Props) {
                 )}
               </button>
 
-             {menuOpen && (
-  <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-    {/* Meet me ciblé */}
-    <button
-      type="button"
-      className="block w-full bg-transparent px-0 py-0 hover:underline"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setMenuOpen(false);
-        window.location.href = meetHref;
-      }}
-    >
-      Meet me (profil créateur)
-    </button>
+              {menuOpen && (
+                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+                  {/* Meet me ciblé */}
+                  <button
+                    type="button"
+                    className="block w-full bg-transparent px-0 py-0 hover:underline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      window.location.href = meetHref;
+                    }}
+                  >
+                    Meet me (profil créateur)
+                  </button>
 
-    {/* 🔒 Pour les contenus système (ours onboarding), on s’arrête là */}
-    {!isSystemFeatured && (
-      <>
-        {/* FREE – seulement si contenu en FREE */}
-        {mode === "FREE" && (
-          <button
-            type="button"
-            className="block w-full bg-transparent px-0 py-0 hover:underline"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleAccess("FREE");
-            }}
-            disabled={isLoading === "FREE"}
-          >
-            {isLoading === "FREE"
-              ? "Vérification FREE…"
-              : "Débloquer (FREE)"}
-          </button>
-        )}
+                  {/* Pour les contenus système (ours onboarding), on s’arrête là */}
+                  {!isSystemFeatured && (
+                    <>
+                      {/* FREE – seulement si contenu en FREE */}
+                      {mode === "FREE" && (
+                        <button
+                          type="button"
+                          className="block w-full bg-transparent px-0 py-0 hover:underline"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAccess("FREE");
+                          }}
+                          disabled={isLoading === "FREE"}
+                        >
+                          {isLoading === "FREE"
+                            ? "Vérification FREE…"
+                            : "Débloquer (FREE)"}
+                        </button>
+                      )}
 
-        {/* Abo – toujours proposé */}
-        <button
-          type="button"
-          className="block w-full bg-transparent px-0 py-0 hover:underline"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleAccess("ABO");
-          }}
-          disabled={isLoading === "ABO"}
-        >
-          {isLoading === "ABO"
-            ? "Activation Abo…"
-            : "Activer l’abonnement créateur"}
-        </button>
+                      {/* Abo – toujours proposé */}
+                      <button
+                        type="button"
+                        className="block w-full bg-transparent px-0 py-0 hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAccess("ABO");
+                        }}
+                        disabled={isLoading === "ABO"}
+                      >
+                        {isLoading === "ABO"
+                          ? "Activation Abo…"
+                          : "Activer l’abonnement créateur"}
+                      </button>
 
-        {/* PPV */}
-        <button
-          type="button"
-          className="block w-full bg-transparent px-0 py-0 hover:underline"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleAccess("PPV");
-          }}
-          disabled={isLoading === "PPV"}
-        >
-          {isLoading === "PPV"
-            ? "Déblocage PPV…"
-            : "Débloquer ce contenu en PPV"}
-        </button>
-      </>
-    )}
-  </div>
-)}
+                      {/* PPV */}
+                      <button
+                        type="button"
+                        className="block w-full bg-transparent px-0 py-0 hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAccess("PPV");
+                        }}
+                        disabled={isLoading === "PPV"}
+                      >
+                        {isLoading === "PPV"
+                          ? "Déblocage PPV…"
+                          : "Débloquer ce contenu en PPV"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </Link>
+      </div>
+
       {/* Bas de carte : créateur + stats + hashtags */}
       <div className="mt-3 space-y-1 text-xs">
-        {/* Ligne 1 : créateur · pastille certifié · vues · likes */}
+        {/* Ligne 1 : créateur · pastille certifié · vues · likes · accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
           <Link href={meetHref} className="font-medium hover:underline">
             {creatorName}
@@ -464,19 +447,21 @@ export default function MediaCard({ item }: Props) {
             <span>{likes.toLocaleString("fr-CH")}</span>
           </span>
 
-          <span className="flex items-center gap-1">
-            {isLocked ? (
-              <Lock className="h-3 w-3" />
-            ) : (
-              <Unlock className="h-3 w-3" />
-            )}
-            <span>{accessLabel}</span>
-            {mode === "PPV" && ppvPrice != null && (
-              <span className="ml-1 text-[11px] text-slate-500">
-                · {ppvPrice.toFixed(2)} CHF
-              </span>
-            )}
-          </span>
+          {mode && (
+            <span className="flex items-center gap-1">
+              {isLocked ? (
+                <Lock className="h-3 w-3" />
+              ) : (
+                <Unlock className="h-3 w-3" />
+              )}
+              <span>{accessLabel}</span>
+              {mode === "PPV" && ppvPrice != null && (
+                <span className="ml-1 text-[11px] text-slate-500">
+                  · {ppvPrice.toFixed(2)} CHF
+                </span>
+              )}
+            </span>
+          )}
         </div>
 
         {/* Ligne 2 : titre + hashtags */}
