@@ -1,7 +1,7 @@
 // app/mymagic/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import MyMagicToolbar from "@/components/mymagic/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
@@ -19,21 +19,80 @@ const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
 const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 
 function isVideo(url: string) {
-  return /\.(mp4|webm|ogg)$/i.test(url);
+  if (!url) return false;
+
+  // data:video/... (base64 depuis FileReader)
+  if (url.startsWith("data:video/")) return true;
+
+  // blob:... (URLs temporaires du navigateur)
+  if (url.startsWith("blob:")) return true;
+
+  // Nettoie la query (?foo=bar) pour les URLs R2
+  const clean = url.split("?")[0].toLowerCase();
+
+  return (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".webm") ||
+    clean.endsWith(".ogg")
+  );
 }
 
-function StudioMediaSlot({ src, alt }: { src: string; alt: string }) {
+function StudioMediaSlot({
+  src,
+  alt,
+  coverTime,
+}: {
+  src: string;
+  alt: string;
+  coverTime?: number | null;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (!isVideo(src)) return;
+    if (coverTime == null) return;
+
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+
+    const seekToCover = () => {
+      const duration = videoEl.duration;
+      let target = coverTime;
+
+      if (Number.isFinite(duration) && duration > 0) {
+        target = Math.max(0, Math.min(coverTime, duration));
+      }
+
+      try {
+        videoEl.currentTime = target;
+        videoEl.pause();
+      } catch (error) {
+        console.error("Failed to seek cover frame", error);
+      }
+    };
+
+    if (videoEl.readyState >= 1) {
+      seekToCover();
+    } else {
+      videoEl.addEventListener("loadedmetadata", seekToCover);
+      return () => {
+        videoEl.removeEventListener("loadedmetadata", seekToCover);
+      };
+    }
+  }, [src, coverTime]);
+
   return (
     <div className="relative h-full w-full">
       {isVideo(src) ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
+          ref={videoRef}
           src={src}
           className="h-full w-full object-cover"
-          autoPlay
           muted
-          loop
           playsInline
+          autoPlay={!coverTime}
+          loop={!coverTime}
         />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
@@ -74,6 +133,8 @@ export default function MyMagicClockPage() {
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [draftBefore, setDraftBefore] = useState<string | null>(null);
   const [draftAfter, setDraftAfter] = useState<string | null>(null);
+  const [draftBeforeCover, setDraftBeforeCover] = useState<number | null>(null);
+  const [draftAfterCover, setDraftAfterCover] = useState<number | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [draftMode, setDraftMode] = useState<PublishMode>("FREE");
   const [draftPpvPrice, setDraftPpvPrice] = useState<number | null>(null);
@@ -91,6 +152,12 @@ export default function MyMagicClockPage() {
 
       if (payload.before?.url) setDraftBefore(payload.before.url);
       if (payload.after?.url) setDraftAfter(payload.after.url);
+      if (typeof payload.before?.coverTime === "number") {
+  setDraftBeforeCover(payload.before.coverTime);
+}
+      if (typeof payload.after?.coverTime === "number") {
+  setDraftAfterCover(payload.after.coverTime);
+}
 
       if (payload.title) setDraftTitle(payload.title);
       if (payload.mode)
@@ -115,6 +182,19 @@ export default function MyMagicClockPage() {
   const beforePreview = draftBefore ?? draftAfter ?? FALLBACK_BEFORE;
   const afterPreview = draftAfter ?? draftBefore ?? FALLBACK_AFTER;
   const effectiveTitle = draftTitle.trim();
+  const beforeCoverTime =
+  draftBefore && beforePreview === draftBefore
+    ? draftBeforeCover
+    : draftAfter && beforePreview === draftAfter
+    ? draftAfterCover
+    : null;
+
+const afterCoverTime =
+  draftAfter && afterPreview === draftAfter
+    ? draftAfterCover
+    : draftBefore && afterPreview === draftBefore
+    ? draftBeforeCover
+    : null;
 
   const accessLabel =
     draftMode === "FREE"
@@ -224,14 +304,16 @@ export default function MyMagicClockPage() {
                 <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <div className="relative mx-auto aspect-[4/5] w-full">
                     <div className="grid h-full w-full grid-cols-2">
-                      <StudioMediaSlot
-                        src={beforePreview}
-                        alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-                      />
-                      <StudioMediaSlot
-                        src={afterPreview}
-                        alt={`${effectiveTitle || "Magic Studio"} - Après`}
-                      />
+                     <StudioMediaSlot
+  src={beforePreview}
+  alt={`${effectiveTitle || "Magic Studio"} - Avant`}
+  coverTime={beforeCoverTime}
+/>
+<StudioMediaSlot
+  src={afterPreview}
+  alt={`${effectiveTitle || "Magic Studio"} - Après`}
+  coverTime={afterCoverTime}
+/>
                     </div>
 
                     {/* Ligne centrale */}
