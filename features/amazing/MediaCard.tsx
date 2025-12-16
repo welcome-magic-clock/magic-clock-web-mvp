@@ -184,6 +184,11 @@ export default function MediaCard({ item }: Props) {
       : typeof (item as any).stats?.likes === "number"
       ? ((item as any).stats.likes as number)
       : 0;
+  
+    // Contenu système (ex : Magic Clock onboarding)
+  const isSystemFeatured =
+    (item as any).isSystemFeatured === true ||
+    item.id === "mcw-onboarding-bear-001";
 
   // ---------- Médias : thumbnails + vidéo éventuelle ----------
   const beforeThumb: string =
@@ -355,78 +360,78 @@ export default function MediaCard({ item }: Props) {
                 )}
               </button>
 
-              {menuOpen && (
-                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                  {/* Meet me ciblé */}
-                  <button
-                    type="button"
-                    className="block w-full bg-transparent px-0 py-0 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      window.location.href = meetHref;
-                    }}
-                  >
-                    Meet me (profil créateur)
-                  </button>
+             {menuOpen && (
+  <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+    {/* Meet me ciblé */}
+    <button
+      type="button"
+      className="block w-full bg-transparent px-0 py-0 hover:underline"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuOpen(false);
+        window.location.href = meetHref;
+      }}
+    >
+      Meet me (profil créateur)
+    </button>
 
-                  {/* FREE – seulement si contenu en FREE */}
-                  {mode === "FREE" && (
-                    <button
-                      type="button"
-                      className="block w-full bg-transparent px-0 py-0 hover:underline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAccess("FREE");
-                      }}
-                      disabled={isLoading === "FREE"}
-                    >
-                      {isLoading === "FREE"
-                        ? "Vérification FREE…"
-                        : "Débloquer (FREE)"}
-                    </button>
-                  )}
+    {/* 🔒 Pour les contenus système (ours onboarding), on s’arrête là */}
+    {!isSystemFeatured && (
+      <>
+        {/* FREE – seulement si contenu en FREE */}
+        {mode === "FREE" && (
+          <button
+            type="button"
+            className="block w-full bg-transparent px-0 py-0 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAccess("FREE");
+            }}
+            disabled={isLoading === "FREE"}
+          >
+            {isLoading === "FREE"
+              ? "Vérification FREE…"
+              : "Débloquer (FREE)"}
+          </button>
+        )}
 
-                  {/* Abo – toujours proposé */}
-                  <button
-                    type="button"
-                    className="block w-full bg-transparent px-0 py-0 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleAccess("ABO");
-                    }}
-                    disabled={isLoading === "ABO"}
-                  >
-                    {isLoading === "ABO"
-                      ? "Activation Abo…"
-                      : "Activer l’abonnement créateur"}
-                  </button>
+        {/* Abo – toujours proposé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAccess("ABO");
+          }}
+          disabled={isLoading === "ABO"}
+        >
+          {isLoading === "ABO"
+            ? "Activation Abo…"
+            : "Activer l’abonnement créateur"}
+        </button>
 
-                  {/* PPV */}
-                  <button
-                    type="button"
-                    className="block w-full bg-transparent px-0 py-0 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleAccess("PPV");
-                    }}
-                    disabled={isLoading === "PPV"}
-                  >
-                    {isLoading === "PPV"
-                      ? "Déblocage PPV…"
-                      : "Débloquer ce contenu en PPV"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </Link>
-      </div>
-
+        {/* PPV */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAccess("PPV");
+          }}
+          disabled={isLoading === "PPV"}
+        >
+          {isLoading === "PPV"
+            ? "Déblocage PPV…"
+            : "Débloquer ce contenu en PPV"}
+        </button>
+      </>
+    )}
+  </div>
+)}
       {/* Bas de carte : créateur + stats + hashtags */}
       <div className="mt-3 space-y-1 text-xs">
         {/* Ligne 1 : créateur · pastille certifié · vues · likes */}
