@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Heart, Lock, Unlock, ArrowUpRight, Loader2 } from "lucide-react";
+import { Heart, ArrowUpRight, Lock, Unlock, Loader2 } from "lucide-react";
+import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type AccessKind = "FREE" | "ABO" | "PPV";
 
-type MediaCardProps = {
-  item: any;
+type Props = {
+  item: FeedCard;
 };
 
 const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
@@ -18,9 +20,13 @@ const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 function isVideo(url: string | null | undefined) {
   if (!url) return false;
 
+  // data:video/... (base64 depuis FileReader)
   if (url.startsWith("data:video/")) return true;
+
+  // blob:... (URLs temporaires du navigateur)
   if (url.startsWith("blob:")) return true;
 
+  // Nettoie la query (?foo=bar) pour les URLs R2 ou CDN
   const clean = url.split("?")[0].toLowerCase();
 
   return (
@@ -43,9 +49,9 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
   useEffect(() => {
     const videoEl = videoRef.current;
     const containerEl = containerRef.current;
-
     if (!videoEl || !containerEl) return;
 
+    // Toujours muet pour autoriser l’autoplay
     videoEl.muted = true;
     videoEl.playsInline = true;
 
@@ -55,12 +61,14 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
           if (!videoEl) return;
 
           if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            // Dans le viewport → play
             videoEl
               .play()
               .catch(() => {
                 // certains navigateurs peuvent bloquer, on ignore
               });
           } else {
+            // Hors viewport → pause + retour début
             videoEl.pause();
             try {
               videoEl.currentTime = 0;
@@ -74,10 +82,7 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
     );
 
     observer.observe(containerEl);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [src]);
 
   return (
@@ -98,16 +103,11 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
   );
 }
 
-export default function MediaCard({ item }: MediaCardProps) {
-  // --- Créateur & avatar (via CREATORS + fallback) ---
-  const rawUserHandle: string =
-    (typeof item.user === "string" && item.user) ||
-    (typeof item.creatorHandle === "string" && item.creatorHandle) ||
-    "@magic_clock";
-
-  const cleanUserHandle = rawUserHandle.startsWith("@")
-    ? rawUserHandle.slice(1)
-    : rawUserHandle;
+export default function MediaCard({ item }: Props) {
+  // ---------- Créateur & avatar via Meet me ----------
+  const cleanUserHandle = item.user.startsWith("@")
+    ? item.user.slice(1)
+    : item.user;
 
   const creator =
     CREATORS.find((c) => {
@@ -117,79 +117,69 @@ export default function MediaCard({ item }: MediaCardProps) {
       return cleanCreatorHandle === cleanUserHandle;
     }) ?? null;
 
-  const creatorName: string =
-    (creator?.name as string) ||
-    (item.creatorName as string) ||
-    cleanUserHandle;
-
-  const avatar: string =
-    (creator?.avatar as string) ||
-    (item.avatar as string) ||
-    (item.creatorAvatar as string) ||
-    "/images/examples/aiko-avatar.jpg";
-
-  const rawHandleForMeet: string = creator?.handle ?? `@${cleanUserHandle}`;
-  const creatorHandle =
-    rawHandleForMeet.startsWith("@") && rawHandleForMeet.length > 1
-      ? rawHandleForMeet
-      : `@${rawHandleForMeet.replace(/^@/, "")}`;
+  const creatorName = creator?.name ?? item.user;
+  const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
+  const avatar = creator?.avatar ?? item.image;
 
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
-  // --- Titre, mode & hashtags ---
-  const title: string = (item.title as string) ?? "Magic Clock";
+  // ---------- Mode, prix, hashtags, stats ----------
+  const modeFromItem = (item as any).mode as PublishMode | undefined;
 
-  const publishMode: PublishMode =
-    item.mode === "PPV" || item.mode === "SUB" || item.mode === "FREE"
-      ? (item.mode as PublishMode)
-      : item.access === "PPV"
+  const mode: PublishMode =
+    modeFromItem ??
+    (item.access === "PPV"
       ? "PPV"
       : item.access === "ABO"
       ? "SUB"
-      : "FREE";
+      : "FREE");
 
   const ppvPrice: number | null =
-    typeof item.ppvPrice === "number" ? item.ppvPrice : null;
+    typeof (item as any).ppvPrice === "number"
+      ? ((item as any).ppvPrice as number)
+      : null;
 
-  const hashtags: string[] = Array.isArray(item.hashtags)
-    ? (item.hashtags as string[])
-    : [];
+  const rawHashtags =
+    (item as any).hashtags && Array.isArray((item as any).hashtags)
+      ? ((item as any).hashtags as string[])
+      : [];
 
   const displayHashtags =
-    hashtags.length > 0 ? hashtags : ["#coiffure", "#magicclock"];
+    rawHashtags.length > 0 ? rawHashtags : ["#coiffure", "#magicclock"];
 
-  // --- Stats ---
-  const views: number =
+  const title = item.title ?? "Magic Clock";
+
+  const views =
     typeof item.views === "number"
       ? item.views
-      : typeof item.stats?.views === "number"
-      ? (item.stats.views as number)
+      : typeof (item as any).stats?.views === "number"
+      ? ((item as any).stats.views as number)
       : 0;
 
-  const likes: number =
-    typeof item.likes === "number"
-      ? item.likes
-      : typeof item.stats?.likes === "number"
-      ? (item.stats.likes as number)
+  const likes =
+    typeof (item as any).likes === "number"
+      ? ((item as any).likes as number)
+      : typeof (item as any).stats?.likes === "number"
+      ? ((item as any).stats.likes as number)
       : 0;
 
-  // --- Thumbnails & vidéo ---
+  // ---------- Médias : thumbnails + vidéo éventuelle ----------
   const beforeThumb: string =
-    (item.beforeThumbnail as string) ||
-    (item.beforeThumb as string) ||
-    (item.beforeImage as string) ||
-    (item.beforeUrl as string) ||
+    ((item as any).beforeThumbnail as string | undefined) ??
+    ((item as any).beforeThumb as string | undefined) ??
+    item.beforeUrl ??
+    item.image ??
     FALLBACK_BEFORE;
 
   const afterThumb: string =
-    (item.afterThumbnail as string) ||
-    (item.afterThumb as string) ||
-    (item.afterImage as string) ||
-    (item.afterUrl as string) ||
+    ((item as any).afterThumbnail as string | undefined) ??
+    ((item as any).afterThumb as string | undefined) ??
+    item.afterUrl ??
+    item.image ??
     FALLBACK_AFTER;
 
-  const afterUrl: string | undefined = item.afterUrl as string | undefined;
-  const beforeUrl: string | undefined = item.beforeUrl as string | undefined;
+  const beforeUrl = item.beforeUrl;
+  const afterUrl = item.afterUrl;
 
   const heroVideoSrc: string | null = isVideo(afterUrl)
     ? (afterUrl as string)
@@ -197,11 +187,28 @@ export default function MediaCard({ item }: MediaCardProps) {
     ? (beforeUrl as string)
     : null;
 
-  // --- Accès & monétisation (mini-menu) ---
+  // ---------- Monétisation & accès ----------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(publishMode === "FREE");
+  const [isUnlocked, setIsUnlocked] = useState(mode === "FREE");
   const [lastDecision, setLastDecision] = useState<string | null>(null);
+
+  const accessLabelBase =
+    mode === "FREE"
+      ? "FREE"
+      : mode === "SUB"
+      ? "Abonnement"
+      : "Pay Per View";
+
+  const accessLabel = isUnlocked
+    ? mode === "FREE"
+      ? "FREE"
+      : mode === "SUB"
+      ? "Abonnement actif"
+      : "PPV débloqué"
+    : accessLabelBase;
+
+  const isLocked = !isUnlocked && mode !== "FREE";
 
   async function handleAccess(kind: AccessKind) {
     setIsLoading(kind);
@@ -211,13 +218,13 @@ export default function MediaCard({ item }: MediaCardProps) {
 
       if (kind === "FREE") {
         url = "/api/access/free";
-        body = { contentId: item.id, creatorHandle: rawUserHandle };
+        body = { contentId: item.id, creatorHandle: item.user };
       } else if (kind === "ABO") {
         url = "/api/access/subscription";
-        body = { creatorHandle: rawUserHandle, contentId: item.id };
+        body = { creatorHandle: item.user, contentId: item.id };
       } else {
         url = "/api/access/ppv";
-        body = { contentId: item.id, creatorHandle: rawUserHandle };
+        body = { contentId: item.id, creatorHandle: item.user };
       }
 
       const res = await fetch(url, {
@@ -238,8 +245,8 @@ export default function MediaCard({ item }: MediaCardProps) {
       if (data.decision === "ALLOWED") {
         setIsUnlocked(true);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       setLastDecision("ERROR");
     } finally {
       setIsLoading(null);
@@ -247,154 +254,159 @@ export default function MediaCard({ item }: MediaCardProps) {
     }
   }
 
-  const accessLabelBase =
-    publishMode === "FREE"
-      ? "FREE"
-      : publishMode === "SUB"
-      ? "Abonnement"
-      : "Pay Per View";
-
-  const accessLabel = isUnlocked
-    ? publishMode === "FREE"
-      ? "FREE"
-      : publishMode === "SUB"
-      ? "Abonnement actif"
-      : "PPV débloqué"
-    : accessLabelBase;
-
-  const isLocked = !isUnlocked && publishMode !== "FREE";
+  const detailHref =
+    typeof item.id === "string" || typeof item.id === "number"
+      ? `/display/${item.id}`
+      : "/display";
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
-      {/* Canevas Magic Studio : Avant / Après / Vidéo */}
+      {/* Zone média (image/vidéo + avatar + menu flèche) */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-        <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
-          {heroVideoSrc ? (
-            <AutoPlayVideo
-              src={heroVideoSrc}
-              poster={afterThumb || beforeThumb}
-              alt={title}
-            />
-          ) : (
-            <div className="grid h-full w-full grid-cols-2">
-              {/* Avant */}
-              <div className="relative h-full w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={beforeThumb}
-                  alt={`${title} - Avant`}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              {/* Après */}
-              <div className="relative h-full w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={afterThumb}
-                  alt={`${title} - Après`}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-
-              {/* Ligne centrale */}
-              <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
-            </div>
-          )}
-
-          {/* Avatar centré : lien vers Meet me */}
-          <Link
-            href={meetHref}
-            className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-            aria-label={`Voir le profil de ${creatorName}`}
-          >
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-black/20 shadow-sm backdrop-blur-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={avatar}
-                alt={creatorName}
-                className="h-[72px] w-[72px] rounded-full object-cover"
+        <Link href={detailHref} className="relative block">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+            {heroVideoSrc ? (
+              <AutoPlayVideo
+                src={heroVideoSrc}
+                poster={afterThumb || beforeThumb}
+                alt={title}
               />
-            </div>
-          </Link>
+            ) : (
+              <div className="grid h-full w-full grid-cols-2">
+                {/* Avant */}
+                <div className="relative h-full w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={beforeThumb}
+                    alt={`${title} - Avant`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                {/* Après */}
+                <div className="relative h-full w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={afterThumb}
+                    alt={`${title} - Après`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
 
-          {/* Flèche + mini-menu FREE / Abo / PPV */}
-          <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center drop-shadow-md"
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen((v) => !v);
-              }}
-              aria-label="Options d’accès"
+                {/* Ligne centrale */}
+                <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+              </div>
+            )}
+
+            {/* Avatar centré (clic → Meet me) */}
+            <Link
+              href={meetHref}
+              className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+              aria-label={`Voir le profil de ${creatorName}`}
             >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <ArrowUpRight className="h-5 w-5" />
-              )}
-            </button>
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
+                <Image
+                  src={avatar}
+                  alt={creatorName}
+                  width={72}
+                  height={72}
+                  className="h-[72px] w-[72px] rounded-full object-cover"
+                />
+              </div>
+            </Link>
 
-            {menuOpen && (
-              <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                {/* Meet me ciblé */}
-                <button
-                  type="button"
-                  className="block w-full bg-transparent px-0 py-0 hover:underline"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    window.location.href = meetHref;
-                  }}
-                >
-                  Meet me (profil créateur)
-                </button>
+            {/* Flèche + mini-menu FREE / Abo / PPV */}
+            <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center drop-shadow-md"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenuOpen((v) => !v);
+                }}
+                aria-label="Options d’accès"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ArrowUpRight className="h-5 w-5" />
+                )}
+              </button>
 
-                {/* FREE – seulement si contenu publié en FREE */}
-                {publishMode === "FREE" && (
+              {menuOpen && (
+                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+                  {/* Meet me ciblé */}
                   <button
                     type="button"
                     className="block w-full bg-transparent px-0 py-0 hover:underline"
-                    onClick={() => handleAccess("FREE")}
-                    disabled={isLoading === "FREE"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      window.location.href = meetHref;
+                    }}
                   >
-                    {isLoading === "FREE"
-                      ? "Vérification FREE…"
-                      : "Débloquer (FREE)"}
+                    Meet me (profil créateur)
                   </button>
-                )}
 
-                {/* Abo – abonnement créateur */}
-                <button
-                  type="button"
-                  className="block w-full bg-transparent px-0 py-0 hover:underline"
-                  onClick={() => handleAccess("ABO")}
-                  disabled={isLoading === "ABO"}
-                >
-                  {isLoading === "ABO"
-                    ? "Activation Abo…"
-                    : "Activer l’abonnement créateur"}
-                </button>
+                  {/* FREE – seulement si contenu en FREE */}
+                  {mode === "FREE" && (
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAccess("FREE");
+                      }}
+                      disabled={isLoading === "FREE"}
+                    >
+                      {isLoading === "FREE"
+                        ? "Vérification FREE…"
+                        : "Débloquer (FREE)"}
+                    </button>
+                  )}
 
-                {/* PPV – déblocage contenu */}
-                <button
-                  type="button"
-                  className="block w-full bg-transparent px-0 py-0 hover:underline"
-                  onClick={() => handleAccess("PPV")}
-                  disabled={isLoading === "PPV"}
-                >
-                  {isLoading === "PPV"
-                    ? "Déblocage PPV…"
-                    : "Débloquer ce contenu en PPV"}
-                </button>
-              </div>
-            )}
+                  {/* Abo – toujours proposé */}
+                  <button
+                    type="button"
+                    className="block w-full bg-transparent px-0 py-0 hover:underline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleAccess("ABO");
+                    }}
+                    disabled={isLoading === "ABO"}
+                  >
+                    {isLoading === "ABO"
+                      ? "Activation Abo…"
+                      : "Activer l’abonnement créateur"}
+                  </button>
+
+                  {/* PPV */}
+                  <button
+                    type="button"
+                    className="block w-full bg-transparent px-0 py-0 hover:underline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleAccess("PPV");
+                    }}
+                    disabled={isLoading === "PPV"}
+                  >
+                    {isLoading === "PPV"
+                      ? "Déblocage PPV…"
+                      : "Débloquer ce contenu en PPV"}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
 
-           {/* Bas de carte : créateur + stats + hashtags */}
+      {/* Bas de carte : créateur + stats + hashtags + statut accès */}
       <div className="mt-3 space-y-1 text-xs">
-        {/* Ligne 1 : créateur · vues · likes · statut accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
           <Link href={meetHref} className="font-medium hover:underline">
             {creatorName}
@@ -417,12 +429,11 @@ export default function MediaCard({ item }: MediaCardProps) {
             <span>{likes.toLocaleString("fr-CH")}</span>
           </span>
 
-          {/* Statut d’accès (FREE / Abonnement / PPV) */}
           <span className="flex items-center gap-1">
             {isLocked ? (
-              <Lock className="h-3 w-3" />
+              <Lock className="h-3 w-3" aria-hidden="true" />
             ) : (
-              <Unlock className="h-3 w-3" />
+              <Unlock className="h-3 w-3" aria-hidden="true" />
             )}
             <span>{accessLabel}</span>
             {mode === "PPV" && ppvPrice != null && (
@@ -433,7 +444,6 @@ export default function MediaCard({ item }: MediaCardProps) {
           </span>
         </div>
 
-        {/* Ligne 2 : titre + hashtags */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
           {title && (
             <span className="font-medium text-slate-800 line-clamp-2">
@@ -447,7 +457,6 @@ export default function MediaCard({ item }: MediaCardProps) {
           ))}
         </div>
 
-        {/* Debug accès (on garde comme avant) */}
         {lastDecision && (
           <p className="mt-1 text-[10px] text-slate-400">
             Décision accès : {lastDecision}
