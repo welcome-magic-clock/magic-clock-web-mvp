@@ -9,21 +9,25 @@ type Props = {
   contentId: number | string;
 };
 
+/**
+ * Pour le MVP, seul le Magic Clock d’onboarding (l’ours 🐻)
+ * a un vrai Magic Display illustré.
+ */
 function getWorkForContent(contentId: number | string): MagicClockWork | null {
   const idAsString = String(contentId);
 
-  // Pour le MVP, seul le Magic Clock d’onboarding (ours) a un vrai Display
   if (idAsString === ONBOARDING_MAGIC_CLOCK_WORK.id) {
     return ONBOARDING_MAGIC_CLOCK_WORK;
   }
 
-  // Les autres Magic Clock auront leur Display plus tard
+  // Les autres contenus auront leur Display plus tard
   return null;
 }
 
 export default function MagicDisplayViewer({ contentId }: Props) {
   const work = getWorkForContent(contentId);
 
+  // Si ce n’est pas le Magic Clock de l’ours, on affiche juste un message MVP
   if (!work) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
@@ -38,6 +42,7 @@ export default function MagicDisplayViewer({ contentId }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Grille des 6 faces du cube */}
       <div className="grid gap-4 sm:grid-cols-2">
         {faces.map((face) => (
           <article
