@@ -5,16 +5,17 @@ import { BadgeCheck } from "lucide-react";
 import { SearchToolbar } from "@/components/search/SearchToolbar";
 import { CREATORS } from "@/features/meet/creators";
 
-// Base : type d'un créateur dans CREATORS
+// Base = type réel d'un créateur dans CREATORS
 type CreatorBase = (typeof CREATORS)[number];
 
-// On étend avec les infos de localisation + isCertified optionnel
+// On étend juste avec des champs optionnels
 type CreatorWithLocation = CreatorBase & {
   city?: string;
   country?: string;
   isCertified?: boolean;
 };
 
+// Format followers façon TikTok / Insta : 12,4k / 125M
 function formatFollowers(count?: number): string {
   if (typeof count !== "number") return "";
 
@@ -38,7 +39,7 @@ function formatFollowers(count?: number): string {
     return `${formatted}k`;
   }
 
-  // < 1 000 → nombre normal
+  // < 1 000 → normal
   return count.toLocaleString("fr-CH");
 }
 
@@ -98,19 +99,19 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
 export default function MeetPage() {
   const baseCreators = CREATORS as CreatorWithLocation[];
 
- // 🔹 Profil système Magic Clock (Bear)
-const systemBearCreator: CreatorWithLocation = {
-  id: 999999, // <- important : nombre, pas string
-  name: "Magic Clock",
-  handle: "magic_clock_app",
-  avatar: "/images/magic-clock-bear/avatar.png",
-  followers: 125_000_000,
-  langs: ["fr"],        // champs attendus par le type d’origine
-  access: "PUBLIC",     // idem
-  isCertified: true,    // notre badge
-  city: "Neuchâtel",
-  country: "Suisse",
-};
+  // 🔹 Profil système Magic Clock (Bear)
+  const systemBearCreator: CreatorWithLocation = {
+    id: 999999, // id numérique pour respecter le type d’origine
+    name: "Magic Clock",
+    handle: "magic_clock_app", // on ajoute @ seulement à l'affichage
+    avatar: "/images/magic-clock-bear/avatar.png",
+    followers: 125_000_000, // → 125M followers
+    langs: ["fr"],          // champs attendus par CreatorBase
+    access: [],             // type attendu = AccessKind[], donc tableau vide OK
+    isCertified: true,      // notre badge
+    city: "Neuchâtel",
+    country: "Suisse",
+  };
 
   // On met Magic Clock tout en haut de la liste
   const creatorsWithSystem: CreatorWithLocation[] = [
