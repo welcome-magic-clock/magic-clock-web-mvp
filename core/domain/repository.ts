@@ -7,10 +7,18 @@ import { FEED } from "@/features/amazing/feed";
 import { ONBOARDING_MAGIC_CLOCK_FEED_CARD } from "./magicClockWork";
 
 // 👇 tableau commun pour Amazing, My Magic Clock et Magic Display
-const ALL_FEED_CARDS: FeedCard[] = [
-  ONBOARDING_MAGIC_CLOCK_FEED_CARD, // Bear en premier
-  ...FEED,
-];
+// On fusionne et on enlève les doublons d'ID (au cas où l'ours serait déjà dans FEED)
+const ALL_FEED_CARDS: FeedCard[] = (() => {
+  const merged: FeedCard[] = [ONBOARDING_MAGIC_CLOCK_FEED_CARD, ...FEED];
+  const seen = new Set<string>();
+
+  return merged.filter((item) => {
+    const key = String(item.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+})();
 
 /**
  * Retourne tous les créateurs (utilisé par Meet me, etc.)
@@ -28,8 +36,9 @@ export function findCreatorByHandle(handle: string): Creator | undefined {
 
 /**
  * Retourne tout le feed global (Amazing).
+ * ⚠️ Synchrone pour éviter les erreurs de type dans My Magic.
  */
-export async function listFeed(): Promise<FeedCard[]> {
+export function listFeed(): FeedCard[] {
   return ALL_FEED_CARDS;
 }
 
