@@ -1,4 +1,4 @@
-Merci beaucoup pour le code, d'accord mon Amiral je vais déployer ces 2 codes, mais il me semble que dans le 2eme on perde des informations de code importante : // app/mymagic/page.tsx
+// app/mymagic/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -12,7 +12,6 @@ import {
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
-import Link from "next/link";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -21,17 +20,11 @@ const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 
 function isVideo(url: string) {
   if (!url) return false;
-
   if (url.startsWith("data:video/")) return true;
   if (url.startsWith("blob:")) return true;
 
   const clean = url.split("?")[0].toLowerCase();
-
-  return (
-    clean.endsWith(".mp4") ||
-    clean.endsWith(".webm") ||
-    clean.endsWith(".ogg")
-  );
+  return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".ogg");
 }
 
 function StudioMediaSlot({
@@ -101,12 +94,10 @@ function StudioMediaSlot({
 
 export default function MyMagicClockPage() {
   const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
-
+  const currentCreator = creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
-  // -------- Flux Amazing (synchrone via repository) ----------
+  // ✅ listFeed est SYNCHRONE (repository.ts), donc pas de .then()
   const all: FeedCard[] = listFeed();
 
   const normalize = (value?: string | null) =>
@@ -115,11 +106,7 @@ export default function MyMagicClockPage() {
   const targetHandle = normalize((currentCreator as any).handle);
 
   const isOwnedByCurrent = (item: any) => {
-    const candidates = [
-      (item as any).user,
-      (item as any).handle,
-      (item as any).creatorHandle,
-    ];
+    const candidates = [(item as any).user, (item as any).handle, (item as any).creatorHandle];
     return candidates.map((v) => normalize(v)).includes(targetHandle);
   };
 
@@ -149,19 +136,13 @@ export default function MyMagicClockPage() {
 
       if (payload.before?.url) setDraftBefore(payload.before.url);
       if (payload.after?.url) setDraftAfter(payload.after.url);
-      if (typeof payload.before?.coverTime === "number") {
-        setDraftBeforeCover(payload.before.coverTime);
-      }
-      if (typeof payload.after?.coverTime === "number") {
-        setDraftAfterCover(payload.after.coverTime);
-      }
+      if (typeof payload.before?.coverTime === "number") setDraftBeforeCover(payload.before.coverTime);
+      if (typeof payload.after?.coverTime === "number") setDraftAfterCover(payload.after.coverTime);
 
       if (payload.title) setDraftTitle(payload.title);
-      if (payload.mode)
-        setDraftMode((payload.mode as PublishMode) ?? "FREE");
-      if (typeof payload.ppvPrice === "number") {
-        setDraftPpvPrice(payload.ppvPrice);
-      }
+      if (payload.mode) setDraftMode((payload.mode as PublishMode) ?? "FREE");
+      if (typeof payload.ppvPrice === "number") setDraftPpvPrice(payload.ppvPrice);
+
       if (Array.isArray(payload.hashtags)) {
         const tags = payload.hashtags
           .map((tag) => tag.trim())
@@ -178,7 +159,6 @@ export default function MyMagicClockPage() {
 
   const beforePreview = draftBefore ?? draftAfter ?? FALLBACK_BEFORE;
   const afterPreview = draftAfter ?? draftBefore ?? FALLBACK_AFTER;
-
   const effectiveTitle = draftTitle.trim();
 
   const beforeCoverTime =
@@ -196,25 +176,21 @@ export default function MyMagicClockPage() {
       : null;
 
   const accessLabel =
-    draftMode === "FREE"
-      ? "FREE"
-      : draftMode === "SUB"
-      ? "Abonnement"
-      : "PayPerView";
+    draftMode === "FREE" ? "FREE" : draftMode === "SUB" ? "Abonnement" : "PayPerView";
   const isLockedPreview = draftMode !== "FREE";
-  const effectiveHashtags =
-    draftHashtags.length > 0 ? draftHashtags : ["#coiffure", "#color"];
+  const effectiveHashtags = draftHashtags.length > 0 ? draftHashtags : ["#coiffure", "#color"];
 
   const mockViews = 0;
   const mockLikes = 0;
 
   const creatorAvatar = currentCreator.avatar;
   const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
-  const creatorHandle = creatorHandleRaw.startsWith("@")
-    ? creatorHandleRaw
-    : `@${creatorHandleRaw}`;
+  const creatorHandle = creatorHandleRaw.startsWith("@") ? creatorHandleRaw : `@${creatorHandleRaw}`;
 
-  const headerHandle = creatorHandle;
+  const openDisplay = (id: FeedCard["id"]) => {
+    const href = `/display/${encodeURIComponent(String(id))}`;
+    window.location.href = href; // ✅ navigation sûre (même si overlay/click weird)
+  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -232,11 +208,9 @@ export default function MyMagicClockPage() {
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold">{currentCreator.name}</h1>
             <p className="text-sm text-slate-600">
-              {headerHandle}
+              {creatorHandle}
               {currentCreator.city ? ` · ${currentCreator.city} (CH)` : ""}
-              {currentCreator.langs?.length
-                ? ` · Langues : ${currentCreator.langs.join(", ")}`
-                : ""}
+              {currentCreator.langs?.length ? ` · Langues : ${currentCreator.langs.join(", ")}` : ""}
             </p>
             <p className="text-xs text-slate-500">
               {followerLabel} followers · {created.length} Magic Clock créés ·{" "}
@@ -250,33 +224,25 @@ export default function MyMagicClockPage() {
       <MyMagicToolbar />
 
       {/* PROFIL + COCKPIT RÉSUMÉ */}
-      <section
-        id="mymagic-profile"
-        className="mb-8 grid gap-6 lg:grid-cols-3"
-      >
+      <section id="mymagic-profile" className="mb-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2">
           <h2 className="text-lg font-semibold">Profil</h2>
           <p className="text-sm text-slate-600">
-            Coiffeuse-coloriste professionnelle spécialisée dans les balayages
-            blonds, les blonds lumineux et les transformations en douceur. Aiko
-            partage ses techniques étape par étape à travers des Magic Clock
-            pédagogiques, pour t&apos;aider à reproduire des résultats salon sur
-            mesure et respectueux de la fibre.
+            Coiffeuse-coloriste professionnelle spécialisée dans les balayages blonds, les blonds lumineux
+            et les transformations en douceur. Aiko partage ses techniques étape par étape à travers des
+            Magic Clock pédagogiques, pour t&apos;aider à reproduire des résultats salon sur mesure et
+            respectueux de la fibre.
           </p>
         </div>
 
-        <div
-          id="mymagic-cockpit"
-          className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4"
-        >
+        <div id="mymagic-cockpit" className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4">
           <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
           <Cockpit mode="compact" followers={currentCreator.followers} />
           <a
             href="/monet"
             className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
           >
-            Ouvrir le cockpit complet
-            <span aria-hidden>↗</span>
+            Ouvrir le cockpit complet <span aria-hidden>↗</span>
           </a>
         </div>
       </section>
@@ -285,24 +251,21 @@ export default function MyMagicClockPage() {
       <section id="mymagic-created" className="mb-8 space-y-4">
         <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
         <p className="text-sm text-slate-600">
-          Ici apparaissent tes propres Magic Clock (Studio + Display). Pour le
-          MVP, nous réutilisons les contenus du flux Amazing créés par ton
-          profil et nous préparons déjà les catégories « En cours » et «
-          Publiés ».
+          Ici apparaissent tes propres Magic Clock (Studio + Display). Pour le MVP, nous réutilisons les
+          contenus du flux Amazing créés par ton profil et nous préparons déjà les catégories « En cours »
+          et « Publiés ».
         </p>
 
         {/* En cours */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-slate-900">En cours</h3>
           <p className="text-xs text-slate-600">
-            Magic Clock en construction (MVP : même visuel que dans Magic
-            Display, en attendant le vrai statut « draft »).
+            Magic Clock en construction (MVP : même visuel que dans Magic Display, en attendant le vrai statut « draft »).
           </p>
 
           {draftLoaded && (draftBefore || draftAfter) ? (
             <div className="mt-2 max-w-md">
               <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-                {/* Canevas Avant / Après */}
                 <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <div className="relative mx-auto aspect-[4/5] w-full">
                     <div className="grid h-full w-full grid-cols-2">
@@ -318,10 +281,8 @@ export default function MyMagicClockPage() {
                       />
                     </div>
 
-                    {/* Ligne centrale */}
                     <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
 
-                    {/* Avatar centré */}
                     <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
                       <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -333,14 +294,12 @@ export default function MyMagicClockPage() {
                       </div>
                     </div>
 
-                    {/* Flèche en haut à droite */}
                     <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white shadow-md">
                       <ArrowUpRight className="h-5 w-5" />
                     </div>
                   </div>
                 </div>
 
-                {/* Bas de carte */}
                 <div className="mt-3 space-y-1 text-xs">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
                     <span className="font-medium">{currentCreator.name}</span>
@@ -349,10 +308,7 @@ export default function MyMagicClockPage() {
                     <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
                     <span>
-                      <span className="font-medium">
-                        {mockViews.toLocaleString("fr-CH")}
-                      </span>{" "}
-                      vues
+                      <span className="font-medium">{mockViews.toLocaleString("fr-CH")}</span> vues
                     </span>
 
                     <span className="flex items-center gap-1">
@@ -361,27 +317,16 @@ export default function MyMagicClockPage() {
                     </span>
 
                     <span className="flex items-center gap-1">
-                      {isLockedPreview ? (
-                        <Lock className="h-3 w-3" />
-                      ) : (
-                        <Unlock className="h-3 w-3" />
-                      )}
+                      {isLockedPreview ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                       <span>{accessLabel}</span>
                       {draftMode === "PPV" && draftPpvPrice != null && (
-                        <span className="ml-1 text-[11px] text-slate-500">
-                          · {draftPpvPrice.toFixed(2)} CHF
-                        </span>
+                        <span className="ml-1 text-[11px] text-slate-500">· {draftPpvPrice.toFixed(2)} CHF</span>
                       )}
                     </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                    {effectiveTitle && (
-                      <span className="font-medium text-slate-800">
-                        {effectiveTitle}
-                      </span>
-                    )}
-
+                    {effectiveTitle && <span className="font-medium text-slate-800">{effectiveTitle}</span>}
                     {effectiveHashtags.map((tag) => (
                       <span key={tag} className="text-brand-600">
                         {tag}
@@ -392,25 +337,20 @@ export default function MyMagicClockPage() {
               </article>
             </div>
           ) : (
-            <p className="mt-2 text-xs text-slate-400">
-              Aucun Magic Clock en cours pour l&apos;instant.
-            </p>
+            <p className="mt-2 text-xs text-slate-400">Aucun Magic Clock en cours pour l&apos;instant.</p>
           )}
         </div>
 
         {/* Publiés sur Amazing */}
         <div className="space-y-2 border-t border-slate-100 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900">
-            Publiés sur Amazing
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-900">Publiés sur Amazing</h3>
           <p className="text-xs text-slate-600">
-            Magic Clock déjà visibles dans le flux Amazing (contenus publics
-            publiés depuis ton profil).
+            Magic Clock déjà visibles dans le flux Amazing (contenus publics publiés depuis ton profil).
           </p>
 
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {created.map((item) => (
-              <MediaCard key={item.id} item={item} />
+              <MediaCard key={String(item.id)} item={item} />
             ))}
           </div>
         </div>
@@ -418,27 +358,24 @@ export default function MyMagicClockPage() {
 
       {/* MAGIC CLOCK DÉBLOQUÉS */}
       <section id="mymagic-unlocked" className="space-y-3">
-        <h2 className="text-lg font-semibold">
-          Magic Clock débloqués (Abonnements &amp; PPV)
-        </h2>
+        <h2 className="text-lg font-semibold">Magic Clock débloqués (Abonnements &amp; PPV)</h2>
         <p className="text-sm text-slate-600">
-          Section bibliothèque de l&apos;utilisateur : contenus accessibles
-          grâce à un abonnement ou à un achat PPV. Pour le MVP, nous affichons
-          ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
+          Section bibliothèque de l&apos;utilisateur : contenus accessibles grâce à un abonnement ou à un achat PPV.
+          Pour le MVP, nous affichons ici les autres Magic Clock du flux Amazing (autres créateurs que toi).
         </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {purchased.map((item) => (
-            <div key={item.id} className="space-y-2">
+            <div key={String(item.id)} className="space-y-2">
               <MediaCard item={item} />
 
-              {/* 🔗 Lien direct vers la page /display/[id] */}
-            <Link
-  href={`/display/${encodeURIComponent(String(item.id))}`}
-  className="block text-[11px] font-medium text-brand-600 hover:underline"
->
-  Ouvrir le Magic Display (MVP)
-</Link>
+              <button
+                type="button"
+                onClick={() => openDisplay(item.id)}
+                className="block text-left text-[11px] font-medium text-brand-600 hover:underline"
+              >
+                Ouvrir le Magic Display (MVP)
+              </button>
             </div>
           ))}
         </div>
