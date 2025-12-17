@@ -33,8 +33,9 @@ export function findCreatorByHandle(handle: string): Creator | undefined {
 
 /**
  * Retourne tout le feed global (Amazing).
+ * 👉 Synchrone, pour rester compatible avec My Magic & Amazing.
  */
-export async function listFeed(): Promise<FeedCard[]> {
+export function listFeed(): FeedCard[] {
   return getAllFeedCards();
 }
 
