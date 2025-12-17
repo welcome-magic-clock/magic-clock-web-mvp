@@ -1,5 +1,7 @@
 // app/meet/page.tsx
+"use client";
 
+import { BadgeCheck } from "lucide-react";
 import { SearchToolbar } from "@/components/search/SearchToolbar";
 import { CREATORS } from "@/features/meet/creators";
 
@@ -10,20 +12,34 @@ type CreatorWithLocation = (typeof CREATORS)[number] & {
 };
 
 function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
+  const hasLocation =
+    (creator as any).city != null || (creator as any).country != null;
+
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
       <div className="aspect-[3/4] w-full overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={creator.avatar}
           alt={creator.name}
           className="h-full w-full object-cover"
         />
       </div>
+
       <div className="space-y-1 px-4 py-3">
         <p className="text-sm font-semibold text-slate-900">
           {creator.name}
         </p>
-        <p className="text-[11px] text-slate-500">@{creator.handle}</p>
+
+        <div className="flex items-center gap-1 text-[11px] text-slate-500">
+          <span>@{creator.handle}</span>
+          {(creator as any).isCertified === true && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+              <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+              <span>Certifié</span>
+            </span>
+          )}
+        </div>
 
         {typeof creator.followers === "number" && (
           <p className="text-[11px] text-slate-500">
@@ -31,7 +47,7 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
           </p>
         )}
 
-        {((creator as any).city || (creator as any).country) && (
+        {hasLocation && (
           <p className="text-[11px] text-slate-400">
             {(creator as any).city}
             {(creator as any).city && (creator as any).country ? " · " : ""}
@@ -46,14 +62,34 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
 export default function MeetPage() {
   const baseCreators = CREATORS as CreatorWithLocation[];
 
+  // 🔹 Profil système Magic Clock Bear (avatar + certifié)
+  const systemBearCreator = {
+    id: "magic-clock-bear",
+    name: "Magic Clock Bear",
+    handle: "magic_clock_app",
+    avatar: "/images/magic-clock-bear/avatar.png",
+    followers: 125_000,
+    isCertified: true,
+    city: "Neuchâtel",
+    country: "Suisse",
+  } as CreatorWithLocation;
+
+  // On place l’ours en tout premier dans la liste
+  const baseCreatorsWithBear: CreatorWithLocation[] = [
+    systemBearCreator,
+    ...baseCreators,
+  ];
+
   // On “allonge” la page : on répète la liste 10×
   const REPEAT_TIMES = 10;
 
-  const extendedCreators = Array.from({ length: REPEAT_TIMES }, (_, idx) =>
-    baseCreators.map((creator) => ({
-      ...creator,
-      _fakeId: `${creator.id}-repeat-${idx}`,
-    }))
+  const extendedCreators = Array.from(
+    { length: REPEAT_TIMES },
+    (_, idx) =>
+      baseCreatorsWithBear.map((creator) => ({
+        ...creator,
+        _fakeId: `${creator.id}-repeat-${idx}`,
+      })) as CreatorWithLocation[]
   ).flat();
 
   return (
