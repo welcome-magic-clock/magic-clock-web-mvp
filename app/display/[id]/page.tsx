@@ -9,17 +9,19 @@ type PageProps = {
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
+  // On garde l'ID tel quel (string), sans le forcer en nombre
   const rawId = decodeURIComponent(params.id);
 
-  // On cherche la carte correspondante dans le feed (Amazing/MyMagic)
+  // On cherche la carte dans le feed commun (Amazing + My Magic)
   const content = findContentById(rawId);
 
   const title =
-    content && typeof content.title === "string" && content.title.trim().length
-      ? content.title
-      : `Magic Display · #${rawId}`;
+    content?.title ??
+    `Magic Display #${rawId}`;
 
   const subtitle =
+    // si un jour on ajoute un "subtitle" dans FeedCard, on le récupérera ici
+    (content as any)?.subtitle ??
     "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc.";
 
   return (
@@ -37,8 +39,8 @@ export default function MagicDisplayPage({ params }: PageProps) {
           <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
         </header>
 
-        {/* On passe l'id réel du contenu (string) au viewer */}
-        <MagicDisplayViewer contentId={content?.id ?? rawId} />
+        {/* On passe l'ID brut au viewer, qui sait gérer l'ours 🐻 */}
+        <MagicDisplayViewer contentId={rawId} />
       </section>
     </main>
   );
