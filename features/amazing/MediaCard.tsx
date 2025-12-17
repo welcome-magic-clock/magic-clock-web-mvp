@@ -115,7 +115,6 @@ export default function MediaCard({ item }: Props) {
 
   const creatorName = creator?.name ?? item.user;
   const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
-  const avatar = creator?.avatar ?? item.image;
 
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
@@ -190,9 +189,17 @@ export default function MediaCard({ item }: Props) {
     ? (beforeUrl as string)
     : null;
 
-  // ---------- Image centrale : avatar en priorité ----------
-  const centerImage: string = avatar ?? afterThumb ?? beforeThumb;
+   // ---------- Image centrale / avatar créateur ----------
+  const systemAvatar = "/images/magic-clock-bear/avatar.png";
 
+  // avatar logique (Bear pour la carte système, sinon avatar normal ou fallback)
+  const avatar: string =
+    isSystemCard
+      ? systemAvatar
+      : creator?.avatar ?? item.image ?? afterThumb ?? beforeThumb;
+
+  // ce qui est vraiment affiché dans la bulle
+  const centerImage = avatar;
   // ---------- Flags système & certifié ----------
   const isCertified =
     (item as any).isCertified === true ||
