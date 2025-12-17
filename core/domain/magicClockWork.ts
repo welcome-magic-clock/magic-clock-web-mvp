@@ -227,7 +227,8 @@ export function magicClockWorkToFeedCard(
     image,
     beforeUrl,
     afterUrl,
-    user: work.creator.handle,          // handle avec @ → nettoyé dans MediaCard
+    // on laisse le handle tel quel (avec @) → MediaCard le nettoie
+    user: work.creator.handle,
     access,
     views: work.stats.views,
 
@@ -236,9 +237,12 @@ export function magicClockWorkToFeedCard(
     creatorName: work.creator.name,
     creatorHandle: work.creator.handle,
     creatorAvatar: work.creator.avatarUrl,
-    hashtags: [],
+    hashtags: [],                        // on pourra en ajouter plus tard
     isCertified: !!work.creator.isCertified,
-    isSystemFeatured: !!work.access.isSystemFeatured, // ⭐ NEW
+
+    // 👇 NOUVEAU : flags système
+    isSystemFeatured: !!work.access.isSystemFeatured,
+    isSystemUnlockedForAll: !!work.access.isSystemUnlockedForAll,
   };
 }
 
