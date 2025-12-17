@@ -1,28 +1,26 @@
 // app/display/[id]/page.tsx
 
+"use client";
+
 import Link from "next/link";
 import MagicDisplayViewer from "../MagicDisplayViewer";
-import { findContentById } from "@/core/domain/repository";
 
 type PageProps = {
   params: { id: string };
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
-  // On garde l'ID tel quel (string), sans le forcer en nombre
   const rawId = decodeURIComponent(params.id);
 
-  // On cherche la carte dans le feed commun (Amazing + My Magic)
-  const content = findContentById(rawId);
+  const isOnboardingBear = rawId === "mcw-onboarding-bear-001";
 
-  const title =
-    content?.title ??
-    `Magic Display #${rawId}`;
+  const title = isOnboardingBear
+    ? "Magic Clock te montre comment transformer ton expérience en lumière pour les autres"
+    : `Magic Display #${rawId}`;
 
-  const subtitle =
-    // si un jour on ajoute un "subtitle" dans FeedCard, on le récupérera ici
-    (content as any)?.subtitle ??
-    "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc.";
+  const subtitle = isOnboardingBear
+    ? "MVP : Magic Display d’onboarding (ours 🐻) — aperçu pédagogique des 6 faces du cube."
+    : "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard cette page affichera les formules, sections, temps de pose, etc.";
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -39,7 +37,7 @@ export default function MagicDisplayPage({ params }: PageProps) {
           <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
         </header>
 
-        {/* On passe l'ID brut au viewer, qui sait gérer l'ours 🐻 */}
+        {/* On passe l'ID brut au viewer, qui sait gérer l’ours 🐻 */}
         <MagicDisplayViewer contentId={rawId} />
       </section>
     </main>
