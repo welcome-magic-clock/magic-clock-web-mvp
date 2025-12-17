@@ -44,6 +44,10 @@ function formatFollowers(count?: number): string {
 }
 
 function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
+  const rawHandle = creator.handle || "";
+  const cleanHandle = rawHandle.startsWith("@")
+    ? rawHandle.slice(1)
+    : rawHandle;
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
       {/* Cover */}
@@ -62,14 +66,14 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
           {creator.name}
         </p>
 
-        {/* Handle + badge certifié sur la même ligne */}
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[11px] text-slate-500 truncate">
-            @{creator.handle}
+                      {/* Handle + badge certifié sur la même ligne, sans couper le @ */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-[11px] text-slate-500">
+            @{cleanHandle}
           </p>
 
           {creator.isCertified && (
-            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
               <BadgeCheck className="h-3 w-3" aria-hidden="true" />
               <span>Certifié</span>
             </span>
