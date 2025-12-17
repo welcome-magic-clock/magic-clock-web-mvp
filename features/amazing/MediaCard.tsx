@@ -119,6 +119,13 @@ export default function MediaCard({ item }: Props) {
 
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
+    // 🔹 Spécificités Magic Clock système (ours, etc.)
+  const isSystemUnlockedForAll =
+    (item as any).isSystemUnlockedForAll === true;
+
+  const isSystemCard =
+    (item as any).isSystemFeatured === true || isSystemUnlockedForAll;
+
   // ---------- Mode, prix, hashtags, stats ----------
   const modeFromItem = (item as any).mode as PublishMode | undefined;
 
@@ -184,10 +191,7 @@ export default function MediaCard({ item }: Props) {
     : null;
 
   // ---------- Flags système & certifié ----------
-  const isSystemFeatured =
-    (item as any).isSystemFeatured === true ||
-    item.id === "mcw-onboarding-bear-001";
-
+ 
   const isCertified =
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
@@ -195,7 +199,9 @@ export default function MediaCard({ item }: Props) {
   // ---------- Monétisation & accès ----------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(mode === "FREE");
+    const [isUnlocked, setIsUnlocked] = useState(
+    mode === "FREE" || isSystemUnlockedForAll
+  );
   const [lastDecision, setLastDecision] = useState<string | null>(null);
 
   const accessLabelBase =
@@ -339,77 +345,110 @@ export default function MediaCard({ item }: Props) {
               </button>
 
               {menuOpen && (
-                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                  {/* Meet me ciblé */}
-                  <button
-                    type="button"
-                    className="block w-full bg-transparent px-0 py-0 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      window.location.href = meetHref;
-                    }}
-                  >
-                    Meet me (profil créateur)
-                  </button>
+  <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+    {isSystemCard && isSystemUnlockedForAll ? (
+      <>
+        {/* 🟣 MENU SPÉCIAL POUR L’OURS / CARTES SYSTÈME DÉBLOQUÉES */}
 
-                  {/* Pour les contenus système (ours onboarding), on s’arrête là */}
-                  {!isSystemFeatured && (
-                    <>
-                      {/* FREE – seulement si contenu en FREE */}
-                      {mode === "FREE" && (
-                        <button
-                          type="button"
-                          className="block w-full bg-transparent px-0 py-0 hover:underline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAccess("FREE");
-                          }}
-                          disabled={isLoading === "FREE"}
-                        >
-                          {isLoading === "FREE"
-                            ? "Vérification FREE…"
-                            : "Débloquer (FREE)"}
-                        </button>
-                      )}
+        {/* Meet me ciblé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(false);
+            window.location.href = meetHref;
+          }}
+        >
+          Meet me (profil créateur)
+        </button>
 
-                      {/* Abo – toujours proposé */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("ABO");
-                        }}
-                        disabled={isLoading === "ABO"}
-                      >
-                        {isLoading === "ABO"
-                          ? "Activation Abo…"
-                          : "Activer l’abonnement créateur"}
-                      </button>
+        {/* Lien direct vers My Magic Clock */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(false);
+            window.location.href = "/mymagic";
+          }}
+        >
+          Voir dans My Magic Clock
+        </button>
+      </>
+    ) : (
+      <>
+        {/* 🟣 MENU NORMAL POUR LES AUTRES CARTES */}
 
-                      {/* PPV */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("PPV");
-                        }}
-                        disabled={isLoading === "PPV"}
-                      >
-                        {isLoading === "PPV"
-                          ? "Déblocage PPV…"
-                          : "Débloquer ce contenu en PPV"}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
+        {/* Meet me ciblé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(false);
+            window.location.href = meetHref;
+          }}
+        >
+          Meet me (profil créateur)
+        </button>
+
+        {/* FREE – seulement si contenu en FREE */}
+        {mode === "FREE" && (
+          <button
+            type="button"
+            className="block w-full bg-transparent px-0 py-0 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAccess("FREE");
+            }}
+            disabled={isLoading === "FREE"}
+          >
+            {isLoading === "FREE"
+              ? "Vérification FREE…"
+              : "Débloquer (FREE)"}
+          </button>
+        )}
+
+        {/* Abo – toujours proposé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAccess("ABO");
+          }}
+          disabled={isLoading === "ABO"}
+        >
+          {isLoading === "ABO"
+            ? "Activation Abo…"
+            : "Activer l’abonnement créateur"}
+        </button>
+
+        {/* PPV */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAccess("PPV");
+          }}
+          disabled={isLoading === "PPV"}
+        >
+          {isLoading === "PPV"
+            ? "Déblocage PPV…"
+            : "Débloquer ce contenu en PPV"}
+        </button>
+      </>
+    )}
+  </div>
+)}
             </div>
           </div>
         </Link>
