@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import MyMagicToolbar from "@/components/mymagic/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
 import { listFeed, listCreators } from "@/core/domain/repository";
@@ -100,14 +99,13 @@ function StudioMediaSlot({
 }
 
 export default function MyMagicClockPage() {
-  // -------- Créateur courant (Aiko) ----------
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
-  // -------- Flux Amazing (synchrone via repo) ----------
+  // -------- Flux Amazing (synchrone via repository) ----------
   const all: FeedCard[] = listFeed();
 
   const normalize = (value?: string | null) =>
@@ -433,12 +431,13 @@ export default function MyMagicClockPage() {
             <div key={item.id} className="space-y-2">
               <MediaCard item={item} />
 
-              <Link
+              {/* 🔗 Lien direct vers la page /display/[id] */}
+              <a
                 href={`/display/${encodeURIComponent(String(item.id))}`}
                 className="block text-[11px] font-medium text-brand-600 hover:underline"
               >
                 Ouvrir le Magic Display (MVP)
-              </Link>
+              </a>
             </div>
           ))}
         </div>
