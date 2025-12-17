@@ -5,10 +5,14 @@ import { BadgeCheck } from "lucide-react";
 import { SearchToolbar } from "@/components/search/SearchToolbar";
 import { CREATORS } from "@/features/meet/creators";
 
-// On part du type réel de CREATORS et on lui ajoute juste city / country
-type CreatorWithLocation = (typeof CREATORS)[number] & {
+// Base : type d'un créateur dans CREATORS
+type CreatorBase = (typeof CREATORS)[number];
+
+// On étend avec les infos de localisation + isCertified optionnel
+type CreatorWithLocation = CreatorBase & {
   city?: string;
   country?: string;
+  isCertified?: boolean;
 };
 
 function formatFollowers(count?: number): string {
@@ -34,7 +38,7 @@ function formatFollowers(count?: number): string {
     return `${formatted}k`;
   }
 
-  // Moins de 1 000 → nombre normal
+  // < 1 000 → nombre normal
   return count.toLocaleString("fr-CH");
 }
 
@@ -72,11 +76,11 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
         </div>
 
         {/* Followers */}
-       {typeof creator.followers === "number" && (
-  <p className="text-[11px] text-slate-500">
-    {formatFollowers(creator.followers)} followers
-  </p>
-)}
+        {typeof creator.followers === "number" && (
+          <p className="text-[11px] text-slate-500">
+            {formatFollowers(creator.followers)} followers
+          </p>
+        )}
 
         {/* Ville / pays (optionnels) */}
         {(creator as any).city || (creator as any).country ? (
@@ -95,18 +99,18 @@ export default function MeetPage() {
   const baseCreators = CREATORS as CreatorWithLocation[];
 
   // 🔹 Profil système Magic Clock (Bear)
-  const systemBearCreator = {
+  const systemBearCreator: CreatorWithLocation = {
     id: "magic-clock-bear",
     name: "Magic Clock",
     handle: "magic_clock_app",
     avatar: "/images/magic-clock-bear/avatar.png",
     followers: 125_000_000,
     isCertified: true,
-    langs: ["fr"],          // champs attendus par le type d’origine
-    access: "PUBLIC",       // idem
+    langs: ["fr"],      // champs attendus dans le type original
+    access: "PUBLIC",   // idem (PUBLIC / PRIVATE, etc.)
     city: "Neuchâtel",
     country: "Suisse",
-  } as unknown as CreatorWithLocation;
+  } as CreatorWithLocation;
 
   // On met Magic Clock tout en haut de la liste
   const creatorsWithSystem: CreatorWithLocation[] = [
