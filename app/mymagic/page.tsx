@@ -12,6 +12,7 @@ import {
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
+import Link from "next/link";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -432,12 +433,12 @@ export default function MyMagicClockPage() {
               <MediaCard item={item} />
 
               {/* 🔗 Lien direct vers la page /display/[id] */}
-              <a
-                href={`/display/${encodeURIComponent(String(item.id))}`}
-                className="block text-[11px] font-medium text-brand-600 hover:underline"
-              >
-                Ouvrir le Magic Display (MVP)
-              </a>
+            <Link
+  href={`/display/${encodeURIComponent(String(item.id))}`}
+  className="block text-[11px] font-medium text-brand-600 hover:underline"
+>
+  Ouvrir le Magic Display (MVP)
+</Link>
             </div>
           ))}
         </div>
