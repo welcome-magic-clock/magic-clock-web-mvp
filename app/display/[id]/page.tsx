@@ -13,10 +13,25 @@ type PageProps = {
 export default function MagicDisplayPage({ params }: PageProps) {
   const rawId = params.id;
 
-  // 🔎 On récupère la carte de contenu (y compris le Bear)
+  // 🔎 On récupère la carte de contenu (Amazing / My Magic Clock)
   const content = findContentById(rawId);
 
-  // Id numérique pour le viewer (MVP)
+  // 🐻 Est-ce le Magic Clock d’onboarding de l’ours ?
+  const isOnboardingBear =
+    rawId === ONBOARDING_MAGIC_CLOCK_WORK.id ||
+    String(content?.id) === String(ONBOARDING_MAGIC_CLOCK_WORK.id);
+
+  // 🎯 Titre et sous-titre affichés
+  const title = isOnboardingBear
+    ? ONBOARDING_MAGIC_CLOCK_WORK.title
+    : content?.title ?? `Magic Display #${rawId}`;
+
+  const subtitle = isOnboardingBear
+    ? ONBOARDING_MAGIC_CLOCK_WORK.subtitle ??
+      "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc."
+    : "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc.";
+
+  // 🧮 Id numérique pour le viewer (MVP)
   const numericId =
     typeof content?.id === "number"
       ? (content.id as number)
@@ -24,16 +39,7 @@ export default function MagicDisplayPage({ params }: PageProps) {
       ? Number(rawId)
       : 0;
 
-  const title = content?.title ?? `Magic Display #${rawId}`;
-  const subtitle =
-    content?.subtitle ??
-    "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc.";
-
-  // 🐻 Est-ce le Magic Clock d’onboarding de l’ours ?
-  const isOnboardingBear =
-    content?.id === ONBOARDING_MAGIC_CLOCK_WORK.id ||
-    rawId === ONBOARDING_MAGIC_CLOCK_WORK.id;
-
+  // 🧊 Faces du Magic Clock d’onboarding (les 6 images Bear)
   const faces = isOnboardingBear
     ? ONBOARDING_MAGIC_CLOCK_WORK.display.faces
     : [];
@@ -56,8 +62,8 @@ export default function MagicDisplayPage({ params }: PageProps) {
             <p className="text-xs text-slate-500">
               Ce Magic Display est offert par{" "}
               <span className="font-semibold">Magic Clock</span> pour te
-              montrer le voyage complet&nbsp;: Studio, Display, Amazing,
-              My Magic Clock et Monétisation.
+              montrer le voyage complet : Studio, Display, Amazing, My Magic
+              Clock et Monétisation.
             </p>
           )}
         </header>
@@ -65,7 +71,7 @@ export default function MagicDisplayPage({ params }: PageProps) {
         {/* 🎛 Viewer 3D / placeholder actuel */}
         <MagicDisplayViewer contentId={numericId} />
 
-        {/* 🧊 Faces du Magic Clock d’onboarding (les 6 images) */}
+        {/* 🧊 Grille des 6 faces Bear */}
         {faces.length > 0 && (
           <section className="mt-6 space-y-3">
             <h2 className="text-sm font-semibold text-slate-900">
