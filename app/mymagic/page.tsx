@@ -12,7 +12,6 @@ import {
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
-import type { FeedCard } from "@/core/domain/types";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -106,22 +105,8 @@ export default function MyMagicClockPage() {
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
-  // -------- Flux Amazing (via repo async) ----------
-  const [all, setAll] = useState<FeedCard[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    listFeed()
-      .then((cards) => {
-        if (!cancelled) setAll(cards);
-      })
-      .catch((err) => {
-        console.error("Failed to load feed in MyMagic", err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // -------- Flux Amazing (synchrone, commun) ----------
+  const all = listFeed(); // tableau direct (pas de Promise)
 
   const normalize = (value?: string | null) =>
     (value ?? "").trim().replace(/^@/, "").toLowerCase();
@@ -430,7 +415,7 @@ export default function MyMagicClockPage() {
         </div>
       </section>
 
-           {/* MAGIC CLOCK DÉBLOQUÉS */}
+      {/* MAGIC CLOCK DÉBLOQUÉS */}
       <section id="mymagic-unlocked" className="space-y-3">
         <h2 className="text-lg font-semibold">
           Magic Clock débloqués (Abonnements &amp; PPV)
