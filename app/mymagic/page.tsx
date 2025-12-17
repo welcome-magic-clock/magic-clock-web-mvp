@@ -12,6 +12,7 @@ import {
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
+import type { FeedCard } from "@/core/domain/types";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -99,19 +100,20 @@ function StudioMediaSlot({
 }
 
 export default function MyMagicClockPage() {
+  // -------- Créateur courant (Aiko) ----------
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
-  // -------- Flux Amazing (synchrone, commun) ----------
-  const all = listFeed(); // tableau direct (pas de Promise)
+  // -------- Flux Amazing (synchrone via repo) ----------
+  const all: FeedCard[] = listFeed();
 
   const normalize = (value?: string | null) =>
     (value ?? "").trim().replace(/^@/, "").toLowerCase();
 
-  const targetHandle = normalize(currentCreator.handle);
+  const targetHandle = normalize((currentCreator as any).handle);
 
   const isOwnedByCurrent = (item: any) => {
     const candidates = [
