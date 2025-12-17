@@ -9,19 +9,18 @@ type PageProps = {
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
-  const rawId = params.id;
+  const rawId = decodeURIComponent(params.id);
 
+  // On cherche la carte correspondante dans le feed (Amazing/MyMagic)
   const content = findContentById(rawId);
 
   const title =
-    (content as any)?.title ?? `Magic Display #${rawId}`;
+    content && typeof content.title === "string" && content.title.trim().length
+      ? content.title
+      : `Magic Display · #${rawId}`;
 
   const subtitle =
-    (content as any)?.subtitle ??
     "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc.";
-
-  // On laisse passer l'ID d’origine (string ou number) au viewer
-  const contentIdForViewer = content?.id ?? rawId;
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -34,15 +33,12 @@ export default function MagicDisplayPage({ params }: PageProps) {
 
       <section className="mt-4 space-y-4">
         <header>
-          <h1 className="text-xl font-semibold sm:text-2xl">
-            {title}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {subtitle}
-          </p>
+          <h1 className="text-xl font-semibold sm:text-2xl">{title}</h1>
+          <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
         </header>
 
-        <MagicDisplayViewer contentId={contentIdForViewer} />
+        {/* On passe l'id réel du contenu (string) au viewer */}
+        <MagicDisplayViewer contentId={content?.id ?? rawId} />
       </section>
     </main>
   );
