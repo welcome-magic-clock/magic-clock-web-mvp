@@ -4,6 +4,18 @@
 import type { Creator, FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 import { FEED } from "@/features/amazing/feed";
+import { ONBOARDING_MAGIC_CLOCK_FEED_CARD } from "./magicClockWork";
+
+/**
+ * Petit helper : feed complet = carte système (Bear) + feed normal
+ */
+const BASE_FEED: FeedCard[] = FEED;
+
+const SYSTEM_FEED: FeedCard[] = [ONBOARDING_MAGIC_CLOCK_FEED_CARD];
+
+function getAllFeedCards(): FeedCard[] {
+  return [...SYSTEM_FEED, ...BASE_FEED];
+}
 
 /**
  * Retourne tous les créateurs (utilisé par Meet me, etc.)
@@ -22,24 +34,24 @@ export function findCreatorByHandle(handle: string): Creator | undefined {
 /**
  * Retourne tout le feed global (Amazing).
  */
-export function listFeed(): FeedCard[] {
-  return FEED;
+export async function listFeed(): Promise<FeedCard[]> {
+  return getAllFeedCards();
 }
 
 /**
  * Retourne les contenus d’un créateur donné.
  */
 export function listFeedByCreator(handle: string): FeedCard[] {
-  return FEED.filter((item) => item.user === handle);
+  return getAllFeedCards().filter((item) => item.user === handle);
 }
 
 /**
  * MVP : Magic Clock "créés" par un créateur.
- * Pour l’instant, on dit simplement :
+ * Pour l’instant :
  * - les contenus où item.user === handle sont ses créations.
  */
 export function listCreatedByCreator(handle: string): FeedCard[] {
-  return FEED.filter((item) => item.user === handle);
+  return getAllFeedCards().filter((item) => item.user === handle);
 }
 
 /**
@@ -49,18 +61,20 @@ export function listCreatedByCreator(handle: string): FeedCard[] {
  */
 export function listLibraryForViewer(viewerHandle: string): FeedCard[] {
   // En attendant : on simule une petite librairie
-  return FEED.slice(0, 4);
+  return getAllFeedCards().slice(0, 4);
 }
 
 /**
  * Recherche d'un contenu par son id (pour Magic Display, détails, etc.)
  */
 export function findContentById(id: number | string): FeedCard | undefined {
+  const all = getAllFeedCards();
+
   const numericId = Number(id);
   if (!Number.isNaN(numericId)) {
-    const direct = FEED.find((item) => item.id === numericId);
+    const direct = all.find((item) => item.id === numericId);
     if (direct) return direct;
   }
   // Fallback string-based
-  return FEED.find((item) => String(item.id) === String(id));
+  return all.find((item) => String(item.id) === String(id));
 }
