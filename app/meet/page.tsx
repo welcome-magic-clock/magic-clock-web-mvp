@@ -62,17 +62,17 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
 export default function MeetPage() {
   const baseCreators = CREATORS as CreatorWithLocation[];
 
-   // 🔹 Profil système Magic Clock Bear (avatar + certifié)
-  const systemBearCreator = {
-    id: "magic-clock-bear",
-    name: "Magic Clock Bear",
-    handle: "magic_clock_app",
-    avatar: "/images/magic-clock-bear/avatar.png",
-    followers: 125_000,
-    isCertified: true,
-    city: "Neuchâtel",
-    country: "Suisse",
-  } as unknown as CreatorWithLocation;
+ // 🔹 Profil système Magic Clock Bear (avatar + certifié)
+const systemBearCreator = {
+  id: "magic-clock-bear",
+  name: "Magic Clock",                    // ← nouveau nom
+  handle: "magic_clock_app",
+  avatar: "/images/magic-clock-bear/avatar.png",
+  followers: 125_000_000,                 // ← + de 100 millions
+  isCertified: true,
+  city: "Neuchâtel",
+  country: "Suisse",
+} as unknown as CreatorWithLocation;
 
   // On place l’ours en tout premier dans la liste
   const baseCreatorsWithBear: CreatorWithLocation[] = [
