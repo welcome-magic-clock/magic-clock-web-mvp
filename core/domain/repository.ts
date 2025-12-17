@@ -4,21 +4,10 @@
 import type { Creator, FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 import { FEED } from "@/features/amazing/feed";
-import { ONBOARDING_MAGIC_CLOCK_FEED_CARD } from "./magicClockWork";
 
 // 👇 tableau commun pour Amazing, My Magic Clock et Magic Display
-// On fusionne et on enlève les doublons d'ID (au cas où l'ours serait déjà dans FEED)
-const ALL_FEED_CARDS: FeedCard[] = (() => {
-  const merged: FeedCard[] = [ONBOARDING_MAGIC_CLOCK_FEED_CARD, ...FEED];
-  const seen = new Set<string>();
-
-  return merged.filter((item) => {
-    const key = String(item.id);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-})();
+// FEED contient déjà l’ours d’onboarding en premier
+const ALL_FEED_CARDS: FeedCard[] = FEED;
 
 /**
  * Retourne tous les créateurs (utilisé par Meet me, etc.)
