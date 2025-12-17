@@ -12,6 +12,7 @@ import {
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
+import type { FeedCard } from "@/core/domain/types";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -21,13 +22,9 @@ const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 function isVideo(url: string) {
   if (!url) return false;
 
-  // data:video/... (base64 depuis FileReader)
   if (url.startsWith("data:video/")) return true;
-
-  // blob:... (URLs temporaires du navigateur)
   if (url.startsWith("blob:")) return true;
 
-  // Nettoie la query (?foo=bar) pour les URLs R2
   const clean = url.split("?")[0].toLowerCase();
 
   return (
@@ -109,8 +106,22 @@ export default function MyMagicClockPage() {
 
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
-  // -------- Flux Amazing (inchangé) ----------
-  const all = listFeed();
+  // -------- Flux Amazing (via repo async) ----------
+  const [all, setAll] = useState<FeedCard[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listFeed()
+      .then((cards) => {
+        if (!cancelled) setAll(cards);
+      })
+      .catch((err) => {
+        console.error("Failed to load feed in MyMagic", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const normalize = (value?: string | null) =>
     (value ?? "").trim().replace(/^@/, "").toLowerCase();
@@ -153,11 +164,11 @@ export default function MyMagicClockPage() {
       if (payload.before?.url) setDraftBefore(payload.before.url);
       if (payload.after?.url) setDraftAfter(payload.after.url);
       if (typeof payload.before?.coverTime === "number") {
-  setDraftBeforeCover(payload.before.coverTime);
-}
+        setDraftBeforeCover(payload.before.coverTime);
+      }
       if (typeof payload.after?.coverTime === "number") {
-  setDraftAfterCover(payload.after.coverTime);
-}
+        setDraftAfterCover(payload.after.coverTime);
+      }
 
       if (payload.title) setDraftTitle(payload.title);
       if (payload.mode)
@@ -181,20 +192,22 @@ export default function MyMagicClockPage() {
 
   const beforePreview = draftBefore ?? draftAfter ?? FALLBACK_BEFORE;
   const afterPreview = draftAfter ?? draftBefore ?? FALLBACK_AFTER;
-  const effectiveTitle = draftTitle.trim();
-  const beforeCoverTime =
-  draftBefore && beforePreview === draftBefore
-    ? draftBeforeCover
-    : draftAfter && beforePreview === draftAfter
-    ? draftAfterCover
-    : null;
 
-const afterCoverTime =
-  draftAfter && afterPreview === draftAfter
-    ? draftAfterCover
-    : draftBefore && afterPreview === draftBefore
-    ? draftBeforeCover
-    : null;
+  const effectiveTitle = draftTitle.trim();
+
+  const beforeCoverTime =
+    draftBefore && beforePreview === draftBefore
+      ? draftBeforeCover
+      : draftAfter && beforePreview === draftAfter
+      ? draftAfterCover
+      : null;
+
+  const afterCoverTime =
+    draftAfter && afterPreview === draftAfter
+      ? draftAfterCover
+      : draftBefore && afterPreview === draftBefore
+      ? draftBeforeCover
+      : null;
 
   const accessLabel =
     draftMode === "FREE"
@@ -215,6 +228,8 @@ const afterCoverTime =
     ? creatorHandleRaw
     : `@${creatorHandleRaw}`;
 
+  const headerHandle = creatorHandle;
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Avatar + infos créateur */}
@@ -231,7 +246,7 @@ const afterCoverTime =
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold">{currentCreator.name}</h1>
             <p className="text-sm text-slate-600">
-              @{currentCreator.handle}
+              {headerHandle}
               {currentCreator.city ? ` · ${currentCreator.city} (CH)` : ""}
               {currentCreator.langs?.length
                 ? ` · Langues : ${currentCreator.langs.join(", ")}`
@@ -285,8 +300,9 @@ const afterCoverTime =
         <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
         <p className="text-sm text-slate-600">
           Ici apparaissent tes propres Magic Clock (Studio + Display). Pour le
-          MVP, nous réutilisons les contenus du flux Amazing créés par ton profil
-          et nous préparons déjà les catégories « En cours » et « Publiés ».
+          MVP, nous réutilisons les contenus du flux Amazing créés par ton
+          profil et nous préparons déjà les catégories « En cours » et «
+          Publiés ».
         </p>
 
         {/* En cours */}
@@ -304,16 +320,16 @@ const afterCoverTime =
                 <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <div className="relative mx-auto aspect-[4/5] w-full">
                     <div className="grid h-full w-full grid-cols-2">
-                     <StudioMediaSlot
-  src={beforePreview}
-  alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-  coverTime={beforeCoverTime}
-/>
-<StudioMediaSlot
-  src={afterPreview}
-  alt={`${effectiveTitle || "Magic Studio"} - Après`}
-  coverTime={afterCoverTime}
-/>
+                      <StudioMediaSlot
+                        src={beforePreview}
+                        alt={`${effectiveTitle || "Magic Studio"} - Avant`}
+                        coverTime={beforeCoverTime}
+                      />
+                      <StudioMediaSlot
+                        src={afterPreview}
+                        alt={`${effectiveTitle || "Magic Studio"} - Après`}
+                        coverTime={afterCoverTime}
+                      />
                     </div>
 
                     {/* Ligne centrale */}
