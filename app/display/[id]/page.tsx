@@ -9,7 +9,10 @@ type PageProps = {
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
-  const rawId = params.id; // ✅ on garde l'ID tel quel (string ou number-string)
+  // ✅ On garde l’ID tel quel, mais on le decode au cas où
+  const rawId = decodeURIComponent(params.id);
+
+  // 🔎 On cherche la carte correspondante dans le feed (Amazing / My Magic Clock)
   const content = findContentById(rawId);
 
   const title = content?.title ?? `Magic Display #${rawId}`;
@@ -31,8 +34,8 @@ export default function MagicDisplayPage({ params }: PageProps) {
           <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
         </header>
 
-        {/* ✅ IMPORTANT : on passe l’ID brut, pas un Number.parseInt */}
-        <MagicDisplayViewer contentId={rawId} />
+        {/* ✅ On passe l'id réel du contenu (string) au viewer */}
+        <MagicDisplayViewer contentId={content?.id ?? rawId} />
       </section>
     </main>
   );
