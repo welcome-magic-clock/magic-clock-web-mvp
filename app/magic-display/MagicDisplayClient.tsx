@@ -614,7 +614,7 @@ export default function MagicDisplayClient() {
   const mockLikes = 0;
 
   const handlePublishFromCube = () => {
-    // MVP : on réutilise le même comportement que le bouton “Voir dans My Magic Clock”
+    // MVP : même comportement que “Voir dans My Magic Clock”
     setIsPublishing(true);
     try {
       router.push("/mymagic?tab=created&source=magic-display");
@@ -632,9 +632,7 @@ export default function MagicDisplayClient() {
           <div className="flex items-center gap-2">
             <BackButton fallbackHref="/studio" label="Retour" />
             <div className="flex flex-col">
-              <h1 className="text-lg font-semibold leading-tight text-slate-9
-
-00 sm:text-xl">
+              <h1 className="text-lg font-semibold leading-tight text-slate-900 sm:text-xl">
                 Magic Display
               </h1>
             </div>
