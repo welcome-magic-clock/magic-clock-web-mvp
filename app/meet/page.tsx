@@ -1,17 +1,56 @@
 // app/meet/page.tsx
+"use client";
 
+import { BadgeCheck } from "lucide-react";
 import { SearchToolbar } from "@/components/search/SearchToolbar";
 import { CREATORS } from "@/features/meet/creators";
 
-// On part du type réel de CREATORS et on lui ajoute juste city / country
-type CreatorWithLocation = (typeof CREATORS)[number] & {
+// Base = type réel d'un créateur dans CREATORS
+type CreatorBase = (typeof CREATORS)[number];
+
+// On étend juste avec des champs optionnels
+type CreatorWithLocation = CreatorBase & {
   city?: string;
   country?: string;
+  isCertified?: boolean;
 };
 
+// Format followers façon TikTok / Insta : 12,4k / 125M
+function formatFollowers(count?: number): string {
+  if (typeof count !== "number") return "";
+
+  // ≥ 1 million → "125M" / "2,5M"
+  if (count >= 1_000_000) {
+    const millions = count / 1_000_000;
+    const formatted = millions.toLocaleString("fr-CH", {
+      maximumFractionDigits: millions >= 10 ? 0 : 1,
+      minimumFractionDigits: millions >= 10 ? 0 : 1,
+    });
+    return `${formatted}M`;
+  }
+
+  // ≥ 1 000 → "12,4k" / "3k"
+  if (count >= 1_000) {
+    const thousands = count / 1_000;
+    const formatted = thousands.toLocaleString("fr-CH", {
+      maximumFractionDigits: thousands >= 10 ? 0 : 1,
+      minimumFractionDigits: thousands >= 10 ? 0 : 1,
+    });
+    return `${formatted}k`;
+  }
+
+  // < 1 000 → normal
+  return count.toLocaleString("fr-CH");
+}
+
 function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
+  const rawHandle = creator.handle || "";
+  const cleanHandle = rawHandle.startsWith("@")
+    ? rawHandle.slice(1)
+    : rawHandle;
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+      {/* Cover */}
       <div className="aspect-[3/4] w-full overflow-hidden">
         <img
           src={creator.avatar}
@@ -19,25 +58,43 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
           className="h-full w-full object-cover"
         />
       </div>
+
+      {/* Texte */}
       <div className="space-y-1 px-4 py-3">
+        {/* Nom */}
         <p className="text-sm font-semibold text-slate-900">
           {creator.name}
         </p>
-        <p className="text-[11px] text-slate-500">@{creator.handle}</p>
 
+                      {/* Handle + badge certifié sur la même ligne, sans couper le @ */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-[11px] text-slate-500">
+            @{cleanHandle}
+          </p>
+
+          {creator.isCertified && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+              <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+              <span>Certifié</span>
+            </span>
+          )}
+        </div>
+
+        {/* Followers */}
         {typeof creator.followers === "number" && (
           <p className="text-[11px] text-slate-500">
-            {creator.followers.toLocaleString("fr-CH")} followers
+            {formatFollowers(creator.followers)} followers
           </p>
         )}
 
-        {((creator as any).city || (creator as any).country) && (
+        {/* Ville / pays (optionnels) */}
+        {(creator as any).city || (creator as any).country ? (
           <p className="text-[11px] text-slate-400">
             {(creator as any).city}
             {(creator as any).city && (creator as any).country ? " · " : ""}
             {(creator as any).country}
           </p>
-        )}
+        ) : null}
       </div>
     </article>
   );
@@ -46,11 +103,31 @@ function CreatorGridCard({ creator }: { creator: CreatorWithLocation }) {
 export default function MeetPage() {
   const baseCreators = CREATORS as CreatorWithLocation[];
 
+  // 🔹 Profil système Magic Clock (Bear)
+  const systemBearCreator: CreatorWithLocation = {
+    id: 999999, // id numérique pour respecter le type d’origine
+    name: "Magic Clock",
+    handle: "magic_clock_app", // on ajoute @ seulement à l'affichage
+    avatar: "/images/magic-clock-bear/avatar.png",
+    followers: 125_000_000, // → 125M followers
+    langs: ["fr"],          // champs attendus par CreatorBase
+    access: [],             // type attendu = AccessKind[], donc tableau vide OK
+    isCertified: true,      // notre badge
+    city: "Neuchâtel",
+    country: "Suisse",
+  };
+
+  // On met Magic Clock tout en haut de la liste
+  const creatorsWithSystem: CreatorWithLocation[] = [
+    systemBearCreator,
+    ...baseCreators,
+  ];
+
   // On “allonge” la page : on répète la liste 10×
   const REPEAT_TIMES = 10;
 
   const extendedCreators = Array.from({ length: REPEAT_TIMES }, (_, idx) =>
-    baseCreators.map((creator) => ({
+    creatorsWithSystem.map((creator) => ({
       ...creator,
       _fakeId: `${creator.id}-repeat-${idx}`,
     }))
