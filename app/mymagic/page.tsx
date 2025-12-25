@@ -13,6 +13,7 @@ import {
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
+import { useEffect, useState, useRef, Suspense } from "react";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type MyMagicTab = "creations" | "bibliotheque";
@@ -272,7 +273,9 @@ export default function MyMagicClockPage() {
       </header>
 
       {/* 🔵 Toolbar existante (on la garde) */}
-      <MyMagicToolbar />
+    <Suspense fallback={<div className="h-10" />}>
+  <MyMagicToolbar />
+</Suspense>
 
       {/* ✅ Onglets MVP (ceux-là pilotent réellement la page) */}
       <div className="mb-6 flex items-center gap-2">
