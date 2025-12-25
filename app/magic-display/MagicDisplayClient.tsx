@@ -370,26 +370,23 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
       const payload = JSON.parse(raw) as StudioForwardPayload;
 
-     if (payload.before?.url) {
-  setStudioBeforeUrl(payload.before.url);
-  if (typeof payload.before.coverTime === "number") {
-    setStudioBeforeCover(payload.before.coverTime);
-  }
-}
-    if (payload.before?.thumbnailUrl) {
-  setStudioBeforeThumb(payload.before.thumbnailUrl);
-}
+      // BEFORE
+      if (payload.before?.url) {
+        setStudioBeforeUrl(payload.before.url);
+        if (typeof payload.before.coverTime === "number") {
+          setStudioBeforeCover(payload.before.coverTime);
+        }
+      }
 
-if (payload.after?.url) {
-  setStudioAfterUrl(payload.after.url);
-  if (typeof payload.after.coverTime === "number") {
-    setStudioAfterCover(payload.after.coverTime);
-  }
-}
-if (payload.after?.thumbnailUrl) {
-  setStudioAfterThumb(payload.after.thumbnailUrl);
-}
+      // AFTER
+      if (payload.after?.url) {
+        setStudioAfterUrl(payload.after.url);
+        if (typeof payload.after.coverTime === "number") {
+          setStudioAfterCover(payload.after.coverTime);
+        }
+      }
 
+      // META
       if (payload.title) setBridgeTitle(payload.title);
       if (payload.mode) setBridgeMode(payload.mode as PublishMode);
       if (typeof payload.ppvPrice === "number") {
@@ -592,19 +589,15 @@ if (payload.after?.thumbnailUrl) {
   }
   
 // Fallback images si rien venant du Studio
-const beforePreview =
-  studioBeforeThumb ??
-  studioAfterThumb ??
-  studioBeforeUrl ??
-  studioAfterUrl ??
-  FALLBACK_BEFORE;
+  const beforePreview =
+    studioBeforeUrl ??
+    studioAfterUrl ??
+    FALLBACK_BEFORE;
 
-const afterPreview =
-  studioAfterThumb ??
-  studioBeforeThumb ??
-  studioAfterUrl ??
-  studioBeforeUrl ??
-  FALLBACK_AFTER;
+  const afterPreview =
+    studioAfterUrl ??
+    studioBeforeUrl ??
+    FALLBACK_AFTER;
 
   // Stats mock pour l’aperçu public
   const mockViews = 0;
