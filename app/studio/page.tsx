@@ -180,7 +180,6 @@ export default function MagicStudioPage() {
   }
 
    // ------------- Pont vers Magic Display -----------------
-
   function handleGoToDisplay() {
     const params = new URLSearchParams();
 
@@ -197,7 +196,7 @@ export default function MagicStudioPage() {
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-    // helper MediaState -> payload (MVP : uniquement url + coverTime)
+    // helper MediaState -> payload (MVP : type + url + coverTime)
     const mapMedia = (
       media: MediaState
     ): StudioForwardPayload["before"] => {
@@ -205,7 +204,10 @@ export default function MagicStudioPage() {
         return null;
       }
 
+      const type = media.kind === "video" ? "video" : "photo";
+
       return {
+        type,
         url: media.url,
         coverTime: media.coverTime ?? null,
       };
