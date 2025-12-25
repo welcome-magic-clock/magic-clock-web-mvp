@@ -9,8 +9,9 @@ type PageProps = {
 
 function formatAccessLabel(access: FeedAccess): string {
   if (access === "FREE") return "FREE";
-  if (access === "SUB") return "Abonnement";
-  return "PayPerView";
+  if (access === "ABO") return "Abonnement";   // 🔁 ICI au lieu de "SUB"
+  if (access === "PPV") return "PayPerView";
+  return "FREE"; // fallback au cas où
 }
 
 export default function ContentDetailPage({ params }: PageProps) {
