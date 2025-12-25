@@ -214,7 +214,7 @@ export function magicClockWorkToFeedCard(work: MagicClockWork): FeedCard {
     work.studio.before?.url ??
     "/images/examples/balayage-after.jpg";
 
-  // 🔧 ICI : on renvoie undefined au lieu de null
+  // on renvoie undefined plutôt que null pour coller avec FeedCard
   const beforeUrl: string | undefined =
     work.studio.before?.thumbnailUrl ??
     work.studio.before?.url ??
@@ -226,25 +226,16 @@ export function magicClockWorkToFeedCard(work: MagicClockWork): FeedCard {
     undefined;
 
   return {
-    // 🛡️ Hack anti-Kraken TypeScript pour l'id (FeedCard.id est number)
+    // FeedCard.id est typé number → on caste le string
+    // (OK pour le MVP, c’est juste un identifiant interne)
     id: work.id as unknown as number,
-
     title: work.title,
     image,
     beforeUrl,
     afterUrl,
-    user: work.creator.handle, // handle avec @ → nettoyé dans MediaCard
+    user: work.creator.handle,
     access,
     views: work.stats.views,
-
-    // champs optionnels
-    likes: work.stats.likes,
-    creatorName: work.creator.name,
-    creatorHandle: work.creator.handle,
-    creatorAvatar: work.creator.avatarUrl,
-    hashtags: [],
-    isCertified: !!work.creator.isCertified,
-    isSystemFeatured: !!work.access.isSystemFeatured,
   };
 }
 
