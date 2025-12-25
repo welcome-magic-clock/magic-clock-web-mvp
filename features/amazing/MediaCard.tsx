@@ -33,11 +33,7 @@ function isVideo(url: string | null | undefined) {
 
   const clean = url.split("?")[0].toLowerCase();
 
-  return (
-    clean.endsWith(".mp4") ||
-    clean.endsWith(".webm") ||
-    clean.endsWith(".ogg")
-  );
+  return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".ogg");
 }
 
 type AutoPlayVideoProps = {
@@ -89,7 +85,7 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
         ref={videoRef}
         src={src}
         poster={poster}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover pointer-events-none"
         loop
         muted
         playsInline
@@ -100,17 +96,19 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
   );
 }
 
+function hashtagToHref(tag: string) {
+  const cleaned = (tag || "").trim().replace(/^#/, "");
+  const slug = cleaned.toLowerCase();
+  return `/tag/${encodeURIComponent(slug)}`;
+}
+
 export default function MediaCard({ item }: Props) {
   // ---------- Créateur & avatar via Meet me ----------
-  const cleanUserHandle = item.user.startsWith("@")
-    ? item.user.slice(1)
-    : item.user;
+  const cleanUserHandle = item.user.startsWith("@") ? item.user.slice(1) : item.user;
 
   const creator =
     CREATORS.find((c) => {
-      const cleanCreatorHandle = c.handle.startsWith("@")
-        ? c.handle.slice(1)
-        : c.handle;
+      const cleanCreatorHandle = c.handle.startsWith("@") ? c.handle.slice(1) : c.handle;
       return cleanCreatorHandle === cleanUserHandle;
     }) ?? null;
 
@@ -120,36 +118,25 @@ export default function MediaCard({ item }: Props) {
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
   // 🔹 Spécificités Magic Clock système (ours, etc.)
-  const isSystemUnlockedForAll =
-    (item as any).isSystemUnlockedForAll === true;
-
-  const isSystemCard =
-    (item as any).isSystemFeatured === true || isSystemUnlockedForAll;
+  const isSystemUnlockedForAll = (item as any).isSystemUnlockedForAll === true;
+  const isSystemCard = (item as any).isSystemFeatured === true || isSystemUnlockedForAll;
 
   // ---------- Mode, prix, hashtags, stats ----------
   const modeFromItem = (item as any).mode as PublishMode | undefined;
 
   const mode: PublishMode =
     modeFromItem ??
-    (item.access === "PPV"
-      ? "PPV"
-      : item.access === "ABO"
-      ? "SUB"
-      : "FREE");
+    (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE");
 
   const ppvPrice: number | null =
-    typeof (item as any).ppvPrice === "number"
-      ? ((item as any).ppvPrice as number)
-      : null;
+    typeof (item as any).ppvPrice === "number" ? ((item as any).ppvPrice as number) : null;
 
   const rawHashtags =
     (item as any).hashtags && Array.isArray((item as any).hashtags)
       ? ((item as any).hashtags as string[])
       : [];
 
-  const displayHashtags =
-    rawHashtags.length > 0 ? rawHashtags : ["#coiffure", "#magicclock"];
-
+  const displayHashtags = rawHashtags.length > 0 ? rawHashtags : ["#coiffure", "#magicclock"];
   const title = item.title ?? "Magic Clock";
 
   const views =
@@ -190,37 +177,23 @@ export default function MediaCard({ item }: Props) {
     ? (beforeUrl as string)
     : null;
 
-   // ---------- Image centrale / avatar créateur ----------
+  // ---------- Image centrale / avatar créateur ----------
   const systemAvatar = "/images/magic-clock-bear/avatar.png";
-
-  // avatar logique (Bear pour la carte système, sinon avatar normal ou fallback)
-  const avatar: string =
-    isSystemCard
-      ? systemAvatar
-      : creator?.avatar ?? item.image ?? afterThumb ?? beforeThumb;
-
-  // ce qui est vraiment affiché dans la bulle
+  const avatar: string = isSystemCard ? systemAvatar : creator?.avatar ?? item.image ?? afterThumb ?? beforeThumb;
   const centerImage = avatar;
+
   // ---------- Flags système & certifié ----------
   const isCertified =
-    (item as any).isCertified === true ||
-    (creator && (creator as any).isCertified === true);
+    (item as any).isCertified === true || (creator && (creator as any).isCertified === true);
 
   // ---------- Monétisation & accès ----------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(
-    mode === "FREE" || isSystemUnlockedForAll
-  );
+  const [isUnlocked, setIsUnlocked] = useState(mode === "FREE" || isSystemUnlockedForAll);
   const [lastDecision, setLastDecision] = useState<string | null>(null);
   const router = useRouter();
 
-  const accessLabelBase =
-    mode === "FREE"
-      ? "FREE"
-      : mode === "SUB"
-      ? "Abonnement"
-      : "Pay Per View";
+  const accessLabelBase = mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "Pay Per View";
 
   const accessLabel = isUnlocked
     ? mode === "FREE"
@@ -277,194 +250,189 @@ export default function MediaCard({ item }: Props) {
   }
 
   const detailHref =
-  typeof item.id === "string" || typeof item.id === "number"
-    ? `/p/${item.id}`      // 🔁 on envoie vers la page détail
-    : "/p/0";
+    typeof item.id === "string" || typeof item.id === "number" ? `/p/${item.id}` : "/p/0";
 
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
+    <article
+      className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md"
+      role="link"
+      tabIndex={0}
+      aria-label={`Ouvrir ${title || "le contenu"}`}
+      onClick={(e) => {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+
+        const interactive = target.closest(
+          'a,button,input,textarea,select,summary,[role="button"],[role="link"],[data-interactive="true"]'
+        );
+        if (interactive) return;
+
+        router.push(detailHref);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(detailHref);
+        }
+      }}
+    >
       {/* Zone média (image/vidéo + avatar + menu flèche) */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-        <Link href={detailHref} className="relative block">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
-            {heroVideoSrc ? (
-              <AutoPlayVideo
-                src={heroVideoSrc}
-                poster={afterThumb || beforeThumb}
-                alt={title}
-              />
-            ) : (
-              <div className="grid h-full w-full grid-cols-2">
-                {/* Avant */}
-                <div className="relative h-full w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={beforeThumb}
-                    alt={`${title} - Avant`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                {/* Après */}
-                <div className="relative h-full w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={afterThumb}
-                    alt={`${title} - Après`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+          {heroVideoSrc ? (
+            <AutoPlayVideo src={heroVideoSrc} poster={afterThumb || beforeThumb} alt={title} />
+          ) : (
+            <div className="grid h-full w-full grid-cols-2">
+              {/* Avant */}
+              <div className="relative h-full w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={beforeThumb} alt={`${title} - Avant`} className="h-full w-full object-cover" />
+              </div>
+              {/* Après */}
+              <div className="relative h-full w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={afterThumb} alt={`${title} - Après`} className="h-full w-full object-cover" />
+              </div>
 
-                {/* Ligne centrale */}
-                <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+              {/* Ligne centrale */}
+              <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+            </div>
+          )}
+
+          {/* Avatar centré (clic → Meet me) */}
+          <Link
+            href={meetHref}
+            onClick={(e) => e.stopPropagation()}
+            className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+            aria-label={`Voir le profil de ${creatorName}`}
+          >
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
+              <Image
+                src={centerImage}
+                alt={creatorName}
+                width={72}
+                height={72}
+                className="h-[72px] w-[72px] rounded-full object-cover"
+              />
+            </div>
+          </Link>
+
+          {/* Flèche + mini-menu FREE / Abo / PPV */}
+          <div className="pointer-events-auto absolute right-3 top-3 z-10 text-right text-[11px] text-white">
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center drop-shadow-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen((v) => !v);
+              }}
+              aria-label="Options d’accès"
+              data-interactive="true"
+            >
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowUpRight className="h-5 w-5" />}
+            </button>
+
+            {menuOpen && (
+              <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+                {isSystemCard && isSystemUnlockedForAll ? (
+                  <>
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        router.push(meetHref);
+                      }}
+                      data-interactive="true"
+                    >
+                      Meet me (profil créateur)
+                    </button>
+
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        router.push("/mymagic");
+                      }}
+                      data-interactive="true"
+                    >
+                      Voir dans My Magic Clock
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        router.push(meetHref);
+                      }}
+                      data-interactive="true"
+                    >
+                      Meet me (profil créateur)
+                    </button>
+
+                    {mode === "FREE" && (
+                      <button
+                        type="button"
+                        className="block w-full bg-transparent px-0 py-0 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAccess("FREE");
+                        }}
+                        disabled={isLoading === "FREE"}
+                        data-interactive="true"
+                      >
+                        {isLoading === "FREE" ? "Vérification FREE…" : "Débloquer (FREE)"}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAccess("ABO");
+                      }}
+                      disabled={isLoading === "ABO"}
+                      data-interactive="true"
+                    >
+                      {isLoading === "ABO" ? "Activation Abo…" : "Activer l’abonnement créateur"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAccess("PPV");
+                      }}
+                      disabled={isLoading === "PPV"}
+                      data-interactive="true"
+                    >
+                      {isLoading === "PPV" ? "Déblocage PPV…" : "Débloquer ce contenu en PPV"}
+                    </button>
+                  </>
+                )}
               </div>
             )}
-
-            {/* Avatar centré (clic → Meet me) */}
-            <Link
-              href={meetHref}
-              className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-              aria-label={`Voir le profil de ${creatorName}`}
-            >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                <Image
-                  src={centerImage}
-                  alt={creatorName}
-                  width={72}
-                  height={72}
-                  className="h-[72px] w-[72px] rounded-full object-cover"
-                />
-              </div>
-            </Link>
-
-            {/* Flèche + mini-menu FREE / Abo / PPV */}
-            <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-              <button
-                type="button"
-                className="flex h-8 w-8 items-center justify-center drop-shadow-md"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMenuOpen((v) => !v);
-                }}
-                aria-label="Options d’accès"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ArrowUpRight className="h-5 w-5" />
-                )}
-              </button>
-
-              {menuOpen && (
-                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                  {isSystemCard && isSystemUnlockedForAll ? (
-                    <>
-                      {/* 🟣 MENU SPÉCIAL POUR L’OURS / CARTES SYSTÈME */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMenuOpen(false);
-                          window.location.href = meetHref;
-                        }}
-                      >
-                        Meet me (profil créateur)
-                      </button>
-
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMenuOpen(false);
-                          window.location.href = "/mymagic";
-                        }}
-                      >
-                        Voir dans My Magic Clock
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* 🟣 MENU NORMAL POUR LES AUTRES CARTES */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMenuOpen(false);
-                          window.location.href = meetHref;
-                        }}
-                      >
-                        Meet me (profil créateur)
-                      </button>
-
-                      {mode === "FREE" && (
-                        <button
-                          type="button"
-                          className="block w-full bg-transparent px-0 py-0 hover:underline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAccess("FREE");
-                          }}
-                          disabled={isLoading === "FREE"}
-                        >
-                          {isLoading === "FREE"
-                            ? "Vérification FREE…"
-                            : "Débloquer (FREE)"}
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("ABO");
-                        }}
-                        disabled={isLoading === "ABO"}
-                      >
-                        {isLoading === "ABO"
-                          ? "Activation Abo…"
-                          : "Activer l’abonnement créateur"}
-                      </button>
-
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("PPV");
-                        }}
-                        disabled={isLoading === "PPV"}
-                      >
-                        {isLoading === "PPV"
-                          ? "Déblocage PPV…"
-                          : "Débloquer ce contenu en PPV"}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* Bas de carte : créateur + stats + hashtags */}
       <div className="mt-3 space-y-1 text-xs">
         {/* Ligne 1 : créateur · pastille certifié · vues · likes · accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-          <Link href={meetHref} className="font-medium hover:underline">
+          <Link href={meetHref} onClick={(e) => e.stopPropagation()} className="font-medium hover:underline">
             {creatorName}
           </Link>
-          <Link href={meetHref} className="text-slate-400 hover:underline">
+          <Link href={meetHref} onClick={(e) => e.stopPropagation()} className="text-slate-400 hover:underline">
             {creatorHandle}
           </Link>
 
@@ -478,10 +446,7 @@ export default function MediaCard({ item }: Props) {
           <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
           <span>
-            <span className="font-medium">
-              {views.toLocaleString("fr-CH")}
-            </span>{" "}
-            vues
+            <span className="font-medium">{views.toLocaleString("fr-CH")}</span> vues
           </span>
 
           <span className="flex items-center gap-1">
@@ -491,40 +456,35 @@ export default function MediaCard({ item }: Props) {
 
           {mode && (
             <span className="flex items-center gap-1">
-              {isLocked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Unlock className="h-3 w-3" />
-              )}
+              {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
               <span>{accessLabel}</span>
               {mode === "PPV" && ppvPrice != null && (
-                <span className="ml-1 text-[11px] text-slate-500">
-                  · {ppvPrice.toFixed(2)} CHF
-                </span>
+                <span className="ml-1 text-[11px] text-slate-500">· {ppvPrice.toFixed(2)} CHF</span>
               )}
             </span>
           )}
         </div>
 
-        {/* Ligne 2 : titre + hashtags */}
+        {/* Ligne 2 : titre + hashtags (cliquables) */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-          {title && (
-            <span className="font-medium text-slate-800 line-clamp-2">
-              {title}
-            </span>
-          )}
+          {title && <span className="font-medium text-slate-800 line-clamp-2">{title}</span>}
 
           {displayHashtags.map((tag) => (
-            <span key={tag} className="text-brand-600">
-              {tag}
-            </span>
+            <Link
+              key={tag}
+              href={hashtagToHref(tag)}
+              onClick={(e) => e.stopPropagation()}
+              className="text-brand-600 hover:underline"
+              aria-label={`Voir le hashtag ${tag}`}
+              data-interactive="true"
+            >
+              {tag.startsWith("#") ? tag : `#${tag}`}
+            </Link>
           ))}
         </div>
 
         {lastDecision && (
-          <p className="mt-1 text-[10px] text-slate-400">
-            Décision accès : {lastDecision}
-          </p>
+          <p className="mt-1 text-[10px] text-slate-400">Décision accès : {lastDecision}</p>
         )}
       </div>
     </article>
