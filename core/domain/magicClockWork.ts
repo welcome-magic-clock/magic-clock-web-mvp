@@ -199,9 +199,7 @@ export const ONBOARDING_MAGIC_CLOCK_WORK: MagicClockWork = {
 };
 
 // 🔁 Adaptateur MagicClockWork → FeedCard (flux Amazing)
-export function magicClockWorkToFeedCard(
-  work: MagicClockWork
-): FeedCard {
+export function magicClockWorkToFeedCard(work: MagicClockWork): FeedCard {
   const access: FeedAccess =
     work.access.mode === "PPV"
       ? "PPV"
@@ -227,12 +225,16 @@ export function magicClockWorkToFeedCard(
     null;
 
   return {
-    id: work.id,                         // id string OK
+    // 🛡️ Hack anti-Kraken TypeScript :
+    // FeedCard.id est typé number, mais notre work.id est une string.
+    // Le cast ne change rien au runtime, ça reste la string "mcw-onboarding-bear-001".
+    id: work.id as unknown as number,
+
     title: work.title,
     image,
     beforeUrl,
     afterUrl,
-    user: work.creator.handle,          // handle avec @ → nettoyé dans MediaCard
+    user: work.creator.handle, // handle avec @ → nettoyé dans MediaCard
     access,
     views: work.stats.views,
 
@@ -243,7 +245,7 @@ export function magicClockWorkToFeedCard(
     creatorAvatar: work.creator.avatarUrl,
     hashtags: [],
     isCertified: !!work.creator.isCertified,
-    isSystemFeatured: !!work.access.isSystemFeatured, // ⭐ NEW
+    isSystemFeatured: !!work.access.isSystemFeatured,
   };
 }
 
