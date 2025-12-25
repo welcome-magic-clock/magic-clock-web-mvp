@@ -3,14 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Heart,
-  ArrowUpRight,
-  Lock,
-  Unlock,
-  Loader2,
-  BadgeCheck,
-} from "lucide-react";
+import { Heart, ArrowUpRight, Lock, Unlock, Loader2, BadgeCheck } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 import { useRouter } from "next/navigation";
@@ -27,12 +20,10 @@ const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 
 function isVideo(url: string | null | undefined) {
   if (!url) return false;
-
   if (url.startsWith("data:video/")) return true;
   if (url.startsWith("blob:")) return true;
 
   const clean = url.split("?")[0].toLowerCase();
-
   return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".ogg");
 }
 
@@ -103,6 +94,8 @@ function hashtagToHref(tag: string) {
 }
 
 export default function MediaCard({ item }: Props) {
+  const router = useRouter();
+
   // ---------- Créateur & avatar via Meet me ----------
   const cleanUserHandle = item.user.startsWith("@") ? item.user.slice(1) : item.user;
 
@@ -114,7 +107,6 @@ export default function MediaCard({ item }: Props) {
 
   const creatorName = creator?.name ?? item.user;
   const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
-
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
   // 🔹 Spécificités Magic Clock système (ours, etc.)
@@ -125,16 +117,13 @@ export default function MediaCard({ item }: Props) {
   const modeFromItem = (item as any).mode as PublishMode | undefined;
 
   const mode: PublishMode =
-    modeFromItem ??
-    (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE");
+    modeFromItem ?? (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE");
 
   const ppvPrice: number | null =
     typeof (item as any).ppvPrice === "number" ? ((item as any).ppvPrice as number) : null;
 
   const rawHashtags =
-    (item as any).hashtags && Array.isArray((item as any).hashtags)
-      ? ((item as any).hashtags as string[])
-      : [];
+    (item as any).hashtags && Array.isArray((item as any).hashtags) ? ((item as any).hashtags as string[]) : [];
 
   const displayHashtags = rawHashtags.length > 0 ? rawHashtags : ["#coiffure", "#magicclock"];
   const title = item.title ?? "Magic Clock";
@@ -171,11 +160,7 @@ export default function MediaCard({ item }: Props) {
   const beforeUrl = item.beforeUrl;
   const afterUrl = item.afterUrl;
 
-  const heroVideoSrc: string | null = isVideo(afterUrl)
-    ? (afterUrl as string)
-    : isVideo(beforeUrl)
-    ? (beforeUrl as string)
-    : null;
+  const heroVideoSrc: string | null = isVideo(afterUrl) ? (afterUrl as string) : isVideo(beforeUrl) ? (beforeUrl as string) : null;
 
   // ---------- Image centrale / avatar créateur ----------
   const systemAvatar = "/images/magic-clock-bear/avatar.png";
@@ -183,15 +168,13 @@ export default function MediaCard({ item }: Props) {
   const centerImage = avatar;
 
   // ---------- Flags système & certifié ----------
-  const isCertified =
-    (item as any).isCertified === true || (creator && (creator as any).isCertified === true);
+  const isCertified = (item as any).isCertified === true || (creator && (creator as any).isCertified === true);
 
   // ---------- Monétisation & accès ----------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(mode === "FREE" || isSystemUnlockedForAll);
   const [lastDecision, setLastDecision] = useState<string | null>(null);
-  const router = useRouter();
 
   const accessLabelBase = mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "Pay Per View";
 
@@ -249,8 +232,7 @@ export default function MediaCard({ item }: Props) {
     }
   }
 
-  const detailHref =
-    typeof item.id === "string" || typeof item.id === "number" ? `/p/${item.id}` : "/p/0";
+  const detailHref = typeof item.id === "string" || typeof item.id === "number" ? `/p/${item.id}` : "/p/0";
 
   return (
     <article
@@ -283,18 +265,14 @@ export default function MediaCard({ item }: Props) {
             <AutoPlayVideo src={heroVideoSrc} poster={afterThumb || beforeThumb} alt={title} />
           ) : (
             <div className="grid h-full w-full grid-cols-2">
-              {/* Avant */}
               <div className="relative h-full w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={beforeThumb} alt={`${title} - Avant`} className="h-full w-full object-cover" />
               </div>
-              {/* Après */}
               <div className="relative h-full w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={afterThumb} alt={`${title} - Après`} className="h-full w-full object-cover" />
               </div>
-
-              {/* Ligne centrale */}
               <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
             </div>
           )}
@@ -305,6 +283,7 @@ export default function MediaCard({ item }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
             aria-label={`Voir le profil de ${creatorName}`}
+            data-interactive="true"
           >
             <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
               <Image
@@ -427,12 +406,11 @@ export default function MediaCard({ item }: Props) {
 
       {/* Bas de carte : créateur + stats + hashtags */}
       <div className="mt-3 space-y-1 text-xs">
-        {/* Ligne 1 : créateur · pastille certifié · vues · likes · accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-          <Link href={meetHref} onClick={(e) => e.stopPropagation()} className="font-medium hover:underline">
+          <Link href={meetHref} onClick={(e) => e.stopPropagation()} className="font-medium hover:underline" data-interactive="true">
             {creatorName}
           </Link>
-          <Link href={meetHref} onClick={(e) => e.stopPropagation()} className="text-slate-400 hover:underline">
+          <Link href={meetHref} onClick={(e) => e.stopPropagation()} className="text-slate-400 hover:underline" data-interactive="true">
             {creatorHandle}
           </Link>
 
@@ -465,7 +443,6 @@ export default function MediaCard({ item }: Props) {
           )}
         </div>
 
-        {/* Ligne 2 : titre + hashtags (cliquables) */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
           {title && <span className="font-medium text-slate-800 line-clamp-2">{title}</span>}
 
@@ -478,14 +455,12 @@ export default function MediaCard({ item }: Props) {
               aria-label={`Voir le hashtag ${tag}`}
               data-interactive="true"
             >
-              {tag.startsWith("#") ? tag : `#${tag}`}
+              {(tag || "").startsWith("#") ? tag : `#${tag}`}
             </Link>
           ))}
         </div>
 
-        {lastDecision && (
-          <p className="mt-1 text-[10px] text-slate-400">Décision accès : {lastDecision}</p>
-        )}
+        {lastDecision && <p className="mt-1 text-[10px] text-slate-400">Décision accès : {lastDecision}</p>}
       </div>
     </article>
   );
