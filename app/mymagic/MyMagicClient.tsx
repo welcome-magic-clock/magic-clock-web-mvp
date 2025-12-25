@@ -240,11 +240,6 @@ export default function MyMagicClient() {
   const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
   const creatorHandle = creatorHandleRaw.startsWith("@") ? creatorHandleRaw : `@${creatorHandleRaw}`;
 
-  const openDisplay = (id: FeedCard["id"]) => {
-    const href = `/display/${encodeURIComponent(String(id))}`;
-    window.location.href = href;
-  };
-
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* Avatar + infos créateur */}
@@ -464,13 +459,13 @@ export default function MyMagicClient() {
                   <div className="space-y-2">
                     <MediaCard item={item} />
 
-                    <button
-                      type="button"
-                      onClick={() => openDisplay(item.id)}
-                      className="block text-left text-[11px] font-medium text-brand-600 hover:underline"
-                    >
-                      Ouvrir le Magic Display (MVP)
-                    </button>
+                 <Link
+  href={`/display/${encodeURIComponent(String(item.id))}`}
+  prefetch={false}
+  className="block text-left text-[11px] font-medium text-brand-600 hover:underline"
+>
+  Ouvrir le Magic Display (MVP)
+</Link>
                   </div>
                 </div>
               );
