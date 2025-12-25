@@ -40,9 +40,6 @@ export type FeedCard = {
   creatorHandle?: string;
   creatorAvatar?: string;
   hashtags?: string[];
-  isCertified?: boolean;          // ✅ pastille compte certifié
-
-  // 👇 NOUVEAU : flags pour les contenus système
-  isSystemFeatured?: boolean;       // ex. l’ours tout en haut du flux
-  isSystemUnlockedForAll?: boolean; // ex. déjà présent dans My Magic Clock
+  isCertified?: boolean;      // ✅ pastille compte certifié
+  isSystemFeatured?: boolean; // ⭐ contenu système (ours onboarding, etc.)
 };
