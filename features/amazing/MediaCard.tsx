@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
+import { useRouter } from "next/navigation";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type AccessKind = "FREE" | "ABO" | "PPV";
@@ -212,6 +213,7 @@ export default function MediaCard({ item }: Props) {
     mode === "FREE" || isSystemUnlockedForAll
   );
   const [lastDecision, setLastDecision] = useState<string | null>(null);
+  const router = useRouter();
 
   const accessLabelBase =
     mode === "FREE"
@@ -275,9 +277,9 @@ export default function MediaCard({ item }: Props) {
   }
 
   const detailHref =
-    typeof item.id === "string" || typeof item.id === "number"
-      ? `/display/${item.id}`
-      : "/display";
+  typeof item.id === "string" || typeof item.id === "number"
+    ? `/p/${item.id}`      // 🔵 AU LIEU DE `/display/${item.id}`
+    : "/p";
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
