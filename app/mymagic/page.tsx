@@ -1,6 +1,7 @@
 // app/mymagic/page.tsx
 import { Suspense } from "react";
 import MyMagicClient from "./MyMagicClient";
+import Link from "next/link";
 
 export default function Page() {
   return (
