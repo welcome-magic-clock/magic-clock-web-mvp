@@ -1,3 +1,4 @@
+// components/MediaCard.tsx
 import Link from "next/link";
 import { Eye, Heart, Play } from "lucide-react";
 
@@ -13,8 +14,7 @@ export default function MediaCard({ item }: MediaCardProps) {
   // donc on dérive un handle propre et des initiales.
   const rawUser: string = item?.user ?? "sofia";
   const creatorHandle = `@${rawUser}`;
-  const avatarInitials =
-    rawUser.charAt(0).toUpperCase() || "M";
+  const avatarInitials = rawUser.charAt(0).toUpperCase() || "M";
 
   const views: number =
     typeof item?.views === "number" ? item.views : 1000;
@@ -29,6 +29,12 @@ export default function MediaCard({ item }: MediaCardProps) {
     "Magic Clock · contenus pédagogiques. Swipe dans le flux pour découvrir d'autres créateurs.";
 
   const displayUrl: string = item?.displayUrl ?? "#";
+
+  // 🔗 Nouveau : lien vers la page détail /p/[id]
+  const detailHref =
+    typeof item?.id === "string" || typeof item?.id === "number"
+      ? `/p/${item.id}`
+      : "/p/0";
 
   return (
     <article
@@ -49,27 +55,30 @@ export default function MediaCard({ item }: MediaCardProps) {
     >
       {/* Zone média (placeholder gradient pour le MVP) */}
       <div className="relative flex-1 bg-gradient-to-b from-slate-800/60 via-slate-900 to-slate-950">
-        {/* Badges top */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between px-4 pt-3 sm:px-6">
-          <span className="inline-flex items-center rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium">
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
-            Magic Display
-          </span>
+        {/* 🔗 Toute la zone média devient cliquable vers /p/[id] */}
+        <Link href={detailHref} className="absolute inset-0 block">
+          {/* Badges top */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between px-4 pt-3 sm:px-6">
+            <span className="inline-flex items-center rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium">
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
+              Magic Display
+            </span>
 
-          <span className="hidden text-[10px] text-slate-400 sm:inline">
-            Média Magic Clock (avant / après, vidéo, etc.)
-          </span>
-        </div>
-
-        {/* Icône Play au centre (placeholder vidéo) */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur">
-            <Play className="h-6 w-6 text-slate-50" />
+            <span className="hidden text-[10px] text-slate-400 sm:inline">
+              Média Magic Clock (avant / après, vidéo, etc.)
+            </span>
           </div>
-        </div>
 
-        {/* Dégradé bas pour la jonction avec le bloc texte */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+          {/* Icône Play au centre (placeholder vidéo) */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur">
+              <Play className="h-6 w-6 text-slate-50" />
+            </div>
+          </div>
+
+          {/* Dégradé bas pour la jonction avec le bloc texte */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+        </Link>
       </div>
 
       {/* Bloc infos */}
@@ -87,9 +96,14 @@ export default function MediaCard({ item }: MediaCardProps) {
           </div>
         </div>
 
-        {/* Titre */}
+        {/* Titre → aussi cliquable vers /p/[id] */}
         <h2 className="mt-2 text-sm font-semibold leading-tight sm:text-base">
-          <span className="line-clamp-1">{title}</span>
+          <Link
+            href={detailHref}
+            className="line-clamp-1 hover:underline"
+          >
+            {title}
+          </Link>
         </h2>
 
         {/* Tags */}
@@ -122,6 +136,7 @@ export default function MediaCard({ item }: MediaCardProps) {
             </div>
           </div>
 
+          {/* Bouton : reste dédié au Display (quand il sera branché) */}
           <Link
             href={displayUrl}
             className="
