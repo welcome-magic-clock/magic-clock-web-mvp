@@ -278,8 +278,8 @@ export default function MediaCard({ item }: Props) {
 
   const detailHref =
   typeof item.id === "string" || typeof item.id === "number"
-    ? `/p/${item.id}`      // 🔵 AU LIEU DE `/display/${item.id}`
-    : "/p";
+    ? `/p/${item.id}`      // 🔁 on envoie vers la page détail
+    : "/p/0";
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
