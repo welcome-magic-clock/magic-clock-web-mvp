@@ -1,8 +1,13 @@
 // core/domain/magicClockWork.ts
-import type { FeedCard, FeedAccess } from "./types";
+import type { FeedCard } from "./types";
 
+// Mode de publication côté créateur / studio
 export type PublishMode = "FREE" | "SUB" | "PPV";
 
+// Accès dans le feed (FREE / ABO / PPV)
+export type FeedAccess = "FREE" | "ABO" | "PPV";
+
+// Type de média utilisé dans le Studio (avant / après)
 export type StudioMediaKind = "image" | "video";
 
 export type StudioMedia = {
