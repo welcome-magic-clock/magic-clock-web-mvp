@@ -1,18 +1,27 @@
 // app/display/[id]/page.tsx
-
 import Link from "next/link";
 import MagicDisplayViewer from "../MagicDisplayViewer";
-import { findContentById } from "@/core/domain/repository";
+import { findContentById, listFeed } from "@/core/domain/repository";
+
+export const dynamicParams = false; // ✅ obligatoire en export statique
+
+export function generateStaticParams() {
+  const all = listFeed();
+
+  // ✅ IDs existants + on force le Bear
+  const ids = new Set(all.map((x: any) => String(x.id)));
+  ids.add("mcw-onboarding-bear-001");
+
+  return Array.from(ids).map((id) => ({ id }));
+}
 
 type PageProps = {
   params: { id: string };
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
-  // ✅ On garde l’ID tel quel, mais on le decode au cas où
   const rawId = decodeURIComponent(params.id);
 
-  // 🔎 On cherche la carte correspondante dans le feed (Amazing / My Magic Clock)
   const content = findContentById(rawId);
 
   const title = content?.title ?? `Magic Display #${rawId}`;
@@ -34,7 +43,6 @@ export default function MagicDisplayPage({ params }: PageProps) {
           <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
         </header>
 
-        {/* ✅ On passe l'id réel du contenu (string) au viewer */}
         <MagicDisplayViewer contentId={content?.id ?? rawId} />
       </section>
     </main>
