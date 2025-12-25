@@ -1,7 +1,8 @@
+// app/p/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findContentById } from "@/core/domain/repository";
-import type { FeedAccess } from "@/core/domain/types";
+import type { Access as FeedAccess } from "@/core/domain/types";
 
 type PageProps = {
   params: { id: string };
@@ -9,19 +10,22 @@ type PageProps = {
 
 function formatAccessLabel(access: FeedAccess): string {
   if (access === "FREE") return "FREE";
-  if (access === "ABO") return "Abonnement";   // 🔁 ICI au lieu de "SUB"
+  if (access === "ABO") return "Abonnement"; // ABO = abonnement côté feed
   if (access === "PPV") return "PayPerView";
-  return "FREE"; // fallback au cas où
+  return "FREE";
 }
 
 export default function ContentDetailPage({ params }: PageProps) {
-  const card = findContentById(params.id);
+  const numericId = Number(params.id);
+  const card = Number.isNaN(numericId)
+    ? undefined
+    : findContentById(numericId);
 
   if (!card) {
     return notFound();
   }
 
-  const accessLabel = formatAccessLabel(card.access);
+  const accessLabel = formatAccessLabel(card.access as FeedAccess);
   const username = card.user.replace(/^@/, "");
 
   const hasBefore = !!card.beforeUrl;
@@ -52,7 +56,7 @@ export default function ContentDetailPage({ params }: PageProps) {
         <div className="flex flex-wrap items-center gap-2">
           {/* Bouton principal vers My Magic Clock */}
           <Link
-            href={`/my-magic-clock?open=${card.id}`}
+            href="/mymagic"
             className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800"
           >
             Ouvrir dans My Magic Clock
@@ -77,6 +81,7 @@ export default function ContentDetailPage({ params }: PageProps) {
               {/* AVANT */}
               <div className="relative">
                 {hasBefore ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={card.beforeUrl as string}
                     alt="Avant"
@@ -92,6 +97,7 @@ export default function ContentDetailPage({ params }: PageProps) {
               {/* APRÈS */}
               <div className="relative">
                 {hasAfter ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={card.afterUrl as string}
                     alt="Après"
@@ -106,6 +112,7 @@ export default function ContentDetailPage({ params }: PageProps) {
             </div>
           ) : (
             <div className="flex aspect-[4/3] items-center justify-center bg-slate-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={card.image}
                 alt={card.title ?? ""}
