@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Camera, Clapperboard, FileText, Plus, Sparkles } from "lucide-react";
+import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
 
 type MediaType = "photo" | "video" | "file";
 
@@ -18,25 +18,12 @@ type MagicCube3DProps = {
   segments: FaceLike[];
   selectedId: number | null;
   onSelect: (id: number) => void;
-
-  /**
-   * Optionnel : callback appelé quand on clique sur
-   * « Publier sur Amazing + My Magic Clock ».
-   * Le parent (page Display) décide quoi faire :
-   * - écrire en localStorage
-   * - router vers /mymagic
-   * - etc.
-   */
-  onPublish?: () => void;
-  isPublishing?: boolean;
 };
 
 export default function MagicCube3D({
   segments,
   selectedId,
   onSelect,
-  onPublish,
-  isPublishing,
 }: MagicCube3DProps) {
   const [rotation, setRotation] = useState({ x: -18, y: 28 });
 
@@ -65,11 +52,9 @@ export default function MagicCube3D({
   return (
     <div className="w-full">
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
-        VUE 3D DE MAGIC CLOCK
-      </p>
-
-      {/* Bloc 3D */}
-      <div className="relative mx-auto mt-2 aspect-square w-full max-w-xs [perspective:1100px] sm:max-w-sm">
+  VUE 3D DE MAGIC CLOCK
+</p>
+      <div className="relative mx-auto aspect-square w-full max-w-xs [perspective:1100px] sm:max-w-sm">
         <div
           className="absolute inset-0 transition-transform duration-150 ease-out [transform-style:preserve-3d]"
           style={{
@@ -116,7 +101,6 @@ export default function MagicCube3D({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        // eslint-disable-next-line jsx-a11y/media-has-caption
                         <video
                           src={seg.mediaUrl!}
                           className="h-full w-full object-cover"
@@ -139,16 +123,16 @@ export default function MagicCube3D({
                       )}
 
                       {/* Petit cercle + icône comme sur Face universelle */}
-                      <div
-                        className={[
-                          "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
-                          isActive
-                            ? "border-brand-500 text-slate-900"
-                            : "border-slate-300 text-slate-700",
-                        ].join(" ")}
-                      >
-                        {faceMediaIcon(seg)}
-                      </div>
+                     <div
+  className={[
+    "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
+    isActive
+      ? "border-brand-500 text-slate-900"   // même logique que Face universelle sélectionnée
+      : "border-slate-300 text-slate-700",  // état neutre
+  ].join(" ")}
+>
+  {faceMediaIcon(seg)}
+</div>
 
                       <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
                         Face {seg.id}
@@ -176,37 +160,11 @@ export default function MagicCube3D({
           })}
         </div>
 
-        {/* Halo global */}
-        <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
-      </div>
-
-      {/* Barre d’action sous le cube */}
-      {onPublish && (
-        <div className="mt-4 flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={isPublishing}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-md hover:bg-slate-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {isPublishing
-              ? "Publication en cours…"
-              : "Publier sur Amazing + My Magic Clock"}
-          </button>
-          <p className="max-w-xs text-center text-[10px] text-slate-500">
-            MVP : ce bouton enverra ton Magic Clock en public sur{" "}
-            <span className="font-semibold">Amazing</span> et le retrouvera en
-            privé dans{" "}
-            <span className="font-semibold">
-              Mes Magic Clock créés · Publiés sur Amazing
-            </span>
-            .
-          </p>
-        </div>
-      )}
+             {/* Halo global */}
+      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
     </div>
-  );
+  </div>
+);
 }
 
 // Placement des faces dans l'espace 3D

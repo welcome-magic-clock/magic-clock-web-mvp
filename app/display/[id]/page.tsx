@@ -2,22 +2,14 @@
 
 import Link from "next/link";
 import MagicDisplayViewer from "../MagicDisplayViewer";
-import { findContentById } from "@/core/domain/repository";
 
 type PageProps = {
   params: { id: string };
 };
 
 export default function MagicDisplayPage({ params }: PageProps) {
-  // ✅ On garde l’ID tel quel, mais on le decode au cas où
-  const rawId = decodeURIComponent(params.id);
-
-  // 🔎 On cherche la carte correspondante dans le feed (Amazing / My Magic Clock)
-  const content = findContentById(rawId);
-
-  const title = content?.title ?? `Magic Display #${rawId}`;
-  const subtitle =
-    "MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard, cette page affichera les formules, sections, temps de pose, etc.";
+  const parsed = Number.parseInt(params.id, 10);
+  const contentId = Number.isFinite(parsed) ? parsed : 0;
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -30,12 +22,16 @@ export default function MagicDisplayPage({ params }: PageProps) {
 
       <section className="mt-4 space-y-4">
         <header>
-          <h1 className="text-xl font-semibold sm:text-2xl">{title}</h1>
-          <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+          <h1 className="text-xl font-semibold sm:text-2xl">
+            Magic Display #{contentId}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            MVP : visualisation pédagogique liée à ce Magic Clock. Plus tard,
+            cette page affichera les formules, sections, temps de pose, etc.
+          </p>
         </header>
 
-        {/* ✅ On passe l'id réel du contenu (string) au viewer */}
-        <MagicDisplayViewer contentId={content?.id ?? rawId} />
+        <MagicDisplayViewer contentId={contentId} />
       </section>
     </main>
   );

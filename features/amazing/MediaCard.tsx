@@ -115,10 +115,11 @@ export default function MediaCard({ item }: Props) {
 
   const creatorName = creator?.name ?? item.user;
   const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
+  const avatar = creator?.avatar ?? item.image;
 
   const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
-  // 🔹 Spécificités Magic Clock système (ours, etc.)
+    // 🔹 Spécificités Magic Clock système (ours, etc.)
   const isSystemUnlockedForAll =
     (item as any).isSystemUnlockedForAll === true;
 
@@ -189,18 +190,8 @@ export default function MediaCard({ item }: Props) {
     ? (beforeUrl as string)
     : null;
 
-   // ---------- Image centrale / avatar créateur ----------
-  const systemAvatar = "/images/magic-clock-bear/avatar.png";
-
-  // avatar logique (Bear pour la carte système, sinon avatar normal ou fallback)
-  const avatar: string =
-    isSystemCard
-      ? systemAvatar
-      : creator?.avatar ?? item.image ?? afterThumb ?? beforeThumb;
-
-  // ce qui est vraiment affiché dans la bulle
-  const centerImage = avatar;
   // ---------- Flags système & certifié ----------
+ 
   const isCertified =
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
@@ -208,7 +199,7 @@ export default function MediaCard({ item }: Props) {
   // ---------- Monétisation & accès ----------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(
+    const [isUnlocked, setIsUnlocked] = useState(
     mode === "FREE" || isSystemUnlockedForAll
   );
   const [lastDecision, setLastDecision] = useState<string | null>(null);
@@ -325,7 +316,7 @@ export default function MediaCard({ item }: Props) {
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
                 <Image
-                  src={centerImage}
+                  src={avatar}
                   alt={creatorName}
                   width={72}
                   height={72}
@@ -354,102 +345,110 @@ export default function MediaCard({ item }: Props) {
               </button>
 
               {menuOpen && (
-                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                  {isSystemCard && isSystemUnlockedForAll ? (
-                    <>
-                      {/* 🟣 MENU SPÉCIAL POUR L’OURS / CARTES SYSTÈME */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMenuOpen(false);
-                          window.location.href = meetHref;
-                        }}
-                      >
-                        Meet me (profil créateur)
-                      </button>
+  <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+    {isSystemCard && isSystemUnlockedForAll ? (
+      <>
+        {/* 🟣 MENU SPÉCIAL POUR L’OURS / CARTES SYSTÈME DÉBLOQUÉES */}
 
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMenuOpen(false);
-                          window.location.href = "/mymagic";
-                        }}
-                      >
-                        Voir dans My Magic Clock
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* 🟣 MENU NORMAL POUR LES AUTRES CARTES */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMenuOpen(false);
-                          window.location.href = meetHref;
-                        }}
-                      >
-                        Meet me (profil créateur)
-                      </button>
+        {/* Meet me ciblé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(false);
+            window.location.href = meetHref;
+          }}
+        >
+          Meet me (profil créateur)
+        </button>
 
-                      {mode === "FREE" && (
-                        <button
-                          type="button"
-                          className="block w-full bg-transparent px-0 py-0 hover:underline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAccess("FREE");
-                          }}
-                          disabled={isLoading === "FREE"}
-                        >
-                          {isLoading === "FREE"
-                            ? "Vérification FREE…"
-                            : "Débloquer (FREE)"}
-                        </button>
-                      )}
+        {/* Lien direct vers My Magic Clock */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(false);
+            window.location.href = "/mymagic";
+          }}
+        >
+          Voir dans My Magic Clock
+        </button>
+      </>
+    ) : (
+      <>
+        {/* 🟣 MENU NORMAL POUR LES AUTRES CARTES */}
 
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("ABO");
-                        }}
-                        disabled={isLoading === "ABO"}
-                      >
-                        {isLoading === "ABO"
-                          ? "Activation Abo…"
-                          : "Activer l’abonnement créateur"}
-                      </button>
+        {/* Meet me ciblé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(false);
+            window.location.href = meetHref;
+          }}
+        >
+          Meet me (profil créateur)
+        </button>
 
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("PPV");
-                        }}
-                        disabled={isLoading === "PPV"}
-                      >
-                        {isLoading === "PPV"
-                          ? "Déblocage PPV…"
-                          : "Débloquer ce contenu en PPV"}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
+        {/* FREE – seulement si contenu en FREE */}
+        {mode === "FREE" && (
+          <button
+            type="button"
+            className="block w-full bg-transparent px-0 py-0 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAccess("FREE");
+            }}
+            disabled={isLoading === "FREE"}
+          >
+            {isLoading === "FREE"
+              ? "Vérification FREE…"
+              : "Débloquer (FREE)"}
+          </button>
+        )}
+
+        {/* Abo – toujours proposé */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAccess("ABO");
+          }}
+          disabled={isLoading === "ABO"}
+        >
+          {isLoading === "ABO"
+            ? "Activation Abo…"
+            : "Activer l’abonnement créateur"}
+        </button>
+
+        {/* PPV */}
+        <button
+          type="button"
+          className="block w-full bg-transparent px-0 py-0 hover:underline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAccess("PPV");
+          }}
+          disabled={isLoading === "PPV"}
+        >
+          {isLoading === "PPV"
+            ? "Déblocage PPV…"
+            : "Débloquer ce contenu en PPV"}
+        </button>
+      </>
+    )}
+  </div>
+)}
             </div>
           </div>
         </Link>
