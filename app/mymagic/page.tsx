@@ -1,7 +1,7 @@
 // app/mymagic/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MyMagicToolbar from "@/components/mymagic/MyMagicToolbar";
 import MediaCard from "@/features/amazing/MediaCard";
@@ -13,7 +13,7 @@ import {
 } from "@/core/domain/magicStudioBridge";
 import { Heart, Lock, Unlock, ArrowUpRight } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
-import { useEffect, useState, useRef, Suspense } from "react";
+
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type MyMagicTab = "creations" | "bibliotheque";
