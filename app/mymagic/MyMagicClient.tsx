@@ -101,7 +101,8 @@ function normalizeTab(raw: string | null): MyMagicTab {
   return "creations";
 }
 
-export default function MyMagicClockPage() {
+export default function MyMagicClient() {
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -273,9 +274,7 @@ export default function MyMagicClockPage() {
       </header>
 
       {/* 🔵 Toolbar existante (on la garde) */}
-    <Suspense fallback={<div className="h-10" />}>
-  <MyMagicToolbar />
-</Suspense>
+    <MyMagicToolbar />
 
       {/* ✅ Onglets MVP (ceux-là pilotent réellement la page) */}
       <div className="mb-6 flex items-center gap-2">
