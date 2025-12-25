@@ -214,20 +214,19 @@ export function magicClockWorkToFeedCard(work: MagicClockWork): FeedCard {
     work.studio.before?.url ??
     "/images/examples/balayage-after.jpg";
 
-  const beforeUrl =
+  // 🔧 ICI : on renvoie undefined au lieu de null
+  const beforeUrl: string | undefined =
     work.studio.before?.thumbnailUrl ??
     work.studio.before?.url ??
-    null;
+    undefined;
 
-  const afterUrl =
+  const afterUrl: string | undefined =
     work.studio.after?.thumbnailUrl ??
     work.studio.after?.url ??
-    null;
+    undefined;
 
   return {
-    // 🛡️ Hack anti-Kraken TypeScript :
-    // FeedCard.id est typé number, mais notre work.id est une string.
-    // Le cast ne change rien au runtime, ça reste la string "mcw-onboarding-bear-001".
+    // 🛡️ Hack anti-Kraken TypeScript pour l'id (FeedCard.id est number)
     id: work.id as unknown as number,
 
     title: work.title,
