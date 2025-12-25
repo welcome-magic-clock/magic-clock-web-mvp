@@ -10,13 +10,15 @@ type PageProps = {
 
 function formatAccessLabel(access: FeedAccess): string {
   if (access === "FREE") return "FREE";
-  if (access === "ABO") return "Abonnement"; // ABO = abonnement côté feed
+  if (access === "ABO") return "Abonnement"; // ✅ ABO = abonnement côté feed
   if (access === "PPV") return "PayPerView";
   return "FREE";
 }
 
 export default function ContentDetailPage({ params }: PageProps) {
   const numericId = Number(params.id);
+
+  // Pour l’instant, findContentById travaille avec des IDs numériques.
   const card = Number.isNaN(numericId)
     ? undefined
     : findContentById(numericId);
@@ -56,7 +58,9 @@ export default function ContentDetailPage({ params }: PageProps) {
         <div className="flex flex-wrap items-center gap-2">
           {/* Bouton principal vers My Magic Clock */}
           <Link
-            href="/mymagic"
+            href={`/mymagic?source=p-detail&id=${encodeURIComponent(
+              String(card.id)
+            )}`}
             className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800"
           >
             Ouvrir dans My Magic Clock
@@ -126,7 +130,7 @@ export default function ContentDetailPage({ params }: PageProps) {
         <aside className="space-y-4">
           {/* Accès & stats */}
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm">
-            <p className="text-xs font-semibold text-slate-500 mb-1">
+            <p className="mb-1 text-xs font-semibold text-slate-500">
               Accès
             </p>
             <p className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">
@@ -143,13 +147,13 @@ export default function ContentDetailPage({ params }: PageProps) {
 
           {/* Placeholder pour le cube 3D (future intégration Magic Display) */}
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-500">
-            <p className="font-medium text-slate-700 mb-1">
+            <p className="mb-1 font-medium text-slate-700">
               Magic Display (à venir)
             </p>
             <p>
-              Ici s’affichera le cube 3D du Magic Clock sélectionné : rotation,
-              faces pédagogiques, aiguilles… exactement ce que nous avons
-              défini pour le Bear et les autres œuvres.
+              Ici s’affichera le cube 3D du Magic Clock sélectionné :
+              rotation, faces pédagogiques, aiguilles… exactement ce que nous
+              avons défini pour le Bear et les autres œuvres.
             </p>
             <p className="mt-2">
               Pour l’instant, ce bloc est une maquette statique pour poser la
