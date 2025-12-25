@@ -460,13 +460,14 @@ export default function MyMagicClient() {
                   <div className="space-y-2">
                     <MediaCard item={item} />
 
-               <button
+              <button
   type="button"
-  className="relative z-50 block text-left text-[11px] font-medium text-brand-600 hover:underline"
+  className="relative z-[9999] pointer-events-auto block text-left text-[11px] font-medium text-brand-600 hover:underline"
   onClick={(e) => {
     e.preventDefault();
     e.stopPropagation();
-    window.location.href = `/display/${encodeURIComponent(String(item.id))}`;
+    alert("CLICK OK ✅");
+    window.location.assign(`/display/${encodeURIComponent(String(item.id))}`);
   }}
 >
   Ouvrir le Magic Display (MVP)
