@@ -1,109 +1,49 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Heart,
-  ArrowUpRight,
-  Lock,
-  Unlock,
-  Loader2,
-  BadgeCheck,
-} from "lucide-react";
+import { Heart, ArrowUpRight, Lock, Unlock, Loader2 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
-
-type PublishMode = "FREE" | "SUB" | "PPV";
-type AccessKind = "FREE" | "ABO" | "PPV";
 
 type Props = {
   item: FeedCard;
 };
 
-const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
-const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
+// Mode de publication “normalisé” (aligné avec /studio)
+type PublishMode = "FREE" | "SUB" | "PPV";
 
-function isVideo(url: string | null | undefined) {
-  if (!url) return false;
+// Type local pour les actions de la flèche
+type AccessKind = "FREE" | "ABO" | "PPV";
 
-  if (url.startsWith("data:video/")) return true;
-  if (url.startsWith("blob:")) return true;
-
-  const clean = url.split("?")[0].toLowerCase();
-
-  return (
-    clean.endsWith(".mp4") ||
-    clean.endsWith(".webm") ||
-    clean.endsWith(".ogg")
-  );
+function isVideo(url: string) {
+  return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-type AutoPlayVideoProps = {
-  src: string;
-  poster?: string;
-  alt?: string;
-};
-
-function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const videoEl = videoRef.current;
-    const containerEl = containerRef.current;
-    if (!videoEl || !containerEl) return;
-
-    videoEl.muted = true;
-    videoEl.playsInline = true;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!videoEl) return;
-
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            videoEl.play().catch(() => {});
-          } else {
-            videoEl.pause();
-            try {
-              videoEl.currentTime = 0;
-            } catch {
-              // ignore
-            }
-          }
-        });
-      },
-      { threshold: [0.6] }
-    );
-
-    observer.observe(containerEl);
-    return () => observer.disconnect();
-  }, [src]);
-
+function MediaSlot({ src, alt }: { src: string; alt: string }) {
   return (
-    <div ref={containerRef} className="relative h-full w-full">
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
-        className="h-full w-full object-cover"
-        loop
-        muted
-        playsInline
-      >
-        {alt ? <track kind="descriptions" label={alt} /> : null}
-      </video>
+    <div className="relative h-full w-full">
+      {isVideo(src) ? (
+        <video
+          src={src}
+          className="h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : (
+        <Image src={src} alt={alt} fill className="object-cover" />
+      )}
     </div>
   );
 }
 
 export default function MediaCard({ item }: Props) {
-  // ---------- Créateur & avatar via Meet me ----------
-  const cleanUserHandle = item.user.startsWith("@")
-    ? item.user.slice(1)
-    : item.user;
+  // Avatar depuis Meet me (on ignore la présence ou non du @)
+  const cleanUserHandle =
+    item.user.startsWith("@") ? item.user.slice(1) : item.user;
 
   const creator =
     CREATORS.find((c) => {
@@ -113,107 +53,29 @@ export default function MediaCard({ item }: Props) {
       return cleanCreatorHandle === cleanUserHandle;
     }) ?? null;
 
-  const creatorName = creator?.name ?? item.user;
-  const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
   const avatar = creator?.avatar ?? item.image;
 
-  const meetHref = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
+  // 🔗 Lien direct vers Meet me pour ce créateur
+  const rawHandleForMeet = creator?.handle ?? `@${cleanUserHandle}`;
+  const meetHref = `/meet?creator=${encodeURIComponent(rawHandleForMeet)}`;
 
-  // ---------- Mode, prix, hashtags, stats ----------
-  const modeFromItem = (item as any).mode as PublishMode | undefined;
+  // Avant / Après réels fournis par le feed (avec fallback)
+  const beforeUrl = item.beforeUrl ?? item.image;
+  const afterUrl = item.afterUrl ?? item.image;
 
-  const mode: PublishMode =
-    modeFromItem ??
-    (item.access === "PPV"
+  // Normalisation du mode d’accès (Studio ↔ Amazing)
+  const publishMode: PublishMode =
+    item.access === "PPV"
       ? "PPV"
       : item.access === "ABO"
       ? "SUB"
-      : "FREE");
+      : "FREE";
 
-  const ppvPrice: number | null =
-    typeof (item as any).ppvPrice === "number"
-      ? ((item as any).ppvPrice as number)
-      : null;
-
-  const rawHashtags =
-    (item as any).hashtags && Array.isArray((item as any).hashtags)
-      ? ((item as any).hashtags as string[])
-      : [];
-
-  const displayHashtags =
-    rawHashtags.length > 0 ? rawHashtags : ["#coiffure", "#magicclock"];
-
-  const title = item.title ?? "Magic Clock";
-
-  const views =
-    typeof item.views === "number"
-      ? item.views
-      : typeof (item as any).stats?.views === "number"
-      ? ((item as any).stats.views as number)
-      : 0;
-
-  const likes =
-    typeof (item as any).likes === "number"
-      ? ((item as any).likes as number)
-      : typeof (item as any).stats?.likes === "number"
-      ? ((item as any).stats.likes as number)
-      : 0;
-
-  // ---------- Médias : thumbnails + vidéo éventuelle ----------
-  const beforeThumb: string =
-    ((item as any).beforeThumbnail as string | undefined) ??
-    ((item as any).beforeThumb as string | undefined) ??
-    (item.beforeUrl as string | undefined) ??
-    item.image ??
-    FALLBACK_BEFORE;
-
-  const afterThumb: string =
-    ((item as any).afterThumbnail as string | undefined) ??
-    ((item as any).afterThumb as string | undefined) ??
-    (item.afterUrl as string | undefined) ??
-    item.image ??
-    FALLBACK_AFTER;
-
-  const beforeUrl = item.beforeUrl;
-  const afterUrl = item.afterUrl;
-
-  const heroVideoSrc: string | null = isVideo(afterUrl)
-    ? (afterUrl as string)
-    : isVideo(beforeUrl)
-    ? (beforeUrl as string)
-    : null;
-
-  // ---------- Flags système & certifié ----------
-  const isSystemFeatured =
-    (item as any).isSystemFeatured === true ||
-    item.id === "mcw-onboarding-bear-001";
-
-  const isCertified =
-    (item as any).isCertified === true ||
-    (creator && (creator as any).isCertified === true);
-
-  // ---------- Monétisation & accès ----------
+  // État d’accès local (simulation UI)
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(mode === "FREE");
+  const [isUnlocked, setIsUnlocked] = useState(publishMode === "FREE");
   const [lastDecision, setLastDecision] = useState<string | null>(null);
-
-  const accessLabelBase =
-    mode === "FREE"
-      ? "FREE"
-      : mode === "SUB"
-      ? "Abonnement"
-      : "Pay Per View";
-
-  const accessLabel = isUnlocked
-    ? mode === "FREE"
-      ? "FREE"
-      : mode === "SUB"
-      ? "Abonnement actif"
-      : "PPV débloqué"
-    : accessLabelBase;
-
-  const isLocked = !isUnlocked && mode !== "FREE";
 
   async function handleAccess(kind: AccessKind) {
     setIsLoading(kind);
@@ -250,8 +112,8 @@ export default function MediaCard({ item }: Props) {
       if (data.decision === "ALLOWED") {
         setIsUnlocked(true);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setLastDecision("ERROR");
     } finally {
       setIsLoading(null);
@@ -259,232 +121,185 @@ export default function MediaCard({ item }: Props) {
     }
   }
 
-  const detailHref =
-    typeof item.id === "string" || typeof item.id === "number"
-      ? `/display/${item.id}`
-      : "/display";
+  const accessLabelBase =
+    publishMode === "FREE"
+      ? "FREE"
+      : publishMode === "SUB"
+      ? "Abonnement"
+      : "Pay Per View";
+
+  const accessLabel = isUnlocked
+    ? publishMode === "FREE"
+      ? "FREE"
+      : publishMode === "SUB"
+      ? "Abonnement actif"
+      : "PPV débloqué"
+    : accessLabelBase;
+
+  const isLocked = !isUnlocked && publishMode !== "FREE";
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
-      {/* Zone média (image/vidéo + avatar + menu flèche) */}
+      {/* Canevas Magic Studio : Avant / Après (même logique que /studio) */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-        <Link href={detailHref} className="relative block">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
-            {heroVideoSrc ? (
-              <AutoPlayVideo
-                src={heroVideoSrc}
-                poster={afterThumb || beforeThumb}
-                alt={title}
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+          {/* 2 colonnes Avant / Après qui remplissent tout le canevas */}
+          <div className="grid h-full w-full grid-cols-2">
+            <MediaSlot src={beforeUrl} alt={`${item.title} - Avant`} />
+            <MediaSlot src={afterUrl} alt={`${item.title} - Après`} />
+          </div>
+
+          {/* Fine ligne blanche au centre */}
+          <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+
+          {/* Avatar centré (clic → Meet me ciblé) */}
+          <Link
+            href={meetHref}
+            className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+            aria-label={`Voir le profil de ${creator?.name ?? item.user}`}
+          >
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
+              <Image
+                src={avatar}
+                alt={creator?.name ?? item.user}
+                width={72}
+                height={72}
+                className="h-[72px] w-[72px] rounded-full object-cover"
               />
-            ) : (
-              <div className="grid h-full w-full grid-cols-2">
-                {/* Avant */}
-                <div className="relative h-full w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={beforeThumb}
-                    alt={`${title} - Avant`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                {/* Après */}
-                <div className="relative h-full w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={afterThumb}
-                    alt={`${title} - Après`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+            </div>
+          </Link>
 
-                {/* Ligne centrale */}
-                <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
-              </div>
-            )}
-
-            {/* Avatar centré (clic → Meet me) */}
-            <Link
-              href={meetHref}
-              className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-              aria-label={`Voir le profil de ${creatorName}`}
+          {/* Flèche + menu FREE / Abo / PPV (texte overlay) */}
+          <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center drop-shadow-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen((v) => !v);
+              }}
+              aria-label="Options d’accès"
             >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                <Image
-                  src={avatar}
-                  alt={creatorName}
-                  width={72}
-                  height={72}
-                  className="h-[72px] w-[72px] rounded-full object-cover"
-                />
-              </div>
-            </Link>
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ArrowUpRight className="h-5 w-5" />
+              )}
+            </button>
 
-            {/* Flèche + mini-menu FREE / Abo / PPV */}
-            <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-              <button
-                type="button"
-                className="flex h-8 w-8 items-center justify-center drop-shadow-md"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMenuOpen((v) => !v);
-                }}
-                aria-label="Options d’accès"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ArrowUpRight className="h-5 w-5" />
-                )}
-              </button>
+            {menuOpen && (
+              <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+                {/* Meet me ciblé */}
+                <button
+                  type="button"
+                  className="block w-full bg-transparent px-0 py-0 hover:underline"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    window.location.href = meetHref;
+                  }}
+                >
+                  Meet me (profil créateur)
+                </button>
 
-              {menuOpen && (
-                <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
-                  {/* Meet me ciblé */}
+                {/* FREE – seulement si le contenu est publié en FREE */}
+                {publishMode === "FREE" && (
                   <button
                     type="button"
                     className="block w-full bg-transparent px-0 py-0 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      window.location.href = meetHref;
-                    }}
+                    onClick={() => handleAccess("FREE")}
+                    disabled={isLoading === "FREE"}
                   >
-                    Meet me (profil créateur)
+                    {isLoading === "FREE"
+                      ? "Vérification FREE…"
+                      : "Débloquer (FREE)"}
                   </button>
+                )}
 
-                  {/* Pour les contenus système (ours onboarding), on s’arrête là */}
-                  {!isSystemFeatured && (
-                    <>
-                      {/* FREE – seulement si contenu en FREE */}
-                      {mode === "FREE" && (
-                        <button
-                          type="button"
-                          className="block w-full bg-transparent px-0 py-0 hover:underline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAccess("FREE");
-                          }}
-                          disabled={isLoading === "FREE"}
-                        >
-                          {isLoading === "FREE"
-                            ? "Vérification FREE…"
-                            : "Débloquer (FREE)"}
-                        </button>
-                      )}
+                {/* Abo – toujours proposé (abonnement créateur) */}
+                <button
+                  type="button"
+                  className="block w-full bg-transparent px-0 py-0 hover:underline"
+                  onClick={() => handleAccess("ABO")}
+                  disabled={isLoading === "ABO"}
+                >
+                  {isLoading === "ABO"
+                    ? "Activation Abo…"
+                    : "Activer l’abonnement créateur"}
+                </button>
 
-                      {/* Abo – toujours proposé */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("ABO");
-                        }}
-                        disabled={isLoading === "ABO"}
-                      >
-                        {isLoading === "ABO"
-                          ? "Activation Abo…"
-                          : "Activer l’abonnement créateur"}
-                      </button>
-
-                      {/* PPV */}
-                      <button
-                        type="button"
-                        className="block w-full bg-transparent px-0 py-0 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAccess("PPV");
-                        }}
-                        disabled={isLoading === "PPV"}
-                      >
-                        {isLoading === "PPV"
-                          ? "Déblocage PPV…"
-                          : "Débloquer ce contenu en PPV"}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+                {/* PPV – proposé en bas du menu */}
+                <button
+                  type="button"
+                  className="block w-full bg-transparent px-0 py-0 hover:underline"
+                  onClick={() => handleAccess("PPV")}
+                  disabled={isLoading === "PPV"}
+                >
+                  {isLoading === "PPV"
+                    ? "Déblocage PPV…"
+                    : "Débloquer ce contenu en PPV"}
+                </button>
+              </div>
+            )}
           </div>
-        </Link>
+        </div>
       </div>
 
-      {/* Bas de carte : créateur + stats + hashtags */}
+      {/* Bas de carte : 2 lignes ultra épurées */}
       <div className="mt-3 space-y-1 text-xs">
-        {/* Ligne 1 : créateur · pastille certifié · vues · likes · accès */}
+        {/* Ligne 1 : créateur · vues · likes · statut accès */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
           <Link href={meetHref} className="font-medium hover:underline">
-            {creatorName}
+            {creator?.name ?? item.user}
           </Link>
-          <Link href={meetHref} className="text-slate-400 hover:underline">
-            {creatorHandle}
+          <Link
+            href={meetHref}
+            className="text-slate-400 hover:underline"
+          >
+            @{item.user}
           </Link>
-
-          {isCertified && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
-              <BadgeCheck className="h-3 w-3" aria-hidden="true" />
-              <span>Certifié</span>
-            </span>
-          )}
 
           <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
           <span>
             <span className="font-medium">
-              {views.toLocaleString("fr-CH")}
+              {item.views.toLocaleString()}
             </span>{" "}
             vues
           </span>
 
           <span className="flex items-center gap-1">
             <Heart className="h-3 w-3" />
-            <span>{likes.toLocaleString("fr-CH")}</span>
+            <span>60</span>
           </span>
 
-          {mode && (
-            <span className="flex items-center gap-1">
-              {isLocked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Unlock className="h-3 w-3" />
-              )}
-              <span>{accessLabel}</span>
-              {mode === "PPV" && ppvPrice != null && (
-                <span className="ml-1 text-[11px] text-slate-500">
-                  · {ppvPrice.toFixed(2)} CHF
-                </span>
-              )}
-            </span>
-          )}
+          <span className="flex items-center gap-1">
+            {isLocked ? (
+              <Lock className="h-3 w-3" />
+            ) : (
+              <Unlock className="h-3 w-3" />
+            )}
+            <span>{accessLabel}</span>
+          </span>
         </div>
 
         {/* Ligne 2 : titre + hashtags */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-          {title && (
-            <span className="font-medium text-slate-800 line-clamp-2">
-              {title}
+          {item.title && (
+            <span className="font-medium text-slate-800">
+              {item.title}
             </span>
           )}
-
-          {displayHashtags.map((tag) => (
-            <span key={tag} className="text-brand-600">
-              {tag}
-            </span>
-          ))}
+          <span className="text-brand-600">#coiffure</span>
+          <span className="text-brand-600">#color</span>
         </div>
-
-        {lastDecision && (
-          <p className="mt-1 text-[10px] text-slate-400">
-            Décision accès : {lastDecision}
-          </p>
-        )}
       </div>
+
+      {/* Debug léger : décision access renvoyée par le backend */}
+      {lastDecision && (
+        <p className="mt-1 text-[10px] text-slate-400">
+          Décision accès : {lastDecision}
+        </p>
+      )}
     </article>
   );
 }

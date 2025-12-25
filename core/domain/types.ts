@@ -17,29 +17,16 @@ export type Creator = {
   specialties?: string[]; // ex. ["Balayage", "Blond froid"]
 };
 
-// 🔹 Alias dédié pour le flux Amazing (même union que AccessKind)
-export type FeedAccess = "FREE" | "ABO" | "PPV";
-
 // Carte du flux Amazing / contenus Magic Clock
 export type FeedCard = {
-  id: string | number;
+  id: number;
   title: string;
-  image: string;              // image de couverture principale
-
-  // AVANT / APRÈS (optionnels pour compat mocks)
-  beforeUrl?: string | null;
-  afterUrl?: string | null;
-
-  user: string;               // handle (avec ou sans @, on nettoie dans MediaCard)
-  access: FeedAccess;         // "FREE" | "ABO" | "PPV"
+  user: string;      // handle du créateur (ex. "@sofia_rivera")
   views: number;
+  image: string;     // image de couverture (souvent l'APRÈS)
+  access: Access;    // "FREE" | "ABO" | "PPV"
 
-  // Champs optionnels (pas obligatoires pour les anciens mocks)
-  likes?: number;
-  creatorName?: string;
-  creatorHandle?: string;
-  creatorAvatar?: string;
-  hashtags?: string[];
-  isCertified?: boolean;      // ✅ pastille compte certifié
-  isSystemFeatured?: boolean; // ⭐ contenu système (ours onboarding, etc.)
+  // 👇 nouveaux champs optionnels pour vrais AVANT / APRÈS
+  beforeUrl?: string; // chemin image AVANT, ex. "/mp-1-before.png"
+  afterUrl?: string;  // chemin image APRÈS, ex. "/mp-1-after.png"
 };

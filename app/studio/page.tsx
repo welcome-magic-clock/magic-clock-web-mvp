@@ -13,11 +13,10 @@ import {
 type MediaKind = "image" | "video";
 
 type MediaState = {
-  kind: MediaKind | null;      // "image" | "video"
-  url: string | null;          // dataURL locale
-  duration: number | null;     // durée vidéo en secondes
-  coverTime: number | null;    // seconde choisie pour la couverture vidéo
-  thumbnailUrl: string | null; // image de couverture (dataURL)
+  kind: MediaKind | null;
+  url: string | null;
+  duration?: number | null;
+  coverTime?: number | null; // temps choisi pour la couverture vidéo (en secondes)
 };
 
 type PublishMode = "FREE" | "SUB" | "PPV";
@@ -39,7 +38,6 @@ const EMPTY_MEDIA: MediaState = {
   url: null,
   duration: null,
   coverTime: null,
-  thumbnailUrl: null,
 };
 
 const STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
@@ -128,55 +126,48 @@ export default function MagicStudioPage() {
     }
   }
 
-  function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-    side: Side
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+ function handleFileChange(
+  event: React.ChangeEvent<HTMLInputElement>,
+  side: Side
+) {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
+  const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
-    const reader = new FileReader();
+  const reader = new FileReader();
 
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result !== "string") return;
+  reader.onload = (e) => {
+    const result = e.target?.result;
+    if (typeof result !== "string") return;
 
-      const state: MediaState = {
-        kind,
-        url: result, // dataURL compatible partout
-        duration: null,
-        coverTime: null,
-        // Pour une image, on peut utiliser directement l'image comme thumbnail
-        thumbnailUrl: kind === "image" ? result : null,
-      };
-
-      if (side === "before") {
-        setBefore(state);
-      } else {
-        setAfter(state);
-      }
+    const state: MediaState = {
+      kind,
+      url: result,          // ✅ data URL compatible partout
+      duration: null,
+      coverTime: null,
     };
 
-    // On lit toujours en dataURL, image ou vidéo
-    reader.readAsDataURL(file);
+    if (side === "before") {
+      setBefore(state);
+    } else {
+      setAfter(state);
+    }
+  };
 
-    // permet de re-sélectionner le même fichier si besoin
-    event.target.value = "";
-  }
+  // On lit toujours en dataURL, que ce soit image ou vidéo (OK pour les deux)
+  reader.readAsDataURL(file);
+
+  // permet de re-sélectionner le même fichier si besoin
+  event.target.value = "";
+}
 
   function handleLoadedMetadata(
     side: Side,
     event: React.SyntheticEvent<HTMLVideoElement, Event>
   ) {
     const duration = event.currentTarget.duration || 0;
-    updateMedia(side, (prev) => ({
-      ...prev,
-      duration,
-      // par défaut on met la coverTime au milieu de la vidéo
-      coverTime: prev.coverTime ?? (duration > 0 ? duration / 2 : null),
-    }));
+    updateMedia(side, (prev) => ({ ...prev, duration }));
   }
 
   // ------------- Pont vers Magic Display -----------------
@@ -197,26 +188,14 @@ export default function MagicStudioPage() {
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-   // helper MediaState -> payload (avec coverTime + thumbnailUrl)
-const mapMedia = (
-  media: MediaState
-): StudioForwardPayload["before"] => {
-  if (!media.url || !media.kind) return null;
-
-  const type = media.kind === "video" ? "video" : "photo";
-
-  const thumbnailUrl =
-    media.kind === "image"
-      ? media.url
-      : media.thumbnailUrl ?? null;
-
-  return {
-    type,
-    url: media.url,
-    coverTime: media.coverTime ?? null,
-    thumbnailUrl,
-  };
-};
+    // helper MediaState -> payload
+    const mapMedia = (
+      media: MediaState
+    ): StudioForwardPayload["before"] => {
+      if (!media.url || !media.kind) return null;
+      const type = media.kind === "video" ? "video" : "photo";
+      return { type, url: media.url };
+    };
 
     // 1) Payload complet pour Magic Display
     const payload: StudioForwardPayload = {
@@ -285,53 +264,14 @@ const mapMedia = (
   function handleCoverSliderChange(event: React.ChangeEvent<HTMLInputElement>) {
     if (!selectingCoverFor) return;
     const percent = Number(event.target.value); // 0 → 100
-
     const { media, videoRef } = currentMediaForCover();
-    const videoEl = videoRef.current;
+    if (!media || media.kind !== "video" || !media.duration || !videoRef.current)
+      return;
 
-    if (!media || media.kind !== "video" || !videoEl) return;
+    const time = (media.duration * percent) / 100;
+    videoRef.current.currentTime = time;
 
-    const duration = media.duration ?? videoEl.duration;
-    if (!duration || Number.isNaN(duration) || duration === Infinity) return;
-
-    const time = (duration * percent) / 100;
-
-    try {
-      videoEl.pause();
-      videoEl.currentTime = time;
-    } catch (error) {
-      console.error("Seek vidéo pour la couverture a échoué", error);
-    }
-
-    updateMedia(selectingCoverFor, (prev) => ({
-      ...prev,
-      coverTime: time,
-    }));
-  }
-
-  // Capture de la frame actuelle en thumbnail (image)
-  function captureCoverThumbnail(side: Side) {
-    const { videoRef } = currentMediaForCover();
-    const videoEl = videoRef.current;
-    if (!videoEl) return;
-
-    const width = videoEl.videoWidth || 720;
-    const height = videoEl.videoHeight || 1280;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(videoEl, 0, 0, width, height);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-
-    updateMedia(side, (prev) => ({
-      ...prev,
-      thumbnailUrl: dataUrl,
-    }));
+    updateMedia(selectingCoverFor, (prev) => ({ ...prev, coverTime: time }));
   }
 
   const coverSliderValue = (() => {
@@ -366,9 +306,7 @@ const mapMedia = (
               type="button"
               onClick={() => setCanvasFormat("portrait")}
               className={`rounded-full px-4 py-1 transition ${
-                isPortrait
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500"
+                isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
               }`}
             >
               Portrait
@@ -540,12 +478,7 @@ const mapMedia = (
             </div>
             <button
               type="button"
-              onClick={() => {
-                if (selectingCoverFor) {
-                  captureCoverThumbnail(selectingCoverFor);
-                }
-                setSelectingCoverFor(null);
-              }}
+              onClick={() => setSelectingCoverFor(null)}
               className="mt-2 inline-flex rounded-full bg-slate-800 px-3 py-1 text-[11px] font-semibold text-white"
             >
               Terminer le choix de couverture
@@ -605,9 +538,7 @@ const mapMedia = (
                     </button>
                   ))}
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  {modeDescription}
-                </p>
+                <p className="text-[11px] text-slate-500">{modeDescription}</p>
               </div>
 
               <button
