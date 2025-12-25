@@ -179,7 +179,8 @@ export default function MagicStudioPage() {
     }));
   }
 
-   // ------------- Pont vers Magic Display -----------------
+  // ------------- Pont vers Magic Display -----------------
+
   function handleGoToDisplay() {
     const params = new URLSearchParams();
 
@@ -196,24 +197,28 @@ export default function MagicStudioPage() {
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-    // helper MediaState -> payload (MVP : type + url + coverTime)
-    const mapMedia = (
-      media: MediaState
-    ): StudioForwardPayload["before"] => {
-      if (!media.url || !media.kind) {
-        return null;
-      }
+   // helper MediaState -> payload (avec coverTime + thumbnailUrl)
+const mapMedia = (
+  media: MediaState
+): StudioForwardPayload["before"] => {
+  if (!media.url || !media.kind) return null;
 
-      const type = media.kind === "video" ? "video" : "photo";
+  const type = media.kind === "video" ? "video" : "photo";
 
-      return {
-        type,
-        url: media.url,
-        coverTime: media.coverTime ?? null,
-      };
-    };
+  const thumbnailUrl =
+    media.kind === "image"
+      ? media.url
+      : media.thumbnailUrl ?? null;
 
-    // 1) Payload complet pour Magic Display (stocké en localStorage)
+  return {
+    type,
+    url: media.url,
+    coverTime: media.coverTime ?? null,
+    thumbnailUrl,
+  };
+};
+
+    // 1) Payload complet pour Magic Display
     const payload: StudioForwardPayload = {
       title: cleanTitle,
       mode,
@@ -223,13 +228,14 @@ export default function MagicStudioPage() {
       after: mapMedia(after),
     };
 
+    // 2) Sauvegarde dans localStorage
     try {
       window.localStorage.setItem(STUDIO_FORWARD_KEY, JSON.stringify(payload));
     } catch (error) {
       console.error("Failed to persist Magic Studio payload", error);
     }
 
-    // 2) Query params comme fallback / partage
+    // 3) Query params comme avant (fallback, SEO, partage)
     if (cleanTitle) {
       params.set("title", cleanTitle);
     }
@@ -244,7 +250,6 @@ export default function MagicStudioPage() {
       params.set("ppvPrice", ppvPrice.toFixed(2));
     }
 
-    // 3) Navigation vers Magic Display
     router.push(`/magic-display?${params.toString()}`);
   }
 

@@ -18,7 +18,7 @@ import {
   ArrowUpRight,
   Lock,
   Unlock,
-  Heart, // ❤️ ajouté
+  Heart,
 } from "lucide-react";
 import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
@@ -261,13 +261,9 @@ function renderSegmentIcon(seg: Segment) {
 function isVideo(url: string) {
   if (!url) return false;
 
-  // data:video/... (base64 depuis FileReader)
   if (url.startsWith("data:video/")) return true;
-
-  // blob:... (URLs temporaires du navigateur, au cas où)
   if (url.startsWith("blob:")) return true;
 
-  // Nettoie la query (?foo=bar) pour les URLs R2
   const clean = url.split("?")[0].toLowerCase();
 
   return (
@@ -350,18 +346,22 @@ export default function MagicDisplayClient() {
     ? creatorHandleRaw
     : `@${creatorHandleRaw}`;
 
-// 🔁 Payload complet Magic Studio (localStorage)
-const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
-const [studioAfterUrl, setStudioAfterUrl] = useState<string | null>(null);
-const [studioBeforeCover, setStudioBeforeCover] = useState<number | null>(null);
-const [studioAfterCover, setStudioAfterCover] = useState<number | null>(null);
-const [studioBeforeThumb, setStudioBeforeThumb] = useState<string | null>(null);
-const [studioAfterThumb, setStudioAfterThumb] = useState<string | null>(null);
+  // 🔁 Payload complet Magic Studio (localStorage)
+  const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
+  const [studioAfterUrl, setStudioAfterUrl] = useState<string | null>(null);
+  const [studioBeforeCover, setStudioBeforeCover] =
+    useState<number | null>(null);
+  const [studioAfterCover, setStudioAfterCover] =
+    useState<number | null>(null);
+  const [studioBeforeThumb, setStudioBeforeThumb] = useState<string | null>(
+    null,
+  );
+  const [studioAfterThumb, setStudioAfterThumb] = useState<string | null>(null);
 
-const [bridgeTitle, setBridgeTitle] = useState("");
-const [bridgeMode, setBridgeMode] = useState<PublishMode | null>(null);
-const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
-const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
+  const [bridgeTitle, setBridgeTitle] = useState("");
+  const [bridgeMode, setBridgeMode] = useState<PublishMode | null>(null);
+  const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
+  const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -370,23 +370,26 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
       const payload = JSON.parse(raw) as StudioForwardPayload;
 
-      // BEFORE
       if (payload.before?.url) {
         setStudioBeforeUrl(payload.before.url);
         if (typeof payload.before.coverTime === "number") {
           setStudioBeforeCover(payload.before.coverTime);
         }
       }
+      if (payload.before?.thumbnailUrl) {
+        setStudioBeforeThumb(payload.before.thumbnailUrl);
+      }
 
-      // AFTER
       if (payload.after?.url) {
         setStudioAfterUrl(payload.after.url);
         if (typeof payload.after.coverTime === "number") {
           setStudioAfterCover(payload.after.coverTime);
         }
       }
+      if (payload.after?.thumbnailUrl) {
+        setStudioAfterThumb(payload.after.thumbnailUrl);
+      }
 
-      // META
       if (payload.title) setBridgeTitle(payload.title);
       if (payload.mode) setBridgeMode(payload.mode as PublishMode);
       if (typeof payload.ppvPrice === "number") {
@@ -432,6 +435,9 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
   const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
+
+  // 🔵 État de publication (bouton sous le cube)
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // 📥 inputs cachés pour les médias
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -587,14 +593,18 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
       </main>
     );
   }
-  
-// Fallback images si rien venant du Studio
+
+  // Fallback images si rien venant du Studio
   const beforePreview =
+    studioBeforeThumb ??
+    studioAfterThumb ??
     studioBeforeUrl ??
     studioAfterUrl ??
     FALLBACK_BEFORE;
 
   const afterPreview =
+    studioAfterThumb ??
+    studioBeforeThumb ??
     studioAfterUrl ??
     studioBeforeUrl ??
     FALLBACK_AFTER;
@@ -602,6 +612,16 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
   // Stats mock pour l’aperçu public
   const mockViews = 0;
   const mockLikes = 0;
+
+  const handlePublishFromCube = () => {
+    // MVP : même comportement que “Voir dans My Magic Clock”
+    setIsPublishing(true);
+    try {
+      router.push("/mymagic?tab=created&source=magic-display");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -631,7 +651,7 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
           </button>
         </div>
 
-              {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = My Magic Clock */}
+        {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = My Magic Clock */}
         <section className="mb-2">
           <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
             <button
@@ -645,15 +665,14 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
                   <div className="grid h-full w-full grid-cols-2">
-                  <StudioMediaSlot
-  src={beforePreview}
-  alt={`${effectiveTitle || "Magic Studio"} - Avant`}
-/>
-
-<StudioMediaSlot
-  src={afterPreview}
-  alt={`${effectiveTitle || "Magic Studio"} - Après`}
-/>
+                    <StudioMediaSlot
+                      src={beforePreview}
+                      alt={`${effectiveTitle || "Magic Studio"} - Avant`}
+                    />
+                    <StudioMediaSlot
+                      src={afterPreview}
+                      alt={`${effectiveTitle || "Magic Studio"} - Après`}
+                    />
                   </div>
 
                   {/* Ligne centrale */}
@@ -801,7 +820,9 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
             <MagicCube3D
               segments={segments}
               selectedId={selectedId}
-              onSelect={(id) => handleCubeFaceSelect(id)}
+              onSelect={handleCubeFaceSelect}
+              onPublish={handlePublishFromCube}
+              isPublishing={isPublishing}
             />
 
             {/* Liste des faces */}
@@ -921,7 +942,7 @@ const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
             {/* Bottom sheet */}
             <div className="relative z-10 w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6">
               {/* En-tête */}
-              <div className="mb-3 flex items-center justify_between gap-2">
+              <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Options du cube

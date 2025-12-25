@@ -1,7 +1,9 @@
 // features/amazing/feed.ts
 import type { FeedCard } from "@/core/domain/types";
+import { ONBOARDING_MAGIC_CLOCK_FEED_CARD } from "@/core/domain/magicClockWork";
 
-export const FEED: FeedCard[] = [
+// 🔹 Tes cartes existantes (mocks actuels)
+export const BASE_FEED: FeedCard[] = [
   {
     id: 1,
     title: "Balayage caramel lumineux",
@@ -42,6 +44,12 @@ export const FEED: FeedCard[] = [
     beforeUrl: "/mp-4-before.jpg",
     afterUrl: "/mp-4-after.jpg",
   },
+];
+
+// 🔹 Flux final Amazing : l’ours en premier, toujours
+export const FEED: FeedCard[] = [
+  ONBOARDING_MAGIC_CLOCK_FEED_CARD,
+  ...BASE_FEED,
 ];
 
 export default FEED;

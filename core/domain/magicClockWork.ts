@@ -1,13 +1,8 @@
 // core/domain/magicClockWork.ts
-import type { FeedCard } from "./types";
+import type { FeedCard, FeedAccess } from "./types";
 
-// Mode de publication côté créateur / studio
 export type PublishMode = "FREE" | "SUB" | "PPV";
 
-// Accès dans le feed (FREE / ABO / PPV)
-export type FeedAccess = "FREE" | "ABO" | "PPV";
-
-// Type de média utilisé dans le Studio (avant / après)
 export type StudioMediaKind = "image" | "video";
 
 export type StudioMedia = {
@@ -199,7 +194,9 @@ export const ONBOARDING_MAGIC_CLOCK_WORK: MagicClockWork = {
 };
 
 // 🔁 Adaptateur MagicClockWork → FeedCard (flux Amazing)
-export function magicClockWorkToFeedCard(work: MagicClockWork): FeedCard {
+export function magicClockWorkToFeedCard(
+  work: MagicClockWork
+): FeedCard {
   const access: FeedAccess =
     work.access.mode === "PPV"
       ? "PPV"
@@ -214,28 +211,38 @@ export function magicClockWorkToFeedCard(work: MagicClockWork): FeedCard {
     work.studio.before?.url ??
     "/images/examples/balayage-after.jpg";
 
-  // on renvoie undefined plutôt que null pour coller avec FeedCard
-  const beforeUrl: string | undefined =
+  const beforeUrl =
     work.studio.before?.thumbnailUrl ??
     work.studio.before?.url ??
-    undefined;
+    null;
 
-  const afterUrl: string | undefined =
+  const afterUrl =
     work.studio.after?.thumbnailUrl ??
     work.studio.after?.url ??
-    undefined;
+    null;
 
   return {
-    // FeedCard.id est typé number → on caste le string
-    // (OK pour le MVP, c’est juste un identifiant interne)
-    id: work.id as unknown as number,
+    id: work.id,                         // id string OK
     title: work.title,
     image,
     beforeUrl,
     afterUrl,
+    // on laisse le handle tel quel (avec @) → MediaCard le nettoie
     user: work.creator.handle,
     access,
     views: work.stats.views,
+
+    // champs optionnels
+    likes: work.stats.likes,
+    creatorName: work.creator.name,
+    creatorHandle: work.creator.handle,
+    creatorAvatar: work.creator.avatarUrl,
+    hashtags: [],                        // on pourra en ajouter plus tard
+    isCertified: !!work.creator.isCertified,
+
+    // 👇 NOUVEAU : flags système
+    isSystemFeatured: !!work.access.isSystemFeatured,
+    isSystemUnlockedForAll: !!work.access.isSystemUnlockedForAll,
   };
 }
 
