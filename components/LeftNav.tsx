@@ -1,24 +1,35 @@
+// components/LeftNav.tsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import type { ComponentType, SVGProps } from "react";
 import {
   Home,
   Users,
-  Sparkles,
   DollarSign,
   Mail,
   Bell,
   Shield,
 } from "lucide-react";
-import { CREATORS } from "@/features/meet/creators";
 
-const items = [
+import { CREATORS } from "@/features/meet/creators";
+import { MagicCubeIcon } from "@/components/icons/MagicCubeIcon";
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon?: IconComponent | null;
+};
+
+const items: NavItem[] = [
   { href: "/", label: "Amazing", icon: Home },
   { href: "/meet", label: "Meet me", icon: Users },
-  { href: "/mymagic", label: "My Magic Clock", icon: null }, // icon gérée à la main
-  { href: "/studio", label: "Créer", icon: Sparkles },
+  { href: "/mymagic", label: "My Magic Clock", icon: null }, // avatar géré à la main
+  { href: "/create", label: "Créer", icon: MagicCubeIcon },   // 🧊 cube 3D
   { href: "/monet", label: "Monétisation", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: Mail },
   { href: "/notifications", label: "Notifications", icon: Bell },
@@ -69,9 +80,9 @@ export default function LeftNav() {
                       className="object-cover"
                     />
                   </div>
-                ) : (
-                  Icon && <Icon className="h-4 w-4" />
-                )}
+                ) : Icon ? (
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                ) : null}
 
                 <span>{label}</span>
               </Link>
