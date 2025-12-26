@@ -91,38 +91,38 @@ function segmentAngleForId(segmentId: number, count: number) {
   return start + step * idx;
 }
 
-// Aiguilles version « ancienne maquette » : look montre propre & travaillé
-// On garde les props pour compatibilité avec les appels,
-// mais on n'utilise que angleDeg à l’intérieur.
-
-const NEEDLE_LEN = 118;      // longueur aiguille principale
-const NEEDLE_LEN_SYM = 118;  // longueur d’un côté pour la symétrique
-
 /**
- * Aiguille 1 (simple, non symétrique)
- * – même design que ton ancienne version
+ * Aiguille 1 (simple)
+ * – corps fin, travaillé, qui part du centre et s’arrête juste avant la bulle
  */
 function WatchHandOneWayRefined({
   angleDeg,
+  frontLenPx,
 }: {
   angleDeg: number;
-  frontLenPx: number; // ignoré, juste pour compatibilité
-  tailLenPx: number;  // idem
+  frontLenPx: number;
+  tailLenPx: number; // ignoré mais gardé pour compatibilité
 }) {
+  const width = Math.max(40, frontLenPx);
+
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
       <div
-        className="h-[3px] bg-slate-900"
         style={{
-          width: `${NEEDLE_LEN}px`,
-          transformOrigin: "0% 50%",
-          borderRadius: "2px",
-          // forme aiguille légèrement facettée (comme sur ton screen)
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${width}px`,
+          height: "3px",
+          background: "rgba(15,23,42,0.95)",
+          borderRadius: 9999,
+          // forme légèrement pointue côté bulle
           clipPath:
-            "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
+            "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
         }}
       />
@@ -132,15 +132,17 @@ function WatchHandOneWayRefined({
 
 /**
  * Aiguille 2 (symétrique)
- * – même style que l’ancienne : pointe des deux côtés
+ * – même style, pointes des deux côtés, même distance aux bulles
  */
 function WatchHandSymmetricRefined({
   angleDeg,
+  halfLenPx,
 }: {
   angleDeg: number;
-  halfLenPx: number; // ignoré, juste pour compatibilité
+  halfLenPx: number;
 }) {
-  const width = NEEDLE_LEN_SYM * 2; // deux côtés symétriques
+  const half = Math.max(40, halfLenPx);
+  const totalWidth = half * 2;
 
   return (
     <div
@@ -148,14 +150,17 @@ function WatchHandSymmetricRefined({
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
       <div
-        className="h-[3px] bg-slate-700/80"
         style={{
-          width: `${width}px`,
-          transform: `translateX(-${width / 2}px)`,
-          transformOrigin: "50% 50%",
-          borderRadius: "2px",
+          position: "absolute",
+          left: `-${half}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${totalWidth}px`,
+          height: "3px",
+          background: "rgba(30,64,175,0.9)",
+          borderRadius: 9999,
           clipPath:
-            "polygon(0 50%, 5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%)",
+            "polygon(0 50%, 4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
         }}
       />
@@ -187,7 +192,6 @@ export default function MagicDisplayFaceEditor({
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // cercle -> longueur aiguille auto (juste avant la bulle)
   const circleRef = useRef<HTMLDivElement | null>(null);
   const [frontLenPx, setFrontLenPx] = useState<number>(92);
 
@@ -239,7 +243,7 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
 
-   // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
+  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
   useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
@@ -247,17 +251,11 @@ export default function MagicDisplayFaceEditor({
     const compute = () => {
       const size = el.getBoundingClientRect().width; // ex: 256
       const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20; // rayon ~ de l’avatar
-      const gap = 6;           // petit espace visuel
-      const TIP = 8;           // même valeur que dans l’aiguille
+      const bubbleRadius = 20; // rayon approximatif des bulles
+      const gap = 8; // petit espace avant la bulle
 
-      // distance max centre → pointe
-      const maxLen = radiusToBubbleCenter - bubbleRadius - gap;
-
-      // frontLenPx = longueur AVANT la pointe
-      const len = maxLen - TIP;
-
-      setFrontLenPx(Math.max(60, Math.round(len)));
+      const len = radiusToBubbleCenter - bubbleRadius - gap;
+      setFrontLenPx(Math.max(40, Math.round(len)));
     };
 
     compute();
@@ -335,10 +333,8 @@ export default function MagicDisplayFaceEditor({
     return { top: `${top}%`, left: `${left}%` };
   }
 
-    const angle1 = segmentAngleForId(selectedId, segmentCount);
-
-  // queue très courte (derrière l’avatar)
-  const TAIL_LEN = 4;
+  const angle1 = segmentAngleForId(selectedId, segmentCount);
+  const TAIL_LEN = 0; // on ne dessine plus de queue derrière, mais on garde l’argument
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
