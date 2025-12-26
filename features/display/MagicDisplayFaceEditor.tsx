@@ -379,22 +379,76 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
 
            
         {/* ✅ Aiguille par défaut (épurée) */}
+{/* AIGUILLE PAR DÉFAUT — pivot au centre (jonction tail/front) */}
+const NEEDLE_THICK = 3;
+
+// ✅ tu contrôles vraiment les 2 longueurs ici
+const NEEDLE_TAIL = 18;    // derrière (épais)
+const NEEDLE_FRONT = 110;  // devant (fin + pointe)
+
 <div
   className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
   style={{
-    transform: `translate(-50%, -50%) rotate(${angle1}deg) translateX(-${NEEDLE_TAIL}px)`,
+    // on place la “jonction” pile au centre, puis on tourne
+    transform: `translate(-50%, -50%) rotate(${angle1}deg)`,
   }}
 >
+  {/* Wrapper de toute l’aiguille */}
   <div
     style={{
-      width: `${NEEDLE_FRONT + NEEDLE_TAIL}px`,
-      height: `${NEEDLE_THICK}px`,
-      background: "rgba(15,23,42,0.72)",
-      borderRadius: 9999,
       position: "relative",
-      boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+      width: `${NEEDLE_TAIL + NEEDLE_FRONT}px`,
+      height: `${NEEDLE_THICK + 2}px`,
+      // ✅ on décale la barre pour que la jonction soit au centre de rotation
+      transform: `translateX(-${NEEDLE_TAIL}px)`,
+      // ✅ pivot EXACT au centre (jonction)
+      transformOrigin: `${NEEDLE_TAIL}px 50%`,
     }}
   >
+    {/* queue épaisse (derrière) */}
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: `${NEEDLE_TAIL}px`,
+        height: `${NEEDLE_THICK + 2}px`,
+        background: "rgba(15,23,42,0.85)",
+        borderRadius: 9999,
+      }}
+    />
+
+    {/* corps fin (devant) */}
+    <div
+      style={{
+        position: "absolute",
+        left: `${NEEDLE_TAIL}px`,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: `${NEEDLE_FRONT}px`,
+        height: `${NEEDLE_THICK}px`,
+        background: "rgba(15,23,42,0.78)",
+        borderRadius: 9999,
+      }}
+    >
+      {/* pointe fine */}
+      <span
+        style={{
+          position: "absolute",
+          right: -10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 0,
+          height: 0,
+          borderTop: "6px solid transparent",
+          borderBottom: "6px solid transparent",
+          borderLeft: "10px solid rgba(15,23,42,0.78)",
+        }}
+      />
+    </div>
+  </div>
+</div>
     {/* ✅ Pointe épaisse côté bulle (seulement au bout) */}
     <span
       style={{
