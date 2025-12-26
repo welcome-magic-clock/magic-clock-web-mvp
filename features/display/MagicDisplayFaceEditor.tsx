@@ -92,9 +92,7 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (simple, vers l’extérieur) :
- * - barre continue
- * - s’arrête juste avant la bulle (frontLenPx est déjà calculé pour ça)
+ * Aiguille 1 (simple, continue, sans pointe triangulaire)
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -105,15 +103,18 @@ function WatchHandOneWayRefined({
   frontLenPx: number;
   tailLenPx: number;
 }) {
-  const THICK = 4; // épaisseur unique
-  const color = "rgba(15,23,42,0.9)";
+  const WIDTH = 6;       // épaisseur principale
+  const TAIL_WIDTH = 4;  // un poil plus fin côté centre
+
+  const colorMain = "rgba(15,23,42,0.92)";
+  const colorTail = "rgba(15,23,42,0.78)";
 
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
-      {/* petite queue derrière le centre (optionnelle) */}
+      {/* petite queue côté centre (cachée en partie par l’avatar) */}
       {tailLenPx > 0 && (
         <div
           style={{
@@ -122,26 +123,27 @@ function WatchHandOneWayRefined({
             top: "50%",
             transform: "translateY(-50%)",
             width: `${tailLenPx}px`,
-            height: `${THICK}px`,
-            background: color,
+            height: `${TAIL_WIDTH}px`,
+            background: colorTail,
             borderRadius: 9999,
-            boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+            boxShadow: "0 1px 2px rgba(15,23,42,0.25)",
           }}
         />
       )}
 
-      {/* barre principale, continue, jusqu’à près de la bulle */}
+      {/* corps principal, continu, avec extrémité arrondie vers la bulle */}
       <div
         style={{
           position: "absolute",
           left: 0,
           top: "50%",
           transform: "translateY(-50%)",
-          width: `${Math.max(0, frontLenPx)}px`,
-          height: `${THICK}px`,
-          background: color,
+          width: `${frontLenPx}px`,
+          height: `${WIDTH}px`,
+          background:
+            "linear-gradient(to bottom, rgba(15,23,42,0.98), rgba(15,23,42,0.85))",
           borderRadius: 9999,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.16)",
+          boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
         }}
       />
     </div>
@@ -149,9 +151,7 @@ function WatchHandOneWayRefined({
 }
 
 /**
- * Aiguille 2 (symétrique) :
- * - barre continue des deux côtés
- * - même style que la première, sans pointe
+ * Aiguille 2 (symétrique, continue, sans pointe triangulaire)
  */
 function WatchHandSymmetricRefined({
   angleDeg,
@@ -160,8 +160,9 @@ function WatchHandSymmetricRefined({
   angleDeg: number;
   halfLenPx: number;
 }) {
-  const THICK = 4;
-  const color = "rgba(15,23,42,0.85)";
+  const WIDTH = 6;
+  const colorMain = "rgba(15,23,42,0.90)";
+
   const total = halfLenPx * 2;
 
   return (
@@ -176,10 +177,11 @@ function WatchHandSymmetricRefined({
           top: "50%",
           transform: "translateY(-50%)",
           width: `${total}px`,
-          height: `${THICK}px`,
-          background: color,
-          borderRadius: 9999,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.16)",
+          height: `${WIDTH}px`,
+          background:
+            "linear-gradient(to bottom, rgba(15,23,42,0.98), rgba(15,23,42,0.85))",
+          borderRadius: 9999, // extrémités bien arrondies (style aiguille)
+          boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
         }}
       />
     </div>
