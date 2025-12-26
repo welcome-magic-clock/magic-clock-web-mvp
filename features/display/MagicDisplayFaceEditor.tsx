@@ -242,7 +242,7 @@ export default function MagicDisplayFaceEditor({
   // - Aiguille 1 : on l'allonge (extrémité) => on augmente NEEDLE_LEN
   // - Aiguille 2 symétrique : même design des deux côtés, mais un peu plus courte
 const NEEDLE_THICK = 1; // tige fine (épuré)
-const NEEDLE_TAIL = 10; // derrière (court)
+const NEEDLE_TAIL = 3; // derrière (court)
 const NEEDLE_FRONT = 110; // devant (réduit -> beaucoup moins grand)
 
 const TIP_THICK = 5; // épais côté bulle
