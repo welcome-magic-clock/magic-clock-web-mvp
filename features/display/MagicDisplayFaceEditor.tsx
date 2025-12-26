@@ -82,6 +82,10 @@ const defaultNeedles = (): FaceNeedles => ({
   needle2Enabled: false,
 });
 
+// 🎨 Couleur unique pour toutes les aiguilles (graphite / slate-900)
+const NEEDLE_COLOR = "#111827";
+const NEEDLE_SHADOW = "0 2px 4px rgba(15,23,42,0.35)";
+
 // angle = centre du segment sélectionné
 function segmentAngleForId(segmentId: number, count: number) {
   const c = Math.max(1, count);
@@ -118,12 +122,10 @@ function WatchHandOneWayRefined({
           transform: "translateY(-50%)",
           width: `${width}px`,
           height: "3px",
-          background: "rgba(15,23,42,0.95)",
+          background: NEEDLE_COLOR,
           borderRadius: 9999,
-          // forme légèrement pointue côté bulle
-          clipPath:
-            "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
-          boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
+          clipPath: "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
+          boxShadow: NEEDLE_SHADOW,
         }}
       />
     </div>
@@ -157,11 +159,11 @@ function WatchHandSymmetricRefined({
           transform: "translateY(-50%)",
           width: `${totalWidth}px`,
           height: "3px",
-          background: "rgba(30,64,175,0.9)",
+          background: NEEDLE_COLOR,
           borderRadius: 9999,
           clipPath:
             "polygon(0 50%, 4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%)",
-          boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
+          boxShadow: NEEDLE_SHADOW,
         }}
       />
     </div>
@@ -334,7 +336,7 @@ export default function MagicDisplayFaceEditor({
   }
 
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const TAIL_LEN = 0; // on ne dessine plus de queue derrière, mais on garde l’argument
+  const TAIL_LEN = 0;
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
