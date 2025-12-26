@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   Camera,
   Clapperboard,
@@ -31,7 +31,7 @@ type Segment = {
 };
 
 type FaceNeedles = {
-  needle2Enabled: boolean; // ✅ simple ON/OFF
+  needle2Enabled: boolean;
 };
 
 type FaceState = {
@@ -82,13 +82,209 @@ const defaultNeedles = (): FaceNeedles => ({
   needle2Enabled: false,
 });
 
-// ---- Aiguilles: angle = centre du segment sélectionné ----
+// angle = centre du segment sélectionné
 function segmentAngleForId(segmentId: number, count: number) {
   const c = Math.max(1, count);
   const step = 360 / c;
   const start = -90;
   const idx = Math.max(0, Math.min(c - 1, (segmentId ?? 1) - 1));
   return start + step * idx;
+}
+
+/**
+ * Aiguille 1 (one-way) :
+ * - corps fin
+ * - partie "épaisse" vers la bulle (plus long)
+ * - micro effilement (pointe raffinée)
+ * - petite queue courte derrière (optionnelle)
+ */
+function WatchHandOneWayRefined({
+  angleDeg,
+  frontLenPx,
+  tailLenPx,
+}: {
+  angleDeg: number;
+  frontLenPx: number;
+  tailLenPx: number;
+}) {
+  // Réglages visuels (tu peux affiner ensuite)
+  const THIN = 2;          // corps fin
+  const THICK = 4;         // partie épaisse vers la bulle
+  const TIP = 10;          // micro effilement (triangle)
+  const END_THICK_LEN = Math.max(28, Math.round(frontLenPx * 0.45)); // épais vers la bulle (allongé)
+
+  const colorThin = "rgba(15,23,42,0.72)";
+  const colorThick = "rgba(15,23,42,0.88)";
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2"
+      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
+    >
+      {/* queue courte derrière */}
+      {tailLenPx > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            left: `-${tailLenPx}px`,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: `${tailLenPx}px`,
+            height: `${THIN}px`,
+            background: colorThin,
+            borderRadius: 9999,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+          }}
+        />
+      )}
+
+      {/* corps fin (devant) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${Math.max(0, frontLenPx)}px`,
+          height: `${THIN}px`,
+          background: colorThin,
+          borderRadius: 9999,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      />
+
+      {/* partie épaisse vers la bulle (par-dessus le corps fin) */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${Math.max(0, frontLenPx - END_THICK_LEN)}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${END_THICK_LEN}px`,
+          height: `${THICK}px`,
+          background: colorThick,
+          borderRadius: 9999,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      />
+
+      {/* micro effilement (pointe raffinée), alignée avec la partie épaisse */}
+      <span
+        style={{
+          position: "absolute",
+          left: `${frontLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 0,
+          height: 0,
+          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderLeft: `${TIP}px solid ${colorThick}`,
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Aiguille 2 (symétrique) :
+ * - même style "refined"
+ * - épaisse aux deux extrémités
+ */
+function WatchHandSymmetricRefined({
+  angleDeg,
+  halfLenPx,
+}: {
+  angleDeg: number;
+  halfLenPx: number;
+}) {
+  const THIN = 2;
+  const THICK = 4;
+  const TIP = 10;
+  const END_THICK_LEN = Math.max(24, Math.round(halfLenPx * 0.35));
+
+  const colorThin = "rgba(15,23,42,0.70)";
+  const colorThick = "rgba(15,23,42,0.86)";
+
+  const total = halfLenPx * 2;
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2"
+      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
+    >
+      {/* corps fin sur toute la longueur */}
+      <div
+        style={{
+          position: "absolute",
+          left: `-${halfLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${total}px`,
+          height: `${THIN}px`,
+          background: colorThin,
+          borderRadius: 9999,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      />
+
+      {/* épais côté droit */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${halfLenPx - END_THICK_LEN}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${END_THICK_LEN}px`,
+          height: `${THICK}px`,
+          background: colorThick,
+          borderRadius: 9999,
+        }}
+      />
+      {/* pointe droite */}
+      <span
+        style={{
+          position: "absolute",
+          left: `${halfLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 0,
+          height: 0,
+          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderLeft: `${TIP}px solid ${colorThick}`,
+        }}
+      />
+
+      {/* épais côté gauche */}
+      <div
+        style={{
+          position: "absolute",
+          left: `-${halfLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${END_THICK_LEN}px`,
+          height: `${THICK}px`,
+          background: colorThick,
+          borderRadius: 9999,
+        }}
+      />
+      {/* pointe gauche */}
+      <span
+        style={{
+          position: "absolute",
+          left: `-${halfLenPx}px`,
+          top: "50%",
+          transform: "translate(-100%, -50%)",
+          width: 0,
+          height: 0,
+          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderRight: `${TIP}px solid ${colorThick}`,
+        }}
+      />
+    </div>
+  );
 }
 
 export default function MagicDisplayFaceEditor({
@@ -115,6 +311,10 @@ export default function MagicDisplayFaceEditor({
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // cercle -> longueur aiguille auto (juste avant la bulle)
+  const circleRef = useRef<HTMLDivElement | null>(null);
+  const [frontLenPx, setFrontLenPx] = useState<number>(92);
+
   useEffect(() => {
     setFaces((prev) => {
       if (prev[faceId]) return prev;
@@ -140,6 +340,7 @@ export default function MagicDisplayFaceEditor({
 
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
+
   const segmentCount = Math.min(
     MAX_SEGMENTS,
     Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS)
@@ -149,11 +350,9 @@ export default function MagicDisplayFaceEditor({
     segments.find((s) => s.id === selectedId) ?? segments[0];
 
   const needles = currentFace.needles ?? defaultNeedles();
-
-  // ✅ règle paire pour l'aiguille symétrique
   const isEven = segmentCount % 2 === 0;
 
-  // Si impair, on force OFF
+  // si impair -> aiguille symétrique forcée OFF
   useEffect(() => {
     if (!isEven && needles.needle2Enabled) {
       updateFace((existing) => ({
@@ -163,6 +362,25 @@ export default function MagicDisplayFaceEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
+
+  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
+  useEffect(() => {
+    const el = circleRef.current;
+    if (!el) return;
+
+    const compute = () => {
+      const size = el.getBoundingClientRect().width; // ex: 256
+      const radiusToBubbleCenter = 0.42 * size;
+      const bubbleRadius = 20; // bulle 40px
+      const gap = 6; // petit espace avant toucher bulle
+      const len = radiusToBubbleCenter - bubbleRadius - gap;
+      setFrontLenPx(Math.max(60, Math.round(len)));
+    };
+
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, [segmentCount]);
 
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
@@ -234,30 +452,11 @@ export default function MagicDisplayFaceEditor({
     return { top: `${top}%`, left: `${left}%` };
   }
 
-  // --- AIGUILLES ---
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const angle2 = angle1 + 180;
 
-  // ✅ Ajustements demandés :
-  // - Aiguille 1 : on l'allonge (extrémité) => on augmente NEEDLE_LEN
-  // - Aiguille 2 symétrique : même design des deux côtés, mais un peu plus courte
-// --- AIGUILLE 1 (par défaut) : épais jusqu’à la bulle + petite pointe fine
-const NEEDLE_THICK = 3;
+  // réglages "queue" (derrière) : très court, et de toute façon masqué par l’avatar
+  const TAIL_LEN = 8;
 
-// queue (derrière) courte
-const NEEDLE_TAIL = 10;
-
-// partie épaisse (celle qu’on veut pousser jusqu’à la bulle)
-const NEEDLE_BODY = 112;
-
-// petite pointe fine (devant)
-const NEEDLE_TIP = 10;
-
-// longueur vers l’avant (devant) = épais + pointe
-const NEEDLE_LEN = NEEDLE_BODY + NEEDLE_TIP;
-  
-const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tard)
-  
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
       {/* Ligne 1 */}
@@ -294,7 +493,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
       {showOptions && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-700">
           <p className="font-semibold">Options</p>
-          <p className="mt-1 text-slate-500">(À venir) Modèles préconçus, presets, styles de face, etc.</p>
+          <p className="mt-1 text-slate-500">(À venir) Modèles préconçus, presets, styles…</p>
         </div>
       )}
 
@@ -328,7 +527,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
         </div>
       </div>
 
-      {/* ✅ Toggle : symétrique seulement si pair */}
+      {/* Toggle symétrique (uniquement pair) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className={`inline-flex items-center gap-2 ${!isEven ? "opacity-60" : ""}`}>
           <input
@@ -356,87 +555,26 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
       </div>
 
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        {/* Cercle principal */}
+        {/* Cercle */}
         <div className="flex items-center justify-center">
-          <div className="relative h-64 w-64 max-w-full">
+          <div ref={circleRef} className="relative h-64 w-64 max-w-full">
             {/* Décor z-10 */}
             <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
             {/* Aiguilles z-20 */}
-            {/* ✅ Aiguille symétrique : vraie symétrie, même design des deux côtés */}
-            {isEven && needles.needle2Enabled && (
-              <div
-                className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-                style={{ transform: `translate(-50%, -50%) rotate(${angle2}deg)` }}
-              >
-                <div
-                  style={{
-                    height: `${NEEDLE_THICK}px`,
-                    width: `${NEEDLE_LEN_2 * 2}px`,
-                    transform: `translateX(-${NEEDLE_LEN_2}px)`,
-                    background: "rgba(15,23,42,0.82)",
-                    borderRadius: 9999,
-                    // même forme/pointe des 2 côtés
-                    clipPath: "polygon(0 50%, 6% 0, 94% 0, 100% 50%, 94% 100%, 6% 100%)",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
-                  }}
-                />
-              </div>
-            )}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <WatchHandOneWayRefined
+                angleDeg={angle1}
+                frontLenPx={frontLenPx}
+                tailLenPx={TAIL_LEN}
+              />
 
-           
-        {/* ✅ Aiguille par défaut (épurée) */}
-<div
-  className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-  style={{ transform: `translate(-50%, -50%) rotate(${angle1}deg)` }}
->
-  {/* queue courte (derrière) */}
-  <div
-    style={{
-      position: "absolute",
-      left: `-${NEEDLE_TAIL}px`,
-      top: "50%",
-      transform: "translateY(-50%)",
-      width: `${NEEDLE_TAIL}px`,
-      height: `${NEEDLE_THICK}px`,
-      background: "rgba(15,23,42,0.55)",
-      borderRadius: 9999,
-    }}
-  />
-
-  {/* corps ÉPAIS (devant) -> c’est lui qui doit aller jusqu’à la bulle */}
-  <div
-    style={{
-      position: "absolute",
-      left: 0,
-      top: "50%",
-      transform: "translateY(-50%)",
-      width: `${NEEDLE_BODY}px`,
-      height: `${NEEDLE_THICK}px`,
-      background: "rgba(15,23,42,0.82)",
-      borderRadius: 9999,
-      boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
-    }}
-  />
-
-  {/* petite pointe fine (devant) */}
-  <div
-    style={{
-      position: "absolute",
-      left: `${NEEDLE_BODY}px`,
-      top: "50%",
-      transform: "translateY(-50%)",
-      width: 0,
-      height: 0,
-      borderTop: "5px solid transparent",
-      borderBottom: "5px solid transparent",
-      borderLeft: `${NEEDLE_TIP}px solid rgba(15,23,42,0.82)`,
-      filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.12))",
-    }}
-  />
-</div>
+              {isEven && needles.needle2Enabled && (
+                <WatchHandSymmetricRefined angleDeg={angle1} halfLenPx={frontLenPx} />
+              )}
+            </div>
 
             {/* Avatar z-30 */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
@@ -448,7 +586,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
               )}
             </div>
 
-            {/* Bulles + z-40 */}
+            {/* Bulles z-40 */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
@@ -467,9 +605,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
                 >
                   {segmentIcon(seg.mediaType)}
                   <span
-                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                      seg.status
-                    )}`}
+                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(seg.status)}`}
                   />
                 </button>
               );
@@ -505,11 +641,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
                       Chapitre de cette face (diagnostic, application, etc.).
                     </p>
                   </div>
-                  <span
-                    className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(
-                      seg.status
-                    )}`}
-                  />
+                  <span className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(seg.status)}`} />
                 </button>
               );
             })}
@@ -581,9 +713,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
             )}
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-600">
-                Notes pédagogiques
-              </label>
+              <label className="text-[11px] font-medium text-slate-600">Notes pédagogiques</label>
               <textarea
                 rows={3}
                 value={selectedSegment.notes}
@@ -596,7 +726,7 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
         </div>
       </div>
 
-      {/* Inputs cachés pour l’upload local */}
+      {/* Inputs cachés */}
       <input
         ref={photoInputRef}
         type="file"
