@@ -364,8 +364,8 @@ const NEEDLE_LEN = NEEDLE_FRONT + NEEDLE_TAIL;
                 <div
                   style={{
                     height: `${NEEDLE_THICK}px`,
-                    width: `${NEEDLE_LEN_2 * 2}px`,
-                    transform: `translateX(-${NEEDLE_LEN_2}px)`,
+                    width: `${NEEDLE_LEN * 2}px`,
+                    transform: `translateX(-${NEEDLE_LEN}px)`,
                     background: "rgba(15,23,42,0.82)",
                     borderRadius: 9999,
                     // même forme/pointe des 2 côtés
