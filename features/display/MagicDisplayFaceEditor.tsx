@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Camera, Clapperboard, FileText, ChevronLeft, MoreHorizontal } from "lucide-react";
+import {
+  Camera,
+  Clapperboard,
+  FileText,
+  ChevronLeft,
+  MoreHorizontal,
+} from "lucide-react";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video" | "file";
@@ -72,9 +78,11 @@ const segmentIcon = (mediaType?: MediaType | null) => {
   return <span className="text-xs">＋</span>;
 };
 
-const defaultNeedles = (): FaceNeedles => ({ needle2Enabled: false });
+const defaultNeedles = (): FaceNeedles => ({
+  needle2Enabled: false,
+});
 
-// ---- Aiguilles: angle = centre du segment sélectionné ----
+// angle = centre du segment sélectionné
 function segmentAngleForId(segmentId: number, count: number) {
   const c = Math.max(1, count);
   const step = 360 / c;
@@ -84,44 +92,197 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille minimaliste "type montre" :
- * - fine côté centre
- * - plus épaisse côté bulle
- * - pointe nette + micro-effilement
+ * Aiguille 1 (one-way) :
+ * - corps fin
+ * - partie "épaisse" vers la bulle (plus long)
+ * - micro effilement (pointe raffinée)
+ * - petite queue courte derrière (optionnelle)
  */
-function NeedleOneWay({ angleDeg, lenPx }: { angleDeg: number; lenPx: number }) {
-  // Design minimal (comme ton image 3)
-  const BASE_THICK = 2; // au centre
-  const TIP_THICK = 6;  // vers la bulle
-  const TIP_LEN = 14;   // longueur de la pointe
-  const BODY_LEN = Math.max(0, lenPx - TIP_LEN);
+function WatchHandOneWayRefined({
+  angleDeg,
+  frontLenPx,
+  tailLenPx,
+}: {
+  angleDeg: number;
+  frontLenPx: number;
+  tailLenPx: number;
+}) {
+  // Réglages visuels (tu peux affiner ensuite)
+  const THIN = 2;          // corps fin
+  const THICK = 4;         // partie épaisse vers la bulle
+  const TIP = 10;          // micro effilement (triangle)
+  const END_THICK_LEN = Math.max(28, Math.round(frontLenPx * 0.45)); // épais vers la bulle (allongé)
+
+  const colorThin = "rgba(15,23,42,0.72)";
+  const colorThick = "rgba(15,23,42,0.88)";
 
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
-      <svg width={lenPx} height={TIP_THICK} viewBox={`0 0 ${lenPx} ${TIP_THICK}`} style={{ overflow: "visible" }}>
-        <polygon
-          fill="rgba(15,23,42,0.86)"
-          points={[
-            // côté centre (fin)
-            `0 ${TIP_THICK / 2 - BASE_THICK / 2}`,
-            `0 ${TIP_THICK / 2 + BASE_THICK / 2}`,
-
-            // corps (reste fin)
-            `${BODY_LEN} ${TIP_THICK / 2 + BASE_THICK / 2}`,
-
-            // micro-effilement + pointe
-            `${BODY_LEN} ${TIP_THICK}`,
-            `${lenPx} ${TIP_THICK / 2}`,
-            `${BODY_LEN} 0`,
-
-            // retour haut du corps
-            `${BODY_LEN} ${TIP_THICK / 2 - BASE_THICK / 2}`,
-          ].join(" ")}
+      {/* queue courte derrière */}
+      {tailLenPx > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            left: `-${tailLenPx}px`,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: `${tailLenPx}px`,
+            height: `${THIN}px`,
+            background: colorThin,
+            borderRadius: 9999,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+          }}
         />
-      </svg>
+      )}
+
+      {/* corps fin (devant) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${Math.max(0, frontLenPx)}px`,
+          height: `${THIN}px`,
+          background: colorThin,
+          borderRadius: 9999,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      />
+
+      {/* partie épaisse vers la bulle (par-dessus le corps fin) */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${Math.max(0, frontLenPx - END_THICK_LEN)}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${END_THICK_LEN}px`,
+          height: `${THICK}px`,
+          background: colorThick,
+          borderRadius: 9999,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      />
+
+      {/* micro effilement (pointe raffinée), alignée avec la partie épaisse */}
+      <span
+        style={{
+          position: "absolute",
+          left: `${frontLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 0,
+          height: 0,
+          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderLeft: `${TIP}px solid ${colorThick}`,
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Aiguille 2 (symétrique) :
+ * - même style "refined"
+ * - épaisse aux deux extrémités
+ */
+function WatchHandSymmetricRefined({
+  angleDeg,
+  halfLenPx,
+}: {
+  angleDeg: number;
+  halfLenPx: number;
+}) {
+  const THIN = 2;
+  const THICK = 4;
+  const TIP = 10;
+  const END_THICK_LEN = Math.max(24, Math.round(halfLenPx * 0.35));
+
+  const colorThin = "rgba(15,23,42,0.70)";
+  const colorThick = "rgba(15,23,42,0.86)";
+
+  const total = halfLenPx * 2;
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2"
+      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
+    >
+      {/* corps fin sur toute la longueur */}
+      <div
+        style={{
+          position: "absolute",
+          left: `-${halfLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${total}px`,
+          height: `${THIN}px`,
+          background: colorThin,
+          borderRadius: 9999,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      />
+
+      {/* épais côté droit */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${halfLenPx - END_THICK_LEN}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${END_THICK_LEN}px`,
+          height: `${THICK}px`,
+          background: colorThick,
+          borderRadius: 9999,
+        }}
+      />
+      {/* pointe droite */}
+      <span
+        style={{
+          position: "absolute",
+          left: `${halfLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 0,
+          height: 0,
+          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderLeft: `${TIP}px solid ${colorThick}`,
+        }}
+      />
+
+      {/* épais côté gauche */}
+      <div
+        style={{
+          position: "absolute",
+          left: `-${halfLenPx}px`,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: `${END_THICK_LEN}px`,
+          height: `${THICK}px`,
+          background: colorThick,
+          borderRadius: 9999,
+        }}
+      />
+      {/* pointe gauche */}
+      <span
+        style={{
+          position: "absolute",
+          left: `-${halfLenPx}px`,
+          top: "50%",
+          transform: "translate(-100%, -50%)",
+          width: 0,
+          height: 0,
+          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderRight: `${TIP}px solid ${colorThick}`,
+        }}
+      />
     </div>
   );
 }
@@ -150,8 +311,9 @@ export default function MagicDisplayFaceEditor({
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // cercle -> longueur aiguille auto (juste avant la bulle)
   const circleRef = useRef<HTMLDivElement | null>(null);
-  const [handLenPx, setHandLenPx] = useState<number>(118);
+  const [frontLenPx, setFrontLenPx] = useState<number>(92);
 
   useEffect(() => {
     setFaces((prev) => {
@@ -179,21 +341,18 @@ export default function MagicDisplayFaceEditor({
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
-  const segmentCount = Math.min(MAX_SEGMENTS, Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS));
+  const segmentCount = Math.min(
+    MAX_SEGMENTS,
+    Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS)
+  );
+
+  const selectedSegment =
+    segments.find((s) => s.id === selectedId) ?? segments[0];
+
+  const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
-  const selectedSegment = segments.find((s) => s.id === selectedId) ?? segments[0];
-  const needles = currentFace.needles ?? defaultNeedles();
-
-  function updateFace(updater: (prev: FaceState) => FaceState) {
-    setFaces((prev) => {
-      const existing = prev[faceId] ?? fallbackFace;
-      const updated = updater(existing);
-      return { ...prev, [faceId]: updated };
-    });
-  }
-
-  // ✅ règle : aiguille symétrique seulement si segments pairs
+  // si impair -> aiguille symétrique forcée OFF
   useEffect(() => {
     if (!isEven && needles.needle2Enabled) {
       updateFace((existing) => ({
@@ -204,28 +363,38 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
 
-  // ✅ longueur automatique : s'arrête juste AVANT la bulle
+  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
   useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
 
     const compute = () => {
-      const size = el.getBoundingClientRect().width; // ex: 256px
-      const radiusToBubbleCenter = 0.42 * size;      // même rayon que les "+"
-      const bubbleRadius = 20;                       // h-10 w-10 => rayon ~20
-      const gap = 10;                                // stop "presque bulle"
+      const size = el.getBoundingClientRect().width; // ex: 256
+      const radiusToBubbleCenter = 0.42 * size;
+      const bubbleRadius = 20; // bulle 40px
+      const gap = 6; // petit espace avant toucher bulle
       const len = radiusToBubbleCenter - bubbleRadius - gap;
-      setHandLenPx(Math.max(70, Math.round(len)));
+      setFrontLenPx(Math.max(60, Math.round(len)));
     };
 
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
-  }, []);
+  }, [segmentCount]);
+
+  function updateFace(updater: (prev: FaceState) => FaceState) {
+    setFaces((prev) => {
+      const existing = prev[faceId] ?? fallbackFace;
+      const updated = updater(existing);
+      return { ...prev, [faceId]: updated };
+    });
+  }
 
   function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
     updateFace((existing) => {
-      const updatedSegments = existing.segments.map((s) => (s.id === segmentId ? updater(s) : s));
+      const updatedSegments = existing.segments.map((s) =>
+        s.id === segmentId ? updater(s) : s
+      );
       return { ...existing, segments: updatedSegments };
     });
   }
@@ -284,7 +453,9 @@ export default function MagicDisplayFaceEditor({
   }
 
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const angle2 = angle1 + 180;
+
+  // réglages "queue" (derrière) : très court, et de toute façon masqué par l’avatar
+  const TAIL_LEN = 8;
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -356,7 +527,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* Toggle symétrique (pairs seulement) */}
+      {/* Toggle symétrique (uniquement pair) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className={`inline-flex items-center gap-2 ${!isEven ? "opacity-60" : ""}`}>
           <input
@@ -374,7 +545,11 @@ export default function MagicDisplayFaceEditor({
           />
           <span className="font-medium text-slate-700">
             Aiguille symétrique{" "}
-            {!isEven && <span className="ml-1 text-slate-500">(Disponible uniquement avec un nombre pair de segments)</span>}
+            {!isEven && (
+              <span className="ml-1 text-slate-500">
+                (Disponible uniquement avec un nombre pair de segments)
+              </span>
+            )}
           </span>
         </label>
       </div>
@@ -383,20 +558,25 @@ export default function MagicDisplayFaceEditor({
         {/* Cercle */}
         <div className="flex items-center justify-center">
           <div ref={circleRef} className="relative h-64 w-64 max-w-full">
-            {/* Décor */}
+            {/* Décor z-10 */}
             <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* Aiguilles (minimalistes) */}
+            {/* Aiguilles z-20 */}
             <div className="absolute inset-0 z-20 pointer-events-none">
-              <NeedleOneWay angleDeg={angle1} lenPx={handLenPx} />
+              <WatchHandOneWayRefined
+                angleDeg={angle1}
+                frontLenPx={frontLenPx}
+                tailLenPx={TAIL_LEN}
+              />
+
               {isEven && needles.needle2Enabled && (
-                <NeedleOneWay angleDeg={angle2} lenPx={Math.max(70, handLenPx - 8)} />
+                <WatchHandSymmetricRefined angleDeg={angle1} halfLenPx={frontLenPx} />
               )}
             </div>
 
-            {/* Avatar */}
+            {/* Avatar z-30 */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -406,7 +586,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* Bulles */}
+            {/* Bulles z-40 */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
@@ -424,7 +604,9 @@ export default function MagicDisplayFaceEditor({
                   style={getSegmentPositionStyle(index)}
                 >
                   {segmentIcon(seg.mediaType)}
-                  <span className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(seg.status)}`} />
+                  <span
+                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(seg.status)}`}
+                  />
                 </button>
               );
             })}
@@ -442,7 +624,11 @@ export default function MagicDisplayFaceEditor({
                   type="button"
                   onClick={() => setSelectedId(seg.id)}
                   className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-                    ${isSelected ? "border-brand-500 bg-brand-50/70" : "border-transparent bg-slate-50 hover:border-slate-200"}`}
+                    ${
+                      isSelected
+                        ? "border-brand-500 bg-brand-50/70"
+                        : "border-transparent bg-slate-50 hover:border-slate-200"
+                    }`}
                 >
                   <div>
                     <p className="font-medium text-slate-800">
@@ -451,7 +637,9 @@ export default function MagicDisplayFaceEditor({
                       {seg.mediaType === "video" && " · Vidéo"}
                       {seg.mediaType === "file" && " · Fichier"}
                     </p>
-                    <p className="text-[11px] text-slate-500">Chapitre de cette face (diagnostic, application, etc.).</p>
+                    <p className="text-[11px] text-slate-500">
+                      Chapitre de cette face (diagnostic, application, etc.).
+                    </p>
                   </div>
                   <span className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(seg.status)}`} />
                 </button>
@@ -464,7 +652,9 @@ export default function MagicDisplayFaceEditor({
               <p className="text-xs font-semibold text-slate-700">
                 Segment {selectedSegment.id} – {selectedSegment.label}
               </p>
-              <p className="text-[11px] text-slate-500">Ajoute un média et des notes pour expliquer précisément cette étape.</p>
+              <p className="text-[11px] text-slate-500">
+                Ajoute un média et des notes pour expliquer précisément cette étape.
+              </p>
               <p className="mt-1 text-[10px] text-slate-400">
                 Statut : <span className="font-semibold">{statusLabel(selectedSegment.status)}</span>
               </p>
@@ -501,10 +691,18 @@ export default function MagicDisplayFaceEditor({
               <div className="mt-1 w-full">
                 {selectedSegment.mediaType === "photo" ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={selectedSegment.mediaUrl} alt="Prévisualisation" className="h-40 w-full rounded-2xl object-cover" />
+                  <img
+                    src={selectedSegment.mediaUrl}
+                    alt="Prévisualisation"
+                    className="h-40 w-full rounded-2xl object-cover"
+                  />
                 ) : selectedSegment.mediaType === "video" ? (
                   // eslint-disable-next-line jsx-a11y/media-has-caption
-                  <video src={selectedSegment.mediaUrl} className="h-40 w-full rounded-2xl object-cover" controls />
+                  <video
+                    src={selectedSegment.mediaUrl}
+                    className="h-40 w-full rounded-2xl object-cover"
+                    controls
+                  />
                 ) : (
                   <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
                     <FileText className="h-4 w-4" />
@@ -529,8 +727,20 @@ export default function MagicDisplayFaceEditor({
       </div>
 
       {/* Inputs cachés */}
-      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaFileChange(e, "photo")} />
-      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => handleMediaFileChange(e, "video")} />
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "photo")}
+      />
+      <input
+        ref={videoInputRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={(e) => handleMediaFileChange(e, "video")}
+      />
       <input
         ref={fileInputRef}
         type="file"
