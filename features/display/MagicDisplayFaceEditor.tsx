@@ -92,11 +92,10 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (one-way) :
- * - corps fin
- * - partie "épaisse" vers la bulle (plus long)
- * - micro effilement (pointe raffinée)
- * - petite queue courte derrière (optionnelle)
+ * Aiguille 1 (one-way) ultra épurée :
+ * - corps très fin
+ * - partie "épaisse" courte vers la bulle
+ * - micro effilement qui s’arrête juste avant la bulle
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -104,24 +103,23 @@ function WatchHandOneWayRefined({
   tailLenPx,
 }: {
   angleDeg: number;
-  frontLenPx: number;
+  frontLenPx: number; // longueur AVANT la petite pointe
   tailLenPx: number;
 }) {
-  // Réglages visuels (tu peux affiner ensuite)
-  const THIN = 2;          // corps fin
-  const THICK = 4;         // partie épaisse vers la bulle
-  const TIP = 10;          // micro effilement (triangle)
-  const END_THICK_LEN = Math.max(28, Math.round(frontLenPx * 0.45)); // épais vers la bulle (allongé)
+  const THIN = 2;   // corps fin
+  const THICK = 4;  // petit renfort vers la bulle
+  const TIP = 8;    // micro pointe
+  const END_THICK_LEN = Math.max(18, Math.round(frontLenPx * 0.32));
 
-  const colorThin = "rgba(15,23,42,0.72)";
-  const colorThick = "rgba(15,23,42,0.88)";
+  const colorThin = "rgba(15,23,42,0.70)";
+  const colorThick = "rgba(15,23,42,0.90)";
 
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
-      {/* queue courte derrière */}
+      {/* queue très courte derrière (masquée par la bulle) */}
       {tailLenPx > 0 && (
         <div
           style={{
@@ -138,7 +136,7 @@ function WatchHandOneWayRefined({
         />
       )}
 
-      {/* corps fin (devant) */}
+      {/* corps fin */}
       <div
         style={{
           position: "absolute",
@@ -153,7 +151,7 @@ function WatchHandOneWayRefined({
         }}
       />
 
-      {/* partie épaisse vers la bulle (par-dessus le corps fin) */}
+      {/* petit renfort épais juste avant la pointe */}
       <div
         style={{
           position: "absolute",
@@ -168,17 +166,17 @@ function WatchHandOneWayRefined({
         }}
       />
 
-      {/* micro effilement (pointe raffinée), alignée avec la partie épaisse */}
+      {/* micro pointe raffinée */}
       <span
         style={{
           position: "absolute",
           left: `${frontLenPx}px`,
           top: "50%",
-          transform: "translateY(-50%)",
+          transform: "translateY(-50%)`,
           width: 0,
           height: 0,
-          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
-          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderTop: `${Math.round(THICK / 2) + 1}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 1}px solid transparent`,
           borderLeft: `${TIP}px solid ${colorThick}`,
         }}
       />
@@ -188,25 +186,26 @@ function WatchHandOneWayRefined({
 
 /**
  * Aiguille 2 (symétrique) :
- * - même style "refined"
- * - épaisse aux deux extrémités
+ * - même style raffiné
+ * - renfort + pointe aux deux extrémités
  */
 function WatchHandSymmetricRefined({
   angleDeg,
   halfLenPx,
 }: {
   angleDeg: number;
-  halfLenPx: number;
+  halfLenPx: number; // longueur AVANT la pointe (d’un côté)
 }) {
   const THIN = 2;
   const THICK = 4;
-  const TIP = 10;
-  const END_THICK_LEN = Math.max(24, Math.round(halfLenPx * 0.35));
+  const TIP = 8;
+  const END_THICK_LEN = Math.max(16, Math.round(halfLenPx * 0.28));
 
   const colorThin = "rgba(15,23,42,0.70)";
-  const colorThick = "rgba(15,23,42,0.86)";
+  const colorThick = "rgba(15,23,42,0.90)";
 
-  const total = halfLenPx * 2;
+  const arm = Math.max(halfLenPx, 40); // sécurité
+  const total = arm * 2;
 
   return (
     <div
@@ -217,7 +216,7 @@ function WatchHandSymmetricRefined({
       <div
         style={{
           position: "absolute",
-          left: `-${halfLenPx}px`,
+          left: `-${arm}px`,
           top: "50%",
           transform: "translateY(-50%)",
           width: `${total}px`,
@@ -228,11 +227,11 @@ function WatchHandSymmetricRefined({
         }}
       />
 
-      {/* épais côté droit */}
+      {/* renfort + pointe côté droit */}
       <div
         style={{
           position: "absolute",
-          left: `${halfLenPx - END_THICK_LEN}px`,
+          left: `${arm - END_THICK_LEN}px`,
           top: "50%",
           transform: "translateY(-50%)",
           width: `${END_THICK_LEN}px`,
@@ -241,26 +240,25 @@ function WatchHandSymmetricRefined({
           borderRadius: 9999,
         }}
       />
-      {/* pointe droite */}
       <span
         style={{
           position: "absolute",
-          left: `${halfLenPx}px`,
+          left: `${arm}px`,
           top: "50%",
-          transform: "translateY(-50%)",
+          transform: "translateY(-50%)`,
           width: 0,
           height: 0,
-          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
-          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderTop: `${Math.round(THICK / 2) + 1}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 1}px solid transparent`,
           borderLeft: `${TIP}px solid ${colorThick}`,
         }}
       />
 
-      {/* épais côté gauche */}
+      {/* renfort + pointe côté gauche */}
       <div
         style={{
           position: "absolute",
-          left: `-${halfLenPx}px`,
+          left: `-${arm}px`,
           top: "50%",
           transform: "translateY(-50%)",
           width: `${END_THICK_LEN}px`,
@@ -269,17 +267,16 @@ function WatchHandSymmetricRefined({
           borderRadius: 9999,
         }}
       />
-      {/* pointe gauche */}
       <span
         style={{
           position: "absolute",
-          left: `-${halfLenPx}px`,
+          left: `-${arm}px`,
           top: "50%",
-          transform: "translate(-100%, -50%)",
+          transform: "translate(-100%, -50%)`,
           width: 0,
           height: 0,
-          borderTop: `${Math.round(THICK / 2) + 2}px solid transparent`,
-          borderBottom: `${Math.round(THICK / 2) + 2}px solid transparent`,
+          borderTop: `${Math.round(THICK / 2) + 1}px solid transparent`,
+          borderBottom: `${Math.round(THICK / 2) + 1}px solid transparent`,
           borderRight: `${TIP}px solid ${colorThick}`,
         }}
       />
@@ -363,7 +360,7 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
 
-  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
+   // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
   useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
@@ -371,9 +368,16 @@ export default function MagicDisplayFaceEditor({
     const compute = () => {
       const size = el.getBoundingClientRect().width; // ex: 256
       const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20; // bulle 40px
-      const gap = 6; // petit espace avant toucher bulle
-      const len = radiusToBubbleCenter - bubbleRadius - gap;
+      const bubbleRadius = 20; // rayon ~ de l’avatar
+      const gap = 6;           // petit espace visuel
+      const TIP = 8;           // même valeur que dans l’aiguille
+
+      // distance max centre → pointe
+      const maxLen = radiusToBubbleCenter - bubbleRadius - gap;
+
+      // frontLenPx = longueur AVANT la pointe
+      const len = maxLen - TIP;
+
       setFrontLenPx(Math.max(60, Math.round(len)));
     };
 
@@ -452,10 +456,10 @@ export default function MagicDisplayFaceEditor({
     return { top: `${top}%`, left: `${left}%` };
   }
 
-  const angle1 = segmentAngleForId(selectedId, segmentCount);
+    const angle1 = segmentAngleForId(selectedId, segmentCount);
 
-  // réglages "queue" (derrière) : très court, et de toute façon masqué par l’avatar
-  const TAIL_LEN = 8;
+  // queue très courte (derrière l’avatar)
+  const TAIL_LEN = 4;
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
