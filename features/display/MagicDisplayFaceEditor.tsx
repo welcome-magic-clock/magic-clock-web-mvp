@@ -31,7 +31,7 @@ type Segment = {
 };
 
 type FaceNeedles = {
-  needle2Enabled: boolean; // ✅ simple ON/OFF
+  needle2Enabled: boolean; // ON/OFF simple
 };
 
 type FaceState = {
@@ -79,7 +79,7 @@ const segmentIcon = (mediaType?: MediaType | null) => {
 };
 
 const defaultNeedles = (): FaceNeedles => ({
-  needle2Enabled: true, // ✅ activée par défaut
+  needle2Enabled: false, // (si tu veux ON par défaut -> true)
 });
 
 // ---- Aiguilles: angle = centre du segment sélectionné ----
@@ -89,6 +89,90 @@ function segmentAngleForId(segmentId: number, count: number) {
   const start = -90;
   const idx = Math.max(0, Math.min(c - 1, (segmentId ?? 1) - 1));
   return start + step * idx;
+}
+
+/**
+ * Aiguilles (style montre)
+ * - Primary: 1 seul sens (pas de queue), pointe visible proche des bulles +
+ * - Secondary: symétrique, même design des deux côtés
+ *
+ * Important: le layering est géré avec z-index:
+ * z-10 décor / z-20 aiguilles / z-30 avatar / z-40 bulles +
+ */
+const HAND_THICK_PX = 3;
+// Longueur calibrée pour un cercle 256px + bulles 40px à ~42%
+// => presque touche la bulle + (tu peux ajuster 120..140 selon ton goût)
+const HAND_LEN_PX = 132;
+
+function WatchHand({
+  angleDeg,
+  variant,
+}: {
+  angleDeg: number;
+  variant: "primary" | "secondary";
+}) {
+  const isSecondary = variant === "secondary";
+
+  // couleurs (sobre pour MVP)
+  const fill = isSecondary ? "rgba(71,85,105,0.78)" : "rgba(15,23,42,0.88)";
+
+  if (isSecondary) {
+    // Symétrique: même pointe des 2 côtés, centré sur le moyeu
+    const total = HAND_LEN_PX * 2;
+
+    return (
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ transform: `rotate(${angleDeg}deg)` }}
+      >
+        <div
+          className="absolute left-1/2 top-1/2"
+          style={{ transform: "translate(-50%, -50%)" }}
+        >
+          <div
+            style={{
+              width: total,
+              height: HAND_THICK_PX,
+              background: fill,
+              transform: `translateX(-${total / 2}px)`,
+              borderRadius: 9999,
+              // pointe identique aux deux extrémités
+              clipPath:
+                "polygon(0 50%, 4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%)",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Primary: part du centre vers l’extérieur (pas de queue)
+  // La partie “centre” est masquée par l’avatar (z-30)
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ transform: `rotate(${angleDeg}deg)` }}
+    >
+      <div
+        className="absolute left-1/2 top-1/2"
+        style={{ transform: "translate(-50%, -50%)" }}
+      >
+        <div
+          style={{
+            width: HAND_LEN_PX,
+            height: HAND_THICK_PX,
+            background: fill,
+            borderRadius: 9999,
+            transformOrigin: "0% 50%",
+            // Pointe type montre (pas de “queue” car départ au centre)
+            clipPath: "polygon(0 38%, 92% 0, 100% 50%, 92% 100%, 0 62%)",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.14)",
+          }}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function MagicDisplayFaceEditor({
@@ -147,6 +231,7 @@ export default function MagicDisplayFaceEditor({
 
   const selectedSegment =
     segments.find((s) => s.id === selectedId) ?? segments[0];
+
   const needles = currentFace.needles ?? defaultNeedles();
 
   function updateFace(updater: (prev: FaceState) => FaceState) {
@@ -230,11 +315,6 @@ export default function MagicDisplayFaceEditor({
   const angle1 = segmentAngleForId(selectedId, segmentCount);
   const angle2 = angle1 + 180;
 
-  // Taille des aiguilles : proche du "+"
-  // (sur un cercle 256px, rayon ≈128, on veut ~112-118px)
-  const NEEDLE_LEN = 118; // px (aiguille 1)
-  const NEEDLE_LEN_2 = 118; // px (aiguille 2 -> même longueur)
-
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
       {/* Ligne 1 : Back + Face x/6 + titre + bouton options */}
@@ -314,7 +394,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* ✅ Toggle simple Aiguille symétrique */}
+      {/* Toggle Aiguille symétrique */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className="inline-flex items-center gap-2">
           <input
@@ -340,54 +420,20 @@ export default function MagicDisplayFaceEditor({
         {/* Cercle principal */}
         <div className="flex items-center justify-center">
           <div className="relative h-64 w-64 max-w-full">
-            {/* ✅ Décor / anneaux = z-10 */}
+            {/* Décor (z-10) */}
             <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* ✅ Aiguilles = z-20 (sous avatar) */}
-            {needles.needle2Enabled && (
-              <div
-                className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-                style={{
-                  transform: `translate(-50%, -50%) rotate(${angle2}deg)`,
-                }}
-              >
-                {/* Symétrique : on dessine une barre centrée (2 côtés) */}
-                <div
-                  className="h-[3px] bg-slate-700/80"
-                  style={{
-                    width: `${NEEDLE_LEN_2 * 2}px`,
-                    transform: `translateX(-${NEEDLE_LEN_2}px)`,
-                    transformOrigin: "50% 50%",
-                    borderRadius: "2px",
-                    // pointe style montre des deux côtés
-                    clipPath:
-                      "polygon(0 50%, 5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%)",
-                  }}
-                />
-              </div>
-            )}
-
-            <div
-              className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-              style={{
-                transform: `translate(-50%, -50%) rotate(${angle1}deg)`,
-              }}
-            >
-              <div
-                className="h-[3px] bg-slate-900"
-                style={{
-                  width: `${NEEDLE_LEN}px`,
-                  transformOrigin: "0% 50%",
-                  borderRadius: "2px",
-                  // pointe type montre
-                  clipPath: "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
-                }}
-              />
+            {/* Aiguilles (z-20) */}
+            <div className="absolute inset-0 z-20">
+              {needles.needle2Enabled && (
+                <WatchHand angleDeg={angle2} variant="secondary" />
+              )}
+              <WatchHand angleDeg={angle1} variant="primary" />
             </div>
 
-            {/* ✅ Avatar = z-30 */}
+            {/* Avatar central (z-30) */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -403,7 +449,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* ✅ Bulles "+" / segments = z-40 */}
+            {/* Bulles + / segments (z-40) */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
