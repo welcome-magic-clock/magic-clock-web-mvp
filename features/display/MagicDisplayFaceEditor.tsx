@@ -45,18 +45,102 @@ const MAX_SEGMENTS = 12;
 const DEFAULT_SEGMENTS = 4;
 
 const INITIAL_SEGMENTS: Segment[] = [
-  { id: 1, label: "Diagnostic / observation", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 2, label: "Préparation / sectionnement", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 3, label: "Application principale", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 4, label: "Patine / correction", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 5, label: "Finition / coiffage", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 6, label: "Routine maison", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 7, label: "Astuces pro", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 8, label: "Erreurs à éviter", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 9, label: "Produits utilisés", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 10, label: "Temps / timing", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 11, label: "Variantes possibles", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 12, label: "Résumé final", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
+  {
+    id: 1,
+    label: "Diagnostic / observation",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 2,
+    label: "Préparation / sectionnement",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 3,
+    label: "Application principale",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 4,
+    label: "Patine / correction",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 5,
+    label: "Finition / coiffage",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 6,
+    label: "Routine maison",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 7,
+    label: "Astuces pro",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 8,
+    label: "Erreurs à éviter",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 9,
+    label: "Produits utilisés",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 10,
+    label: "Temps / timing",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 11,
+    label: "Variantes possibles",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 12,
+    label: "Résumé final",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
 ];
 
 const statusDotClass = (status: SegmentStatus) => {
@@ -79,7 +163,7 @@ const segmentIcon = (mediaType?: MediaType | null) => {
 };
 
 const defaultNeedles = (): FaceNeedles => ({
-  needle2Enabled: false, // (si tu veux ON par défaut -> true)
+  needle2Enabled: false, // si tu veux ON par défaut -> true
 });
 
 // ---- Aiguilles: angle = centre du segment sélectionné ----
@@ -92,17 +176,16 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguilles (style montre)
- * - Primary: 1 seul sens (pas de queue), pointe visible proche des bulles +
- * - Secondary: symétrique, même design des deux côtés
+ * Aiguilles (style montre) — SANS QUEUE
+ * - Primary: part du centre -> extérieur uniquement (donc pas de queue visible)
+ * - Secondary: même design des 2 côtés (on dessine la même aiguille 2 fois)
  *
- * Important: le layering est géré avec z-index:
+ * Layering (z-index) :
  * z-10 décor / z-20 aiguilles / z-30 avatar / z-40 bulles +
  */
-const HAND_THICK_PX = 3;
-// Longueur calibrée pour un cercle 256px + bulles 40px à ~42%
-// => presque touche la bulle + (tu peux ajuster 120..140 selon ton goût)
-const HAND_LEN_PX = 132;
+const NEEDLE_LEN_PX = 108; // 🔧 ajuste 96..112 pour toucher presque la bulle +
+const NEEDLE_W = 3;
+const TIP_LEN = 12;
 
 function WatchHand({
   angleDeg,
@@ -112,65 +195,42 @@ function WatchHand({
   variant: "primary" | "secondary";
 }) {
   const isSecondary = variant === "secondary";
+  const stroke = isSecondary
+    ? "rgba(51,65,85,0.70)"
+    : "rgba(15,23,42,0.82)";
+  const tip = isSecondary
+    ? "rgba(51,65,85,0.85)"
+    : "rgba(15,23,42,0.92)";
 
-  // couleurs (sobre pour MVP)
-  const fill = isSecondary ? "rgba(71,85,105,0.78)" : "rgba(15,23,42,0.88)";
-
-  if (isSecondary) {
-    // Symétrique: même pointe des 2 côtés, centré sur le moyeu
-    const total = HAND_LEN_PX * 2;
-
-    return (
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ transform: `rotate(${angleDeg}deg)` }}
-      >
-        <div
-          className="absolute left-1/2 top-1/2"
-          style={{ transform: "translate(-50%, -50%)" }}
-        >
-          <div
-            style={{
-              width: total,
-              height: HAND_THICK_PX,
-              background: fill,
-              transform: `translateX(-${total / 2}px)`,
-              borderRadius: 9999,
-              // pointe identique aux deux extrémités
-              clipPath:
-                "polygon(0 50%, 4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%)",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Primary: part du centre vers l’extérieur (pas de queue)
-  // La partie “centre” est masquée par l’avatar (z-30)
   return (
     <div
-      className="absolute inset-0 pointer-events-none"
+      className="pointer-events-none absolute inset-0"
       style={{ transform: `rotate(${angleDeg}deg)` }}
     >
-      <div
-        className="absolute left-1/2 top-1/2"
+      {/* SVG centré : l’aiguille part du centre (0,0) vers +X, aucune partie à gauche */}
+      <svg
+        className="absolute left-1/2 top-1/2 overflow-visible"
         style={{ transform: "translate(-50%, -50%)" }}
+        width={NEEDLE_LEN_PX + TIP_LEN + 2}
+        height={24}
+        viewBox={`0 -12 ${NEEDLE_LEN_PX + TIP_LEN + 2} 24`}
       >
-        <div
-          style={{
-            width: HAND_LEN_PX,
-            height: HAND_THICK_PX,
-            background: fill,
-            borderRadius: 9999,
-            transformOrigin: "0% 50%",
-            // Pointe type montre (pas de “queue” car départ au centre)
-            clipPath: "polygon(0 38%, 92% 0, 100% 50%, 92% 100%, 0 62%)",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.14)",
-          }}
+        <line
+          x1="0"
+          y1="0"
+          x2={NEEDLE_LEN_PX}
+          y2="0"
+          stroke={stroke}
+          strokeWidth={NEEDLE_W}
+          strokeLinecap="round"
         />
-      </div>
+        <polygon
+          points={`${NEEDLE_LEN_PX},0 ${NEEDLE_LEN_PX + TIP_LEN},-5 ${
+            NEEDLE_LEN_PX + TIP_LEN
+          },5`}
+          fill={tip}
+        />
+      </svg>
     </div>
   );
 }
@@ -234,6 +294,9 @@ export default function MagicDisplayFaceEditor({
 
   const needles = currentFace.needles ?? defaultNeedles();
 
+  // ✅ Aiguille 2 uniquement si nombre de segments PAIR
+  const canUseNeedle2 = segmentCount % 2 === 0;
+
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
       const existing = prev[faceId] ?? fallbackFace;
@@ -256,7 +319,18 @@ export default function MagicDisplayFaceEditor({
 
   function handleSegmentCountChange(count: number) {
     const clamped = Math.min(MAX_SEGMENTS, Math.max(1, count));
-    updateFace((existing) => ({ ...existing, segmentCount: clamped }));
+
+    // ✅ si impair => on force needle2 OFF (cohérence UX)
+    updateFace((existing) => ({
+      ...existing,
+      segmentCount: clamped,
+      needles: {
+        ...(existing.needles ?? defaultNeedles()),
+        needle2Enabled:
+          clamped % 2 === 0 ? (existing.needles?.needle2Enabled ?? false) : false,
+      },
+    }));
+
     setSelectedId((prevId) => (prevId > clamped ? 1 : prevId));
   }
 
@@ -394,12 +468,13 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* Toggle Aiguille symétrique */}
+      {/* Toggle Aiguille symétrique (pair uniquement) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className="inline-flex items-center gap-2">
           <input
             type="checkbox"
-            checked={needles.needle2Enabled}
+            checked={needles.needle2Enabled && canUseNeedle2}
+            disabled={!canUseNeedle2}
             onChange={(e) => {
               const enabled = e.target.checked;
               updateFace((existing) => ({
@@ -410,9 +485,14 @@ export default function MagicDisplayFaceEditor({
                 },
               }));
             }}
-            className="h-4 w-4 accent-brand-500"
+            className="h-4 w-4 accent-brand-500 disabled:opacity-40"
           />
           <span className="font-medium text-slate-700">Aiguille symétrique</span>
+          {!canUseNeedle2 && (
+            <span className="text-[10px] text-slate-400">
+              (Disponible uniquement avec un nombre pair de segments)
+            </span>
+          )}
         </label>
       </div>
 
@@ -425,12 +505,20 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* Aiguilles (z-20) */}
-            <div className="absolute inset-0 z-20">
-              {needles.needle2Enabled && (
-                <WatchHand angleDeg={angle2} variant="secondary" />
-              )}
+            {/* Aiguilles (z-20) — sans queue + symétrie vraie */}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              {/* Aiguille 1 : toujours */}
               <WatchHand angleDeg={angle1} variant="primary" />
+
+              {/* Aiguille 2 : uniquement si pair + checkbox ON
+                  Symétrie parfaite = même aiguille dessinée 2 fois (angle & angle+180)
+              */}
+              {canUseNeedle2 && needles.needle2Enabled && (
+                <>
+                  <WatchHand angleDeg={angle1} variant="secondary" />
+                  <WatchHand angleDeg={angle2} variant="secondary" />
+                </>
+              )}
             </div>
 
             {/* Avatar central (z-30) */}
