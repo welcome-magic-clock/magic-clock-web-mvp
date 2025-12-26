@@ -217,44 +217,71 @@ export default function MagicDisplayFaceEditor({
   const angle1 = segmentAngleForId(selectedId, segmentCount);
   const angle2 = angle1 + 180;
 
-  const HAND_LEN = "44%"; // ✅ longueur fixe (même pour les 2)
-  const HAND_THICK = 3;
+ // --- AIGUILLES (visibles + proches du "+") ---
+const HAND_THICK = 3;
 
-  function WatchHand({ angleDeg, variant }: { angleDeg: number; variant: "primary" | "secondary" }) {
-    const isSecondary = variant === "secondary";
-    const barClass = isSecondary ? "bg-brand-600" : "bg-slate-900/85";
-    const tipColor = isSecondary ? "rgba(79,70,229,0.95)" : "rgba(15,23,42,0.85)";
+// Distance centre -> près du bord (le + est très haut)
+// Ajuste si tu veux encore plus long: 62% max conseillé.
+const HAND_LEN = "58%";
 
-    return (
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20">
-        <div className="origin-left" style={{ transform: `rotate(${angleDeg}deg)` }}>
-          {/* tige */}
-          <div
-            className={`relative rounded-full shadow-sm ${barClass}`}
-            style={{ width: HAND_LEN, height: HAND_THICK }}
-          >
-            {/* pointe (triangle) */}
-            <span
-              className="absolute right-0 top-1/2 block"
-              style={{
-                transform: "translate(70%, -50%)",
-                width: 0,
-                height: 0,
-                borderTop: "6px solid transparent",
-                borderBottom: "6px solid transparent",
-                borderLeft: `10px solid ${tipColor}`,
-              }}
-            />
-          </div>
-        </div>
+function WatchHand({
+  angleDeg,
+  variant,
+}: {
+  angleDeg: number;
+  variant: "primary" | "secondary";
+}) {
+  const isSecondary = variant === "secondary";
 
-        {/* axe central (une seule fois suffit, mais c'est OK si doublé visuellement) */}
-        {!isSecondary && (
-          <div className="absolute left-0 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-900 shadow" />
-        )}
+  // Couleurs (tu pourras designer plus tard)
+  const barClass = isSecondary ? "bg-brand-600/90" : "bg-slate-900/80";
+  const tipColor = isSecondary
+    ? "rgba(79,70,229,0.95)"
+    : "rgba(15,23,42,0.85)";
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2"
+      // ✅ centrage + rotation
+      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
+    >
+      {/* ✅ tige part du centre vers l’extérieur */}
+      <div
+        className={`relative rounded-full shadow-sm ${barClass}`}
+        style={{
+          width: HAND_LEN,
+          height: HAND_THICK,
+          transformOrigin: "0% 50%",
+        }}
+      >
+        {/* ✅ pointe type montre */}
+        <span
+          className="absolute right-0 top-1/2 block"
+          style={{
+            transform: "translate(70%, -50%)",
+            width: 0,
+            height: 0,
+            borderTop: "6px solid transparent",
+            borderBottom: "6px solid transparent",
+            borderLeft: `10px solid ${tipColor}`,
+          }}
+        />
       </div>
-    );
-  }
+
+      {/* ✅ axe central (petit point) */}
+      {!isSecondary && (
+        <div
+          className="absolute left-0 top-1/2 rounded-full bg-slate-900 shadow"
+          style={{
+            width: 10,
+            height: 10,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -360,13 +387,19 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-16 rounded-full border border-slate-300/70" />
 
             {/* ✅ Aiguille 2 (symétrique) */}
-            {needles.needle2Enabled && <WatchHand angleDeg={angle2} variant="secondary" />}
+            {needles.needle2Enabled && (
+  <div className="absolute inset-0 z-20 pointer-events-none">
+    <WatchHand angleDeg={angle2} variant="secondary" />
+  </div>
+)}
 
             {/* ✅ Aiguille 1 (toujours) */}
-            <WatchHand angleDeg={angle1} variant="primary" />
+          <div className="absolute inset-0 z-20 pointer-events-none">
+  <WatchHand angleDeg={angle1} variant="primary" />
+</div>
 
             {/* Avatar central */}
-            <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
+           <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
