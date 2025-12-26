@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  type ChangeEvent,
+} from "react";
 import {
   Camera,
   Clapperboard,
@@ -92,9 +98,9 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille "propre" (sans queue visible)
- * - On part du centre vers l'extérieur (une seule direction)
- * - La base est cachée par l'avatar (z-30)
+ * Aiguille élégante (design “image 3”)
+ * - One-way: tige fine + pointe
+ * - La base est masquée par l’avatar (z-30)
  */
 function WatchHandOneWay({
   angleDeg,
@@ -103,8 +109,8 @@ function WatchHandOneWay({
   angleDeg: number;
   lenPx: number;
 }) {
-  const THICK = 2; // plus fin = plus élégant
-  const tipW = 10; // taille pointe
+  const THICK = 2; // fin
+  const tipW = 12; // pointe un peu plus longue
   const tipH = 6;
 
   return (
@@ -163,7 +169,7 @@ export default function MagicDisplayFaceEditor({
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // ref du cercle pour calculer la bonne longueur d’aiguille
+  // ref cercle pour calcul de longueur
   const circleRef = useRef<HTMLDivElement | null>(null);
   const [handLenPx, setHandLenPx] = useState<number>(120);
 
@@ -204,38 +210,6 @@ export default function MagicDisplayFaceEditor({
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
-  // UX: si impair, on force OFF (et on disable)
-  useEffect(() => {
-    if (!isEven && needles.needle2Enabled) {
-      updateFace((existing) => ({
-        ...existing,
-        needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: false },
-      }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEven, segmentCount]);
-
-  // calc longueur ≈ “pointe proche de la bulle +”
-  useEffect(() => {
-    const el = circleRef.current;
-    if (!el) return;
-
-    const compute = () => {
-      const size = el.getBoundingClientRect().width; // ex: 256
-      // bulles à radiusPercent=42% => distance centre->centre bulle ≈ 0.42*size
-      // on veut toucher presque la bulle (rayon ~20) + un tout petit gap
-      const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20;
-      const gap = 6; // “presque”
-      const len = radiusToBubbleCenter - bubbleRadius - gap;
-      setHandLenPx(Math.max(60, Math.round(len)));
-    };
-
-    compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, []);
-
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
       const existing = prev[faceId] ?? fallbackFace;
@@ -246,10 +220,55 @@ export default function MagicDisplayFaceEditor({
 
   function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
     updateFace((existing) => {
-      const updatedSegments = existing.segments.map((s) => (s.id === segmentId ? updater(s) : s));
+      const updatedSegments = existing.segments.map((s) =>
+        s.id === segmentId ? updater(s) : s
+      );
       return { ...existing, segments: updatedSegments };
     });
   }
+
+  // UX: si impair, on force OFF
+  useEffect(() => {
+    if (!isEven && needles.needle2Enabled) {
+      updateFace((existing) => ({
+        ...existing,
+        needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: false },
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEven, segmentCount]);
+
+  // Calcul longueur: centre -> presque bord intérieur de la bulle "+"
+  // useLayoutEffect = plus fiable sur mobile (après layout)
+  useLayoutEffect(() => {
+    const el = circleRef.current;
+    if (!el) return;
+
+    const compute = () => {
+      const rect = el.getBoundingClientRect();
+      const size = Math.min(rect.width, rect.height);
+
+      // BULLES: radiusPercent = 42% du rayon => distance centre->centre bulle = 0.42*(size/2)
+      const radiusToBubbleCenter = 0.42 * (size / 2);
+
+      // bulle: 40px => rayon 20px
+      const bubbleRadius = 20;
+
+      // petit gap pour "presque toucher"
+      const gap = 6;
+
+      const len = radiusToBubbleCenter - bubbleRadius - gap;
+
+      // clamp pour éviter des valeurs extrêmes
+      const clamped = Math.max(55, Math.min(160, Math.round(len)));
+
+      setHandLenPx(clamped);
+    };
+
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, [segmentCount]);
 
   function handleSegmentCountChange(count: number) {
     const clamped = Math.min(MAX_SEGMENTS, Math.max(1, count));
@@ -304,7 +323,6 @@ export default function MagicDisplayFaceEditor({
     return { top: `${top}%`, left: `${left}%` };
   }
 
-  // angles
   const angle1 = segmentAngleForId(selectedId, segmentCount);
   const angle2 = angle1 + 180;
 
@@ -378,7 +396,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* Toggle symétrique (uniquement pair) */}
+      {/* Toggle symétrique */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className={`inline-flex items-center gap-2 ${!isEven ? "opacity-60" : ""}`}>
           <input
@@ -416,9 +434,10 @@ export default function MagicDisplayFaceEditor({
 
             {/* Aiguilles z-20 */}
             <div className="absolute inset-0 z-20 pointer-events-none">
-              {/* primary */}
+              {/* aiguille 1 */}
               <WatchHandOneWay angleDeg={angle1} lenPx={handLenPx} />
-              {/* secondary = même design, juste opposée */}
+
+              {/* aiguille 2 = opposée (même design) */}
               {isEven && needles.needle2Enabled && (
                 <WatchHandOneWay angleDeg={angle2} lenPx={handLenPx} />
               )}
