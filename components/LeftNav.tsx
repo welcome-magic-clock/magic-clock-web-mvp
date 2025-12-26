@@ -4,32 +4,22 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import type { ComponentType, SVGProps } from "react";
 import {
   Home,
   Users,
+  Box,
   DollarSign,
   Mail,
   Bell,
   Shield,
 } from "lucide-react";
-
 import { CREATORS } from "@/features/meet/creators";
-import { MagicCubeIcon } from "@/components/icons/MagicCubeIcon";
 
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon?: IconComponent | null;
-};
-
-const items: NavItem[] = [
+const items = [
   { href: "/", label: "Amazing", icon: Home },
   { href: "/meet", label: "Meet me", icon: Users },
-  { href: "/mymagic", label: "My Magic Clock", icon: null }, // avatar géré à la main
-  { href: "/create", label: "Créer", icon: MagicCubeIcon },   // 🧊 cube 3D
+  { href: "/mymagic", label: "My Magic Clock", icon: null }, // icon gérée à la main
+  { href: "/create", label: "Créer", icon: Box },            // 🧊 cube
   { href: "/monet", label: "Monétisation", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: Mail },
   { href: "/notifications", label: "Notifications", icon: Bell },
@@ -56,6 +46,7 @@ export default function LeftNav() {
               pathname === href ||
               (href !== "/" && pathname.startsWith(href + "/"));
             const isMyMagic = href === "/mymagic";
+            const isCreate = href === "/create";
 
             return (
               <Link
@@ -80,9 +71,13 @@ export default function LeftNav() {
                       className="object-cover"
                     />
                   </div>
-                ) : Icon ? (
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                ) : null}
+                ) : (
+                  Icon && (
+                    <Icon
+                      className={isCreate ? "h-5 w-5" : "h-4 w-4"}
+                    />
+                  )
+                )}
 
                 <span>{label}</span>
               </Link>
