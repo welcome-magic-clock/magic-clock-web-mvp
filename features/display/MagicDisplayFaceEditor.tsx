@@ -241,12 +241,21 @@ export default function MagicDisplayFaceEditor({
   // ✅ Ajustements demandés :
   // - Aiguille 1 : on l'allonge (extrémité) => on augmente NEEDLE_LEN
   // - Aiguille 2 symétrique : même design des deux côtés, mais un peu plus courte
-const NEEDLE_THICK = 1; // tige fine (épuré)
-const NEEDLE_TAIL = 1; // derrière (court)
-const NEEDLE_FRONT = 120; // devant (réduit -> beaucoup moins grand)
+// --- AIGUILLE 1 (par défaut) : épais jusqu’à la bulle + petite pointe fine
+const NEEDLE_THICK = 3;
 
-const TIP_THICK = 5; // épais côté bulle
-const TIP_LEN = 22;  // longueur de la partie épaisse
+// queue (derrière) courte
+const NEEDLE_TAIL = 10;
+
+// partie épaisse (celle qu’on veut pousser jusqu’à la bulle)
+const NEEDLE_BODY = 112;
+
+// petite pointe fine (devant)
+const NEEDLE_TIP = 10;
+
+// longueur vers l’avant (devant) = épais + pointe
+const NEEDLE_LEN = NEEDLE_BODY + NEEDLE_TIP;
+  
 const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tard)
   
   return (
@@ -379,91 +388,54 @@ const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tar
 
            
         {/* ✅ Aiguille par défaut (épurée) */}
-{/* AIGUILLE PAR DÉFAUT — pivot au centre (jonction tail/front) */}
-const NEEDLE_THICK = 3;
-
-// ✅ tu contrôles vraiment les 2 longueurs ici
-const NEEDLE_TAIL = 18;    // derrière (épais)
-const NEEDLE_FRONT = 110;  // devant (fin + pointe)
-
 <div
   className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-  style={{
-    // on place la “jonction” pile au centre, puis on tourne
-    transform: `translate(-50%, -50%) rotate(${angle1}deg)`,
-  }}
+  style={{ transform: `translate(-50%, -50%) rotate(${angle1}deg)` }}
 >
-  {/* Wrapper de toute l’aiguille */}
+  {/* queue courte (derrière) */}
   <div
     style={{
-      position: "relative",
-      width: `${NEEDLE_TAIL + NEEDLE_FRONT}px`,
-      height: `${NEEDLE_THICK + 2}px`,
-      // ✅ on décale la barre pour que la jonction soit au centre de rotation
-      transform: `translateX(-${NEEDLE_TAIL}px)`,
-      // ✅ pivot EXACT au centre (jonction)
-      transformOrigin: `${NEEDLE_TAIL}px 50%`,
+      position: "absolute",
+      left: `-${NEEDLE_TAIL}px`,
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: `${NEEDLE_TAIL}px`,
+      height: `${NEEDLE_THICK}px`,
+      background: "rgba(15,23,42,0.55)",
+      borderRadius: 9999,
     }}
-  >
-    {/* queue épaisse (derrière) */}
-    <div
-      style={{
-        position: "absolute",
-        left: 0,
-        top: "50%",
-        transform: "translateY(-50%)",
-        width: `${NEEDLE_TAIL}px`,
-        height: `${NEEDLE_THICK + 2}px`,
-        background: "rgba(15,23,42,0.85)",
-        borderRadius: 9999,
-      }}
-    />
+  />
 
-    {/* corps fin (devant) */}
-    <div
-      style={{
-        position: "absolute",
-        left: `${NEEDLE_TAIL}px`,
-        top: "50%",
-        transform: "translateY(-50%)",
-        width: `${NEEDLE_FRONT}px`,
-        height: `${NEEDLE_THICK}px`,
-        background: "rgba(15,23,42,0.78)",
-        borderRadius: 9999,
-      }}
-    >
-      {/* pointe fine */}
-      <span
-        style={{
-          position: "absolute",
-          right: -10,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 0,
-          height: 0,
-          borderTop: "6px solid transparent",
-          borderBottom: "6px solid transparent",
-          borderLeft: "10px solid rgba(15,23,42,0.78)",
-        }}
-      />
-    </div>
-  </div>
-</div>
-    {/* ✅ Pointe épaisse côté bulle (seulement au bout) */}
-    <span
-      style={{
-        position: "absolute",
-        right: 0,
-        top: "50%",
-        transform: "translateY(-50%)",
-        width: `${TIP_LEN}px`,
-        height: `${TIP_THICK}px`,
-        background: "rgba(15,23,42,0.82)",
-        borderRadius: 9999,
-        clipPath: "polygon(0 15%, 82% 0, 100% 50%, 82% 100%, 0 85%)",
-      }}
-    />
-  </div>
+  {/* corps ÉPAIS (devant) -> c’est lui qui doit aller jusqu’à la bulle */}
+  <div
+    style={{
+      position: "absolute",
+      left: 0,
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: `${NEEDLE_BODY}px`,
+      height: `${NEEDLE_THICK}px`,
+      background: "rgba(15,23,42,0.82)",
+      borderRadius: 9999,
+      boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+    }}
+  />
+
+  {/* petite pointe fine (devant) */}
+  <div
+    style={{
+      position: "absolute",
+      left: `${NEEDLE_BODY}px`,
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: 0,
+      height: 0,
+      borderTop: "5px solid transparent",
+      borderBottom: "5px solid transparent",
+      borderLeft: `${NEEDLE_TIP}px solid rgba(15,23,42,0.82)`,
+      filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.12))",
+    }}
+  />
 </div>
 
             {/* Avatar z-30 */}
