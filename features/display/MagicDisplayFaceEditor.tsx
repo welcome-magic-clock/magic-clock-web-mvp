@@ -248,6 +248,7 @@ const NEEDLE_TAIL = 34;        // derrière (queue) : plus court/fin
 const NEEDLE_FRONT = 130;      // devant : longueur globale vers la bulle
 const TIP_THICK = 8;           // 👈 épaisseur au bout (vers la bulle)
 const TIP_LEN = 26;            // 👈 longueur de la zone épaisse au bout
+const NEEDLE_LEN = NEEDLE_FRONT; // ✅ utilisé par l’aiguille symétrique (centrée)
   
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
