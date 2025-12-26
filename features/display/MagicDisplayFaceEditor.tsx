@@ -92,10 +92,9 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (one-way) ultra épurée :
- * - corps très fin
- * - partie "épaisse" courte vers la bulle
- * - micro effilement qui s’arrête juste avant la bulle
+ * Aiguille 1 (simple, vers l’extérieur) :
+ * - barre continue
+ * - s’arrête juste avant la bulle (frontLenPx est déjà calculé pour ça)
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -103,23 +102,18 @@ function WatchHandOneWayRefined({
   tailLenPx,
 }: {
   angleDeg: number;
-  frontLenPx: number; // longueur AVANT la petite pointe
+  frontLenPx: number;
   tailLenPx: number;
 }) {
-  const THIN = 2;   // corps fin
-  const THICK = 4;  // petit renfort vers la bulle
-  const TIP = 8;    // micro pointe
-  const END_THICK_LEN = Math.max(18, Math.round(frontLenPx * 0.32));
-
-  const colorThin = "rgba(15,23,42,0.70)";
-  const colorThick = "rgba(15,23,42,0.90)";
+  const THICK = 4; // épaisseur unique
+  const color = "rgba(15,23,42,0.9)";
 
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
-      {/* queue très courte derrière (masquée par la bulle) */}
+      {/* petite queue derrière le centre (optionnelle) */}
       {tailLenPx > 0 && (
         <div
           style={{
@@ -128,15 +122,15 @@ function WatchHandOneWayRefined({
             top: "50%",
             transform: "translateY(-50%)",
             width: `${tailLenPx}px`,
-            height: `${THIN}px`,
-            background: colorThin,
+            height: `${THICK}px`,
+            background: color,
             borderRadius: 9999,
             boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
           }}
         />
       )}
 
-      {/* corps fin */}
+      {/* barre principale, continue, jusqu’à près de la bulle */}
       <div
         style={{
           position: "absolute",
@@ -144,40 +138,10 @@ function WatchHandOneWayRefined({
           top: "50%",
           transform: "translateY(-50%)",
           width: `${Math.max(0, frontLenPx)}px`,
-          height: `${THIN}px`,
-          background: colorThin,
-          borderRadius: 9999,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
-        }}
-      />
-
-      {/* petit renfort épais juste avant la pointe */}
-      <div
-        style={{
-          position: "absolute",
-          left: `${Math.max(0, frontLenPx - END_THICK_LEN)}px`,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: `${END_THICK_LEN}px`,
           height: `${THICK}px`,
-          background: colorThick,
+          background: color,
           borderRadius: 9999,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
-        }}
-      />
-
-      {/* micro pointe raffinée */}
-      <span
-        style={{
-          position: "absolute",
-          left: `${frontLenPx}px`,
-          top: "50%",
-         transform: "translateY(-50%)",
-          width: 0,
-          height: 0,
-          borderTop: `${Math.round(THICK / 2) + 1}px solid transparent`,
-          borderBottom: `${Math.round(THICK / 2) + 1}px solid transparent`,
-          borderLeft: `${TIP}px solid ${colorThick}`,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.16)",
         }}
       />
     </div>
@@ -186,104 +150,41 @@ function WatchHandOneWayRefined({
 
 /**
  * Aiguille 2 (symétrique) :
- * - même style raffiné
- * - renfort + pointe aux deux extrémités
+ * - barre continue des deux côtés
+ * - même style que la première, sans pointe
  */
 function WatchHandSymmetricRefined({
   angleDeg,
   halfLenPx,
 }: {
   angleDeg: number;
-  halfLenPx: number; // longueur AVANT la pointe (d’un côté)
+  halfLenPx: number;
 }) {
-  const THIN = 2;
   const THICK = 4;
-  const TIP = 8;
-  const END_THICK_LEN = Math.max(16, Math.round(halfLenPx * 0.28));
-
-  const colorThin = "rgba(15,23,42,0.70)";
-  const colorThick = "rgba(15,23,42,0.90)";
-
-  const arm = Math.max(halfLenPx, 40); // sécurité
-  const total = arm * 2;
+  const color = "rgba(15,23,42,0.85)";
+  const total = halfLenPx * 2;
 
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
-      {/* corps fin sur toute la longueur */}
       <div
         style={{
           position: "absolute",
-          left: `-${arm}px`,
+          left: `-${halfLenPx}px`,
           top: "50%",
           transform: "translateY(-50%)",
           width: `${total}px`,
-          height: `${THIN}px`,
-          background: colorThin,
-          borderRadius: 9999,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
-        }}
-      />
-
-      {/* renfort + pointe côté droit */}
-      <div
-        style={{
-          position: "absolute",
-          left: `${arm - END_THICK_LEN}px`,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: `${END_THICK_LEN}px`,
           height: `${THICK}px`,
-          background: colorThick,
+          background: color,
           borderRadius: 9999,
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          left: `${arm}px`,
-          top: "50%",
-        transform: "translateY(-50%)",
-          width: 0,
-          height: 0,
-          borderTop: `${Math.round(THICK / 2) + 1}px solid transparent`,
-          borderBottom: `${Math.round(THICK / 2) + 1}px solid transparent`,
-          borderLeft: `${TIP}px solid ${colorThick}`,
-        }}
-      />
-
-      {/* renfort + pointe côté gauche */}
-      <div
-        style={{
-          position: "absolute",
-          left: `-${arm}px`,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: `${END_THICK_LEN}px`,
-          height: `${THICK}px`,
-          background: colorThick,
-          borderRadius: 9999,
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          left: `-${arm}px`,
-          top: "50%",
-        transform: "translate(-100%, -50%)",
-          width: 0,
-          height: 0,
-          borderTop: `${Math.round(THICK / 2) + 1}px solid transparent`,
-          borderBottom: `${Math.round(THICK / 2) + 1}px solid transparent`,
-          borderRight: `${TIP}px solid ${colorThick}`,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.16)",
         }}
       />
     </div>
   );
 }
-
 export default function MagicDisplayFaceEditor({
   creatorName = "Aiko Tanaka",
   creatorAvatar,
