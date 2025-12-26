@@ -140,9 +140,13 @@ export default function MagicDisplayFaceEditor({
 
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
-  const segmentCount = Math.min(MAX_SEGMENTS, Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS));
+  const segmentCount = Math.min(
+    MAX_SEGMENTS,
+    Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS)
+  );
 
-  const selectedSegment = segments.find((s) => s.id === selectedId) ?? segments[0];
+  const selectedSegment =
+    segments.find((s) => s.id === selectedId) ?? segments[0];
   const needles = currentFace.needles ?? defaultNeedles();
 
   function updateFace(updater: (prev: FaceState) => FaceState) {
@@ -153,9 +157,14 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
+  function updateSegment(
+    segmentId: number,
+    updater: (prev: Segment) => Segment
+  ) {
     updateFace((existing) => {
-      const updatedSegments = existing.segments.map((s) => (s.id === segmentId ? updater(s) : s));
+      const updatedSegments = existing.segments.map((s) =>
+        s.id === segmentId ? updater(s) : s
+      );
       return { ...existing, segments: updatedSegments };
     });
   }
@@ -173,7 +182,10 @@ export default function MagicDisplayFaceEditor({
     else fileInputRef.current?.click();
   }
 
-  function handleMediaFileChange(event: ChangeEvent<HTMLInputElement>, type: MediaType) {
+  function handleMediaFileChange(
+    event: ChangeEvent<HTMLInputElement>,
+    type: MediaType
+  ) {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
 
@@ -195,7 +207,8 @@ export default function MagicDisplayFaceEditor({
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
-      status: prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
+      status:
+        prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
     }));
   }
 
@@ -217,71 +230,10 @@ export default function MagicDisplayFaceEditor({
   const angle1 = segmentAngleForId(selectedId, segmentCount);
   const angle2 = angle1 + 180;
 
- // --- AIGUILLES (visibles + proches du "+") ---
-const HAND_THICK = 3;
-
-// Distance centre -> près du bord (le + est très haut)
-// Ajuste si tu veux encore plus long: 62% max conseillé.
-const HAND_LEN = "58%";
-
-function WatchHand({
-  angleDeg,
-  variant,
-}: {
-  angleDeg: number;
-  variant: "primary" | "secondary";
-}) {
-  const isSecondary = variant === "secondary";
-
-  // Couleurs (tu pourras designer plus tard)
-  const barClass = isSecondary ? "bg-brand-600/90" : "bg-slate-900/80";
-  const tipColor = isSecondary
-    ? "rgba(79,70,229,0.95)"
-    : "rgba(15,23,42,0.85)";
-
-  return (
-    <div
-      className="pointer-events-none absolute left-1/2 top-1/2"
-      // ✅ centrage + rotation
-      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
-    >
-      {/* ✅ tige part du centre vers l’extérieur */}
-      <div
-        className={`relative rounded-full shadow-sm ${barClass}`}
-        style={{
-          width: HAND_LEN,
-          height: HAND_THICK,
-          transformOrigin: "0% 50%",
-        }}
-      >
-        {/* ✅ pointe type montre */}
-        <span
-          className="absolute right-0 top-1/2 block"
-          style={{
-            transform: "translate(70%, -50%)",
-            width: 0,
-            height: 0,
-            borderTop: "6px solid transparent",
-            borderBottom: "6px solid transparent",
-            borderLeft: `10px solid ${tipColor}`,
-          }}
-        />
-      </div>
-
-      {/* ✅ axe central (petit point) */}
-      {!isSecondary && (
-        <div
-          className="absolute left-0 top-1/2 rounded-full bg-slate-900 shadow"
-          style={{
-            width: 10,
-            height: 10,
-            transform: "translate(-50%, -50%)",
-          }}
-        />
-      )}
-    </div>
-  );
-}
+  // Taille des aiguilles : proche du "+"
+  // (sur un cercle 256px, rayon ≈128, on veut ~112-118px)
+  const NEEDLE_LEN = 118; // px (aiguille 1)
+  const NEEDLE_LEN_2 = 118; // px (aiguille 2 -> même longueur)
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -302,7 +254,9 @@ function WatchHand({
             <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Face {faceId} / 6
             </span>
-            <span className="text-sm font-semibold text-slate-900">{faceLabel}</span>
+            <span className="text-sm font-semibold text-slate-900">
+              {faceLabel}
+            </span>
           </div>
         </div>
 
@@ -347,7 +301,11 @@ function WatchHand({
           <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
             {creatorAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
+              <img
+                src={creatorAvatar}
+                alt={creatorName}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="text-xs font-semibold">{creatorInitials}</span>
             )}
@@ -356,7 +314,7 @@ function WatchHand({
         </div>
       </div>
 
-      {/* ✅ Toggle simple Aiguille symétrique (sous la ligne segments) */}
+      {/* ✅ Toggle simple Aiguille symétrique */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className="inline-flex items-center gap-2">
           <input
@@ -366,7 +324,10 @@ function WatchHand({
               const enabled = e.target.checked;
               updateFace((existing) => ({
                 ...existing,
-                needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: enabled },
+                needles: {
+                  ...(existing.needles ?? defaultNeedles()),
+                  needle2Enabled: enabled,
+                },
               }));
             }}
             className="h-4 w-4 accent-brand-500"
@@ -379,36 +340,70 @@ function WatchHand({
         {/* Cercle principal */}
         <div className="flex items-center justify-center">
           <div className="relative h-64 w-64 max-w-full">
-            {/* Halo */}
-            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
-            {/* Disque principal */}
-            <div className="absolute inset-4 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
-            {/* Anneau interne */}
-            <div className="absolute inset-16 rounded-full border border-slate-300/70" />
+            {/* ✅ Décor / anneaux = z-10 */}
+            <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
+            <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
+            <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* ✅ Aiguille 2 (symétrique) */}
+            {/* ✅ Aiguilles = z-20 (sous avatar) */}
             {needles.needle2Enabled && (
-  <div className="absolute inset-0 z-20 pointer-events-none">
-    <WatchHand angleDeg={angle2} variant="secondary" />
-  </div>
-)}
+              <div
+                className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
+                style={{
+                  transform: `translate(-50%, -50%) rotate(${angle2}deg)`,
+                }}
+              >
+                {/* Symétrique : on dessine une barre centrée (2 côtés) */}
+                <div
+                  className="h-[3px] bg-slate-700/80"
+                  style={{
+                    width: `${NEEDLE_LEN_2 * 2}px`,
+                    transform: `translateX(-${NEEDLE_LEN_2}px)`,
+                    transformOrigin: "50% 50%",
+                    borderRadius: "2px",
+                    // pointe style montre des deux côtés
+                    clipPath:
+                      "polygon(0 50%, 5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%)",
+                  }}
+                />
+              </div>
+            )}
 
-            {/* ✅ Aiguille 1 (toujours) */}
-          <div className="absolute inset-0 z-20 pointer-events-none">
-  <WatchHand angleDeg={angle1} variant="primary" />
-</div>
+            <div
+              className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
+              style={{
+                transform: `translate(-50%, -50%) rotate(${angle1}deg)`,
+              }}
+            >
+              <div
+                className="h-[3px] bg-slate-900"
+                style={{
+                  width: `${NEEDLE_LEN}px`,
+                  transformOrigin: "0% 50%",
+                  borderRadius: "2px",
+                  // pointe type montre
+                  clipPath: "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
+                }}
+              />
+            </div>
 
-            {/* Avatar central */}
-           <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
+            {/* ✅ Avatar = z-30 */}
+            <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <span className="text-xs font-semibold text-slate-50">{creatorInitials}</span>
+                <span className="text-xs font-semibold text-slate-50">
+                  {creatorInitials}
+                </span>
               )}
             </div>
 
-            {/* Points de segments */}
+            {/* ✅ Bulles "+" / segments = z-40 */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
@@ -417,7 +412,7 @@ function WatchHand({
                   key={seg.id}
                   type="button"
                   onClick={() => setSelectedId(seg.id)}
-                  className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
+                  className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                     ${
                       isSelected
                         ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
@@ -427,7 +422,9 @@ function WatchHand({
                 >
                   {segmentIcon(seg.mediaType)}
                   <span
-                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(seg.status)}`}
+                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
+                      seg.status
+                    )}`}
                   />
                 </button>
               );
@@ -437,7 +434,6 @@ function WatchHand({
 
         {/* Liste + détail */}
         <div className="space-y-4">
-          {/* Liste des segments */}
           <div className="space-y-2">
             {segments.slice(0, segmentCount).map((seg) => {
               const isSelected = seg.id === selectedId;
@@ -464,23 +460,30 @@ function WatchHand({
                       Chapitre de cette face (diagnostic, application, etc.).
                     </p>
                   </div>
-                  <span className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(seg.status)}`} />
+                  <span
+                    className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(
+                      seg.status
+                    )}`}
+                  />
                 </button>
               );
             })}
           </div>
 
-          {/* Détail segment sélectionné */}
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
             <div>
               <p className="text-xs font-semibold text-slate-700">
                 Segment {selectedSegment.id} – {selectedSegment.label}
               </p>
               <p className="text-[11px] text-slate-500">
-                Ajoute un média et des notes pour expliquer précisément cette étape.
+                Ajoute un média et des notes pour expliquer précisément cette
+                étape.
               </p>
               <p className="mt-1 text-[10px] text-slate-400">
-                Statut : <span className="font-semibold">{statusLabel(selectedSegment.status)}</span>
+                Statut :{" "}
+                <span className="font-semibold">
+                  {statusLabel(selectedSegment.status)}
+                </span>
               </p>
             </div>
 
@@ -537,7 +540,9 @@ function WatchHand({
             )}
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-600">Notes pédagogiques</label>
+              <label className="text-[11px] font-medium text-slate-600">
+                Notes pédagogiques
+              </label>
               <textarea
                 rows={3}
                 value={selectedSegment.notes}
@@ -548,7 +553,8 @@ function WatchHand({
             </div>
 
             <p className="text-[11px] text-slate-500">
-              MVP local : les données restent dans la mémoire de la page. Plus tard, elles seront reliées à ton Magic Studio et à My Magic Clock.
+              MVP local : les données restent dans la mémoire de la page. Plus
+              tard, elles seront reliées à ton Magic Studio et à My Magic Clock.
             </p>
           </div>
         </div>
