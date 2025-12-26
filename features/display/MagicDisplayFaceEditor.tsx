@@ -31,10 +31,7 @@ type Segment = {
 };
 
 type FaceNeedles = {
-  needle1Angle: number; // deg (snapped)
-  needle1Length: number; // 0..100 (%)
-  needle2Enabled: boolean; // optional
-  needle2Length: number; // 0..100 (%)
+  needle2Enabled: boolean; // ✅ simple ON/OFF
 };
 
 type FaceState = {
@@ -81,40 +78,17 @@ const segmentIcon = (mediaType?: MediaType | null) => {
   return <span className="text-xs">＋</span>;
 };
 
-const defaultNeedles = (_count: number): FaceNeedles => ({
-  needle1Angle: -90,
-  needle1Length: 78,
-  needle2Enabled: false,
-  needle2Length: 78,
+const defaultNeedles = (): FaceNeedles => ({
+  needle2Enabled: true, // ✅ activée par défaut
 });
 
-// ---- Aiguilles: snap au centre des segments ----
-function segmentCenterAngles(count: number) {
+// ---- Aiguilles: angle = centre du segment sélectionné ----
+function segmentAngleForId(segmentId: number, count: number) {
   const c = Math.max(1, count);
   const step = 360 / c;
   const start = -90;
-  return Array.from({ length: c }, (_, i) => start + step * i);
-}
-
-function snapAngleToNearestSegment(angle: number, count: number) {
-  const centers = segmentCenterAngles(count);
-  let best = centers[0];
-  let bestDist = Infinity;
-
-  for (const c of centers) {
-    const d = Math.abs(((angle - c + 540) % 360) - 180); // circular distance
-    if (d < bestDist) {
-      bestDist = d;
-      best = c;
-    }
-  }
-  return best;
-}
-
-function angleToSegmentIndex(angle: number, count: number) {
-  const centers = segmentCenterAngles(count);
-  const snapped = snapAngleToNearestSegment(angle, count);
-  return Math.max(0, centers.findIndex((c) => c === snapped));
+  const idx = Math.max(0, Math.min(c - 1, (segmentId ?? 1) - 1));
+  return start + step * idx;
 }
 
 export default function MagicDisplayFaceEditor({
@@ -130,7 +104,7 @@ export default function MagicDisplayFaceEditor({
       faceId,
       segmentCount: DEFAULT_SEGMENTS,
       segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
-      needles: defaultNeedles(DEFAULT_SEGMENTS),
+      needles: defaultNeedles(),
     },
   }));
 
@@ -150,7 +124,7 @@ export default function MagicDisplayFaceEditor({
           faceId,
           segmentCount: DEFAULT_SEGMENTS,
           segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
-          needles: defaultNeedles(DEFAULT_SEGMENTS),
+          needles: defaultNeedles(),
         },
       };
     });
@@ -161,17 +135,15 @@ export default function MagicDisplayFaceEditor({
     faceId,
     segmentCount: DEFAULT_SEGMENTS,
     segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
-    needles: defaultNeedles(DEFAULT_SEGMENTS),
+    needles: defaultNeedles(),
   };
 
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
-  const segmentCount = Math.min(
-    MAX_SEGMENTS,
-    Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS)
-  );
+  const segmentCount = Math.min(MAX_SEGMENTS, Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS));
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? segments[0];
+  const needles = currentFace.needles ?? defaultNeedles();
 
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
@@ -183,29 +155,14 @@ export default function MagicDisplayFaceEditor({
 
   function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
     updateFace((existing) => {
-      const updatedSegments = existing.segments.map((s) =>
-        s.id === segmentId ? updater(s) : s
-      );
+      const updatedSegments = existing.segments.map((s) => (s.id === segmentId ? updater(s) : s));
       return { ...existing, segments: updatedSegments };
     });
   }
 
   function handleSegmentCountChange(count: number) {
     const clamped = Math.min(MAX_SEGMENTS, Math.max(1, count));
-    updateFace((existing) => {
-      const existingNeedles = existing.needles ?? defaultNeedles(existing.segmentCount);
-      // On resnap l'aiguille 1 si on change le nombre de segments
-      const snapped = snapAngleToNearestSegment(existingNeedles.needle1Angle, clamped);
-      return {
-        ...existing,
-        segmentCount: clamped,
-        needles: {
-          ...existingNeedles,
-          needle1Angle: snapped,
-        },
-      };
-    });
-
+    updateFace((existing) => ({ ...existing, segmentCount: clamped }));
     setSelectedId((prevId) => (prevId > clamped ? 1 : prevId));
   }
 
@@ -256,7 +213,48 @@ export default function MagicDisplayFaceEditor({
     return { top: `${top}%`, left: `${left}%` };
   }
 
-  const needles = currentFace.needles ?? defaultNeedles(segmentCount);
+  // --- AIGUILLES ---
+  const angle1 = segmentAngleForId(selectedId, segmentCount);
+  const angle2 = angle1 + 180;
+
+  const HAND_LEN = "44%"; // ✅ longueur fixe (même pour les 2)
+  const HAND_THICK = 3;
+
+  function WatchHand({ angleDeg, variant }: { angleDeg: number; variant: "primary" | "secondary" }) {
+    const isSecondary = variant === "secondary";
+    const barClass = isSecondary ? "bg-brand-600" : "bg-slate-900/85";
+    const tipColor = isSecondary ? "rgba(79,70,229,0.95)" : "rgba(15,23,42,0.85)";
+
+    return (
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20">
+        <div className="origin-left" style={{ transform: `rotate(${angleDeg}deg)` }}>
+          {/* tige */}
+          <div
+            className={`relative rounded-full shadow-sm ${barClass}`}
+            style={{ width: HAND_LEN, height: HAND_THICK }}
+          >
+            {/* pointe (triangle) */}
+            <span
+              className="absolute right-0 top-1/2 block"
+              style={{
+                transform: "translate(70%, -50%)",
+                width: 0,
+                height: 0,
+                borderTop: "6px solid transparent",
+                borderBottom: "6px solid transparent",
+                borderLeft: `10px solid ${tipColor}`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* axe central (une seule fois suffit, mais c'est OK si doublé visuellement) */}
+        {!isSecondary && (
+          <div className="absolute left-0 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-900 shadow" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -291,103 +289,18 @@ export default function MagicDisplayFaceEditor({
         </button>
       </div>
 
-      {/* Panel Options (Aiguilles) */}
+      {/* Panel Options (placeholder templates plus tard) */}
       {showOptions && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-700">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-semibold">Aiguilles</span>
-
-            <label className="inline-flex items-center gap-2">
-              <span className="text-slate-600">Aiguille 2 (symétrique)</span>
-              <input
-                type="checkbox"
-                checked={needles.needle2Enabled}
-                onChange={(e) => {
-                  const enabled = e.target.checked;
-                  updateFace((existing) => ({
-                    ...existing,
-                    needles: {
-                      ...(existing.needles ?? defaultNeedles(existing.segmentCount)),
-                      needle2Enabled: enabled,
-                    },
-                  }));
-                }}
-              />
-            </label>
-
-            <div className="flex items-center gap-2">
-              <span className="text-slate-600">Segment ciblé</span>
-              <input
-                type="range"
-                min={1}
-                max={segmentCount}
-                value={angleToSegmentIndex(needles.needle1Angle, segmentCount) + 1}
-                onChange={(e) => {
-                  const idx = Number(e.target.value) - 1;
-                  const centers = segmentCenterAngles(segmentCount);
-                  const angle = centers[idx] ?? -90;
-
-                  updateFace((existing) => ({
-                    ...existing,
-                    needles: {
-                      ...(existing.needles ?? defaultNeedles(existing.segmentCount)),
-                      needle1Angle: angle,
-                    },
-                  }));
-                }}
-                className="w-36 accent-brand-500"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-slate-600">Longueur</span>
-              <input
-                type="range"
-                min={30}
-                max={95}
-                value={needles.needle1Length}
-                onChange={(e) => {
-                  const len = Number(e.target.value);
-                  updateFace((existing) => ({
-                    ...existing,
-                    needles: {
-                      ...(existing.needles ?? defaultNeedles(existing.segmentCount)),
-                      needle1Length: len,
-                    },
-                  }));
-                }}
-                className="w-28 accent-brand-500"
-              />
-            </div>
-
-            {needles.needle2Enabled && (
-              <div className="flex items-center gap-2">
-                <span className="text-slate-600">Longueur aiguille 2</span>
-                <input
-                  type="range"
-                  min={30}
-                  max={95}
-                  value={needles.needle2Length}
-                  onChange={(e) => {
-                    const len = Number(e.target.value);
-                    updateFace((existing) => ({
-                      ...existing,
-                      needles: {
-                        ...(existing.needles ?? defaultNeedles(existing.segmentCount)),
-                        needle2Length: len,
-                      },
-                    }));
-                  }}
-                  className="w-28 accent-brand-500"
-                />
-              </div>
-            )}
-          </div>
+          <p className="font-semibold">Options</p>
+          <p className="mt-1 text-slate-500">
+            (À venir) Modèles préconçus, presets, styles de face, etc.
+          </p>
         </div>
       )}
 
       {/* Ligne 2 : Segments + slider + avatar */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
           <span>Segments sur cette face</span>
           <span className="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-800">
@@ -416,6 +329,25 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
+      {/* ✅ Toggle simple Aiguille symétrique (sous la ligne segments) */}
+      <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={needles.needle2Enabled}
+            onChange={(e) => {
+              const enabled = e.target.checked;
+              updateFace((existing) => ({
+                ...existing,
+                needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: enabled },
+              }));
+            }}
+            className="h-4 w-4 accent-brand-500"
+          />
+          <span className="font-medium text-slate-700">Aiguille symétrique</span>
+        </label>
+      </div>
+
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         {/* Cercle principal */}
         <div className="flex items-center justify-center">
@@ -427,6 +359,12 @@ export default function MagicDisplayFaceEditor({
             {/* Anneau interne */}
             <div className="absolute inset-16 rounded-full border border-slate-300/70" />
 
+            {/* ✅ Aiguille 2 (symétrique) */}
+            {needles.needle2Enabled && <WatchHand angleDeg={angle2} variant="secondary" />}
+
+            {/* ✅ Aiguille 1 (toujours) */}
+            <WatchHand angleDeg={angle1} variant="primary" />
+
             {/* Avatar central */}
             <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
@@ -436,47 +374,6 @@ export default function MagicDisplayFaceEditor({
                 <span className="text-xs font-semibold text-slate-50">{creatorInitials}</span>
               )}
             </div>
-
-            {/* ✅ AIGUILLE 2 (optionnelle) : barre symétrique */}
-            {(() => {
-              if (!needles.needle2Enabled) return null;
-              const base = snapAngleToNearestSegment(needles.needle1Angle, segmentCount);
-              const len = needles.needle2Length;
-
-              return (
-                <div
-                  className="absolute left-1/2 top-1/2 z-10"
-                  style={{ transform: `translate(-50%, -50%) rotate(${base}deg)` }}
-                >
-                  <div
-                    className="h-[3px] rounded-full bg-slate-700/80"
-                    style={{
-                      width: `${len * 2}%`,
-                      transform: `translateX(-${len}%)`,
-                      transformOrigin: "50% 50%",
-                    }}
-                  />
-                </div>
-              );
-            })()}
-
-            {/* ✅ AIGUILLE 1 (obligatoire) : depuis le centre vers 1 segment */}
-            {(() => {
-              const angle = snapAngleToNearestSegment(needles.needle1Angle, segmentCount);
-              const len = needles.needle1Length;
-
-              return (
-                <div
-                  className="absolute left-1/2 top-1/2 z-20"
-                  style={{ transform: `translate(-50%, -50%) rotate(${angle}deg)` }}
-                >
-                  <div
-                    className="h-[3px] rounded-full bg-slate-900 shadow-sm"
-                    style={{ width: `${len}%`, transformOrigin: "0% 50%" }}
-                  />
-                </div>
-              );
-            })()}
 
             {/* Points de segments */}
             {segments.slice(0, segmentCount).map((seg, index) => {
@@ -497,9 +394,7 @@ export default function MagicDisplayFaceEditor({
                 >
                   {segmentIcon(seg.mediaType)}
                   <span
-                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                      seg.status
-                    )}`}
+                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(seg.status)}`}
                   />
                 </button>
               );
@@ -593,6 +488,7 @@ export default function MagicDisplayFaceEditor({
                     className="h-40 w-full rounded-2xl object-cover"
                   />
                 ) : selectedSegment.mediaType === "video" ? (
+                  // eslint-disable-next-line jsx-a11y/media-has-caption
                   <video
                     src={selectedSegment.mediaUrl}
                     className="h-40 w-full rounded-2xl object-cover"
