@@ -243,10 +243,11 @@ export default function MagicDisplayFaceEditor({
   // - Aiguille 2 symétrique : même design des deux côtés, mais un peu plus courte
 const NEEDLE_THICK = 3;
 
-// ✅ réglages aiguille par défaut
-const NEEDLE_TAIL = 18;    // <-- "derrière" (queue) : plus petit = plus court derrière
-const NEEDLE_FRONT = 150;  // <-- "devant" : plus grand = plus long vers l’extrémité
-const NEEDLE_LEN = NEEDLE_FRONT + NEEDLE_TAIL;
+// ✅ queue fine + avant épais (vers la bulle)
+const NEEDLE_TAIL = 34;        // derrière (queue) : plus court/fin
+const NEEDLE_FRONT = 130;      // devant : longueur globale vers la bulle
+const TIP_THICK = 8;           // 👈 épaisseur au bout (vers la bulle)
+const TIP_LEN = 26;            // 👈 longueur de la zone épaisse au bout
   
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -377,23 +378,67 @@ const NEEDLE_LEN = NEEDLE_FRONT + NEEDLE_TAIL;
             )}
 
             {/* ✅ Aiguille par défaut : même design que ton code + plus longue */}
-          <div
+         <div
   className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
   style={{ transform: `translate(-50%, -50%) rotate(${angle1}deg)` }}
 >
-  {/* Aiguille par défaut: plus longue devant + plus courte derrière */}
+  {/* 1) queue fine (derrière) */}
   <div
     style={{
+      position: "absolute",
+      left: `-${NEEDLE_TAIL}px`,
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: `${NEEDLE_TAIL}px`,
       height: `${NEEDLE_THICK}px`,
-      width: `${NEEDLE_LEN}px`,
-      transform: `translateX(-${NEEDLE_TAIL}px)`, // <-- recule légèrement pour créer une "queue"
-      background: "rgba(15,23,42,0.86)",
+      background: "rgba(15,23,42,0.55)",
       borderRadius: 9999,
-      transformOrigin: "0% 50%",
-      clipPath: "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
-      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
     }}
   />
+
+  {/* 2) corps fin (devant) */}
+  <div
+    style={{
+      position: "absolute",
+      left: 0,
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: `${Math.max(0, NEEDLE_FRONT - TIP_LEN)}px`,
+      height: `${NEEDLE_THICK}px`,
+      background: "rgba(15,23,42,0.70)",
+      borderRadius: 9999,
+    }}
+  />
+
+  {/* 3) zone ÉPAISSE au bout (celle qui pointe vers la bulle) */}
+  <div
+    style={{
+      position: "absolute",
+      left: `${Math.max(0, NEEDLE_FRONT - TIP_LEN)}px`,
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: `${TIP_LEN}px`,
+      height: `${TIP_THICK}px`,
+      background: "rgba(15,23,42,0.82)",
+      borderRadius: 9999,
+      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+    }}
+  >
+    {/* pointe */}
+    <span
+      style={{
+        position: "absolute",
+        right: -10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 0,
+        height: 0,
+        borderTop: `${Math.round(TIP_THICK / 2)}px solid transparent`,
+        borderBottom: `${Math.round(TIP_THICK / 2)}px solid transparent`,
+        borderLeft: "10px solid rgba(15,23,42,0.82)",
+      }}
+    />
+  </div>
 </div>
 
             {/* Avatar z-30 */}
