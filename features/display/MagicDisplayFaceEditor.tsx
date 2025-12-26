@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useRef,
-  useLayoutEffect,
-  type ChangeEvent,
-} from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import {
   Camera,
   Clapperboard,
@@ -98,10 +92,25 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille élégante (design “image 3”)
- * - One-way: tige fine + pointe
- * - La base est masquée par l’avatar (z-30)
+ * Design "image 3" : tige fine + pointe triangulaire élégante
+ * - OneWay : une seule direction (pas de queue visible car cachée par l'avatar)
+ * - Symmetric : même design aux 2 extrémités
  */
+
+const HAND_THICK = 2;
+const TIP_W = 14;
+const TIP_H = 7;
+
+// bulles "+"
+const BUBBLE_SIZE = 40; // h-10 w-10
+const BUBBLE_RADIUS = BUBBLE_SIZE / 2;
+
+// Notre positionnement des bulles est à 42% du container
+const BUBBLE_RADIUS_PERCENT = 0.42;
+
+// petit espace “presque touche”
+const GAP_TO_BUBBLE = 4;
+
 function WatchHandOneWay({
   angleDeg,
   lenPx,
@@ -109,9 +118,8 @@ function WatchHandOneWay({
   angleDeg: number;
   lenPx: number;
 }) {
-  const THICK = 2; // fin
-  const tipW = 12; // pointe un peu plus longue
-  const tipH = 6;
+  // lenPx = longueur "utile" jusqu’au bord de la bulle (hors pointe)
+  const barLen = Math.max(10, lenPx);
 
   return (
     <div
@@ -119,25 +127,81 @@ function WatchHandOneWay({
       style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
     >
       <div
+        className="relative"
         style={{
-          width: Math.max(0, lenPx),
-          height: THICK,
+          width: barLen,
+          height: HAND_THICK,
           background: "rgba(15,23,42,0.72)",
           borderRadius: 9999,
           transformOrigin: "0% 50%",
           boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
         }}
       >
-        {/* Pointe */}
+        {/* Pointe (sans translate qui fausse la longueur) */}
         <span
           className="absolute right-0 top-1/2 block"
           style={{
-            transform: "translate(70%, -50%)",
+            transform: "translate(100%, -50%)",
             width: 0,
             height: 0,
-            borderTop: `${tipH}px solid transparent`,
-            borderBottom: `${tipH}px solid transparent`,
-            borderLeft: `${tipW}px solid rgba(15,23,42,0.78)`,
+            borderTop: `${TIP_H}px solid transparent`,
+            borderBottom: `${TIP_H}px solid transparent`,
+            borderLeft: `${TIP_W}px solid rgba(15,23,42,0.78)`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function WatchHandSymmetric({
+  angleDeg,
+  halfLenPx,
+}: {
+  angleDeg: number;
+  halfLenPx: number;
+}) {
+  const half = Math.max(10, halfLenPx);
+  const total = half * 2;
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2"
+      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
+    >
+      <div
+        className="relative"
+        style={{
+          width: total,
+          height: HAND_THICK,
+          background: "rgba(15,23,42,0.62)",
+          borderRadius: 9999,
+          transform: `translateX(-${half}px)`, // centre du trait sur le moyeu
+          boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+        }}
+      >
+        {/* Pointe droite */}
+        <span
+          className="absolute right-0 top-1/2 block"
+          style={{
+            transform: "translate(100%, -50%)",
+            width: 0,
+            height: 0,
+            borderTop: `${TIP_H}px solid transparent`,
+            borderBottom: `${TIP_H}px solid transparent`,
+            borderLeft: `${TIP_W}px solid rgba(15,23,42,0.70)`,
+          }}
+        />
+        {/* Pointe gauche (miroir) */}
+        <span
+          className="absolute left-0 top-1/2 block"
+          style={{
+            transform: "translate(-100%, -50%)",
+            width: 0,
+            height: 0,
+            borderTop: `${TIP_H}px solid transparent`,
+            borderBottom: `${TIP_H}px solid transparent`,
+            borderRight: `${TIP_W}px solid rgba(15,23,42,0.70)`,
           }}
         />
       </div>
@@ -169,8 +233,10 @@ export default function MagicDisplayFaceEditor({
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // ref cercle pour calcul de longueur
+  // ref du cercle pour calculer longueur auto
   const circleRef = useRef<HTMLDivElement | null>(null);
+
+  // longueur de la tige (sans pointe) vers la bulle
   const [handLenPx, setHandLenPx] = useState<number>(120);
 
   useEffect(() => {
@@ -218,15 +284,6 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
-    updateFace((existing) => {
-      const updatedSegments = existing.segments.map((s) =>
-        s.id === segmentId ? updater(s) : s
-      );
-      return { ...existing, segments: updatedSegments };
-    });
-  }
-
   // UX: si impair, on force OFF
   useEffect(() => {
     if (!isEven && needles.needle2Enabled) {
@@ -238,37 +295,36 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
 
-  // Calcul longueur: centre -> presque bord intérieur de la bulle "+"
-  // useLayoutEffect = plus fiable sur mobile (après layout)
-  useLayoutEffect(() => {
+  // Longueur auto: viser le bord de la bulle "+" (pas le centre),
+  // et soustraire la pointe (TIP_W) pour que la pointe “touche presque”.
+  useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
 
     const compute = () => {
-      const rect = el.getBoundingClientRect();
-      const size = Math.min(rect.width, rect.height);
+      const size = el.getBoundingClientRect().width; // ex: 256 (mais responsive possible)
+      const radiusToBubbleCenter = BUBBLE_RADIUS_PERCENT * size; // 42% * size
+      const targetToBubbleEdge = radiusToBubbleCenter - BUBBLE_RADIUS - GAP_TO_BUBBLE;
 
-      // BULLES: radiusPercent = 42% du rayon => distance centre->centre bulle = 0.42*(size/2)
-      const radiusToBubbleCenter = 0.42 * (size / 2);
+      // on retire la longueur de pointe, car la pointe s’ajoute après la tige
+      const barLen = targetToBubbleEdge - TIP_W;
 
-      // bulle: 40px => rayon 20px
-      const bubbleRadius = 20;
-
-      // petit gap pour "presque toucher"
-      const gap = 6;
-
-      const len = radiusToBubbleCenter - bubbleRadius - gap;
-
-      // clamp pour éviter des valeurs extrêmes
-      const clamped = Math.max(55, Math.min(160, Math.round(len)));
-
-      setHandLenPx(clamped);
+      setHandLenPx(Math.max(70, Math.round(barLen)));
     };
 
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
-  }, [segmentCount]);
+  }, []);
+
+  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
+    updateFace((existing) => {
+      const updatedSegments = existing.segments.map((s) =>
+        s.id === segmentId ? updater(s) : s
+      );
+      return { ...existing, segments: updatedSegments };
+    });
+  }
 
   function handleSegmentCountChange(count: number) {
     const clamped = Math.min(MAX_SEGMENTS, Math.max(1, count));
@@ -396,7 +452,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* Toggle symétrique */}
+      {/* Toggle symétrique (uniquement pair) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label className={`inline-flex items-center gap-2 ${!isEven ? "opacity-60" : ""}`}>
           <input
@@ -434,16 +490,16 @@ export default function MagicDisplayFaceEditor({
 
             {/* Aiguilles z-20 */}
             <div className="absolute inset-0 z-20 pointer-events-none">
-              {/* aiguille 1 */}
+              {/* Primary (design image 3 + plus longue) */}
               <WatchHandOneWay angleDeg={angle1} lenPx={handLenPx} />
 
-              {/* aiguille 2 = opposée (même design) */}
+              {/* Symétrique : même design aux 2 extrémités + plus longue des 2 côtés */}
               {isEven && needles.needle2Enabled && (
-                <WatchHandOneWay angleDeg={angle2} lenPx={handLenPx} />
+                <WatchHandSymmetric angleDeg={angle1} halfLenPx={handLenPx} />
               )}
             </div>
 
-            {/* Avatar z-30 */}
+            {/* Avatar z-30 (cache la base => pas de queue visible) */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
