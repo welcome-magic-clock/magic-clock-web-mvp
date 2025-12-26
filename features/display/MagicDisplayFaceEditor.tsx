@@ -79,7 +79,7 @@ const segmentIcon = (mediaType?: MediaType | null) => {
 };
 
 const defaultNeedles = (): FaceNeedles => ({
-  needle2Enabled: true, // ✅ activée par défaut
+  needle2Enabled: false,
 });
 
 // ---- Aiguilles: angle = centre du segment sélectionné ----
@@ -147,7 +147,22 @@ export default function MagicDisplayFaceEditor({
 
   const selectedSegment =
     segments.find((s) => s.id === selectedId) ?? segments[0];
+
   const needles = currentFace.needles ?? defaultNeedles();
+
+  // ✅ règle paire pour l'aiguille symétrique
+  const isEven = segmentCount % 2 === 0;
+
+  // Si impair, on force OFF
+  useEffect(() => {
+    if (!isEven && needles.needle2Enabled) {
+      updateFace((existing) => ({
+        ...existing,
+        needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: false },
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEven, segmentCount]);
 
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
@@ -157,10 +172,7 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  function updateSegment(
-    segmentId: number,
-    updater: (prev: Segment) => Segment
-  ) {
+  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
     updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
         s.id === segmentId ? updater(s) : s
@@ -182,10 +194,7 @@ export default function MagicDisplayFaceEditor({
     else fileInputRef.current?.click();
   }
 
-  function handleMediaFileChange(
-    event: ChangeEvent<HTMLInputElement>,
-    type: MediaType
-  ) {
+  function handleMediaFileChange(event: ChangeEvent<HTMLInputElement>, type: MediaType) {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
 
@@ -207,8 +216,7 @@ export default function MagicDisplayFaceEditor({
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
-      status:
-        prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
+      status: prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
     }));
   }
 
@@ -230,14 +238,17 @@ export default function MagicDisplayFaceEditor({
   const angle1 = segmentAngleForId(selectedId, segmentCount);
   const angle2 = angle1 + 180;
 
-  // Taille des aiguilles : proche du "+"
-  // (sur un cercle 256px, rayon ≈128, on veut ~112-118px)
-  const NEEDLE_LEN = 118; // px (aiguille 1)
-  const NEEDLE_LEN_2 = 118; // px (aiguille 2 -> même longueur)
+  // ✅ Ajustements demandés :
+  // - Aiguille 1 : on l'allonge (extrémité) => on augmente NEEDLE_LEN
+  // - Aiguille 2 symétrique : même design des deux côtés, mais un peu plus courte
+  const NEEDLE_THICK = 3;
+
+  const NEEDLE_LEN = 138;    // 🔥 + long (aiguille par défaut)
+  const NEEDLE_LEN_2 = 124;  // 🔥 un peu plus courte (symétrique)
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
-      {/* Ligne 1 : Back + Face x/6 + titre + bouton options */}
+      {/* Ligne 1 */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {onBack && (
@@ -254,9 +265,7 @@ export default function MagicDisplayFaceEditor({
             <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Face {faceId} / 6
             </span>
-            <span className="text-sm font-semibold text-slate-900">
-              {faceLabel}
-            </span>
+            <span className="text-sm font-semibold text-slate-900">{faceLabel}</span>
           </div>
         </div>
 
@@ -270,17 +279,14 @@ export default function MagicDisplayFaceEditor({
         </button>
       </div>
 
-      {/* Panel Options (placeholder templates plus tard) */}
       {showOptions && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-700">
           <p className="font-semibold">Options</p>
-          <p className="mt-1 text-slate-500">
-            (À venir) Modèles préconçus, presets, styles de face, etc.
-          </p>
+          <p className="mt-1 text-slate-500">(À venir) Modèles préconçus, presets, styles de face, etc.</p>
         </div>
       )}
 
-      {/* Ligne 2 : Segments + slider + avatar */}
+      {/* Ligne 2 */}
       <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
           <span>Segments sur cette face</span>
@@ -301,11 +307,7 @@ export default function MagicDisplayFaceEditor({
           <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
             {creatorAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
-                alt={creatorName}
-                className="h-full w-full object-cover"
-              />
+              <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
             ) : (
               <span className="text-xs font-semibold">{creatorInitials}</span>
             )}
@@ -314,25 +316,30 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* ✅ Toggle simple Aiguille symétrique */}
+      {/* ✅ Toggle : symétrique seulement si pair */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
-        <label className="inline-flex items-center gap-2">
+        <label className={`inline-flex items-center gap-2 ${!isEven ? "opacity-60" : ""}`}>
           <input
             type="checkbox"
-            checked={needles.needle2Enabled}
+            disabled={!isEven}
+            checked={isEven ? needles.needle2Enabled : false}
             onChange={(e) => {
               const enabled = e.target.checked;
               updateFace((existing) => ({
                 ...existing,
-                needles: {
-                  ...(existing.needles ?? defaultNeedles()),
-                  needle2Enabled: enabled,
-                },
+                needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: enabled },
               }));
             }}
             className="h-4 w-4 accent-brand-500"
           />
-          <span className="font-medium text-slate-700">Aiguille symétrique</span>
+          <span className="font-medium text-slate-700">
+            Aiguille symétrique{" "}
+            {!isEven && (
+              <span className="ml-1 text-slate-500">
+                (Disponible uniquement avec un nombre pair de segments)
+              </span>
+            )}
+          </span>
         </label>
       </div>
 
@@ -340,70 +347,63 @@ export default function MagicDisplayFaceEditor({
         {/* Cercle principal */}
         <div className="flex items-center justify-center">
           <div className="relative h-64 w-64 max-w-full">
-            {/* ✅ Décor / anneaux = z-10 */}
+            {/* Décor z-10 */}
             <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* ✅ Aiguilles = z-20 (sous avatar) */}
-            {needles.needle2Enabled && (
+            {/* Aiguilles z-20 */}
+            {/* ✅ Aiguille symétrique : vraie symétrie, même design des deux côtés */}
+            {isEven && needles.needle2Enabled && (
               <div
                 className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-                style={{
-                  transform: `translate(-50%, -50%) rotate(${angle2}deg)`,
-                }}
+                style={{ transform: `translate(-50%, -50%) rotate(${angle2}deg)` }}
               >
-                {/* Symétrique : on dessine une barre centrée (2 côtés) */}
                 <div
-                  className="h-[3px] bg-slate-700/80"
                   style={{
+                    height: `${NEEDLE_THICK}px`,
                     width: `${NEEDLE_LEN_2 * 2}px`,
                     transform: `translateX(-${NEEDLE_LEN_2}px)`,
-                    transformOrigin: "50% 50%",
-                    borderRadius: "2px",
-                    // pointe style montre des deux côtés
-                    clipPath:
-                      "polygon(0 50%, 5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%)",
+                    background: "rgba(15,23,42,0.82)",
+                    borderRadius: 9999,
+                    // même forme/pointe des 2 côtés
+                    clipPath: "polygon(0 50%, 6% 0, 94% 0, 100% 50%, 94% 100%, 6% 100%)",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
                   }}
                 />
               </div>
             )}
 
+            {/* ✅ Aiguille par défaut : même design que ton code + plus longue */}
             <div
               className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-              style={{
-                transform: `translate(-50%, -50%) rotate(${angle1}deg)`,
-              }}
+              style={{ transform: `translate(-50%, -50%) rotate(${angle1}deg)` }}
             >
               <div
-                className="h-[3px] bg-slate-900"
                 style={{
+                  height: `${NEEDLE_THICK}px`,
                   width: `${NEEDLE_LEN}px`,
+                  background: "rgba(15,23,42,0.86)",
+                  borderRadius: 9999,
                   transformOrigin: "0% 50%",
-                  borderRadius: "2px",
-                  // pointe type montre
+                  // design “image 3”
                   clipPath: "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
                 }}
               />
             </div>
 
-            {/* ✅ Avatar = z-30 */}
+            {/* Avatar z-30 */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={creatorAvatar}
-                  alt={creatorName}
-                  className="h-full w-full object-cover"
-                />
+                <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
               ) : (
-                <span className="text-xs font-semibold text-slate-50">
-                  {creatorInitials}
-                </span>
+                <span className="text-xs font-semibold text-slate-50">{creatorInitials}</span>
               )}
             </div>
 
-            {/* ✅ Bulles "+" / segments = z-40 */}
+            {/* Bulles + z-40 */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
@@ -476,14 +476,10 @@ export default function MagicDisplayFaceEditor({
                 Segment {selectedSegment.id} – {selectedSegment.label}
               </p>
               <p className="text-[11px] text-slate-500">
-                Ajoute un média et des notes pour expliquer précisément cette
-                étape.
+                Ajoute un média et des notes pour expliquer précisément cette étape.
               </p>
               <p className="mt-1 text-[10px] text-slate-400">
-                Statut :{" "}
-                <span className="font-semibold">
-                  {statusLabel(selectedSegment.status)}
-                </span>
+                Statut : <span className="font-semibold">{statusLabel(selectedSegment.status)}</span>
               </p>
             </div>
 
@@ -551,11 +547,6 @@ export default function MagicDisplayFaceEditor({
                 placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
               />
             </div>
-
-            <p className="text-[11px] text-slate-500">
-              MVP local : les données restent dans la mémoire de la page. Plus
-              tard, elles seront reliées à ton Magic Studio et à My Magic Clock.
-            </p>
           </div>
         </div>
       </div>
