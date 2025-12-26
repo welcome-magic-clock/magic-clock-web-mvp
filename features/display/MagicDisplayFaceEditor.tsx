@@ -91,23 +91,24 @@ function segmentAngleForId(segmentId: number, count: number) {
   return start + step * idx;
 }
 
+// Aiguilles version « ancienne maquette » : look montre propre & travaillé
+// On garde les props pour compatibilité avec les appels,
+// mais on n'utilise que angleDeg à l’intérieur.
+
+const NEEDLE_LEN = 118;      // longueur aiguille principale
+const NEEDLE_LEN_SYM = 118;  // longueur d’un côté pour la symétrique
+
 /**
- * Aiguille 1
- * – même style que l’ancienne : fine, avec pointe type montre
- * – longueur basée sur frontLenPx (arrive juste avant la bulle)
+ * Aiguille 1 (simple, non symétrique)
+ * – même design que ton ancienne version
  */
 function WatchHandOneWayRefined({
   angleDeg,
-  frontLenPx,
-  tailLenPx, // on le garde pour le type, même si on ne l'utilise pas vraiment
 }: {
   angleDeg: number;
-  frontLenPx: number;
-  tailLenPx: number;
+  frontLenPx: number; // ignoré, juste pour compatibilité
+  tailLenPx: number;  // idem
 }) {
-  // sécurité : ne jamais descendre trop court
-  const width = Math.max(40, frontLenPx);
-
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2"
@@ -116,10 +117,10 @@ function WatchHandOneWayRefined({
       <div
         className="h-[3px] bg-slate-900"
         style={{
-          width: `${width}px`,
+          width: `${NEEDLE_LEN}px`,
           transformOrigin: "0% 50%",
           borderRadius: "2px",
-          // forme aiguille (ancienne version)
+          // forme aiguille légèrement facettée (comme sur ton screen)
           clipPath:
             "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
@@ -130,18 +131,16 @@ function WatchHandOneWayRefined({
 }
 
 /**
- * Aiguille 2 symétrique
- * – reprend exactement le style de l’ancienne aiguille symétrique
- * – halfLenPx = longueur d’un côté, donc width = 2 * halfLenPx
+ * Aiguille 2 (symétrique)
+ * – même style que l’ancienne : pointe des deux côtés
  */
 function WatchHandSymmetricRefined({
   angleDeg,
-  halfLenPx,
 }: {
   angleDeg: number;
-  halfLenPx: number;
+  halfLenPx: number; // ignoré, juste pour compatibilité
 }) {
-  const width = Math.max(40, halfLenPx * 2);
+  const width = NEEDLE_LEN_SYM * 2; // deux côtés symétriques
 
   return (
     <div
@@ -152,7 +151,6 @@ function WatchHandSymmetricRefined({
         className="h-[3px] bg-slate-700/80"
         style={{
           width: `${width}px`,
-          // on centre la barre pour qu’elle parte à la fois en haut et en bas
           transform: `translateX(-${width / 2}px)`,
           transformOrigin: "50% 50%",
           borderRadius: "2px",
