@@ -1,17 +1,21 @@
 // components/MobileTabs.tsx
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Sparkles, DollarSign } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { Home, Users, DollarSign } from "lucide-react";
 
 import { listCreators } from "@/core/domain/repository";
+import { MagicCubeIcon } from "@/components/icons/MagicCubeIcon";
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 type TabItem = {
   href: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   isProfile?: boolean;
 };
 
@@ -29,7 +33,7 @@ const TABS: TabItem[] = [
   {
     href: "/create",
     label: "Créer",
-    icon: Sparkles,
+    icon: MagicCubeIcon, // 🧊 Nouveau cube 3D Magic Clock
   },
   {
     href: "/monet",
@@ -47,7 +51,7 @@ export default function MobileTabs() {
   const pathname = usePathname();
 
   // On réutilise Aiko Tanaka comme créatrice actuelle
-  const creators = listCreators();
+  const creators = useMemo(() => listCreators(), []);
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const avatar = currentCreator.avatar;
@@ -60,6 +64,8 @@ export default function MobileTabs() {
             tab.href === "/"
               ? pathname === "/"
               : pathname.startsWith(tab.href);
+
+          const Icon = tab.icon;
 
           return (
             <Link
@@ -74,22 +80,21 @@ export default function MobileTabs() {
               {tab.isProfile ? (
                 // Avatar rond pour My Magic Clock
                 <span className="mb-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatar}
                     alt={currentCreator.name}
                     className="h-7 w-7 rounded-full object-cover"
                   />
                 </span>
-              ) : tab.href === "/create" && tab.icon ? (
-                // ⭐ Icône "Créer" avec rond autour (version que tu aimais bien)
+              ) : tab.href === "/create" && Icon ? (
+                // 🧊 Icône "Créer" dans un rond violet (cube 3D)
                 <span className="mb-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-sm">
-                  <tab.icon className="h-4 w-4" aria-hidden="true" />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
-              ) : (
-                tab.icon && (
-                  <tab.icon className="mb-0.5 h-5 w-5" aria-hidden="true" />
-                )
-              )}
+              ) : Icon ? (
+                <Icon className="mb-0.5 h-5 w-5" aria-hidden="true" />
+              ) : null}
 
               {/* Label toujours sur une seule ligne */}
               <span className="leading-tight text-[10px] whitespace-nowrap">
