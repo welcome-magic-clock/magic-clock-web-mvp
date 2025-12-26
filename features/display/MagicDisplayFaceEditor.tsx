@@ -247,6 +247,7 @@ const NEEDLE_FRONT = 92; // devant (réduit -> beaucoup moins grand)
 
 const TIP_THICK = 5; // épais côté bulle
 const TIP_LEN = 22;  // longueur de la partie épaisse
+const NEEDLE_LEN_2 = 72; // demi-longueur de la symétrique (à ajuster plus tard)
   
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -364,8 +365,8 @@ const TIP_LEN = 22;  // longueur de la partie épaisse
                 <div
                   style={{
                     height: `${NEEDLE_THICK}px`,
-                    width: `${NEEDLE_LEN * 2}px`,
-                    transform: `translateX(-${NEEDLE_LEN}px)`,
+                    width: `${NEEDLE_LEN_2 * 2}px`,
+                    transform: `translateX(-${NEEDLE_LEN_2}px)`,
                     background: "rgba(15,23,42,0.82)",
                     borderRadius: 9999,
                     // même forme/pointe des 2 côtés
