@@ -241,11 +241,13 @@ export default function MagicDisplayFaceEditor({
   // ✅ Ajustements demandés :
   // - Aiguille 1 : on l'allonge (extrémité) => on augmente NEEDLE_LEN
   // - Aiguille 2 symétrique : même design des deux côtés, mais un peu plus courte
-  const NEEDLE_THICK = 3;
+const NEEDLE_THICK = 3;
 
-  const NEEDLE_LEN = 138;    // 🔥 + long (aiguille par défaut)
-  const NEEDLE_LEN_2 = 124;  // 🔥 un peu plus courte (symétrique)
-
+// ✅ réglages aiguille par défaut
+const NEEDLE_TAIL = 18;    // <-- "derrière" (queue) : plus petit = plus court derrière
+const NEEDLE_FRONT = 150;  // <-- "devant" : plus grand = plus long vers l’extrémité
+const NEEDLE_LEN = NEEDLE_FRONT + NEEDLE_TAIL;
+  
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
       {/* Ligne 1 */}
@@ -375,23 +377,24 @@ export default function MagicDisplayFaceEditor({
             )}
 
             {/* ✅ Aiguille par défaut : même design que ton code + plus longue */}
-            <div
-              className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
-              style={{ transform: `translate(-50%, -50%) rotate(${angle1}deg)` }}
-            >
-              <div
-                style={{
-                  height: `${NEEDLE_THICK}px`,
-                  width: `${NEEDLE_LEN}px`,
-                  background: "rgba(15,23,42,0.86)",
-                  borderRadius: 9999,
-                  transformOrigin: "0% 50%",
-                  // design “image 3”
-                  clipPath: "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
-                }}
-              />
-            </div>
+          <div
+  className="absolute left-1/2 top-1/2 z-20 pointer-events-none"
+  style={{ transform: `translate(-50%, -50%) rotate(${angle1}deg)` }}
+>
+  {/* Aiguille par défaut: plus longue devant + plus courte derrière */}
+  <div
+    style={{
+      height: `${NEEDLE_THICK}px`,
+      width: `${NEEDLE_LEN}px`,
+      transform: `translateX(-${NEEDLE_TAIL}px)`, // <-- recule légèrement pour créer une "queue"
+      background: "rgba(15,23,42,0.86)",
+      borderRadius: 9999,
+      transformOrigin: "0% 50%",
+      clipPath: "polygon(0 40%, 95% 0, 100% 50%, 95% 100%, 0 60%)",
+      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+    }}
+  />
+</div>
 
             {/* Avatar z-30 */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
