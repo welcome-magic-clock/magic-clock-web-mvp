@@ -521,7 +521,7 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                      {/* Axes de segments alignés entre les bulles */}
+                      {/* Axes de segments alignés avec les bulles (demi-rayons) */}
 <div
   className="absolute inset-0 pointer-events-none"
   style={{ zIndex: 15 }}
@@ -530,32 +530,30 @@ export default function MagicDisplayFaceEditor({
     Array.from({ length: segmentCount }, (_, index) => {
       const count = segmentCount || 1;
       const step = 360 / count;
-      const startAngleDeg = -90; // même origine que les bulles
-
-      // angle de la bulle : start + step * index
-      // ici on veut le MILIEU entre deux bulles -> index + 0.5
-      const midAngle = startAngleDeg + step * (index + 0.5);
-
-      // notre trait de base est VERTICAL
-      // pour pointer vers midAngle (système trig → vertical),
-      // on ajoute +90°
-      const angleDeg = midAngle + 90;
+      const startAngleDeg = -90; // bulle n°1 en haut
+      // angle AU MILIEU entre deux bulles
+      const midAngleDeg = startAngleDeg + step * index + step / 2;
 
       return (
         <div
           key={index}
-          className="absolute inset-0"
+          className="absolute left-1/2 top-1/2"
           style={{
-            transform: `rotate(${angleDeg}deg)`,
+            // on place le repère au centre du cercle puis on le fait tourner
+            transform: `translate(-50%, -50%) rotate(${midAngleDeg}deg)`,
           }}
         >
           <div
-            className="absolute left-1/2 top-1/2"
+            className="bg-slate-300/70"
             style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
               width: "1px",
-              height: "82%",          // ne pas toucher
-              transform: "translate(-50%, -50%)",
-              background: "rgba(148,163,184,0.75)", // ~ slate-400
+              // longueur : centre → entre-deux des bulles (légèrement > 42%)
+              height: "45%",
+              transform: "translate(-50%, 0)",
+              transformOrigin: "top center",
             }}
           />
         </div>
