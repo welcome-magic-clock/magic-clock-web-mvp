@@ -521,44 +521,41 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                                                                              {/* Axes de segments : toujours au MILIEU entre deux bulles */}
-            {segmentCount > 1 && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ zIndex: 15 }}
-              >
-                {Array.from({ length: segmentCount }, (_, index) => {
-                  const count = segmentCount || 1;
-                  const step = 360 / count;
-                  const startAngleDeg = -90;
+                        {/* Axes de segments : trait au MILIEU entre deux bulles */}
+{segmentCount > 1 && (
+  <div
+    className="absolute inset-0 pointer-events-none"
+    style={{ zIndex: 15 }}
+  >
+    {Array.from({ length: segmentCount }, (_, index) => {
+      const count = segmentCount || 1;
+      const step = 360 / count;
+      const startAngleDeg = -90;
 
-                  // 🔥 TRÈS IMPORTANT :
-                  // + 0.5 ⇒ le trait est exactement au milieu de deux bulles
-                  const angleDeg = startAngleDeg + step * (index + 0.5);
+      // centre entre deux bulles (+ step/2)
+      // puis +90° car le trait de base est vertical
+      const angleDeg = startAngleDeg + step * index + step / 2 + 90;
 
-                  return (
-                    <div
-                      key={index}
-                      className="absolute inset-0"
-                      style={{
-                        transform: `rotate(${angleDeg}deg)`,
-                      }}
-                    >
-                      <div
-                        className="absolute left-1/2 top-1/2"
-                        style={{
-                          width: "1px",
-                          height: "82%",
-                          transform: "translate(-50%, -50%)",
-                          // même couleur douce que ton ancienne version
-                          background: "rgba(148,163,184,0.75)",
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+      return (
+        <div
+          key={index}
+          className="absolute inset-0"
+          style={{ transform: `rotate(${angleDeg}deg)` }}
+        >
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{
+              width: "1px",
+              height: "82%",
+              transform: "translate(-50%, -50%)",
+              background: "rgba(148,163,184,0.75)", // gris doux
+            }}
+          />
+        </div>
+      );
+    })}
+  </div>
+)}
             
             {/* Aiguilles z-20 */}
             <div className="absolute inset-0 z-20 pointer-events-none">
