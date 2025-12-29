@@ -521,43 +521,41 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                  {/* Axes de segments alignés entre les bulles */}
+                 {/* Axes de segments alignés entre les bulles */}
 <div
-  className="absolute inset-0"
-  style={{ zIndex: 15, pointerEvents: "none" }}
+  className="absolute inset-0 pointer-events-none"
+  style={{ zIndex: 15 }}
 >
-  {segmentCount > 1 &&
-    Array.from({ length: segmentCount }, (_, index) => {
-      const count = segmentCount || 1;
-      const step = 360 / count;
-      const startAngleDeg = -90;
+  {Array.from({ length: segmentCount }, (_, index) => {
+    const count = segmentCount || 1;
+    if (count <= 1) return null; // 1 segment → aucun trait
 
-      // angle au MILIEU entre deux bulles (en coordonnées "maths")
-      const midAngleDeg = startAngleDeg + step * (index + 0.5);
+    const step = 360 / count;
+    const startAngleDeg = -90;
 
-      // conversion pour CSS (0° = vertical)
-      const cssAngle = midAngleDeg + 90;
+    // ✅ ANGLE AU MILIEU ENTRE 2 BULLES
+    const angleDeg = startAngleDeg + step * index + step / 2;
 
-      return (
+    return (
+      <div
+        key={index}
+        className="absolute inset-0"
+        style={{
+          transform: `rotate(${angleDeg}deg)`,
+        }}
+      >
         <div
-          key={index}
           className="absolute left-1/2 top-1/2"
           style={{
-            transform: `translate(-50%, -50%) rotate(${cssAngle}deg)`,
+            width: "1px",
+            height: "82%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(148,163,184,0.75)",
           }}
-        >
-          {/* demi-trait depuis le centre vers le bord */}
-          <div
-            style={{
-              width: "1px",
-              height: "41%",          // ≈ du centre jusqu’aux bulles
-              transformOrigin: "top", // le centre reste fixe
-              background: "rgba(100,116,139,0.9)", // bien visible (slate ~500)
-            }}
-          />
-        </div>
-      );
-    })}
+        />
+      </div>
+    );
+  })}
 </div>
             
             {/* Aiguilles z-20 */}
