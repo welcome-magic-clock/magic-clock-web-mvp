@@ -1,64 +1,45 @@
 // features/display/progress.ts
-export type SegmentStatus = "empty" | "in-progress" | "complete";
 
-export type Segment = {
+export interface FaceProgressInput {
   id: number;
-  status: SegmentStatus;
-  notes: string;
-  mediaUrl?: string | null;
-};
-
-export type FaceState = {
-  faceId: number;
-  segmentCount: number;
-  segments: Segment[];
-};
-
-function isFaceCovered(face: FaceState): boolean {
-  const active = face.segments.slice(0, face.segmentCount);
-  return active.some((s) => s.status !== "empty");
+  /** Au moins un contenu sur la face (photo / vidéo / fichier) */
+  covered: boolean;
+  /** Contenu “universel” (MVP : on considère pareil que covered) */
+  universalContent: boolean;
 }
 
-function hasUniversalContent(face: FaceState): boolean {
-  const active = face.segments.slice(0, face.segmentCount);
-  return active.some((s) => s.status === "complete");
-}
-
-export function computeMagicClockPublishProgress(opts: {
+export function computeMagicClockPublishProgress(params: {
   studioCompleted: boolean;
-  faces: Record<number, FaceState>;
+  faces: FaceProgressInput[];
 }) {
-  const { studioCompleted, faces } = opts;
+  const { studioCompleted, faces } = params;
 
   let progress = 0;
-  const studioPart = studioCompleted ? 40 : 0;
-  progress += studioPart;
-
   let completedFaces = 0;
   let partialFaces = 0;
 
-  for (let i = 1; i <= 6; i++) {
-    const face = faces[i];
-    if (!face) continue;
+  const studioPart = studioCompleted ? 40 : 0;
+  progress += studioPart;
 
-    const covered = isFaceCovered(face);
-    const universal = hasUniversalContent(face);
-
-    if (universal) {
-      progress += 10;          // 5% couverture + 5% contenu
-      completedFaces++;
-    } else if (covered) {
-      progress += 5;           // seulement couverture
-      partialFaces++;
+  for (const face of faces) {
+    if (face.universalContent) {
+      // 5 % couverture + 5 % contenu universel
+      progress += 10;
+      completedFaces += 1;
+    } else if (face.covered) {
+      // MVP : cas où il n’y aurait que “couverture”
+      progress += 5;
+      partialFaces += 1;
     }
   }
 
   const clamped = Math.min(100, Math.max(0, progress));
+  const displayPart = clamped - studioPart;
 
   return {
     percent: clamped,
     studioPart,
-    displayPart: clamped - studioPart,
+    displayPart,
     completedFaces,
     partialFaces,
   };
