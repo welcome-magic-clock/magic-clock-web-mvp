@@ -521,7 +521,7 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                      {/* Axes de segments alignés avec les bulles (demi-rayons) */}
+                     {/* Axes de segments alignés avec les bulles (demi-traits depuis le centre) */}
 <div
   className="absolute inset-0 pointer-events-none"
   style={{ zIndex: 15 }}
@@ -537,21 +537,19 @@ export default function MagicDisplayFaceEditor({
       return (
         <div
           key={index}
-          className="absolute left-1/2 top-1/2"
+          className="absolute inset-0"
           style={{
-            // on place le repère au centre du cercle puis on le fait tourner
-            transform: `translate(-50%, -50%) rotate(${midAngleDeg}deg)`,
+            // on fait tourner tout le plan autour du centre
+            transform: `rotate(${midAngleDeg}deg)`,
           }}
         >
           <div
-            className="bg-slate-300/70"
+            className="absolute left-1/2 top-1/2 bg-slate-300/70"
             style={{
-              position: "absolute",
-              left: "50%",
-              top: "50%",
               width: "1px",
-              // longueur : centre → entre-deux des bulles (légèrement > 42%)
-              height: "45%",
+              // demi-trait : du centre vers l’extérieur, sans toucher les bulles
+              height: "36%",
+              // le haut du trait est au centre, il part vers le bas
               transform: "translate(-50%, 0)",
               transformOrigin: "top center",
             }}
