@@ -521,10 +521,10 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                    {/* Axes de segments alignés entre les bulles */}
+                  {/* Axes de segments alignés entre les bulles */}
 <div
-  className="absolute inset-0 pointer-events-none"
-  style={{ zIndex: 15 }}
+  className="absolute inset-0"
+  style={{ zIndex: 15, pointerEvents: "none" }}
 >
   {segmentCount > 1 &&
     Array.from({ length: segmentCount }, (_, index) => {
@@ -532,26 +532,27 @@ export default function MagicDisplayFaceEditor({
       const step = 360 / count;
       const startAngleDeg = -90;
 
-      // angle "entre" deux bulles (en coordonnées standard)
+      // angle au MILIEU entre deux bulles (en coordonnées "maths")
       const midAngleDeg = startAngleDeg + step * (index + 0.5);
 
-      // conversion angle math (0° = droite) -> rotation CSS (0° = vertical)
-      const rotateDeg = midAngleDeg + 90;
+      // conversion pour CSS (0° = vertical)
+      const cssAngle = midAngleDeg + 90;
 
       return (
         <div
           key={index}
           className="absolute left-1/2 top-1/2"
           style={{
-            transform: `translate(-50%, -50%) rotate(${rotateDeg}deg)`,
+            transform: `translate(-50%, -50%) rotate(${cssAngle}deg)`,
           }}
         >
+          {/* demi-trait depuis le centre vers le bord */}
           <div
-            className="bg-slate-300/70"
             style={{
               width: "1px",
-              height: "82%",          // trait sur tout le diamètre
-              transform: "translateY(-50%)",
+              height: "41%",          // ≈ du centre jusqu’aux bulles
+              transformOrigin: "top", // le centre reste fixe
+              background: "rgba(100,116,139,0.9)", // bien visible (slate ~500)
             }}
           />
         </div>
