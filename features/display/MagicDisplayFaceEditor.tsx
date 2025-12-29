@@ -521,7 +521,7 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                     {/* Axes de segments alignés avec les bulles (demi-traits depuis le centre) */}
+                    {/* Axes de segments alignés entre les bulles */}
 <div
   className="absolute inset-0 pointer-events-none"
   style={{ zIndex: 15 }}
@@ -530,28 +530,28 @@ export default function MagicDisplayFaceEditor({
     Array.from({ length: segmentCount }, (_, index) => {
       const count = segmentCount || 1;
       const step = 360 / count;
-      const startAngleDeg = -90; // bulle n°1 en haut
-      // angle AU MILIEU entre deux bulles
-      const midAngleDeg = startAngleDeg + step * index + step / 2;
+      const startAngleDeg = -90;
+
+      // angle "entre" deux bulles (en coordonnées standard)
+      const midAngleDeg = startAngleDeg + step * (index + 0.5);
+
+      // conversion angle math (0° = droite) -> rotation CSS (0° = vertical)
+      const rotateDeg = midAngleDeg + 90;
 
       return (
         <div
           key={index}
-          className="absolute inset-0"
+          className="absolute left-1/2 top-1/2"
           style={{
-            // on fait tourner tout le plan autour du centre
-            transform: `rotate(${midAngleDeg}deg)`,
+            transform: `translate(-50%, -50%) rotate(${rotateDeg}deg)`,
           }}
         >
           <div
-            className="absolute left-1/2 top-1/2 bg-slate-300/70"
+            className="bg-slate-300/70"
             style={{
               width: "1px",
-              // demi-trait : du centre vers l’extérieur, sans toucher les bulles
-              height: "36%",
-              // le haut du trait est au centre, il part vers le bas
-              transform: "translate(-50%, 0)",
-              transformOrigin: "top center",
+              height: "82%",          // trait sur tout le diamètre
+              transform: "translateY(-50%)",
             }}
           />
         </div>
