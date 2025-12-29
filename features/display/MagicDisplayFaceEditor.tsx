@@ -45,18 +45,102 @@ const MAX_SEGMENTS = 12;
 const DEFAULT_SEGMENTS = 4;
 
 const INITIAL_SEGMENTS: Segment[] = [
-  { id: 1, label: "Diagnostic / observation", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 2, label: "Préparation / sectionnement", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 3, label: "Application principale", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 4, label: "Patine / correction", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 5, label: "Finition / coiffage", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 6, label: "Routine maison", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 7, label: "Astuces pro", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 8, label: "Erreurs à éviter", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 9, label: "Produits utilisés", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 10, label: "Temps / timing", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 11, label: "Variantes possibles", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
-  { id: 12, label: "Résumé final", status: "empty", mediaType: null, mediaUrl: null, notes: "" },
+  {
+    id: 1,
+    label: "Diagnostic / observation",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 2,
+    label: "Préparation / sectionnement",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 3,
+    label: "Application principale",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 4,
+    label: "Patine / correction",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 5,
+    label: "Finition / coiffage",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 6,
+    label: "Routine maison",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 7,
+    label: "Astuces pro",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 8,
+    label: "Erreurs à éviter",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 9,
+    label: "Produits utilisés",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 10,
+    label: "Temps / timing",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 11,
+    label: "Variantes possibles",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
+  {
+    id: 12,
+    label: "Résumé final",
+    status: "empty",
+    mediaType: null,
+    mediaUrl: null,
+    notes: "",
+  },
 ];
 
 const statusDotClass = (status: SegmentStatus) => {
@@ -92,14 +176,8 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Couleur commune des aiguilles :
- * gris ardoise profond, plus doux que le noir.
- */
-const NEEDLE_COLOR = "rgba(30,41,59,0.96)"; // ~ slate-800/900
-
-/**
  * Aiguille 1 (simple)
- * – corps fin au centre, qui s’élargit vers la pointe
+ * – corps plus fin au centre, qui s’élargit vers la pointe
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -124,52 +202,11 @@ function WatchHandOneWayRefined({
           transform: "translateY(-50%)",
           width: `${width}px`,
           height: "3px",
-          background: NEEDLE_COLOR,
+          // gris profond légèrement bleuté (cohérent avec les cercles)
+          background: "rgba(51,65,85,0.95)", // ~ slate-700
           borderRadius: 9999,
-          // queue un peu plus fine, pointe élargie
           clipPath:
-            "polygon(0 45%, 12% 35%, 86% 0, 100% 50%, 86% 100%, 12% 65%, 0 55%)",
-          boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
-        }}
-      />
-    </div>
-  );
-}
-
-/**
- * Aiguille 2 (symétrique)
- * – même style « élancé », affiné aux deux extrémités
- *   et un peu plus pleine au centre.
- */
-function WatchHandSymmetricRefined({
-  angleDeg,
-  halfLenPx,
-}: {
-  angleDeg: number;
-  halfLenPx: number;
-}) {
-  const half = Math.max(40, halfLenPx);
-  const totalWidth = half * 2;
-
-  return (
-    <div
-      className="pointer-events-none absolute left-1/2 top-1/2"
-      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          left: `-${half}px`,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: `${totalWidth}px`,
-          height: "3px",
-          background: NEEDLE_COLOR,
-          borderRadius: 9999,
-          // forme en « losange allongé » :
-          // fine aux deux extrémités, plus épaisse au milieu
-          clipPath:
-            "polygon(0 50%, 6% 32%, 32% 22%, 50% 18%, 68% 22%, 94% 32%, 100% 50%, 94% 68%, 68% 78%, 50% 82%, 32% 78%, 6% 68%)",
+            "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
         }}
       />
@@ -357,7 +394,7 @@ export default function MagicDisplayFaceEditor({
   }
 
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const TAIL_LEN = 0; // on ne dessine plus de queue derrière, mais on garde l’argument
+  const TAIL_LEN = 0; // on ne dessine pas de queue, mais on garde l’argument
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -486,16 +523,18 @@ export default function MagicDisplayFaceEditor({
 
             {/* Aiguilles z-20 */}
             <div className="absolute inset-0 z-20 pointer-events-none">
+              {/* Aiguille principale */}
               <WatchHandOneWayRefined
                 angleDeg={angle1}
                 frontLenPx={frontLenPx}
                 tailLenPx={TAIL_LEN}
               />
-
+              {/* Aiguille symétrique : même composant, angle + 180° */}
               {isEven && needles.needle2Enabled && (
-                <WatchHandSymmetricRefined
-                  angleDeg={angle1}
-                  halfLenPx={frontLenPx}
+                <WatchHandOneWayRefined
+                  angleDeg={angle1 + 180}
+                  frontLenPx={frontLenPx}
+                  tailLenPx={TAIL_LEN}
                 />
               )}
             </div>
@@ -570,7 +609,8 @@ export default function MagicDisplayFaceEditor({
                       {seg.mediaType === "file" && " · Fichier"}
                     </p>
                     <p className="text-[11px] text-slate-500">
-                      Chapitre de cette face (diagnostic, application, etc.).
+                      Chapitre de cette face (diagnostic, application,
+                      etc.).
                     </p>
                   </div>
                   <span
@@ -589,8 +629,8 @@ export default function MagicDisplayFaceEditor({
                 Segment {selectedSegment.id} – {selectedSegment.label}
               </p>
               <p className="text-[11px] text-slate-500">
-                Ajoute un média et des notes pour expliquer précisément cette
-                étape.
+                Ajoute un média et des notes pour expliquer précisément
+                cette étape.
               </p>
               <p className="mt-1 text-[10px] text-slate-400">
                 Statut :{" "}
