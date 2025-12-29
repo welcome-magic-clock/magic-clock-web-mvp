@@ -649,14 +649,16 @@ export default function MagicDisplayClient() {
   const mockViews = 0;
   const mockLikes = 0;
 
-  // 🧮 Progression de publication (Studio + Display) en se basant sur :
-  // - hasMedia / coveredFromDetails
-  // - universalContentCompleted (pastilles vertes internes)
+   // 🧮 Progression de publication (Studio + Display)
+  // On se base sur :
+  // - hasMedia (depuis MagicDisplayClient)
+  // - coveredFromDetails / universalContentCompleted (pastilles internes, R2)
   const faceProgressInput = segments.map((seg) => {
     const meta = faceUniversalProgress[String(seg.id)] ?? {};
 
     const covered =
-      seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
+      seg.hasMedia ||
+      Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
 
     const universalContent =
       covered && Boolean(meta.universalContentCompleted);
@@ -668,7 +670,7 @@ export default function MagicDisplayClient() {
     };
   });
 
-    // Studio complété = payload Magic Studio présent (MVP)
+  // Studio complété = payload Magic Studio présent (MVP)
   const hasStudioPayload =
     // Médias réels ou miniatures
     studioBeforeUrl ||
@@ -683,7 +685,7 @@ export default function MagicDisplayClient() {
     titleFromStudio ||
     modeFromStudioParam ||
     (hashtagsParam && hashtagsParam.trim().length > 0) ||
-    (hashtagTokensFromQuery.length > 0);
+    hashtagTokensFromQuery.length > 0;
 
   const studioCompleted = Boolean(hasStudioPayload);
 
@@ -729,7 +731,7 @@ export default function MagicDisplayClient() {
       setIsPublishing(false);
     }
   };
-
+  
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* ⭐️ Une seule grande carte Magic Display */}
