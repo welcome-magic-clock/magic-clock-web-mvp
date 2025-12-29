@@ -668,8 +668,17 @@ export default function MagicDisplayClient() {
     };
   });
 
-  // Studio complété = au moins un média réel venant du Studio
-  const studioCompleted = Boolean(studioBeforeUrl || studioAfterUrl);
+   // Studio complété = payload Magic Studio présent (MVP)
+  const hasStudioPayload =
+    studioBeforeUrl ||
+    studioAfterUrl ||
+    studioBeforeThumb ||
+    studioAfterThumb ||
+    bridgeTitle ||
+    bridgeMode ||
+    (Array.isArray(bridgeHashtags) && bridgeHashtags.length > 0);
+
+  const studioCompleted = Boolean(hasStudioPayload);
 
   const {
     percent: publishPercent,
