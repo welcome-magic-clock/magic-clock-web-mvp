@@ -521,35 +521,34 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                 {/* Axes de segments alignés entre les bulles */}
+                {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
 <div
   className="absolute inset-0 pointer-events-none"
   style={{ zIndex: 15 }}
 >
   {Array.from({ length: segmentCount }, (_, index) => {
     const count = segmentCount || 1;
-    if (count <= 1) return null; // 1 segment → aucun trait
+
+    // 0 ou 1 segment → aucun trait
+    if (count <= 1) return null;
 
     const step = 360 / count;
     const startAngleDeg = -90;
 
-    // ✅ ANGLE AU MILIEU ENTRE 2 BULLES
+    // 🔁 angle AU MILIEU entre deux bulles
     const angleDeg = startAngleDeg + step * index + step / 2;
 
     return (
-      <div
-        key={index}
-        className="absolute inset-0"
-        style={{
-          transform: `rotate(${angleDeg}deg)`,
-        }}
-      >
+      <div key={index} className="absolute inset-0">
         <div
           className="absolute left-1/2 top-1/2"
           style={{
-            width: "1px",
-            height: "82%",
-            transform: "translate(-50%, -50%)",
+            // demi-segment : du centre vers l'extérieur
+            width: "42%",              // longueur du trait
+            height: "1px",
+            transformOrigin: "left center",
+            transform: `translateY(-50%) rotate(${angleDeg}deg)`,
+            // gris doux bien visible
             background: "rgba(148,163,184,0.75)",
           }}
         />
