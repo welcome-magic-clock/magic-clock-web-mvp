@@ -521,7 +521,7 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                                  {/* Axes de segments alignés avec les bulles */}
+                                             {/* Axes de segments alignés avec les bulles */}
             {segmentCount > 1 && (
               <div
                 className="absolute inset-0 pointer-events-none"
@@ -530,23 +530,26 @@ export default function MagicDisplayFaceEditor({
                 {Array.from({ length: segmentCount }, (_, index) => {
                   const count = segmentCount || 1;
                   const step = 360 / count;
-                  const startAngleDeg = -90; // même référence que les bulles
+                  const startAngleDeg = -90;
                   const angleDeg = startAngleDeg + step * index;
 
                   return (
                     <div
                       key={index}
-                      className="absolute left-1/2 top-1/2"
+                      className="absolute inset-0"
                       style={{
-                        transform: `translate(-50%, -50%) rotate(${angleDeg}deg)`,
+                        // on tourne tout le wrapper qui fait la taille du cercle
+                        transform: `rotate(${angleDeg}deg)`,
                       }}
                     >
                       <div
-                        className="bg-slate-300/70"
+                        className="absolute left-1/2 top-1/2"
                         style={{
                           width: "1px",
-                          height: "82%", // du centre vers le bord
-                          transform: "translateY(-50%)",
+                          height: "82%", // % du cercle → maintenant ça marche
+                          transform: "translate(-50%, -50%)",
+                          // gris doux légèrement contrasté
+                          background: "rgba(148,163,184,0.75)", // ~ slate-400
                         }}
                       />
                     </div>
