@@ -668,15 +668,22 @@ export default function MagicDisplayClient() {
     };
   });
 
-   // Studio complété = payload Magic Studio présent (MVP)
+    // Studio complété = payload Magic Studio présent (MVP)
   const hasStudioPayload =
+    // Médias réels ou miniatures
     studioBeforeUrl ||
     studioAfterUrl ||
     studioBeforeThumb ||
     studioAfterThumb ||
+    // Données bridgées (localStorage)
     bridgeTitle ||
     bridgeMode ||
-    (Array.isArray(bridgeHashtags) && bridgeHashtags.length > 0);
+    (Array.isArray(bridgeHashtags) && bridgeHashtags.length > 0) ||
+    // Données arrivant directement par l'URL (query params)
+    titleFromStudio ||
+    modeFromStudioParam ||
+    (hashtagsParam && hashtagsParam.trim().length > 0) ||
+    (hashtagTokensFromQuery.length > 0);
 
   const studioCompleted = Boolean(hasStudioPayload);
 
