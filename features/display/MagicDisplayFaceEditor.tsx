@@ -82,10 +82,6 @@ const defaultNeedles = (): FaceNeedles => ({
   needle2Enabled: false,
 });
 
-// 🎨 Couleur unique pour toutes les aiguilles (graphite / slate-900)
-const NEEDLE_COLOR = "#111827";
-const NEEDLE_SHADOW = "0 2px 4px rgba(15,23,42,0.35)";
-
 // angle = centre du segment sélectionné
 function segmentAngleForId(segmentId: number, count: number) {
   const c = Math.max(1, count);
@@ -96,8 +92,14 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (simple, non symétrique)
- * – même design que maintenant, couleur unique gris-noir
+ * Couleur commune des aiguilles :
+ * gris ardoise profond, plus doux que le noir.
+ */
+const NEEDLE_COLOR = "rgba(30,41,59,0.96)"; // ~ slate-800/900
+
+/**
+ * Aiguille 1 (simple)
+ * – corps fin au centre, qui s’élargit vers la pointe
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -108,7 +110,6 @@ function WatchHandOneWayRefined({
   tailLenPx: number; // ignoré mais gardé pour compatibilité
 }) {
   const width = Math.max(40, frontLenPx);
-  const color = "rgba(15,23,42,0.95)"; // gris-noir élégant
 
   return (
     <div
@@ -123,11 +124,11 @@ function WatchHandOneWayRefined({
           transform: "translateY(-50%)",
           width: `${width}px`,
           height: "3px",
-          background: color,
+          background: NEEDLE_COLOR,
           borderRadius: 9999,
-          // forme légèrement pointue côté bulle
+          // queue un peu plus fine, pointe élargie
           clipPath:
-            "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
+            "polygon(0 45%, 12% 35%, 86% 0, 100% 50%, 86% 100%, 12% 65%, 0 55%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
         }}
       />
@@ -137,7 +138,8 @@ function WatchHandOneWayRefined({
 
 /**
  * Aiguille 2 (symétrique)
- * – même couleur et style général, mais pointes des deux côtés
+ * – même style « élancé », affiné aux deux extrémités
+ *   et un peu plus pleine au centre.
  */
 function WatchHandSymmetricRefined({
   angleDeg,
@@ -148,7 +150,6 @@ function WatchHandSymmetricRefined({
 }) {
   const half = Math.max(40, halfLenPx);
   const totalWidth = half * 2;
-  const color = "rgba(15,23,42,0.95)"; // même couleur que l’aiguille 1
 
   return (
     <div
@@ -158,16 +159,17 @@ function WatchHandSymmetricRefined({
       <div
         style={{
           position: "absolute",
-          left: `-${half}px`, // centrée sur le milieu
+          left: `-${half}px`,
           top: "50%",
           transform: "translateY(-50%)",
           width: `${totalWidth}px`,
           height: "3px",
-          background: color,
+          background: NEEDLE_COLOR,
           borderRadius: 9999,
-          // pointes des deux côtés (style aiguille, mais symétrique)
+          // forme en « losange allongé » :
+          // fine aux deux extrémités, plus épaisse au milieu
           clipPath:
-            "polygon(0 50%, 4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%)",
+            "polygon(0 50%, 6% 32%, 32% 22%, 50% 18%, 68% 22%, 94% 32%, 100% 50%, 94% 68%, 68% 78%, 50% 82%, 32% 78%, 6% 68%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
         }}
       />
@@ -244,7 +246,10 @@ export default function MagicDisplayFaceEditor({
     if (!isEven && needles.needle2Enabled) {
       updateFace((existing) => ({
         ...existing,
-        needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: false },
+        needles: {
+          ...(existing.needles ?? defaultNeedles()),
+          needle2Enabled: false,
+        },
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -278,7 +283,10 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
+  function updateSegment(
+    segmentId: number,
+    updater: (prev: Segment) => Segment
+  ) {
     updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
         s.id === segmentId ? updater(s) : s
@@ -300,7 +308,10 @@ export default function MagicDisplayFaceEditor({
     else fileInputRef.current?.click();
   }
 
-  function handleMediaFileChange(event: ChangeEvent<HTMLInputElement>, type: MediaType) {
+  function handleMediaFileChange(
+    event: ChangeEvent<HTMLInputElement>,
+    type: MediaType
+  ) {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
 
@@ -316,13 +327,18 @@ export default function MagicDisplayFaceEditor({
     event.target.value = "";
   }
 
-  function handleNotesChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+  function handleNotesChange(
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) {
     const value = event.target.value;
     if (!selectedSegment) return;
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
-      status: prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
+      status:
+        prev.status === "empty" && !prev.mediaUrl
+          ? "in-progress"
+          : prev.status,
     }));
   }
 
@@ -341,7 +357,7 @@ export default function MagicDisplayFaceEditor({
   }
 
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const TAIL_LEN = 0;
+  const TAIL_LEN = 0; // on ne dessine plus de queue derrière, mais on garde l’argument
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -362,7 +378,9 @@ export default function MagicDisplayFaceEditor({
             <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Face {faceId} / 6
             </span>
-            <span className="text-sm font-semibold text-slate-900">{faceLabel}</span>
+            <span className="text-sm font-semibold text-slate-900">
+              {faceLabel}
+            </span>
           </div>
         </div>
 
@@ -379,7 +397,9 @@ export default function MagicDisplayFaceEditor({
       {showOptions && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-700">
           <p className="font-semibold">Options</p>
-          <p className="mt-1 text-slate-500">(À venir) Modèles préconçus, presets, styles…</p>
+          <p className="mt-1 text-slate-500">
+            (À venir) Modèles préconçus, presets, styles…
+          </p>
         </div>
       )}
 
@@ -395,7 +415,9 @@ export default function MagicDisplayFaceEditor({
             min={1}
             max={MAX_SEGMENTS}
             value={segmentCount}
-            onChange={(e) => handleSegmentCountChange(Number(e.target.value))}
+            onChange={(e) =>
+              handleSegmentCountChange(Number(e.target.value))
+            }
             className="w-28 accent-brand-500"
           />
         </div>
@@ -404,9 +426,15 @@ export default function MagicDisplayFaceEditor({
           <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
             {creatorAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
+              <img
+                src={creatorAvatar}
+                alt={creatorName}
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <span className="text-xs font-semibold">{creatorInitials}</span>
+              <span className="text-xs font-semibold">
+                {creatorInitials}
+              </span>
             )}
           </span>
           <span className="font-medium">{creatorName}</span>
@@ -415,7 +443,11 @@ export default function MagicDisplayFaceEditor({
 
       {/* Toggle symétrique (uniquement pair) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
-        <label className={`inline-flex items-center gap-2 ${!isEven ? "opacity-60" : ""}`}>
+        <label
+          className={`inline-flex items-center gap-2 ${
+            !isEven ? "opacity-60" : ""
+          }`}
+        >
           <input
             type="checkbox"
             disabled={!isEven}
@@ -424,7 +456,10 @@ export default function MagicDisplayFaceEditor({
               const enabled = e.target.checked;
               updateFace((existing) => ({
                 ...existing,
-                needles: { ...(existing.needles ?? defaultNeedles()), needle2Enabled: enabled },
+                needles: {
+                  ...(existing.needles ?? defaultNeedles()),
+                  needle2Enabled: enabled,
+                },
               }));
             }}
             className="h-4 w-4 accent-brand-500"
@@ -458,7 +493,10 @@ export default function MagicDisplayFaceEditor({
               />
 
               {isEven && needles.needle2Enabled && (
-                <WatchHandSymmetricRefined angleDeg={angle1} halfLenPx={frontLenPx} />
+                <WatchHandSymmetricRefined
+                  angleDeg={angle1}
+                  halfLenPx={frontLenPx}
+                />
               )}
             </div>
 
@@ -466,9 +504,15 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <span className="text-xs font-semibold text-slate-50">{creatorInitials}</span>
+                <span className="text-xs font-semibold text-slate-50">
+                  {creatorInitials}
+                </span>
               )}
             </div>
 
@@ -491,7 +535,9 @@ export default function MagicDisplayFaceEditor({
                 >
                   {segmentIcon(seg.mediaType)}
                   <span
-                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(seg.status)}`}
+                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
+                      seg.status
+                    )}`}
                   />
                 </button>
               );
@@ -527,7 +573,11 @@ export default function MagicDisplayFaceEditor({
                       Chapitre de cette face (diagnostic, application, etc.).
                     </p>
                   </div>
-                  <span className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(seg.status)}`} />
+                  <span
+                    className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(
+                      seg.status
+                    )}`}
+                  />
                 </button>
               );
             })}
@@ -539,10 +589,14 @@ export default function MagicDisplayFaceEditor({
                 Segment {selectedSegment.id} – {selectedSegment.label}
               </p>
               <p className="text-[11px] text-slate-500">
-                Ajoute un média et des notes pour expliquer précisément cette étape.
+                Ajoute un média et des notes pour expliquer précisément cette
+                étape.
               </p>
               <p className="mt-1 text-[10px] text-slate-400">
-                Statut : <span className="font-semibold">{statusLabel(selectedSegment.status)}</span>
+                Statut :{" "}
+                <span className="font-semibold">
+                  {statusLabel(selectedSegment.status)}
+                </span>
               </p>
             </div>
 
@@ -599,7 +653,9 @@ export default function MagicDisplayFaceEditor({
             )}
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-600">Notes pédagogiques</label>
+              <label className="text-[11px] font-medium text-slate-600">
+                Notes pédagogiques
+              </label>
               <textarea
                 rows={3}
                 value={selectedSegment.notes}
