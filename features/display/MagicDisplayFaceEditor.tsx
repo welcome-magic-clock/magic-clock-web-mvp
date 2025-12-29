@@ -522,29 +522,40 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
                       {/* Axes de segments alignés entre les bulles */}
-<div className="absolute inset-0 pointer-events-none" style={{ zIndex: 15 }}>
+<div
+  className="absolute inset-0 pointer-events-none"
+  style={{ zIndex: 15 }}
+>
   {segmentCount > 1 &&
     Array.from({ length: segmentCount }, (_, index) => {
-      const count = Math.max(2, segmentCount);
+      const count = segmentCount || 1;
       const step = 360 / count;
-      const startAngleDeg = -90; // bulle 0 en haut
-      // trait = milieu entre deux bulles -> i + 0.5
-      const angleDeg = startAngleDeg + step * (index + 0.5);
+      const startAngleDeg = -90; // même origine que les bulles
+
+      // angle de la bulle : start + step * index
+      // ici on veut le MILIEU entre deux bulles -> index + 0.5
+      const midAngle = startAngleDeg + step * (index + 0.5);
+
+      // notre trait de base est VERTICAL
+      // pour pointer vers midAngle (système trig → vertical),
+      // on ajoute +90°
+      const angleDeg = midAngle + 90;
 
       return (
         <div
           key={index}
-          className="absolute left-1/2 top-1/2"
+          className="absolute inset-0"
           style={{
-            transform: `translate(-50%, -50%) rotate(${angleDeg}deg)`,
+            transform: `rotate(${angleDeg}deg)`,
           }}
         >
           <div
-            className="absolute left-1/2 top-1/2 bg-slate-300/70"
+            className="absolute left-1/2 top-1/2"
             style={{
               width: "1px",
-              height: "82%",
+              height: "82%",          // ne pas toucher
               transform: "translate(-50%, -50%)",
+              background: "rgba(148,163,184,0.75)", // ~ slate-400
             }}
           />
         </div>
