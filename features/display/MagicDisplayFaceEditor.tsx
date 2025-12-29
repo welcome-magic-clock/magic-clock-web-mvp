@@ -540,14 +540,14 @@ export default function MagicDisplayFaceEditor({
                       transform: `translate(-50%, -50%) rotate(${angleDeg}deg)`,
                     }}
                   >
-                    <div
-                      className="bg-slate-300/70"
-                      style={{
-                        width: "1px",
-                        height: "82%", // longueur du rayon
-                        transform: "translateY(-50%)",
-                      }}
-                    />
+                   <div
+  className="bg-red-500"   // provisoire, bien visible
+  style={{
+    width: "2px",
+    height: "82%",
+    transform: "translateY(-50%)",
+  }}
+/>
                   </div>
                 );
               })}
