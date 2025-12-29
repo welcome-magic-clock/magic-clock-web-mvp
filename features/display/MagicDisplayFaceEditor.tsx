@@ -96,8 +96,8 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (simple)
- * – corps fin, travaillé, qui part du centre et s’arrête juste avant la bulle
+ * Aiguille 1 (simple, non symétrique)
+ * – même design que maintenant, couleur unique gris-noir
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -108,6 +108,7 @@ function WatchHandOneWayRefined({
   tailLenPx: number; // ignoré mais gardé pour compatibilité
 }) {
   const width = Math.max(40, frontLenPx);
+  const color = "rgba(15,23,42,0.95)"; // gris-noir élégant
 
   return (
     <div
@@ -122,10 +123,12 @@ function WatchHandOneWayRefined({
           transform: "translateY(-50%)",
           width: `${width}px`,
           height: "3px",
-          background: NEEDLE_COLOR,
+          background: color,
           borderRadius: 9999,
-          clipPath: "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
-          boxShadow: NEEDLE_SHADOW,
+          // forme légèrement pointue côté bulle
+          clipPath:
+            "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
+          boxShadow: "0 2px 4px rgba(15,23,42,0.35)",
         }}
       />
     </div>
@@ -134,7 +137,7 @@ function WatchHandOneWayRefined({
 
 /**
  * Aiguille 2 (symétrique)
- * – même style, pointes des deux côtés, même distance aux bulles
+ * – même couleur et style général, mais pointes des deux côtés
  */
 function WatchHandSymmetricRefined({
   angleDeg,
@@ -145,6 +148,7 @@ function WatchHandSymmetricRefined({
 }) {
   const half = Math.max(40, halfLenPx);
   const totalWidth = half * 2;
+  const color = "rgba(15,23,42,0.95)"; // même couleur que l’aiguille 1
 
   return (
     <div
@@ -154,16 +158,17 @@ function WatchHandSymmetricRefined({
       <div
         style={{
           position: "absolute",
-          left: `-${half}px`,
+          left: `-${half}px`, // centrée sur le milieu
           top: "50%",
           transform: "translateY(-50%)",
           width: `${totalWidth}px`,
           height: "3px",
-          background: NEEDLE_COLOR,
+          background: color,
           borderRadius: 9999,
+          // pointes des deux côtés (style aiguille, mais symétrique)
           clipPath:
             "polygon(0 50%, 4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%)",
-          boxShadow: NEEDLE_SHADOW,
+          boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
         }}
       />
     </div>
