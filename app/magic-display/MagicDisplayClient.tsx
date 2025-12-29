@@ -91,21 +91,10 @@ const INITIAL_SEGMENTS: Segment[] = [
 ];
 
 const STORAGE_KEY = "mc-display-draft-v1";
-const FACE_PROGRESS_STORAGE_KEY = "mc-display-face-progress-v1";
+const FACE_PROGRESS_KEY = "mc-display-face-progress-v1";
 
 const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
 const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
-
-// Progress interne de chaque face, écrit par MagicDisplayFaceEditor
-type FaceUniversalProgress = Record<
-  string,
-  {
-    /** Un média a été ajouté via l’éditeur de face (même si pas via le cercle) */
-    coveredFromDetails?: boolean;
-    /** Tous les segments universels de la face sont complétés (pastilles vertes) */
-    universalContentCompleted?: boolean;
-  }
->;
 
 function buildTemplateSegments(template: TemplateId): Segment[] {
   switch (template) {
@@ -247,10 +236,8 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
   }
 }
 
-function statusDotClass(hasMedia: boolean, universalCompleted?: boolean) {
-  if (universalCompleted) return "bg-emerald-500"; // Face 100 % complète
-  if (hasMedia) return "bg-amber-400"; // Média ok mais universel pas fini
-  return "bg-slate-300"; // Rien encore
+function statusDotClass(hasMedia: boolean) {
+  return hasMedia ? "bg-emerald-500" : "bg-slate-300";
 }
 
 function mediaTypeLabel(type?: MediaType) {
@@ -421,7 +408,8 @@ export default function MagicDisplayClient() {
   // 🎯 Valeurs “effectives” (URL + localStorage)
   const effectiveTitle = (titleFromStudio || bridgeTitle).trim();
 
-  const effectiveMode: PublishMode = modeFromStudioParam ?? bridgeMode ?? "FREE";
+  const effectiveMode: PublishMode =
+    modeFromStudioParam ?? bridgeMode ?? "FREE";
 
   const effectivePpvPrice =
     ppvPriceFromStudio != null ? Number(ppvPriceFromStudio) : bridgePpvPrice;
@@ -459,53 +447,34 @@ export default function MagicDisplayClient() {
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 🔁 Progress universel (écrit par MagicDisplayFaceEditor)
-  const [faceUniversalProgress, setFaceUniversalProgress] =
-    useState<FaceUniversalProgress>({});
-
-  const loadFaceProgressFromStorage = () => {
-    try {
-      const raw = window.localStorage.getItem(FACE_PROGRESS_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as FaceUniversalProgress;
-      if (parsed && typeof parsed === "object") {
-        setFaceUniversalProgress(parsed);
-      }
-    } catch (error) {
-      console.error("Failed to load face universal progress", error);
-    }
-  };
-
-  // 🧬 Charger le draft du cube + la progression de face depuis localStorage
+  // 🧬 Charger le draft du cube depuis localStorage (structure uniquement)
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Segment>[];
-        if (Array.isArray(parsed)) {
-          const merged: Segment[] = INITIAL_SEGMENTS.map((defaultSeg) => {
-            const fromStore = parsed.find((s) => s.id === defaultSeg.id);
-            if (!fromStore) return defaultSeg;
+      if (!raw) return;
 
-            return {
-              ...defaultSeg,
-              label: fromStore.label ?? defaultSeg.label,
-              description: fromStore.description ?? defaultSeg.description,
-              hasMedia: fromStore.hasMedia ?? false,
-              mediaType: fromStore.mediaType ?? undefined,
-              mediaUrl: null,
-            };
-          });
+      const parsed = JSON.parse(raw) as Partial<Segment>[];
+      if (!Array.isArray(parsed)) return;
 
-          setSegments(merged);
-          setSelectedId(null);
-        }
-      }
+      const merged: Segment[] = INITIAL_SEGMENTS.map((defaultSeg) => {
+        const fromStore = parsed.find((s) => s.id === defaultSeg.id);
+        if (!fromStore) return defaultSeg;
+
+        return {
+          ...defaultSeg,
+          label: fromStore.label ?? defaultSeg.label,
+          description: fromStore.description ?? defaultSeg.description,
+          hasMedia: false,
+          mediaType: undefined,
+          mediaUrl: null,
+        };
+      });
+
+      setSegments(merged);
+      setSelectedId(null);
     } catch (error) {
       console.error("Failed to load Magic Display draft from storage", error);
     }
-
-    loadFaceProgressFromStorage();
   }, []);
 
   // 💾 Sauvegarder la structure du cube à chaque modification
@@ -524,6 +493,30 @@ export default function MagicDisplayClient() {
       console.error("Failed to save Magic Display draft to storage", error);
     }
   }, [segments]);
+
+  // 🧬 Charger la progression détaillée des faces (pastilles vertes internes)
+  const [faceUniversalProgress, setFaceUniversalProgress] = useState<
+    Record<
+      string,
+      {
+        coveredFromDetails?: boolean;
+        universalContentCompleted?: boolean;
+      }
+    >
+  >({});
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FACE_PROGRESS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as typeof faceUniversalProgress;
+      if (parsed && typeof parsed === "object") {
+        setFaceUniversalProgress(parsed);
+      }
+    } catch (error) {
+      console.error("Failed to load face universal progress", error);
+    }
+  }, []);
 
   // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
   function handleCubeFaceSelect(id: number | null) {
@@ -593,8 +586,6 @@ export default function MagicDisplayClient() {
 
   function handleCloseFaceDetail() {
     setIsFaceDetailOpen(false);
-    // Quand on revient de l’éditeur de face, on recharge la progression universelle
-    loadFaceProgressFromStorage();
   }
 
   // 🎛 Appliquer un modèle pré-conçu (ou un cube mock) depuis le menu Options
@@ -649,10 +640,10 @@ export default function MagicDisplayClient() {
   const mockViews = 0;
   const mockLikes = 0;
 
-   // 🧮 Progression de publication (Studio + Display)
-  // On se base sur :
-  // - hasMedia (depuis MagicDisplayClient)
-  // - coveredFromDetails / universalContentCompleted (pastilles internes, R2)
+  // 🧮 Progression de publication (Studio + Display)
+  // basés sur :
+  // - hasMedia / coveredFromDetails
+  // - universalContentCompleted (pastilles vertes internes)
   const faceProgressInput = segments.map((seg) => {
     const meta = faceUniversalProgress[String(seg.id)] ?? {};
 
@@ -672,16 +663,13 @@ export default function MagicDisplayClient() {
 
   // Studio complété = payload Magic Studio présent (MVP)
   const hasStudioPayload =
-    // Médias réels ou miniatures
     studioBeforeUrl ||
     studioAfterUrl ||
     studioBeforeThumb ||
     studioAfterThumb ||
-    // Données bridgées (localStorage)
     bridgeTitle ||
     bridgeMode ||
     (Array.isArray(bridgeHashtags) && bridgeHashtags.length > 0) ||
-    // Données arrivant directement par l'URL (query params)
     titleFromStudio ||
     modeFromStudioParam ||
     (hashtagsParam && hashtagsParam.trim().length > 0) ||
@@ -731,7 +719,7 @@ export default function MagicDisplayClient() {
       setIsPublishing(false);
     }
   };
-  
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* ⭐️ Une seule grande carte Magic Display */}
@@ -898,16 +886,6 @@ export default function MagicDisplayClient() {
                   const left = 50 + Math.cos(rad) * radiusPercent;
                   const isSelected = seg.id === selectedId;
 
-                  const meta = faceUniversalProgress[String(seg.id)] ?? {};
-                  const covered =
-                    seg.hasMedia ||
-                    Boolean(
-                      meta.coveredFromDetails || meta.universalContentCompleted,
-                    );
-                  const universalCompleted = Boolean(
-                    meta.universalContentCompleted,
-                  );
-
                   return (
                     <button
                       key={seg.id}
@@ -924,8 +902,7 @@ export default function MagicDisplayClient() {
                       {renderSegmentIcon(seg)}
                       <span
                         className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                          covered,
-                          universalCompleted,
+                          seg.hasMedia,
                         )}`}
                       />
                     </button>
@@ -935,7 +912,7 @@ export default function MagicDisplayClient() {
             </div>
           </div>
 
-          {/* Colonne droite : cube 3D + liste */}
+          {/* Colonne droite : cube 3D + liste + bouton de publication */}
           <div className="flex-1 space-y-4">
             <MagicCube3D
               segments={segments}
@@ -944,6 +921,49 @@ export default function MagicDisplayClient() {
               onPublish={handlePublishFromCube}
               isPublishing={isPublishing}
             />
+
+            {/* Bouton de publication global – sous le cube */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={handleFinalPublish}
+                  disabled={!canPublish || isPublishing}
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-sm transition sm:w-auto
+                ${
+                  canPublish
+                    ? "bg-slate-900 text-slate-50 hover:bg-slate-800"
+                    : "bg-slate-400/80 text-slate-100 cursor-not-allowed"
+                }`}
+                >
+                  <span className="text-lg">✨</span>
+                  <span>Publier sur Amazing + My Magic Clock</span>
+                  <span className="ml-2 h-1.5 w-24 overflow-hidden rounded-full bg-slate-700/40">
+                    <span
+                      className="block h-full bg-emerald-400 transition-[width]"
+                      style={{ width: `${publishPercent}%` }}
+                    />
+                  </span>
+                </button>
+
+                <div className="space-y-1 text-[11px] text-slate-500">
+                  <p>{publishHelperText}</p>
+                  <p className="text-[10px] text-slate-400">
+                    Studio : {studioPart}% · Display : {displayPart}% · Total :{" "}
+                    {publishPercent}%.
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    MVP : ce bouton enverra ton Magic Clock en public sur{" "}
+                    <span className="font-medium">Amazing</span> et le
+                    retrouvera en privé dans{" "}
+                    <span className="font-medium">
+                      Mes Magic Clock créés · Publiés sur Amazing
+                    </span>
+                    .
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Liste des faces */}
             <div className="space-y-3">
@@ -958,22 +978,6 @@ export default function MagicDisplayClient() {
                 {segments.map((seg) => {
                   const isSelected = seg.id === selectedId;
                   const label = mediaTypeLabel(seg.mediaType);
-
-                  const meta = faceUniversalProgress[String(seg.id)] ?? {};
-                  const covered =
-                    seg.hasMedia ||
-                    Boolean(
-                      meta.coveredFromDetails || meta.universalContentCompleted,
-                    );
-                  const universalCompleted = Boolean(
-                    meta.universalContentCompleted,
-                  );
-
-                  const statusLabel = universalCompleted
-                    ? "Complet"
-                    : covered
-                    ? "En cours"
-                    : "À faire";
 
                   return (
                     <button
@@ -990,10 +994,6 @@ export default function MagicDisplayClient() {
                         <p className="font-medium text-slate-800">
                           {seg.label}
                           {seg.hasMedia && label ? ` · ${label}` : ""}
-                          {" · "}
-                          <span className="font-normal text-slate-500">
-                            {statusLabel}
-                          </span>
                         </p>
                         <p className="mt-0.5 truncate text-[11px] text-slate-500">
                           {seg.description}
@@ -1001,8 +1001,7 @@ export default function MagicDisplayClient() {
                       </div>
                       <span
                         className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-                          covered,
-                          universalCompleted,
+                          seg.hasMedia,
                         )}`}
                       />
                     </button>
@@ -1065,40 +1064,6 @@ export default function MagicDisplayClient() {
             </div>
           </div>
         )}
-
-        {/* Bouton de publication global */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={handleFinalPublish}
-              disabled={!canPublish || isPublishing}
-              className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-sm transition sm:w-auto
-                ${
-                  canPublish
-                    ? "bg-slate-900 text-slate-50 hover:bg-slate-800"
-                    : "bg-slate-400/80 text-slate-100 cursor-not-allowed"
-                }`}
-            >
-              <span className="text-lg">✨</span>
-              <span>Publier sur Amazing + My Magic Clock</span>
-              <span className="ml-2 h-1.5 w-24 overflow-hidden rounded-full bg-slate-700/40">
-                <span
-                  className="block h-full bg-emerald-400 transition-[width]"
-                  style={{ width: `${publishPercent}%` }}
-                />
-              </span>
-            </button>
-
-            <div className="space-y-1 text-[11px] text-slate-500">
-              <p>{publishHelperText}</p>
-              <p className="text-[10px] text-slate-400">
-                Studio : {studioPart}% · Display : {displayPart}% · Total :{" "}
-                {publishPercent}%
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Menu Options (bottom sheet) */}
         {isOptionsOpen && (
