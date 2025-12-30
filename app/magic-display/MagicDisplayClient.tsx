@@ -534,23 +534,17 @@ export default function MagicDisplayClient() {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
-    // ✏️ Mise à jour du texte d'une face (label / description)
-  function handleUpdateFaceText(
-    id: number,
-    field: "label" | "description",
-    value: string,
-  ) {
-    setSegments((prev) =>
-      prev.map((seg) =>
-        seg.id === id
-          ? {
-              ...seg,
-              [field]: value,
-            }
-          : seg,
-      ),
-    );
-  }
+    // ✏️ Mise à jour du texte d'une face description
+ function handleSelectedDescriptionChange(
+  event: ChangeEvent<HTMLTextAreaElement>,
+) {
+  const value = event.target.value;
+  setSegments((prev) =>
+    prev.map((seg) =>
+      seg.id === selectedId ? { ...seg, description: value } : seg,
+    ),
+  );
+}
 
   // 🎯 Clic sur le cercle → sélection + éventuel upload
   function handleCircleFaceClick(seg: Segment) {
@@ -1030,41 +1024,25 @@ export default function MagicDisplayClient() {
        {selectedSegment && (
   <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="space-y-1 sm:w-1/2">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Face sélectionnée
-        </p>
+    <div className="space-y-1 sm:w-1/2">
+  <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+    Face sélectionnée
+  </p>
 
-        {/* Titre de la face – éditable */}
-        <input
-          type="text"
-          value={selectedSegment.label}
-          onChange={(e) =>
-            handleUpdateFaceText(
-              selectedSegment.id,
-              "label",
-              e.target.value,
-            )
-          }
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-sm font-semibold text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
-          placeholder={`Face ${selectedSegment.id}`}
-        />
+  {/* 👉 Label non modifiable : "Face 1", "Face 2", etc. */}
+  <p className="text-sm font-semibold text-slate-900">
+    {selectedSegment.label}
+  </p>
 
-        {/* Description de la face – éditable */}
-        <textarea
-          value={selectedSegment.description}
-          onChange={(e) =>
-            handleUpdateFaceText(
-              selectedSegment.id,
-              "description",
-              e.target.value,
-            )
-          }
-          rows={2}
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600 outline-none focus:border-brand-500 focus:bg-white"
-          placeholder="Décris ce que tu fais sur cette face (ex. Pré-lightening / éclaircissement)"
-        />
-      </div>
+  {/* 👉 Description éditable */}
+  <textarea
+    className="mt-1 w-full rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 outline-none focus:border-brand-500 focus:ring-0"
+    rows={2}
+    placeholder="Décris en quelques mots cette face (facultatif)"
+    value={selectedSegment.description}
+    onChange={handleSelectedDescriptionChange}
+  />
+</div>
 
       {/* On laisse intact le bloc des boutons médias */}
       <div className="flex flex-wrap gap-2 sm:w-1/2 sm:justify-end">
@@ -1151,8 +1129,7 @@ export default function MagicDisplayClient() {
                   </p>
 
                   <p className="text-[11px] text-slate-500">
-                    Applique une structure prête pour gagner du temps. Tu pourras
-                    toujours modifier les titres et descriptions de chaque face.
+                    Applique une structure prête pour gagner du temps. Tu pourras toujours modifier la description de chaque face.
                   </p>
 
                   <div className="space-y-1.5">
