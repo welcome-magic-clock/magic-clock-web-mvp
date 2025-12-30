@@ -365,6 +365,17 @@ export default function MagicDisplayClient() {
   const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
   const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
+  // 🔵 Progrès détaillé par face (pastilles internes vertes)
+  const [faceUniversalProgress, setFaceUniversalProgress] = useState<
+    Record<
+      string,
+      {
+        coveredFromDetails?: boolean;
+        universalContentCompleted?: boolean;
+      }
+    >
+  >({});
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
@@ -405,11 +416,24 @@ export default function MagicDisplayClient() {
     }
   }, []);
 
+  // Charger les infos de progression des faces (pastilles internes)
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FACE_PROGRESS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        setFaceUniversalProgress(parsed);
+      }
+    } catch (error) {
+      console.error("Failed to read face universal progress", error);
+    }
+  }, []);
+
   // 🎯 Valeurs “effectives” (URL + localStorage)
   const effectiveTitle = (titleFromStudio || bridgeTitle).trim();
 
-  const effectiveMode: PublishMode =
-    modeFromStudioParam ?? bridgeMode ?? "FREE";
+  const effectiveMode: PublishMode = modeFromStudioParam ?? bridgeMode ?? "FREE";
 
   const effectivePpvPrice =
     ppvPriceFromStudio != null ? Number(ppvPriceFromStudio) : bridgePpvPrice;
@@ -493,30 +517,6 @@ export default function MagicDisplayClient() {
       console.error("Failed to save Magic Display draft to storage", error);
     }
   }, [segments]);
-
-  // 🧬 Charger la progression détaillée des faces (pastilles vertes internes)
-  const [faceUniversalProgress, setFaceUniversalProgress] = useState<
-    Record<
-      string,
-      {
-        coveredFromDetails?: boolean;
-        universalContentCompleted?: boolean;
-      }
-    >
-  >({});
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(FACE_PROGRESS_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as typeof faceUniversalProgress;
-      if (parsed && typeof parsed === "object") {
-        setFaceUniversalProgress(parsed);
-      }
-    } catch (error) {
-      console.error("Failed to load face universal progress", error);
-    }
-  }, []);
 
   // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
   function handleCubeFaceSelect(id: number | null) {
@@ -640,8 +640,7 @@ export default function MagicDisplayClient() {
   const mockViews = 0;
   const mockLikes = 0;
 
-  // 🧮 Progression de publication (Studio + Display)
-  // basés sur :
+  // 🧮 Progression de publication (Studio + Display) en se basant sur :
   // - hasMedia / coveredFromDetails
   // - universalContentCompleted (pastilles vertes internes)
   const faceProgressInput = segments.map((seg) => {
@@ -701,7 +700,7 @@ export default function MagicDisplayClient() {
   }
 
   const handlePublishFromCube = () => {
-    // MVP : garder ce bouton comme “voir dans My Magic Clock”
+    // MVP : garder ce bouton comme “voir dans My Magic Clock” si on le réutilise plus tard
     setIsPublishing(true);
     try {
       router.push("/mymagic?tab=created&source=magic-display");
@@ -748,7 +747,7 @@ export default function MagicDisplayClient() {
           </button>
         </div>
 
-        {/* 🔎 Carte d’aperçu Magic Studio — format Amazing + click = My Magic Clock */}
+        {/* 🔎 Carte d’aperçu Magic Studio */}
         <section className="mb-2">
           <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
             <button
@@ -796,7 +795,6 @@ export default function MagicDisplayClient() {
 
               {/* Bas de carte : créateur + vues + likes + accès + titre + hashtags */}
               <div className="mt-3 space-y-1 text-xs">
-                {/* Ligne 1 : créateur · vues · likes · statut accès */}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
                   <span className="font-medium">{currentCreator.name}</span>
                   <span className="text-slate-400">{creatorHandle}</span>
@@ -830,7 +828,6 @@ export default function MagicDisplayClient() {
                   </span>
                 </div>
 
-                {/* Ligne 2 : titre + hashtags */}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
                   {effectiveTitle && (
                     <span className="font-medium text-slate-800">
@@ -912,7 +909,7 @@ export default function MagicDisplayClient() {
             </div>
           </div>
 
-          {/* Colonne droite : cube 3D + liste + bouton de publication */}
+          {/* Colonne droite : cube 3D + liste */}
           <div className="flex-1 space-y-4">
             <MagicCube3D
               segments={segments}
@@ -921,47 +918,6 @@ export default function MagicDisplayClient() {
               onPublish={handlePublishFromCube}
               isPublishing={isPublishing}
             />
-
-                  {/* Bouton de publication global */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={handleFinalPublish}
-              disabled={!canPublish || isPublishing}
-              className={`inline-flex w-full flex-col items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-sm transition sm:w-auto
-                ${
-                  canPublish
-                    ? "bg-slate-900 text-slate-50 hover:bg-slate-800"
-                    : "bg-slate-400/80 text-slate-100 cursor-not-allowed"
-                }`}
-            >
-              {/* Titre + icône */}
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-lg">✨</span>
-                <span>Publier sur Amazing + My Magic Clock</span>
-              </div>
-
-              {/* Barre de progression pleine longueur sous le titre */}
-              <div className="mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-700/40">
-                <div
-                  className="h-full bg-emerald-400 transition-[width]"
-                  style={{ width: `${publishPercent}%` }}
-                />
-              </div>
-            </button>
-
-            <div className="space-y-1 text-[11px] text-slate-500">
-              {/* ex. : 0 face(s) complétée(s) · 0 en cours. Termine ton Display pour publier. */}
-              <p>{publishHelperText}</p>
-              {/* ex. : Studio : 40% · Display : 0% · Total : 40% */}
-              <p className="text-[10px] text-slate-400">
-                Studio : {studioPart}% · Display : {displayPart}% · Total :{" "}
-                {publishPercent}%
-              </p>
-            </div>
-          </div>
-        </div>
 
             {/* Liste des faces */}
             <div className="space-y-3">
@@ -1062,6 +1018,42 @@ export default function MagicDisplayClient() {
             </div>
           </div>
         )}
+
+        {/* Bouton de publication global avec barre pleine largeur */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={handleFinalPublish}
+              disabled={!canPublish || isPublishing}
+              className={`inline-flex w-full flex-col items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-sm transition sm:w-auto
+                ${
+                  canPublish
+                    ? "bg-slate-900 text-slate-50 hover:bg-slate-800"
+                    : "bg-slate-400/80 text-slate-100 cursor-not-allowed"
+                }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg">✨</span>
+                <span>Publier sur Amazing + My Magic Clock</span>
+              </div>
+              <div className="mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-700/40">
+                <div
+                  className="h-full bg-emerald-400 transition-[width]"
+                  style={{ width: `${publishPercent}%` }}
+                />
+              </div>
+            </button>
+
+            <div className="space-y-1 text-[11px] text-slate-500">
+              <p>{publishHelperText}</p>
+              <p className="text-[10px] text-slate-400">
+                Studio : {studioPart}% · Display : {displayPart}% · Total :{" "}
+                {publishPercent}%
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Menu Options (bottom sheet) */}
         {isOptionsOpen && (
