@@ -785,7 +785,6 @@ export default function MagicDisplayFaceEditor({
             </div>
           </div>
         </div>
-      </div>
 
       {/* Inputs cachés */}
       <input
