@@ -36,14 +36,13 @@ type FaceNeedles = {
 
 type FaceState = {
   faceId: number;
-  segmentCount: number;
+  segmentCount: number; // 1 → 12
   segments: Segment[];
   needles: FaceNeedles;
 };
 
 const MAX_SEGMENTS = 12;
 const DEFAULT_SEGMENTS = 4;
-const MAX_SHORT_DESCRIPTION = 27;
 
 const INITIAL_SEGMENTS: Segment[] = [
   {
@@ -167,6 +166,7 @@ const defaultNeedles = (): FaceNeedles => ({
   needle2Enabled: false,
 });
 
+// angle = centre du segment sélectionné
 function segmentAngleForId(segmentId: number, count: number) {
   const c = Math.max(1, count);
   const step = 360 / c;
@@ -176,7 +176,8 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (simple raffinée)
+ * Aiguille 1 (simple)
+ * – corps plus fin au centre, qui s’élargit vers la pointe
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -184,7 +185,7 @@ function WatchHandOneWayRefined({
 }: {
   angleDeg: number;
   frontLenPx: number;
-  tailLenPx: number; // ignoré, gardé pour compat
+  tailLenPx: number; // ignoré mais gardé pour compatibilité
 }) {
   const width = Math.max(40, frontLenPx);
 
@@ -201,10 +202,9 @@ function WatchHandOneWayRefined({
           transform: "translateY(-50%)",
           width: `${width}px`,
           height: "3px",
-          background: "rgba(51,65,85,0.95)",
+          background: "rgba(51,65,85,0.95)", // slate-700
           borderRadius: 9999,
-          clipPath:
-            "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
+          clipPath: "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
         }}
       />
@@ -276,7 +276,7 @@ export default function MagicDisplayFaceEditor({
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
-  // si impair -> aiguille symétrique OFF
+  // si impair -> aiguille symétrique forcée OFF
   useEffect(() => {
     if (!isEven && needles.needle2Enabled) {
       updateFace((existing) => ({
@@ -290,16 +290,16 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
 
-  // calc longueur avant bulle
+  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
   useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
 
     const compute = () => {
-      const size = el.getBoundingClientRect().width;
+      const size = el.getBoundingClientRect().width; // ex: 256
       const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20;
-      const gap = 8;
+      const bubbleRadius = 20; // rayon approximatif des bulles
+      const gap = 8; // petit espace avant la bulle
 
       const len = radiusToBubbleCenter - bubbleRadius - gap;
       setFrontLenPx(Math.max(40, Math.round(len)));
@@ -318,10 +318,7 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  function updateSegment(
-    segmentId: number,
-    updater: (prev: Segment) => Segment,
-  ) {
+  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
     updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
         s.id === segmentId ? updater(s) : s,
@@ -362,27 +359,23 @@ export default function MagicDisplayFaceEditor({
     event.target.value = "";
   }
 
-  function handleNotesChange(
-    event: React.ChangeEvent<HTMLTextAreaElement>,
-  ) {
+  function handleNotesChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = event.target.value;
     if (!selectedSegment) return;
-
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
       status:
-        prev.status === "empty" && !prev.mediaUrl
-          ? "in-progress"
-          : prev.status,
+        prev.status === "empty" && !prev.mediaUrl ? "in-progress" : prev.status,
     }));
   }
 
-  function handleShortDescriptionChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  // ✏️ Édition du texte court du segment (affiché sur le cube)
+  function handleLabelChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const raw = event.target.value ?? "";
+    const value = raw.slice(0, 27); // limite dure, comme sur le cube
+
     if (!selectedSegment) return;
-    const value = event.target.value.slice(0, MAX_SHORT_DESCRIPTION);
 
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
@@ -408,12 +401,20 @@ export default function MagicDisplayFaceEditor({
     return { top: `${top}%`, left: `${left}%` };
   }
 
+  // 🎯 Clic sur une bulle autour du cercle → sélection + upload photo si vide
+  function handleSegmentBubbleClick(seg: Segment) {
+    setSelectedId(seg.id);
+    if (!seg.mediaUrl && photoInputRef.current) {
+      photoInputRef.current.click();
+    }
+  }
+
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const TAIL_LEN = 0;
+  const TAIL_LEN = 0; // on ne dessine pas de queue, mais on garde l’argument
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
-      {/* Ligne 1 : header */}
+      {/* Ligne 1 */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {onBack && (
@@ -455,7 +456,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       )}
 
-      {/* Ligne 2 : slider segments + avatar créateur */}
+      {/* Ligne 2 */}
       <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
           <span>Segments sur cette face</span>
@@ -467,9 +468,7 @@ export default function MagicDisplayFaceEditor({
             min={1}
             max={MAX_SEGMENTS}
             value={segmentCount}
-            onChange={(e) =>
-              handleSegmentCountChange(Number(e.target.value))
-            }
+            onChange={(e) => handleSegmentCountChange(Number(e.target.value))}
             className="w-28 accent-brand-500"
           />
         </div>
@@ -484,16 +483,14 @@ export default function MagicDisplayFaceEditor({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-xs font-semibold">
-                {creatorInitials}
-              </span>
+              <span className="text-xs font-semibold">{creatorInitials}</span>
             )}
           </span>
           <span className="font-medium">{creatorName}</span>
         </div>
       </div>
 
-      {/* Toggle aiguille symétrique */}
+      {/* Toggle symétrique (uniquement pair) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label
           className={`inline-flex items-center gap-2 ${
@@ -528,15 +525,15 @@ export default function MagicDisplayFaceEditor({
       </div>
 
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        {/* Cercle + bulles */}
+        {/* Cercle */}
         <div className="flex items-center justify-center">
           <div ref={circleRef} className="relative h-64 w-64 max-w-full">
-            {/* décor */}
+            {/* Décor z-10 */}
             <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* demi-segments */}
+            {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
             <div className="pointer-events-none absolute inset-0" style={{ zIndex: 15 }}>
               {Array.from({ length: segmentCount }, (_, index) => {
                 const count = segmentCount || 1;
@@ -563,7 +560,7 @@ export default function MagicDisplayFaceEditor({
               })}
             </div>
 
-            {/* aiguilles */}
+            {/* Aiguilles z-20 */}
             <div className="pointer-events-none absolute inset-0 z-20">
               <WatchHandOneWayRefined
                 angleDeg={angle1}
@@ -579,7 +576,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* avatar centre */}
+            {/* Avatar z-30 */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -595,7 +592,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* bulles segments */}
+            {/* Bulles z-40 */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
 
@@ -603,14 +600,14 @@ export default function MagicDisplayFaceEditor({
                 <button
                   key={seg.id}
                   type="button"
-                  onClick={() => setSelectedId(seg.id)}
-                  className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
-                    ${
-                      isSelected
-                        ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
-                        : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
-                    }`}
+                  onClick={() => handleSegmentBubbleClick(seg)}
+                  className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
+                    isSelected
+                      ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
+                      : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
+                  }`}
                   style={getSegmentPositionStyle(index)}
+                  aria-label={`Segment ${seg.id} – ${statusLabel(seg.status)}`}
                 >
                   {segmentIcon(seg.mediaType)}
                   <span
@@ -624,8 +621,9 @@ export default function MagicDisplayFaceEditor({
           </div>
         </div>
 
-        {/* Liste segments + panneau détaillé */}
+        {/* Liste + détail */}
         <div className="space-y-4">
+          {/* Liste des segments */}
           <div className="space-y-2">
             {segments.slice(0, segmentCount).map((seg) => {
               const isSelected = seg.id === selectedId;
@@ -634,19 +632,15 @@ export default function MagicDisplayFaceEditor({
                   key={seg.id}
                   type="button"
                   onClick={() => setSelectedId(seg.id)}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-                    ${
-                      isSelected
-                        ? "border-brand-500 bg-brand-50/70"
-                        : "border-transparent bg-slate-50 hover:border-slate-200"
-                    }`}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition ${
+                    isSelected
+                      ? "border-brand-500 bg-brand-50/70"
+                      : "border-transparent bg-slate-50 hover:border-slate-200"
+                  }`}
                 >
                   <div>
                     <p className="font-medium text-slate-800">
                       Segment {seg.id}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {seg.label}
                     </p>
                   </div>
                   <span
@@ -659,88 +653,81 @@ export default function MagicDisplayFaceEditor({
             })}
           </div>
 
-          {/* SEGMENT SÉLECTIONNÉ */}
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/95 p-3 sm:p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              {/* Colonne gauche : titre, description, notes */}
-              <div className="space-y-3 sm:w-2/3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Segment sélectionné
-                  </p>
-                  <p className="text-base font-semibold text-slate-900">
-                    Segment {selectedSegment.id}
-                  </p>
-                </div>
+          {/* Détail du segment sélectionné */}
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                Segment sélectionné
+              </p>
+              <p className="text-sm font-semibold text-slate-900">
+                Segment {selectedSegment.id}
+              </p>
+            </div>
 
-                <input
-                  type="text"
-                  value={selectedSegment.label}
-                  onChange={handleShortDescriptionChange}
-                  maxLength={MAX_SHORT_DESCRIPTION}
-                  className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none ring-0 focus:border-brand-500"
-                  placeholder="Diagnostic / observation"
-                />
+            {/* Champ texte court (affiché sur le cube) */}
+            <div className="space-y-1">
+              <input
+                type="text"
+                maxLength={27}
+                value={selectedSegment.label}
+                onChange={handleLabelChange}
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                placeholder="Diagnostic / observation"
+              />
+            </div>
 
-                <div className="space-y-1">
-                  <p className="text-[11px] font-medium text-slate-600">
-                    Notes pédagogiques
-                  </p>
-                  <textarea
-                    rows={3}
-                    value={selectedSegment.notes}
-                    onChange={handleNotesChange}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500"
-                    placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
-                  />
-                  <p className="mt-0.5 text-[10px] text-slate-400">
-                    Statut :{" "}
-                    <span className="font-semibold">
-                      {statusLabel(selectedSegment.status)}
-                    </span>
-                  </p>
-                </div>
-              </div>
+            {/* Notes pédagogiques */}
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-slate-600">
+                Notes pédagogiques
+              </p>
+              <textarea
+                rows={3}
+                value={selectedSegment.notes}
+                onChange={handleNotesChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
+              />
+            </div>
 
-              {/* Colonne droite : boutons médias */}
-              <div className="mt-1 flex w-full flex-col gap-2 sm:mt-0 sm:w-[190px]">
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("photo")}
-                  className="inline-flex items-center justify-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.75 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  <span>Ajouter une photo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("video")}
-                  className="inline-flex items-center justify-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.75 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <Clapperboard className="h-3.5 w-3.5" />
-                  <span>Ajouter une vidéo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("file")}
-                  className="inline-flex items-center justify-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.75 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  <span>Ajouter un fichier</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="inline-flex items-center justify-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.75 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
-                >
-                  <span>Ouvrir la face en détail</span>
-                </button>
-              </div>
+            <p className="text-[10px] text-slate-400">
+              Statut :{" "}
+              <span className="font-semibold">
+                {statusLabel(selectedSegment.status)}
+              </span>
+            </p>
+
+            {/* Boutons médias */}
+            <div className="mt-1 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => handleChooseMedia("photo")}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                <span>Ajouter une photo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChooseMedia("video")}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+              >
+                <Clapperboard className="h-3.5 w-3.5" />
+                <span>Ajouter une vidéo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChooseMedia("file")}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>Ajouter un fichier</span>
+              </button>
             </div>
 
             {/* Prévisualisation média */}
             {selectedSegment.mediaUrl && (
-              <div className="mt-3 w-full">
+              <div className="mt-2 w-full">
                 {selectedSegment.mediaType === "photo" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
