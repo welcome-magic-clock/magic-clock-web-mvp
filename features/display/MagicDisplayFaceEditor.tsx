@@ -24,10 +24,11 @@ type MagicDisplayFaceEditorProps = {
 type Segment = {
   id: number;
   label: string;
+  shortDescription: string; // ✅ description courte (affichée sur le cube / liste)
   status: SegmentStatus;
   mediaType?: MediaType | null;
   mediaUrl?: string | null;
-  notes: string;
+  notes: string; // ✅ notes pédagogiques illimitées
 };
 
 type FaceNeedles = {
@@ -48,6 +49,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 1,
     label: "Diagnostic / observation",
+    shortDescription: "Diagnostic / observation",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -56,6 +58,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 2,
     label: "Préparation / sectionnement",
+    shortDescription: "Préparation / sectionnement",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -64,6 +67,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 3,
     label: "Application principale",
+    shortDescription: "Application principale",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -72,6 +76,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 4,
     label: "Patine / correction",
+    shortDescription: "Patine / correction",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -80,6 +85,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 5,
     label: "Finition / coiffage",
+    shortDescription: "Finition / coiffage",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -88,6 +94,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 6,
     label: "Routine maison",
+    shortDescription: "Routine maison",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -96,6 +103,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 7,
     label: "Astuces pro",
+    shortDescription: "Astuces pro",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -104,6 +112,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 8,
     label: "Erreurs à éviter",
+    shortDescription: "Erreurs à éviter",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -112,6 +121,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 9,
     label: "Produits utilisés",
+    shortDescription: "Produits utilisés",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -120,6 +130,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 10,
     label: "Temps / timing",
+    shortDescription: "Temps / timing",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -128,6 +139,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 11,
     label: "Variantes possibles",
+    shortDescription: "Variantes possibles",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -136,6 +148,7 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 12,
     label: "Résumé final",
+    shortDescription: "Résumé final",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -269,7 +282,7 @@ export default function MagicDisplayFaceEditor({
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
-    Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS)
+    Math.max(1, currentFace.segmentCount || DEFAULT_SEGMENTS),
   );
 
   const selectedSegment =
@@ -322,11 +335,11 @@ export default function MagicDisplayFaceEditor({
 
   function updateSegment(
     segmentId: number,
-    updater: (prev: Segment) => Segment
+    updater: (prev: Segment) => Segment,
   ) {
     updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
-        s.id === segmentId ? updater(s) : s
+        s.id === segmentId ? updater(s) : s,
       );
       return { ...existing, segments: updatedSegments };
     });
@@ -347,7 +360,7 @@ export default function MagicDisplayFaceEditor({
 
   function handleMediaFileChange(
     event: ChangeEvent<HTMLInputElement>,
-    type: MediaType
+    type: MediaType,
   ) {
     const file = event.target.files?.[0];
     if (!file || !selectedSegment) return;
@@ -364,9 +377,7 @@ export default function MagicDisplayFaceEditor({
     event.target.value = "";
   }
 
-  function handleNotesChange(
-    event: React.ChangeEvent<HTMLTextAreaElement>
-  ) {
+  function handleNotesChange(event: ChangeEvent<HTMLTextAreaElement>) {
     const value = event.target.value;
     if (!selectedSegment) return;
     updateSegment(selectedSegment.id, (prev) => ({
@@ -376,6 +387,19 @@ export default function MagicDisplayFaceEditor({
         prev.status === "empty" && !prev.mediaUrl
           ? "in-progress"
           : prev.status,
+    }));
+  }
+
+  // ✅ Description courte limitée à 27 caractères
+  function handleShortDescriptionChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const raw = event.target.value;
+    const value = raw.slice(0, 27); // sécurité double
+    if (!selectedSegment) return;
+    updateSegment(selectedSegment.id, (prev) => ({
+      ...prev,
+      shortDescription: value,
     }));
   }
 
@@ -521,51 +545,48 @@ export default function MagicDisplayFaceEditor({
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-                {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
-<div
-  className="absolute inset-0 pointer-events-none"
-  style={{ zIndex: 15 }}
->
-  {Array.from({ length: segmentCount }, (_, index) => {
-    const count = segmentCount || 1;
+            {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ zIndex: 15 }}
+            >
+              {Array.from({ length: segmentCount }, (_, index) => {
+                const count = segmentCount || 1;
 
-    // 0 ou 1 segment → aucun trait
-    if (count <= 1) return null;
+                if (count <= 1) return null;
 
-    const step = 360 / count;
-    const startAngleDeg = -90;
+                const step = 360 / count;
+                const startAngleDeg = -90;
 
-    // 🔁 angle AU MILIEU entre deux bulles
-    const angleDeg = startAngleDeg + step * index + step / 2;
+                // angle au milieu entre deux bulles
+                const angleDeg = startAngleDeg + step * index + step / 2;
 
-    return (
-      <div key={index} className="absolute inset-0">
-        <div
-          className="absolute left-1/2 top-1/2"
-          style={{
-            // demi-segment : du centre vers l'extérieur
-            width: "42%",              // longueur du trait
-            height: "1px",
-            transformOrigin: "left center",
-            transform: `translateY(-50%) rotate(${angleDeg}deg)`,
-            // gris doux bien visible
-            background: "rgba(148,163,184,0.75)",
-          }}
-        />
-      </div>
-    );
-  })}
-</div>
-            
+                return (
+                  <div key={index} className="absolute inset-0">
+                    <div
+                      className="absolute left-1/2 top-1/2"
+                      style={{
+                        width: "42%",
+                        height: "1px",
+                        transformOrigin: "left center",
+                        transform: `translateY(-50%) rotate(${angleDeg}deg)`,
+                        background: "rgba(148,163,184,0.75)",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Aiguilles z-20 */}
-            <div className="absolute inset-0 z-20 pointer-events-none">
+            <div className="pointer-events-none absolute inset-0 z-20">
               {/* Aiguille principale */}
               <WatchHandOneWayRefined
                 angleDeg={angle1}
                 frontLenPx={frontLenPx}
                 tailLenPx={TAIL_LEN}
               />
-              {/* Aiguille symétrique : même composant, angle + 180° */}
+              {/* Aiguille symétrique */}
               {isEven && needles.needle2Enabled && (
                 <WatchHandOneWayRefined
                   angleDeg={angle1 + 180}
@@ -599,7 +620,13 @@ export default function MagicDisplayFaceEditor({
                 <button
                   key={seg.id}
                   type="button"
-                  onClick={() => setSelectedId(seg.id)}
+                  onClick={() => {
+                    setSelectedId(seg.id);
+                    // ✅ si aucun média → on ouvre directement l’upload photo
+                    if (!seg.mediaUrl) {
+                      photoInputRef.current?.click();
+                    }
+                  }}
                   className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
                     ${
                       isSelected
@@ -611,7 +638,7 @@ export default function MagicDisplayFaceEditor({
                   {segmentIcon(seg.mediaType)}
                   <span
                     className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                      seg.status
+                      seg.status,
                     )}`}
                   />
                 </button>
@@ -645,13 +672,13 @@ export default function MagicDisplayFaceEditor({
                       {seg.mediaType === "file" && " · Fichier"}
                     </p>
                     <p className="text-[11px] text-slate-500">
-                      Chapitre de cette face (diagnostic, application,
-                      etc.).
+                      {seg.shortDescription ||
+                        "Chapitre de cette face (diagnostic, application, etc.)."}
                     </p>
                   </div>
                   <span
                     className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(
-                      seg.status
+                      seg.status,
                     )}`}
                   />
                 </button>
@@ -665,14 +692,32 @@ export default function MagicDisplayFaceEditor({
                 Segment {selectedSegment.id} – {selectedSegment.label}
               </p>
               <p className="text-[11px] text-slate-500">
-                Ajoute un média et des notes pour expliquer précisément
-                cette étape.
+                Ajoute un média, une description courte et des notes pour
+                expliquer précisément cette étape.
               </p>
               <p className="mt-1 text-[10px] text-slate-400">
                 Statut :{" "}
                 <span className="font-semibold">
                   {statusLabel(selectedSegment.status)}
                 </span>
+              </p>
+            </div>
+
+            {/* ✅ Description courte (27 caractères max) */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-medium text-slate-600">
+                Description courte (affichée sur le cube)
+              </label>
+              <input
+                type="text"
+                value={selectedSegment.shortDescription}
+                onChange={handleShortDescriptionChange}
+                maxLength={27}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500"
+                placeholder="Ex. Diagnostic / observation"
+              />
+              <p className="text-[10px] text-slate-400">
+                {selectedSegment.shortDescription.length}/27 caractères
               </p>
             </div>
 
@@ -728,6 +773,7 @@ export default function MagicDisplayFaceEditor({
               </div>
             )}
 
+            {/* ✅ Notes pédagogiques illimitées */}
             <div className="space-y-1">
               <label className="text-[11px] font-medium text-slate-600">
                 Notes pédagogiques
