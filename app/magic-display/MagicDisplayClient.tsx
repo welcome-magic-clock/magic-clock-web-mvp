@@ -675,7 +675,7 @@ export default function MagicDisplayClient() {
     (hashtagsParam && hashtagsParam.trim().length > 0) ||
     (hashtagTokensFromQuery.length > 0);
 
-  // 🔢 On calcule combien de faces Studio sont vraiment complétées (Avant / Après)
+   // 🔢 On calcule combien de faces Studio sont vraiment complétées (Avant / Après)
   const studioFacesCompleted = [
     studioBeforeUrl || studioBeforeThumb,
     studioAfterUrl || studioAfterThumb,
@@ -684,11 +684,13 @@ export default function MagicDisplayClient() {
   // 0% si aucune face, 20% par face complétée, max 40%
   const studioPartDisplay = Math.min(40, studioFacesCompleted * 20);
 
+  // Studio "complété" uniquement si Avant ET Après sont présents
   const studioCompleted = studioFacesCompleted === 2;
 
+  // 🧮 Pour le Display, on garde le helper centralisé
   const {
-    percent: _percent,          // on ne l’utilise plus
-    studioPart: _studioPart,    // idem
+    percent: _percent,       // non utilisé dans ce calcul, on garde pour compatibilité
+    studioPart: _studioPart, // idem
     displayPart,
     completedFaces,
     partialFaces,
@@ -697,23 +699,27 @@ export default function MagicDisplayClient() {
     faces: faceProgressInput,
   });
 
+  // Total = Studio (0 / 20 / 40) + Display (0 → 60)
   const totalPercentDisplay = studioPartDisplay + displayPart;
 
-  // 🔒 Barre = Studio (0/20/40) + Display (0 → 60)
+  // 🔒 Barre = total clampé entre 0 et 100
   const clampedPublishPercent = Math.max(
     0,
     Math.min(100, totalPercentDisplay),
   );
   const canPublish = clampedPublishPercent >= 100;
 
+  // Libellé "Studio complété / incomplet"
   const studioStatusLabel =
     studioFacesCompleted === 2 ? "Studio complété" : "Studio incomplet";
 
   let publishHelperText: string;
   if (canPublish) {
-    publishHelperText = "Tout est prêt, tu peux publier ton Magic Clock ✨";
+    // 100% atteint
+    publishHelperText =
+      "Studio complété · Display complété · Tu peux publier ton Magic Clock ✨";
   } else {
-    // Nouveau texte demandé
+    // Texte demandé
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
@@ -946,13 +952,13 @@ export default function MagicDisplayClient() {
     </div>
   </button>
 
-  <div className="mt-2 text-[11px] text-slate-500">
-    <p>{publishHelperText}</p>
-    <p className="mt-0.5 text-[10px] text-slate-400">
-      Studio : {studioPartDisplay}% · Display : {displayPart}% · Total :{" "}
-      {Math.round(totalPercentDisplay)}%
-    </p>
-  </div>
+<div className="mt-2 text-[11px] text-slate-500">
+  <p>{publishHelperText}</p>
+  <p className="mt-0.5 text-[10px] text-slate-400">
+    Studio : {studioPartDisplay}% · Display : {displayPart}% · Total :{" "}
+    {Math.round(totalPercentDisplay)}%
+  </p>
+</div>
 </div>
 
             {/* Liste des faces */}
