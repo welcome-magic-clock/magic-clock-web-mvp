@@ -534,6 +534,24 @@ export default function MagicDisplayClient() {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
+    // ✏️ Mise à jour du texte d'une face (label / description)
+  function handleUpdateFaceText(
+    id: number,
+    field: "label" | "description",
+    value: string,
+  ) {
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === id
+          ? {
+              ...seg,
+              [field]: value,
+            }
+          : seg,
+      ),
+    );
+  }
+
   // 🎯 Clic sur le cercle → sélection + éventuel upload
   function handleCircleFaceClick(seg: Segment) {
     setSelectedId(seg.id);
@@ -1009,57 +1027,82 @@ export default function MagicDisplayClient() {
         </div>
 
         {/* Panneau d’action face sélectionnée */}
-        {selectedSegment && (
-          <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Face sélectionnée
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {selectedSegment.label}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {selectedSegment.description}
-                </p>
-              </div>
+       {selectedSegment && (
+  <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-1 sm:w-1/2">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Face sélectionnée
+        </p>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("photo")}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  <span>Ajouter une photo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("video")}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <Clapperboard className="h-3.5 w-3.5" />
-                  <span>Ajouter une vidéo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChooseMedia("file")}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  <span>Ajouter un fichier</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenFaceDetail}
-                  className="inline-flex items-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
-                >
-                  <span>Ouvrir la face en détail</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Titre de la face – éditable */}
+        <input
+          type="text"
+          value={selectedSegment.label}
+          onChange={(e) =>
+            handleUpdateFaceText(
+              selectedSegment.id,
+              "label",
+              e.target.value,
+            )
+          }
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-sm font-semibold text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+          placeholder={`Face ${selectedSegment.id}`}
+        />
+
+        {/* Description de la face – éditable */}
+        <textarea
+          value={selectedSegment.description}
+          onChange={(e) =>
+            handleUpdateFaceText(
+              selectedSegment.id,
+              "description",
+              e.target.value,
+            )
+          }
+          rows={2}
+          className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600 outline-none focus:border-brand-500 focus:bg-white"
+          placeholder="Décris ce que tu fais sur cette face (ex. Pré-lightening / éclaircissement)"
+        />
+      </div>
+
+      {/* On laisse intact le bloc des boutons médias */}
+      <div className="flex flex-wrap gap-2 sm:w-1/2 sm:justify-end">
+        <button
+          type="button"
+          onClick={() => handleChooseMedia("photo")}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+        >
+          <Camera className="h-3.5 w-3.5" />
+          <span>Ajouter une photo</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleChooseMedia("video")}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+        >
+          <Clapperboard className="h-3.5 w-3.5" />
+          <span>Ajouter une vidéo</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleChooseMedia("file")}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          <span>Ajouter un fichier</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleOpenFaceDetail}
+          className="inline-flex items-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
+        >
+          <span>Ouvrir la face en détail</span>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Menu Options (bottom sheet) */}
         {isOptionsOpen && (
