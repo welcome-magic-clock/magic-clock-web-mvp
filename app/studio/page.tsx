@@ -353,6 +353,18 @@ export default function MagicStudioPage() {
     { value: "PPV", label: "PayPerView" },
   ];
 
+const minPpvIndex = 0;
+const maxPpvIndex = 1998; // 0.99 + 0.5 * 1998 ≈ 999.99
+
+// Convertit le prix actuel en "index" de slider (0 → 1998)
+const ppvSliderValue = Math.max(
+  minPpvIndex,
+  Math.min(
+    maxPpvIndex,
+    Math.round((ppvPrice - 0.99) / 0.5)
+  )
+);
+  
   const isPortrait = canvasFormat === "portrait";
 
   return (
@@ -631,30 +643,72 @@ export default function MagicStudioPage() {
             </div>
           </div>
 
-       {/* Sélecteur de prix PPV */}
+      {/* Sélecteur de prix PPV */}
 {mode === "PPV" && (
-  <div className="space-y-1 pt-2">
+  <div className="space-y-2 pt-2">
     <label className="text-xs font-medium text-slate-700">
       Prix PayPerView
     </label>
+
+    {/* Slider : index 0 → 1998, converti en prix 0.99 + 0.50 * index */}
     <div className="flex items-center gap-3">
       <input
         type="range"
-        // 0.99 CHF → 999.99 CHF, en CENTIMES
-        min={99}
-        max={99999}
-        // pas de 50 centimes
-        step={50}
-        // on convertit le prix en centimes pour le slider
-        value={Math.round(ppvPrice * 100)}
-        onChange={(event) =>
-          setPpvPrice(Number(event.target.value) / 100)
-        }
+        min={minPpvIndex}
+        max={maxPpvIndex}
+        step={1}
+        value={ppvSliderValue}
+        onChange={(event) => {
+          const idx = Number(event.target.value);
+          const clampedIdx = Math.max(
+            minPpvIndex,
+            Math.min(maxPpvIndex, idx)
+          );
+          const newPrice = 0.99 + 0.5 * clampedIdx; // 0.99, 1.49, 1.99, 2.49, etc.
+          setPpvPrice(Number(newPrice.toFixed(2)));
+        }}
         className="flex-1 accent-brand-500"
       />
       <div className="w-20 text-right text-xs font-semibold text-slate-700">
         {ppvPrice.toFixed(2)} CHF
       </div>
+    </div>
+
+    {/* Champ numérique : saisie libre, puis snap sur .49 / .99 */}
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] text-slate-500">
+        Ou entre le prix exact :
+      </span>
+      <input
+        type="number"
+        min={0.99}
+        max={999.99}
+        step={0.1}
+        value={ppvPrice.toFixed(2)}
+        onChange={(event) => {
+          // supporte virgule ou point
+          const raw = event.target.value.replace(",", ".");
+          let value = Number(raw);
+          if (Number.isNaN(value)) return;
+
+          // clamp 0.99 → 999.99
+          if (value < 0.99) value = 0.99;
+          if (value > 999.99) value = 999.99;
+
+          // 🔁 Snap sur la grille 0.99 + 0.50 * n
+          const idxFloat = (value - 0.99) / 0.5;
+          const idx = Math.round(idxFloat);
+          const clampedIdx = Math.max(
+            minPpvIndex,
+            Math.min(maxPpvIndex, idx)
+          );
+          const snapped = 0.99 + 0.5 * clampedIdx;
+
+          setPpvPrice(Number(snapped.toFixed(2)));
+        }}
+        className="w-24 rounded-full border border-slate-200 px-2 py-1 text-xs text-right shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+      />
+      <span className="text-[11px] text-slate-500">CHF</span>
     </div>
   </div>
 )}
