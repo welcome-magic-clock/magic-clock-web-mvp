@@ -40,6 +40,8 @@ type Segment = {
   hasMedia: boolean;
   mediaType?: MediaType;
   mediaUrl?: string | null;
+  /** Notes pédagogiques détaillées (illimitées) */
+  notes?: string;
 };
 
 type TemplateId = "BALAYAGE_4" | "COULEUR_3" | "BLOND_6";
@@ -488,6 +490,7 @@ export default function MagicDisplayClient() {
           ...defaultSeg,
           label: fromStore.label ?? defaultSeg.label,
           description: fromStore.description ?? defaultSeg.description,
+          notes: fromStore.notes ?? defaultSeg.notes,
           hasMedia: false,
           mediaType: undefined,
           mediaUrl: null,
@@ -511,6 +514,7 @@ export default function MagicDisplayClient() {
         angleDeg: seg.angleDeg,
         hasMedia: seg.hasMedia,
         mediaType: seg.mediaType ?? undefined,
+        notes: seg.notes ?? undefined,
       }));
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
     } catch (error) {
@@ -534,17 +538,31 @@ export default function MagicDisplayClient() {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
-    // ✏️ Mise à jour du texte d'une face description
- function handleSelectedDescriptionChange(
-  event: ChangeEvent<HTMLTextAreaElement>,
-) {
-  const value = event.target.value;
-  setSegments((prev) =>
-    prev.map((seg) =>
-      seg.id === selectedId ? { ...seg, description: value } : seg,
-    ),
-  );
-}
+  // ✏️ Description courte – max 27 caractères (pour le cube)
+  function handleSelectedDescriptionChange(
+    event: ChangeEvent<HTMLTextAreaElement>,
+  ) {
+    const raw = event.target.value ?? "";
+    const value = raw.slice(0, 27); // limite dure
+
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === selectedId ? { ...seg, description: value } : seg,
+      ),
+    );
+  }
+
+  // 📝 Notes pédagogiques – illimitées
+  function handleSelectedNotesChange(
+    event: ChangeEvent<HTMLTextAreaElement>,
+  ) {
+    const value = event.target.value;
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === selectedId ? { ...seg, notes: value } : seg,
+      ),
+    );
+  }
 
   // 🎯 Clic sur le cercle → sélection + éventuel upload
   function handleCircleFaceClick(seg: Segment) {
@@ -652,7 +670,7 @@ export default function MagicDisplayClient() {
   const mockViews = 0;
   const mockLikes = 0;
 
-    // 🧮 Progression de publication (Studio + Display)
+  // 🧮 Progression de publication (Studio + Display)
   const faceProgressInput = segments.map((seg) => {
     const meta = faceUniversalProgress[String(seg.id)] ?? {};
 
@@ -685,9 +703,9 @@ export default function MagicDisplayClient() {
     titleFromStudio ||
     modeFromStudioParam ||
     (hashtagsParam && hashtagsParam.trim().length > 0) ||
-    (hashtagTokensFromQuery.length > 0);
+    hashtagTokensFromQuery.length > 0;
 
-   // 🔢 On calcule combien de faces Studio sont vraiment complétées (Avant / Après)
+  // 🔢 On calcule combien de faces Studio sont vraiment complétées (Avant / Après)
   const studioFacesCompleted = [
     studioBeforeUrl || studioBeforeThumb,
     studioAfterUrl || studioAfterThumb,
@@ -701,7 +719,7 @@ export default function MagicDisplayClient() {
 
   // 🧮 Pour le Display, on garde le helper centralisé
   const {
-    percent: _percent,       // non utilisé dans ce calcul, on garde pour compatibilité
+    percent: _percent, // non utilisé dans ce calcul, on garde pour compatibilité
     studioPart: _studioPart, // idem
     displayPart,
     completedFaces,
@@ -943,35 +961,35 @@ export default function MagicDisplayClient() {
               onSelect={handleCubeFaceSelect}
             />
 
-                        {/* Bouton de publication global – ultra épuré & brand */}
-<div className="mt-2">
-  <button
-    type="button"
-    onClick={handleFinalPublish}
-    disabled={!canPublish || isPublishing}
-    className="flex w-full flex-col items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-slate-50 shadow-md shadow-slate-900/40 transition hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    <span className="whitespace-nowrap">
-      Publier sur Amazing + My Magic Clock
-    </span>
+            {/* Bouton de publication global – ultra épuré & brand */}
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={handleFinalPublish}
+                disabled={!canPublish || isPublishing}
+                className="flex w-full flex-col items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-slate-50 shadow-md shadow-slate-900/40 transition hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="whitespace-nowrap">
+                  Publier sur Amazing + My Magic Clock
+                </span>
 
-    {/* Ligne de progression ultra fine */}
-    <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-slate-700/40">
-      <div
-        className="h-full rounded-full bg-emerald-400 transition-[width]"
-        style={{ width: `${clampedPublishPercent}%` }}
-      />
-    </div>
-  </button>
+                {/* Ligne de progression ultra fine */}
+                <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-slate-700/40">
+                  <div
+                    className="h-full rounded-full bg-emerald-400 transition-[width]"
+                    style={{ width: `${clampedPublishPercent}%` }}
+                  />
+                </div>
+              </button>
 
-<div className="mt-2 text-[11px] text-slate-500">
-  <p>{publishHelperText}</p>
-  <p className="mt-0.5 text-[10px] text-slate-400">
-    Studio : {studioPartDisplay}% · Display : {displayPart}% · Total :{" "}
-    {Math.round(totalPercentDisplay)}%
-  </p>
-</div>
-</div>
+              <div className="mt-2 text-[11px] text-slate-500">
+                <p>{publishHelperText}</p>
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  Studio : {studioPartDisplay}% · Display : {displayPart}% ·
+                  Total : {Math.round(totalPercentDisplay)}%
+                </p>
+              </div>
+            </div>
 
             {/* Liste des faces */}
             <div className="space-y-3">
@@ -1021,66 +1039,82 @@ export default function MagicDisplayClient() {
         </div>
 
         {/* Panneau d’action face sélectionnée */}
-       {selectedSegment && (
-  <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <div className="space-y-1 sm:w-1/2">
-  <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-    Face sélectionnée
-  </p>
+        {selectedSegment && (
+          <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              {/* Colonne gauche : description courte + notes pédagogiques */}
+              <div className="space-y-2 sm:w-1/2">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Face sélectionnée
+                </p>
 
-  {/* 👉 Label non modifiable : "Face 1", "Face 2", etc. */}
-  <p className="text-sm font-semibold text-slate-900">
-    {selectedSegment.label}
-  </p>
+                {/* Label non modifiable : "Face 1", "Face 2", etc. */}
+                <p className="text-sm font-semibold text-slate-900">
+                  {selectedSegment.label}
+                </p>
 
-  {/* 👉 Description éditable */}
-  <textarea
-    className="mt-1 w-full rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 outline-none focus:border-brand-500 focus:ring-0"
-    rows={2}
-    placeholder="Décris en quelques mots cette face (facultatif)"
-    value={selectedSegment.description}
-    onChange={handleSelectedDescriptionChange}
-  />
-</div>
+                {/* Description courte (affichée sur le cube) */}
+                <textarea
+                  className="mt-1 w-full rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 outline-none focus:border-brand-500 focus:ring-0"
+                  rows={1}
+                  maxLength={27}
+                  placeholder="Texte court de cette face (max. 27 caractères)"
+                  value={selectedSegment.description}
+                  onChange={handleSelectedDescriptionChange}
+                />
 
-      {/* On laisse intact le bloc des boutons médias */}
-      <div className="flex flex-wrap gap-2 sm:w-1/2 sm:justify-end">
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("photo")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <Camera className="h-3.5 w-3.5" />
-          <span>Ajouter une photo</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("video")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <Clapperboard className="h-3.5 w-3.5" />
-          <span>Ajouter une vidéo</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => handleChooseMedia("file")}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-        >
-          <FileText className="h-3.5 w-3.5" />
-          <span>Ajouter un fichier</span>
-        </button>
-        <button
-          type="button"
-          onClick={handleOpenFaceDetail}
-          className="inline-flex items-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
-        >
-          <span>Ouvrir la face en détail</span>
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+                {/* Notes pédagogiques */}
+                <div className="space-y-1">
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Notes pédagogiques
+                  </p>
+                  <textarea
+                    className="mt-0.5 w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-700 outline-none focus:border-brand-500 focus:bg-white focus:ring-0"
+                    rows={3}
+                    placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
+                    value={selectedSegment.notes ?? ""}
+                    onChange={handleSelectedNotesChange}
+                  />
+                </div>
+              </div>
+
+              {/* Colonne droite : boutons médias */}
+              <div className="mt-2 flex flex-wrap gap-2 sm:mt-6 sm:w-1/2 sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("photo")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Ajouter une photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("video")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Clapperboard className="h-3.5 w-3.5" />
+                  <span>Ajouter une vidéo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("file")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Ajouter un fichier</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenFaceDetail}
+                  className="inline-flex items-center gap-1 rounded-full border border-brand-500 bg-brand-50 px-3 py-1.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
+                >
+                  <span>Ouvrir la face en détail</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Menu Options (bottom sheet) */}
         {isOptionsOpen && (
@@ -1129,7 +1163,8 @@ export default function MagicDisplayClient() {
                   </p>
 
                   <p className="text-[11px] text-slate-500">
-                    Applique une structure prête pour gagner du temps. Tu pourras toujours modifier la description de chaque face.
+                    Applique une structure prête pour gagner du temps. Tu
+                    pourras toujours modifier la description de chaque face.
                   </p>
 
                   <div className="space-y-1.5">
@@ -1143,7 +1178,8 @@ export default function MagicDisplayClient() {
                           Balayage en 4 étapes
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Diagnostic, préparation, application, patine / finition.
+                          Diagnostic, préparation, application, patine /
+                          finition.
                         </p>
                       </div>
                     </button>
@@ -1158,7 +1194,8 @@ export default function MagicDisplayClient() {
                           Couleur complète en 3 étapes
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Racines, longueurs / pointes, finition &amp; conseils maison.
+                          Racines, longueurs / pointes, finition &amp; conseils
+                          maison.
                         </p>
                       </div>
                     </button>
@@ -1173,7 +1210,8 @@ export default function MagicDisplayClient() {
                           Blond signature (6 faces)
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Idéal pour les transformations premium et contenus pédagogiques.
+                          Idéal pour les transformations premium et contenus
+                          pédagogiques.
                         </p>
                       </div>
                     </button>
@@ -1197,7 +1235,8 @@ export default function MagicDisplayClient() {
                           Dupliquer depuis un autre Magic Clock
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Reprend la structure d’un cube existant (faces &amp; titres).
+                          Reprend la structure d’un cube existant (faces &amp;
+                          titres).
                         </p>
                       </div>
                     </button>
@@ -1239,7 +1278,8 @@ export default function MagicDisplayClient() {
                       <div>
                         <p className="font-medium">Réinitialiser ce cube</p>
                         <p className="text-[11px]">
-                          Effacer tous les médias et le contenu des faces. Action définitive.
+                          Effacer tous les médias et le contenu des faces.
+                          Action définitive.
                         </p>
                       </div>
                     </button>
@@ -1249,9 +1289,10 @@ export default function MagicDisplayClient() {
                 {/* Bloc 3 – Astuce */}
                 <div className="space-y-1 border-t border-slate-100 pt-3">
                   <p className="text-[11px] text-slate-500">
-                    Astuce : commence par préparer un modèle, puis ajoute les photos / vidéos
-                    face par face. Tu peux ensuite affiner chaque face en détail depuis le
-                    panneau “Face sélectionnée”.
+                    Astuce : commence par préparer un modèle, puis ajoute les
+                    photos / vidéos face par face. Tu peux ensuite affiner
+                    chaque face en détail depuis le panneau “Face
+                    sélectionnée”.
                   </p>
                 </div>
               </div>
