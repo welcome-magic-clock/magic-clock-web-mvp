@@ -23,8 +23,7 @@ type MagicDisplayFaceEditorProps = {
 
 type Segment = {
   id: number;
-  label: string; // titre "long" pédagogique
-  shortDescription: string; // texte court affiché sur le cube (max 27)
+  label: string; // description courte (affichée sur le cube)
   status: SegmentStatus;
   mediaType?: MediaType | null;
   mediaUrl?: string | null;
@@ -44,13 +43,12 @@ type FaceState = {
 
 const MAX_SEGMENTS = 12;
 const DEFAULT_SEGMENTS = 4;
-const MAX_SHORT_DESC = 27;
+const MAX_SHORT_DESC_CHARS = 27;
 
 const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 1,
     label: "Diagnostic / observation",
-    shortDescription: "Diagnostic / observation",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -59,7 +57,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 2,
     label: "Préparation / sectionnement",
-    shortDescription: "Préparation / sectionnement",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -68,7 +65,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 3,
     label: "Application principale",
-    shortDescription: "Application principale",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -77,7 +73,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 4,
     label: "Patine / correction",
-    shortDescription: "Patine / correction",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -86,7 +81,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 5,
     label: "Finition / coiffage",
-    shortDescription: "Finition / coiffage",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -95,7 +89,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 6,
     label: "Routine maison",
-    shortDescription: "Routine maison",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -104,7 +97,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 7,
     label: "Astuces pro",
-    shortDescription: "Astuces pro",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -113,7 +105,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 8,
     label: "Erreurs à éviter",
-    shortDescription: "Erreurs à éviter",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -122,7 +113,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 9,
     label: "Produits utilisés",
-    shortDescription: "Produits utilisés",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -131,7 +121,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 10,
     label: "Temps / timing",
-    shortDescription: "Temps / timing",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -140,7 +129,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 11,
     label: "Variantes possibles",
-    shortDescription: "Variantes possibles",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -149,7 +137,6 @@ const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 12,
     label: "Résumé final",
-    shortDescription: "Résumé final",
     status: "empty",
     mediaType: null,
     mediaUrl: null,
@@ -216,7 +203,7 @@ function WatchHandOneWayRefined({
           transform: "translateY(-50%)",
           width: `${width}px`,
           height: "3px",
-          background: "rgba(51,65,85,0.95)", // slate-700
+          background: "rgba(51,65,85,0.95)", // ~ slate-700
           borderRadius: 9999,
           clipPath: "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
           boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
@@ -310,10 +297,10 @@ export default function MagicDisplayFaceEditor({
     if (!el) return;
 
     const compute = () => {
-      const size = el.getBoundingClientRect().width;
+      const size = el.getBoundingClientRect().width; // ex: 256
       const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20;
-      const gap = 8;
+      const bubbleRadius = 20; // rayon approximatif des bulles
+      const gap = 8; // petit espace avant la bulle
 
       const len = radiusToBubbleCenter - bubbleRadius - gap;
       setFrontLenPx(Math.max(40, Math.round(len)));
@@ -332,7 +319,10 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
+  function updateSegment(
+    segmentId: number,
+    updater: (prev: Segment) => Segment,
+  ) {
     updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
         s.id === segmentId ? updater(s) : s,
@@ -345,6 +335,26 @@ export default function MagicDisplayFaceEditor({
     const clamped = Math.min(MAX_SEGMENTS, Math.max(1, count));
     updateFace((existing) => ({ ...existing, segmentCount: clamped }));
     setSelectedId((prevId) => (prevId > clamped ? 1 : prevId));
+  }
+
+  // ✏️ Description courte (affichée sur le cube) – 27 caractères max
+  function handleShortDescriptionChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    if (!selectedSegment) return;
+    const raw = event.target.value;
+    const truncated = raw.slice(0, MAX_SHORT_DESC_CHARS);
+
+    updateSegment(selectedSegment.id, (prev) => ({
+      ...prev,
+      label: truncated,
+      status:
+        truncated.length > 0 || prev.mediaUrl || prev.notes
+          ? prev.status === "complete"
+            ? prev.status
+            : "in-progress"
+          : "empty",
+    }));
   }
 
   function handleChooseMedia(type: MediaType) {
@@ -373,34 +383,17 @@ export default function MagicDisplayFaceEditor({
     event.target.value = "";
   }
 
-  function handleNotesChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+  function handleNotesChange(
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ) {
     const value = event.target.value;
     if (!selectedSegment) return;
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
       status:
-        prev.status === "empty" && !prev.mediaUrl && !prev.shortDescription
+        prev.status === "empty" && !prev.mediaUrl && !prev.label
           ? "in-progress"
-          : prev.status,
-    }));
-  }
-
-  function handleShortDescriptionChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
-    const raw = event.target.value ?? "";
-    const value = raw.slice(0, MAX_SHORT_DESC);
-    if (!selectedSegment) return;
-
-    updateSegment(selectedSegment.id, (prev) => ({
-      ...prev,
-      shortDescription: value,
-      status:
-        prev.status === "empty" && !prev.mediaUrl && !prev.notes
-          ? value.length > 0
-            ? "in-progress"
-            : "empty"
           : prev.status,
     }));
   }
@@ -420,7 +413,7 @@ export default function MagicDisplayFaceEditor({
   }
 
   const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const TAIL_LEN = 0;
+  const TAIL_LEN = 0; // on ne dessine pas de queue, mais on garde l’argument
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -478,7 +471,9 @@ export default function MagicDisplayFaceEditor({
             min={1}
             max={MAX_SEGMENTS}
             value={segmentCount}
-            onChange={(e) => handleSegmentCountChange(Number(e.target.value))}
+            onChange={(e) =>
+              handleSegmentCountChange(Number(e.target.value))
+            }
             className="w-28 accent-brand-500"
           />
         </div>
@@ -493,14 +488,16 @@ export default function MagicDisplayFaceEditor({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-xs font-semibold">{creatorInitials}</span>
+              <span className="text-xs font-semibold">
+                {creatorInitials}
+              </span>
             )}
           </span>
           <span className="font-medium">{creatorName}</span>
         </div>
       </div>
 
-      {/* Toggle symétrique */}
+      {/* Toggle symétrique (uniquement pair) */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label
           className={`inline-flex items-center gap-2 ${
@@ -538,20 +535,28 @@ export default function MagicDisplayFaceEditor({
         {/* Cercle */}
         <div className="flex items-center justify-center">
           <div ref={circleRef} className="relative h-64 w-64 max-w-full">
-            {/* Décor */}
+            {/* Décor z-10 */}
             <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
             <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
             <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-            {/* Demi-segments */}
-            <div className="pointer-events-none absolute inset-0" style={{ zIndex: 15 }}>
+            {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ zIndex: 15 }}
+            >
               {Array.from({ length: segmentCount }, (_, index) => {
                 const count = segmentCount || 1;
+
+                // 0 ou 1 segment → aucun trait
                 if (count <= 1) return null;
 
                 const step = 360 / count;
                 const startAngleDeg = -90;
-                const angleDeg = startAngleDeg + step * index + step / 2;
+
+                // angle au milieu entre deux bulles
+                const angleDeg =
+                  startAngleDeg + step * index + step / 2;
 
                 return (
                   <div key={index} className="absolute inset-0">
@@ -570,7 +575,7 @@ export default function MagicDisplayFaceEditor({
               })}
             </div>
 
-            {/* Aiguilles */}
+            {/* Aiguilles z-20 */}
             <div className="pointer-events-none absolute inset-0 z-20">
               <WatchHandOneWayRefined
                 angleDeg={angle1}
@@ -586,7 +591,7 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* Avatar */}
+            {/* Avatar z-30 */}
             <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
               {creatorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -602,19 +607,21 @@ export default function MagicDisplayFaceEditor({
               )}
             </div>
 
-            {/* Bulles */}
+            {/* Bulles z-40 */}
             {segments.slice(0, segmentCount).map((seg, index) => {
               const isSelected = seg.id === selectedId;
+
               return (
                 <button
                   key={seg.id}
                   type="button"
                   onClick={() => setSelectedId(seg.id)}
-                  className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
-                    isSelected
-                      ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
-                      : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
-                  }`}
+                  className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition
+                    ${
+                      isSelected
+                        ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
+                        : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
+                    }`}
                   style={getSegmentPositionStyle(index)}
                 >
                   {segmentIcon(seg.mediaType)}
@@ -631,7 +638,6 @@ export default function MagicDisplayFaceEditor({
 
         {/* Liste + détail */}
         <div className="space-y-4">
-          {/* Liste des segments (UX alignée avec les Faces) */}
           <div className="space-y-2">
             {segments.slice(0, segmentCount).map((seg) => {
               const isSelected = seg.id === selectedId;
@@ -640,21 +646,25 @@ export default function MagicDisplayFaceEditor({
                   key={seg.id}
                   type="button"
                   onClick={() => setSelectedId(seg.id)}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition ${
-                    isSelected
-                      ? "border-brand-500 bg-brand-50/70"
-                      : "border-transparent bg-slate-50 hover:border-slate-200"
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
+                    ${
+                      isSelected
+                        ? "border-brand-500 bg-brand-50/70"
+                        : "border-transparent bg-slate-50 hover:border-slate-200"
+                    }`}
                 >
-                  <div className="min-w-0">
+                  <div>
                     <p className="font-medium text-slate-800">
                       Segment {seg.id}
                       {seg.mediaType === "photo" && " · Photo"}
                       {seg.mediaType === "video" && " · Vidéo"}
                       {seg.mediaType === "file" && " · Fichier"}
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                      {seg.shortDescription || seg.label}
+                    <p className="text-[11px] text-slate-500">
+                      Statut :{" "}
+                      <span className="font-semibold">
+                        {statusLabel(seg.status)}
+                      </span>
                     </p>
                   </div>
                   <span
@@ -667,43 +677,51 @@ export default function MagicDisplayFaceEditor({
             })}
           </div>
 
-          {/* Panneau segment sélectionné */}
+          {/* Détail du segment – mimique “Face sélectionnée” */}
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
-            <div>
-              <p className="text-xs font-semibold text-slate-700">
-                Segment {selectedSegment.id} – {selectedSegment.label}
+            {/* Titre + description courte */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Segment sélectionné
               </p>
-              <p className="text-[11px] text-slate-500">
-                Ajoute un média, une description courte et des notes pour
-                expliquer précisément cette étape.
+              <p className="text-sm font-semibold text-slate-900">
+                Segment {selectedSegment.id}
               </p>
-              <p className="mt-1 text-[10px] text-slate-400">
-                Statut :{" "}
-                <span className="font-semibold">
-                  {statusLabel(selectedSegment.status)}
-                </span>
-              </p>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-slate-600">
+                  Description courte (affichée sur le cube)
+                </label>
+                <input
+                  type="text"
+                  value={selectedSegment.label}
+                  onChange={handleShortDescriptionChange}
+                  maxLength={MAX_SHORT_DESC_CHARS}
+                  className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500"
+                  placeholder="Diagnostic / observation"
+                />
+                <p className="text-[10px] text-slate-400">
+                  {selectedSegment.label.length}/{MAX_SHORT_DESC_CHARS}{" "}
+                  caractères
+                </p>
+              </div>
             </div>
 
-            {/* Description courte (affichée sur le cube) */}
+            {/* Notes pédagogiques */}
             <div className="space-y-1">
               <label className="text-[11px] font-medium text-slate-600">
-                Description courte (affichée sur le cube)
+                Notes pédagogiques
               </label>
-              <input
-                type="text"
-                value={selectedSegment.shortDescription}
-                onChange={handleShortDescriptionChange}
-                className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500"
-                placeholder={selectedSegment.label}
+              <textarea
+                rows={3}
+                value={selectedSegment.notes}
+                onChange={handleNotesChange}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500"
+                placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
               />
-              <p className="text-[10px] text-slate-400">
-                {selectedSegment.shortDescription.length}/{MAX_SHORT_DESC}{" "}
-                caractères
-              </p>
             </div>
 
-            {/* Boutons médias */}
+            {/* Boutons média */}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -731,7 +749,7 @@ export default function MagicDisplayFaceEditor({
               </button>
             </div>
 
-            {/* Preview média */}
+            {/* Prévisualisation média */}
             {selectedSegment.mediaUrl && (
               <div className="mt-1 w-full">
                 {selectedSegment.mediaType === "photo" ? (
@@ -756,20 +774,6 @@ export default function MagicDisplayFaceEditor({
                 )}
               </div>
             )}
-
-            {/* Notes pédagogiques */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-600">
-                Notes pédagogiques
-              </label>
-              <textarea
-                rows={3}
-                value={selectedSegment.notes}
-                onChange={handleNotesChange}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500"
-                placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
-              />
-            </div>
           </div>
         </div>
       </div>
