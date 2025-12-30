@@ -925,22 +925,22 @@ export default function MagicDisplayClient() {
               onSelect={handleCubeFaceSelect}
             />
 
-                        {/* Bouton de publication global – ultra épuré */}
+                                 {/* Bouton de publication global – ultra épuré & brand */}
             <div className="mt-2">
               <button
                 type="button"
                 onClick={handleFinalPublish}
                 disabled={!canPublish || isPublishing}
-                className="flex w-full flex-col items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-slate-50 shadow-sm transition disabled:cursor-not-allowed disabled:bg-slate-400/80"
+                className="flex w-full flex-col items-center justify-center rounded-full bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-brand-500/40 transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="whitespace-nowrap">
                   Publier sur Amazing + My Magic Clock
                 </span>
 
                 {/* Ligne de progression ultra fine */}
-                <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-slate-700/40">
+                <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-white/25">
                   <div
-                    className="h-full rounded-full bg-emerald-400 transition-[width]"
+                    className="h-full rounded-full bg-emerald-300 transition-[width]"
                     style={{ width: `${clampedPublishPercent}%` }}
                   />
                 </div>
