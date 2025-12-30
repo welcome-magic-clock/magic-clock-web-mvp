@@ -127,13 +127,13 @@ export default function MagicCube3D({
                         />
                       )}
 
-                      {/* Pastille complété en bas à droite */}
+                      {/* Pastille complétée en bas à droite */}
                       <span className="absolute bottom-3 right-3 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
                     </>
                   ) : (
                     /* 🧾 Variante texte (fichier ou aucun média) */
                     <div className="relative z-10 space-y-1">
-                      {/* Pastille complété en haut à droite si fichier */}
+                      {/* Pastille complétée en haut à droite si fichier */}
                       {seg.hasMedia && seg.mediaType === "file" && (
                         <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-500" />
                       )}
@@ -180,7 +180,7 @@ export default function MagicCube3D({
         <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
       </div>
 
-      {/* Barre d’action sous le cube */}
+      {/* Petite action sous le cube (optionnelle) */}
       {onPublish && (
         <div className="mt-4 flex flex-col items-center gap-2">
           <button
@@ -194,15 +194,6 @@ export default function MagicCube3D({
               ? "Publication en cours…"
               : "Publier sur Amazing + My Magic Clock"}
           </button>
-          <p className="max-w-xs text-center text-[10px] text-slate-500">
-            MVP : ce bouton enverra ton Magic Clock en public sur{" "}
-            <span className="font-semibold">Amazing</span> et le retrouvera en
-            privé dans{" "}
-            <span className="font-semibold">
-              Mes Magic Clock créés · Publiés sur Amazing
-            </span>
-            .
-          </p>
         </div>
       )}
     </div>
