@@ -640,7 +640,7 @@ export default function MagicDisplayClient() {
   const mockViews = 0;
   const mockLikes = 0;
 
-  // 🧮 Progression de publication (Studio + Display)
+    // 🧮 Progression de publication (Studio + Display)
   const faceProgressInput = segments.map((seg) => {
     const meta = faceUniversalProgress[String(seg.id)] ?? {};
 
@@ -675,11 +675,20 @@ export default function MagicDisplayClient() {
     (hashtagsParam && hashtagsParam.trim().length > 0) ||
     (hashtagTokensFromQuery.length > 0);
 
-  const studioCompleted = Boolean(hasStudioPayload);
+  // 🔢 On calcule combien de faces Studio sont vraiment complétées (Avant / Après)
+  const studioFacesCompleted = [
+    studioBeforeUrl || studioBeforeThumb,
+    studioAfterUrl || studioAfterThumb,
+  ].filter(Boolean).length;
+
+  // 0% si aucune face, 20% par face complétée, max 40%
+  const studioPartDisplay = Math.min(40, studioFacesCompleted * 20);
+
+  const studioCompleted = studioFacesCompleted === 2;
 
   const {
-    percent: publishPercent,
-    studioPart,
+    percent: _percent,          // on ne l’utilise plus
+    studioPart: _studioPart,    // idem
     displayPart,
     completedFaces,
     partialFaces,
@@ -688,18 +697,24 @@ export default function MagicDisplayClient() {
     faces: faceProgressInput,
   });
 
-  // 🔒 On sécurise pour la barre (0 → 100 max)
-  const clampedPublishPercent = Math.max(0, Math.min(100, publishPercent));
+  const totalPercentDisplay = studioPartDisplay + displayPart;
+
+  // 🔒 Barre = Studio (0/20/40) + Display (0 → 60)
+  const clampedPublishPercent = Math.max(
+    0,
+    Math.min(100, totalPercentDisplay),
+  );
   const canPublish = clampedPublishPercent >= 100;
 
+  const studioStatusLabel =
+    studioFacesCompleted === 2 ? "Studio complété" : "Studio incomplet";
+
   let publishHelperText: string;
-  if (!studioCompleted) {
-    publishHelperText =
-      "Complète d'abord ton Magic Studio (Avant / Après) pour activer le cube.";
-  } else if (!canPublish) {
-    publishHelperText = `${completedFaces} face(s) complétée(s) · ${partialFaces} en cours. Termine ton Display pour publier.`;
-  } else {
+  if (canPublish) {
     publishHelperText = "Tout est prêt, tu peux publier ton Magic Clock ✨";
+  } else {
+    // Nouveau texte demandé
+    publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
   const handleFinalPublish = () => {
@@ -910,21 +925,20 @@ export default function MagicDisplayClient() {
               onSelect={handleCubeFaceSelect}
             />
 
-            {/* Bouton de publication global – juste sous le cube */}
-            <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4">
+                        {/* Bouton de publication global – ultra épuré */}
+            <div className="mt-2">
               <button
                 type="button"
                 onClick={handleFinalPublish}
                 disabled={!canPublish || isPublishing}
                 className="flex w-full flex-col items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-slate-50 shadow-sm transition disabled:cursor-not-allowed disabled:bg-slate-400/80"
               >
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-lg">✨</span>
-                  <span>Publier sur Amazing + My Magic Clock</span>
-                </div>
+                <span className="whitespace-nowrap">
+                  Publier sur Amazing + My Magic Clock
+                </span>
 
-                {/* Barre de progression pleine largeur sous le titre */}
-                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-700/40">
+                {/* Ligne de progression ultra fine */}
+                <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-slate-700/40">
                   <div
                     className="h-full rounded-full bg-emerald-400 transition-[width]"
                     style={{ width: `${clampedPublishPercent}%` }}
@@ -935,8 +949,8 @@ export default function MagicDisplayClient() {
               <div className="mt-2 text-[11px] text-slate-500">
                 <p>{publishHelperText}</p>
                 <p className="mt-0.5 text-[10px] text-slate-400">
-                  Studio : {studioPart}% · Display : {displayPart}% · Total :{" "}
-                  {Math.round(clampedPublishPercent)}%
+                  Studio : {studioPartDisplay}% · Display : {displayPart}% · Total :{" "}
+                  {Math.round(totalPercentDisplay)}%
                 </p>
               </div>
             </div>
