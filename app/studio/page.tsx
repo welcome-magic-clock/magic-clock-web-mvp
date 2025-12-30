@@ -44,6 +44,10 @@ const EMPTY_MEDIA: MediaState = {
 
 const STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 
+// 🔢 Limites de longueur pour garder des cartes compactes
+const MAX_TITLE_LENGTH = 30;
+const MAX_HASHTAGS_LENGTH = 30;
+
 export default function MagicStudioPage() {
   const router = useRouter();
 
@@ -89,8 +93,9 @@ export default function MagicStudioPage() {
       setCanvasFormat(parsed.canvasFormat ?? "portrait");
       setBefore(parsed.before ?? EMPTY_MEDIA);
       setAfter(parsed.after ?? EMPTY_MEDIA);
-      setTitle(parsed.title ?? "");
-      setHashtags(parsed.hashtags ?? "");
+      // On tronque au cas où d’anciens drafts avaient plus de 30 caractères
+      setTitle((parsed.title ?? "").slice(0, MAX_TITLE_LENGTH));
+      setHashtags((parsed.hashtags ?? "").slice(0, MAX_HASHTAGS_LENGTH));
       setMode(parsed.mode ?? "FREE");
       setPpvPrice(
         typeof parsed.ppvPrice === "number" ? parsed.ppvPrice : 0.99
@@ -184,8 +189,9 @@ export default function MagicStudioPage() {
   function handleGoToDisplay() {
     const params = new URLSearchParams();
 
-    const cleanTitle = title.trim();
-    const rawHashtags = hashtags.trim();
+    // On re-trim + limite à 30 caractères pour le payload et les query
+    const cleanTitle = title.trim().slice(0, MAX_TITLE_LENGTH);
+    const rawHashtags = hashtags.trim().slice(0, MAX_HASHTAGS_LENGTH);
 
     // tableau de hashtags pour le payload
     const hashtagArray =
@@ -197,26 +203,26 @@ export default function MagicStudioPage() {
             .filter(Boolean)
             .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-   // helper MediaState -> payload (avec coverTime + thumbnailUrl)
-const mapMedia = (
-  media: MediaState
-): StudioForwardPayload["before"] => {
-  if (!media.url || !media.kind) return null;
+    // helper MediaState -> payload (avec coverTime + thumbnailUrl)
+    const mapMedia = (
+      media: MediaState
+    ): StudioForwardPayload["before"] => {
+      if (!media.url || !media.kind) return null;
 
-  const type = media.kind === "video" ? "video" : "photo";
+      const type = media.kind === "video" ? "video" : "photo";
 
-  const thumbnailUrl =
-    media.kind === "image"
-      ? media.url
-      : media.thumbnailUrl ?? null;
+      const thumbnailUrl =
+        media.kind === "image"
+          ? media.url
+          : media.thumbnailUrl ?? null;
 
-  return {
-    type,
-    url: media.url,
-    coverTime: media.coverTime ?? null,
-    thumbnailUrl,
-  };
-};
+      return {
+        type,
+        url: media.url,
+        coverTime: media.coverTime ?? null,
+        thumbnailUrl,
+      };
+    };
 
     // 1) Payload complet pour Magic Display
     const payload: StudioForwardPayload = {
@@ -562,7 +568,9 @@ const mapMedia = (
             <input
               type="text"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) =>
+                setTitle(event.target.value.slice(0, MAX_TITLE_LENGTH))
+              }
               placeholder="Balayage caramel lumineux, cheveux longs"
               className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
@@ -576,7 +584,9 @@ const mapMedia = (
             <input
               type="text"
               value={hashtags}
-              onChange={(event) => setHashtags(event.target.value)}
+              onChange={(event) =>
+                setHashtags(event.target.value.slice(0, MAX_HASHTAGS_LENGTH))
+              }
               placeholder="#balayage #cheveuxblonds #magicclock"
               className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
