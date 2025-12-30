@@ -13,10 +13,10 @@ import {
 type MediaKind = "image" | "video";
 
 type MediaState = {
-  kind: MediaKind | null;      // "image" | "video"
-  url: string | null;          // dataURL locale
-  duration: number | null;     // durée vidéo en secondes
-  coverTime: number | null;    // seconde choisie pour la couverture vidéo
+  kind: MediaKind | null; // "image" | "video"
+  url: string | null; // dataURL locale
+  duration: number | null; // durée vidéo en secondes
+  coverTime: number | null; // seconde choisie pour la couverture vidéo
   thumbnailUrl: string | null; // image de couverture (dataURL)
 };
 
@@ -65,6 +65,8 @@ export default function MagicStudioPage() {
   // Mode de publication
   const [mode, setMode] = useState<PublishMode>("FREE");
   const [ppvPrice, setPpvPrice] = useState<number>(0.99); // 0.99 → 999.99 CHF
+  // Valeur brute saisie dans l'input (pour ne pas bloquer la frappe)
+  const [ppvPriceInput, setPpvPriceInput] = useState("0.99");
 
   // Sélection couverture vidéo
   const [selectingCoverFor, setSelectingCoverFor] = useState<Side | null>(null);
@@ -122,6 +124,11 @@ export default function MagicStudioPage() {
       console.error("Failed to save Magic Studio draft", error);
     }
   }, [canvasFormat, before, after, title, hashtags, mode, ppvPrice]);
+
+  // 🔄 Sync affichage input quand le prix change (slider, load, etc.)
+  useEffect(() => {
+    setPpvPriceInput(ppvPrice.toFixed(2));
+  }, [ppvPrice]);
 
   // ------------- Gestion des médias -----------------
 
@@ -212,9 +219,7 @@ export default function MagicStudioPage() {
       const type = media.kind === "video" ? "video" : "photo";
 
       const thumbnailUrl =
-        media.kind === "image"
-          ? media.url
-          : media.thumbnailUrl ?? null;
+        media.kind === "image" ? media.url : media.thumbnailUrl ?? null;
 
       return {
         type,
@@ -353,18 +358,41 @@ export default function MagicStudioPage() {
     { value: "PPV", label: "PayPerView" },
   ];
 
-const minPpvIndex = 0;
-const maxPpvIndex = 1998; // 0.99 + 0.5 * 1998 ≈ 999.99
+  const minPpvIndex = 0;
+  const maxPpvIndex = 1998; // 0.99 + 0.5 * 1998 ≈ 999.99
 
-// Convertit le prix actuel en "index" de slider (0 → 1998)
-const ppvSliderValue = Math.max(
-  minPpvIndex,
-  Math.min(
-    maxPpvIndex,
-    Math.round((ppvPrice - 0.99) / 0.5)
-  )
-);
-  
+  // Convertit le prix actuel en "index" de slider (0 → 1998)
+  const ppvSliderValue = Math.max(
+    minPpvIndex,
+    Math.min(maxPpvIndex, Math.round((ppvPrice - 0.99) / 0.5))
+  );
+
+  // Valide + “snap” la saisie texte vers la grille 0.99 + 0.50 * n
+  function commitPpvPriceFromInput(rawInput: string) {
+    const normalized = rawInput.replace(",", ".");
+    let value = Number(normalized);
+
+    if (Number.isNaN(value)) {
+      // si ce n'est pas un nombre valide : on revient à la valeur actuelle
+      setPpvPriceInput(ppvPrice.toFixed(2));
+      return;
+    }
+
+    // clamp 0.99 → 999.99
+    if (value < 0.99) value = 0.99;
+    if (value > 999.99) value = 999.99;
+
+    // 🔁 Snap sur la grille 0.99 + 0.50 * n → finit toujours par .49 ou .99
+    const idxFloat = (value - 0.99) / 0.5;
+    const idx = Math.round(idxFloat);
+    const clampedIdx = Math.max(minPpvIndex, Math.min(maxPpvIndex, idx));
+    const snapped = 0.99 + 0.5 * clampedIdx;
+
+    const finalPrice = Number(snapped.toFixed(2));
+    setPpvPrice(finalPrice);
+    setPpvPriceInput(finalPrice.toFixed(2));
+  }
+
   const isPortrait = canvasFormat === "portrait";
 
   return (
@@ -643,75 +671,66 @@ const ppvSliderValue = Math.max(
             </div>
           </div>
 
-      {/* Sélecteur de prix PPV */}
-{mode === "PPV" && (
-  <div className="space-y-2 pt-2">
-    <label className="text-xs font-medium text-slate-700">
-      Prix PayPerView
-    </label>
+          {/* Sélecteur de prix PPV */}
+          {mode === "PPV" && (
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-medium text-slate-700">
+                Prix PayPerView
+              </label>
 
-    {/* Slider : index 0 → 1998, converti en prix 0.99 + 0.50 * index */}
-    <div className="flex items-center gap-3">
-      <input
-        type="range"
-        min={minPpvIndex}
-        max={maxPpvIndex}
-        step={1}
-        value={ppvSliderValue}
-        onChange={(event) => {
-          const idx = Number(event.target.value);
-          const clampedIdx = Math.max(
-            minPpvIndex,
-            Math.min(maxPpvIndex, idx)
-          );
-          const newPrice = 0.99 + 0.5 * clampedIdx; // 0.99, 1.49, 1.99, 2.49, etc.
-          setPpvPrice(Number(newPrice.toFixed(2)));
-        }}
-        className="flex-1 accent-brand-500"
-      />
-      <div className="w-20 text-right text-xs font-semibold text-slate-700">
-        {ppvPrice.toFixed(2)} CHF
-      </div>
-    </div>
+              {/* Slider : index 0 → 1998, converti en prix 0.99 + 0.50 * index */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={minPpvIndex}
+                  max={maxPpvIndex}
+                  step={1}
+                  value={ppvSliderValue}
+                  onChange={(event) => {
+                    const idx = Number(event.target.value);
+                    const clampedIdx = Math.max(
+                      minPpvIndex,
+                      Math.min(maxPpvIndex, idx)
+                    );
+                    const newPrice = 0.99 + 0.5 * clampedIdx; // 0.99, 1.49, 1.99, 2.49, etc.
+                    setPpvPrice(Number(newPrice.toFixed(2)));
+                  }}
+                  className="flex-1 accent-brand-500"
+                />
+                <div className="w-20 text-right text-xs font-semibold text-slate-700">
+                  {ppvPrice.toFixed(2)} CHF
+                </div>
+              </div>
 
-    {/* Champ numérique : saisie libre, puis snap sur .49 / .99 */}
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] text-slate-500">
-        Ou entre le prix exact :
-      </span>
-      <input
-        type="number"
-        min={0.99}
-        max={999.99}
-        step={0.1}
-        value={ppvPrice.toFixed(2)}
-        onChange={(event) => {
-          // supporte virgule ou point
-          const raw = event.target.value.replace(",", ".");
-          let value = Number(raw);
-          if (Number.isNaN(value)) return;
-
-          // clamp 0.99 → 999.99
-          if (value < 0.99) value = 0.99;
-          if (value > 999.99) value = 999.99;
-
-          // 🔁 Snap sur la grille 0.99 + 0.50 * n
-          const idxFloat = (value - 0.99) / 0.5;
-          const idx = Math.round(idxFloat);
-          const clampedIdx = Math.max(
-            minPpvIndex,
-            Math.min(maxPpvIndex, idx)
-          );
-          const snapped = 0.99 + 0.5 * clampedIdx;
-
-          setPpvPrice(Number(snapped.toFixed(2)));
-        }}
-        className="w-24 rounded-full border border-slate-200 px-2 py-1 text-xs text-right shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-      />
-      <span className="text-[11px] text-slate-500">CHF</span>
-    </div>
-  </div>
-)}
+              {/* Champ numérique : saisie libre, puis snap sur .49 / .99 */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-500">
+                  Ou entre le prix exact :
+                </span>
+                <input
+                  type="number"
+                  min={0.99}
+                  max={999.99}
+                  step={0.1}
+                  value={ppvPriceInput}
+                  onChange={(event) => {
+                    // on laisse l'utilisateur écrire librement (y compris effacer)
+                    const raw = event.target.value.replace(",", ".");
+                    setPpvPriceInput(raw);
+                  }}
+                  onBlur={() => commitPpvPriceFromInput(ppvPriceInput)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      commitPpvPriceFromInput(ppvPriceInput);
+                    }
+                  }}
+                  className="w-24 rounded-full border border-slate-200 px-2 py-1 text-xs text-right shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+                <span className="text-[11px] text-slate-500">CHF</span>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </main>
