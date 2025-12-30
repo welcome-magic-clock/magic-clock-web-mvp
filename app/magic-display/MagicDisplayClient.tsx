@@ -676,7 +676,7 @@ export default function MagicDisplayClient() {
 
   const studioCompleted = Boolean(hasStudioPayload);
 
-  const {
+   const {
     percent: publishPercent,
     studioPart,
     displayPart,
@@ -687,6 +687,7 @@ export default function MagicDisplayClient() {
     faces: faceProgressInput,
   });
 
+  const clampedPublishPercent = Math.max(0, Math.min(100, publishPercent));
   const canPublish = publishPercent >= 100;
 
   let publishHelperText: string;
@@ -1019,33 +1020,34 @@ export default function MagicDisplayClient() {
           </div>
         )}
 
-        {/* Bouton de publication global avec barre pleine largeur */}
+             {/* Bouton de publication global */}
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={handleFinalPublish}
               disabled={!canPublish || isPublishing}
-              className={`inline-flex w-full flex-col items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-sm transition sm:w-auto
-                ${
-                  canPublish
-                    ? "bg-slate-900 text-slate-50 hover:bg-slate-800"
-                    : "bg-slate-400/80 text-slate-100 cursor-not-allowed"
-                }`}
+              className={`inline-flex w-full flex-col items-center justify-center gap-1 rounded-full px-4 py-2.5 text-sm font-semibold shadow-sm transition sm:w-auto ${
+                canPublish
+                  ? "bg-slate-900 text-slate-50 hover:bg-slate-800"
+                  : "bg-slate-400/80 text-slate-100 cursor-not-allowed"
+              }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <span className="flex items-center gap-2">
                 <span className="text-lg">✨</span>
                 <span>Publier sur Amazing + My Magic Clock</span>
-              </div>
-              <div className="mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-700/40">
+              </span>
+
+              {/* Barre de progression pleine largeur sous le titre */}
+              <div className="mt-1 h-1.5 w-full max-w-[260px] overflow-hidden rounded-full bg-slate-700/40">
                 <div
                   className="h-full bg-emerald-400 transition-[width]"
-                  style={{ width: `${publishPercent}%` }}
+                  style={{ width: `${clampedPublishPercent}%` }}
                 />
               </div>
             </button>
 
-            <div className="space-y-1 text-[11px] text-slate-500">
+            <div className="space-y-1 text-[11px] text-slate-500 text-center sm:text-left">
               <p>{publishHelperText}</p>
               <p className="text-[10px] text-slate-400">
                 Studio : {studioPart}% · Display : {displayPart}% · Total :{" "}
