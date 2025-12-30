@@ -631,30 +631,33 @@ export default function MagicStudioPage() {
             </div>
           </div>
 
-          {/* Sélecteur de prix PPV */}
-          {mode === "PPV" && (
-            <div className="space-y-1 pt-2">
-              <label className="text-xs font-medium text-slate-700">
-                Prix PayPerView
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={0.99}
-                  max={999.99}
-                  step={0.5}
-                  value={ppvPrice}
-                  onChange={(event) =>
-                    setPpvPrice(Number(event.target.value))
-                  }
-                  className="flex-1 accent-brand-500"
-                />
-                <div className="w-20 text-right text-xs font-semibold text-slate-700">
-                  {ppvPrice.toFixed(2)} CHF
-                </div>
-              </div>
-            </div>
-          )}
+       {/* Sélecteur de prix PPV */}
+{mode === "PPV" && (
+  <div className="space-y-1 pt-2">
+    <label className="text-xs font-medium text-slate-700">
+      Prix PayPerView
+    </label>
+    <div className="flex items-center gap-3">
+      <input
+        type="range"
+        // 0.99 CHF → 999.99 CHF, en CENTIMES
+        min={99}
+        max={99999}
+        // pas de 50 centimes
+        step={50}
+        // on convertit le prix en centimes pour le slider
+        value={Math.round(ppvPrice * 100)}
+        onChange={(event) =>
+          setPpvPrice(Number(event.target.value) / 100)
+        }
+        className="flex-1 accent-brand-500"
+      />
+      <div className="w-20 text-right text-xs font-semibold text-slate-700">
+        {ppvPrice.toFixed(2)} CHF
+      </div>
+    </div>
+  </div>
+)}
         </div>
       </section>
     </main>
