@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Camera, Clapperboard, FileText, Plus, Sparkles } from "lucide-react";
+import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
 
 type MediaType = "photo" | "video" | "file";
 
@@ -19,14 +19,8 @@ type MagicCube3DProps = {
   selectedId: number | null;
   onSelect: (id: number) => void;
 
-  /**
-   * Optionnel : callback appelé quand on clique sur
-   * « Publier sur Amazing + My Magic Clock ».
-   * Le parent (page Display) décide quoi faire :
-   * - écrire en localStorage
-   * - router vers /mymagic
-   * - etc.
-   */
+  // onPublish / isPublishing restent dans le type pour le futur,
+  // mais ne sont plus utilisés ici (plus de bouton dans le cube).
   onPublish?: () => void;
   isPublishing?: boolean;
 };
@@ -35,8 +29,6 @@ export default function MagicCube3D({
   segments,
   selectedId,
   onSelect,
-  onPublish,
-  isPublishing,
 }: MagicCube3DProps) {
   const [rotation, setRotation] = useState({ x: -18, y: 28 });
 
@@ -105,7 +97,6 @@ export default function MagicCube3D({
                       : "flex items-center justify-center px-3 text-center",
                   ].join(" ")}
                 >
-                  {/* 🎥 / 📸 FULL MEDIA : la face entière devient l’image / la vidéo */}
                   {isVisualMedia ? (
                     <>
                       {seg.mediaType === "photo" ? (
@@ -126,19 +117,16 @@ export default function MagicCube3D({
                           autoPlay
                         />
                       )}
-
                       {/* Pastille complétée en bas à droite */}
                       <span className="absolute bottom-3 right-3 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
                     </>
                   ) : (
                     /* 🧾 Variante texte (fichier ou aucun média) */
                     <div className="relative z-10 space-y-1">
-                      {/* Pastille complétée en haut à droite si fichier */}
                       {seg.hasMedia && seg.mediaType === "file" && (
                         <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-500" />
                       )}
 
-                      {/* Petit cercle + icône comme sur Face universelle */}
                       <div
                         className={[
                           "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border bg-white/95",
@@ -179,23 +167,6 @@ export default function MagicCube3D({
         {/* Halo global */}
         <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
       </div>
-
-      {/* Petite action sous le cube (optionnelle) */}
-      {onPublish && (
-        <div className="mt-4 flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={isPublishing}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-md hover:bg-slate-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {isPublishing
-              ? "Publication en cours…"
-              : "Publier sur Amazing + My Magic Clock"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -205,18 +176,18 @@ function faceTransform(index: number): string {
   const depth = "6.5rem";
 
   switch (index) {
-    case 0: // Face 1 = TOP
-      return `rotateX(90deg) translateZ(${depth})`;
-    case 1: // Face 2 = FRONT
-      return `translateZ(${depth})`;
-    case 2: // Face 3 = RIGHT
-      return `rotateY(90deg) translateZ(${depth})`;
-    case 3: // Face 4 = BACK
-      return `rotateY(180deg) translateZ(${depth})`;
-    case 4: // Face 5 = LEFT
-      return `rotateY(-90deg) translateZ(${depth})`;
-    case 5: // Face 6 = BOTTOM
-      return `rotateX(-90deg) translateZ(${depth})`;
+    case 0:
+      return `rotateX(90deg) translateZ(${depth})`; // TOP
+    case 1:
+      return `translateZ(${depth})`; // FRONT
+    case 2:
+      return `rotateY(90deg) translateZ(${depth})`; // RIGHT
+    case 3:
+      return `rotateY(180deg) translateZ(${depth})`; // BACK
+    case 4:
+      return `rotateY(-90deg) translateZ(${depth})`; // LEFT
+    case 5:
+      return `rotateX(-90deg) translateZ(${depth})`; // BOTTOM
     default:
       return `translateZ(${depth})`;
   }
