@@ -647,44 +647,41 @@ export default function MagicDisplayFaceEditor({
           </div>
         </div>
 
-        {/* Liste + détail */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            {segments.slice(0, segmentCount).map((seg) => {
-              const isSelected = seg.id === selectedId;
-              return (
-                <button
-                  key={seg.id}
-                  type="button"
-                  onClick={() => setSelectedId(seg.id)}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
-                    ${
-                      isSelected
-                        ? "border-brand-500 bg-brand-50/70"
-                        : "border-transparent bg-slate-50 hover:border-slate-200"
-                    }`}
-                >
-                  <div>
-                    <p className="font-medium text-slate-800">
-                      Segment {seg.id} – {seg.label}
-                      {seg.mediaType === "photo" && " · Photo"}
-                      {seg.mediaType === "video" && " · Vidéo"}
-                      {seg.mediaType === "file" && " · Fichier"}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {seg.shortDescription ||
-                        "Chapitre de cette face (diagnostic, application, etc.)."}
-                    </p>
-                  </div>
-                  <span
-                    className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(
-                      seg.status,
-                    )}`}
-                  />
-                </button>
-              );
-            })}
-          </div>
+       {/* Liste des segments */}
+<div className="space-y-2">
+  {segments.slice(0, segmentCount).map((seg) => {
+    const isSelected = seg.id === selectedId;
+    return (
+      <button
+        key={seg.id}
+        type="button"
+        onClick={() => setSelectedId(seg.id)}
+        className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition
+          ${
+            isSelected
+              ? "border-brand-500 bg-brand-50/70"
+              : "border-transparent bg-slate-50 hover:border-slate-200"
+          }`}
+      >
+        <div>
+          <p className="font-medium text-slate-800">
+            {/* 👉 Titre ultra simple, comme pour "Face 1" */}
+            Segment {seg.id}
+            {seg.mediaType === "photo" && " · Photo"}
+            {seg.mediaType === "video" && " · Vidéo"}
+            {seg.mediaType === "file" && " · Fichier"}
+          </p>
+        </div>
+
+        <span
+          className={`ml-2 inline-flex h-2.5 w-2.5 rounded-full ${statusDotClass(
+            seg.status
+          )}`}
+        />
+      </button>
+    );
+  })}
+</div>
 
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
             <div>
