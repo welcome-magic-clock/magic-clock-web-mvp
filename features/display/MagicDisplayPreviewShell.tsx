@@ -250,15 +250,15 @@ export default function MagicDisplayPreviewShell({
                         const label = face.title || `Face ${index + 1}`;
 
                         return (
-                           <div
-  key={index}
-  className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
-  style={{
-    width: size,
-    height: size,
-    transform: `translate(-50%, -50%) ${transforms[index]}`,
-  }}
->
+                          <div
+                            key={index}
+                            className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+                            style={{
+                              width: size,
+                              height: size,
+                              transform: `translate(-50%, -50%) ${transforms[index]}`,
+                            }}
+                          >
                             {imgUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -276,6 +276,15 @@ export default function MagicDisplayPreviewShell({
                                 </p>
                               </div>
                             )}
+
+                            {/* Flèche en haut à droite pour ouvrir la face */}
+                            <button
+                              type="button"
+                              onClick={() => onOpenFace?.(index)}
+                              className="absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[11px] font-medium text-slate-800 shadow-sm hover:bg-white"
+                            >
+                              ↗︎
+                            </button>
 
                             {/* Légende en bas */}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
@@ -320,7 +329,7 @@ export default function MagicDisplayPreviewShell({
                 </button>
               </div>
 
-              {/* Panneau face active */}
+              {/* Panneau face active (sans bouton) */}
               <div className="mt-6 w-full max-w-4xl rounded-3xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-6 sm:py-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
@@ -337,15 +346,9 @@ export default function MagicDisplayPreviewShell({
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:pt-2">
-                    <button
-                      type="button"
-                      onClick={() => onOpenFace?.(safeIndex)}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-800 hover:border-slate-400 hover:bg-white"
-                    >
-                      <span>Ouvrir cette face</span>
-                      <span aria-hidden>↗︎</span>
-                    </button>
+                  {/* zone droite vide pour respirer */}
+                  <div className="hidden text-[11px] text-slate-400 sm:block">
+                    Vue lecture seule du Display sélectionné.
                   </div>
                 </div>
               </div>
