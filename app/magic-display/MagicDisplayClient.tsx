@@ -984,10 +984,10 @@ export default function MagicDisplayClient() {
 
               <div className="mt-2 text-[11px] text-slate-500">
                 <p>{publishHelperText}</p>
-                <p className="mt-0.5 text-[10px] text-slate-400">
-                  Studio : {studioPartDisplay}% · Display : {displayPart}% ·
-                  Total : {Math.round(totalPercentDisplay)}%
-                </p>
+               <p className="mt-0.5 text-[10px] text-slate-400">
+                  Studio : {studioPartDisplay}% · Display (Face + Segment) : {displayPart}% ·
+                   Total : {Math.round(totalPercentDisplay)}%
+                 </p>
               </div>
             </div>
 
