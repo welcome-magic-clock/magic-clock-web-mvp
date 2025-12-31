@@ -290,9 +290,10 @@ export default function MagicDisplayPreviewShell({
                     })()}
                   </div>
 
-                  {/* halo global (on le laisse tel quel) */}
+                                  {/* halo global (on le laisse tel quel) */}
                   <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
-                </div>
+                </div> {/* ferme le cube (mx-auto ...) */}
+              </div>   {/* ✅ nouveau : ferme le conteneur relative w-full max-w-5xl */}
 
               {/* Flèches mobile */}
               <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
