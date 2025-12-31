@@ -12,11 +12,12 @@ export type PreviewMedia = {
 };
 
 export type PreviewSegment = {
-  id: number | string;
+  id: number;
   title: string;
   description?: string;
   notes?: string;
-  media: PreviewMedia[];
+  /** Médias associés à ce segment (photo / vidéo / fichier) */
+  media?: PreviewMedia[]; // ⬅️ IMPORTANT : optionnel
 };
 
 export type PreviewFace = {
