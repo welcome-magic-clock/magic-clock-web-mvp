@@ -27,7 +27,6 @@ import MagicCube3D from "@/features/display/MagicCube3D";
 import MagicDisplayPreviewShell, {
   type PreviewDisplay,
   type PreviewFace,
-  type PreviewSegment,
   type PreviewMedia,
   type MediaKind,
 } from "@/features/display/MagicDisplayPreviewShell";
@@ -644,37 +643,14 @@ export default function MagicDisplayClient() {
     setIsOptionsOpen(false);
   }
 
-   // 🔄 Quand la Face universelle est ouverte, on affiche UNIQUEMENT l'éditeur
-
-  // 🌌 Types locaux pour la preview (alignés avec MagicDisplayPreviewShell)
-  type PreviewMedia = {
-    type: "photo" | "video" | "file";
-    url: string;
-    filename?: string;
-  };
-
-  type PreviewSegment = {
-    id: number;
-    title: string;
-    description?: string;
-    notes?: string;
-    media?: PreviewMedia[];
-  };
-
-  type PreviewFace = {
-    title: string;
-    notes?: string;
-    segments: PreviewSegment[];
-  };
-
-   // 🌌 Reconstitution minimale du Display pour la preview
+  // 🌌 Reconstitution minimale du Display pour la preview (alignée avec MagicDisplayPreviewShell)
   const displayState: PreviewDisplay = {
-    faces: segments.map<PreviewFace>((seg) => {
+    faces: segments.map((seg): PreviewFace => {
       const mediaArray: PreviewMedia[] =
         seg.mediaUrl && seg.mediaType
           ? [
               {
-                type: (seg.mediaType ?? "file") as MediaKind,
+                type: seg.mediaType as MediaKind,
                 url: seg.mediaUrl,
               },
             ]
@@ -695,8 +671,8 @@ export default function MagicDisplayClient() {
       };
     }),
   };
-  
-    // 🌌 Mode "Visualiser mon Magic Clock" : plein écran
+
+  // 🌌 Mode "Visualiser mon Magic Clock" : plein écran (preview 3D + bouton ↗︎)
   if (showPreview) {
     return (
       <MagicDisplayPreviewShell
@@ -714,6 +690,8 @@ export default function MagicDisplayClient() {
       />
     );
   }
+
+  // 🧩 Mode “Face universelle” : uniquement l’éditeur détaillé
   if (isFaceDetailOpen && selectedSegment) {
     return (
       <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
