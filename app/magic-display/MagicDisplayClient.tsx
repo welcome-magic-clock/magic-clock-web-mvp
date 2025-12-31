@@ -24,6 +24,7 @@ import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
+import MagicDisplayPreviewShell from "@/features/display/MagicDisplayPreviewShell";
 import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
@@ -378,6 +379,8 @@ export default function MagicDisplayClient() {
     >
   >({});
 
+    const [showPreview, setShowPreview] = useState(false);
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
@@ -636,6 +639,50 @@ export default function MagicDisplayClient() {
   }
 
   // 🔄 Quand la Face universelle est ouverte, on affiche UNIQUEMENT l'éditeur
+    // 🌌 Reconstitution minimale du Display pour la preview
+  const displayState = {
+    faces: segments.map((seg) => {
+      const mediaArray =
+        seg.mediaUrl
+          ? [
+              {
+                type:
+                  seg.mediaType === "video"
+                    ? "video"
+                    : seg.mediaType === "photo"
+                    ? "photo"
+                    : "file",
+                url: seg.mediaUrl,
+                filename: undefined,
+              },
+            ]
+          : [];
+
+      return {
+        title: seg.label,
+        notes: seg.notes ?? "",
+        segments: [
+          {
+            id: seg.id,
+            title: seg.label,
+            description: seg.description,
+            notes: seg.notes ?? "",
+            media: mediaArray,
+          },
+        ],
+      };
+    }),
+  };
+
+  // 🌌 Mode "Visualiser mon Magic Clock" : plein écran
+  if (showPreview) {
+    return (
+      <MagicDisplayPreviewShell
+        display={displayState}
+        onBack={() => setShowPreview(false)}
+      />
+    );
+  }
   if (isFaceDetailOpen && selectedSegment) {
     return (
       <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
@@ -768,7 +815,7 @@ export default function MagicDisplayClient() {
       {/* ⭐️ Une seule grande carte Magic Display */}
       <section className="mb-6 flex min-h-[calc(100vh-7rem)] flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         {/* Ligne 1 : Back + titre + Options */}
-        <div className="mb-3 flex items-center justify-between gap-3">
+               <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BackButton fallbackHref="/studio" label="Retour" />
             <div className="flex flex-col">
@@ -778,17 +825,27 @@ export default function MagicDisplayClient() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOptionsOpen(true);
-              setIsDuplicateOpen(false);
-            }}
-            aria-label="Ouvrir les options du cube"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+            >
+              Visualiser mon Magic Clock
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsOptionsOpen(true);
+                setIsDuplicateOpen(false);
+              }}
+              aria-label="Ouvrir les options du cube"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* 🔎 Carte d’aperçu Magic Studio */}
