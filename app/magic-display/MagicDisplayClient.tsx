@@ -674,12 +674,21 @@ export default function MagicDisplayClient() {
     }),
   };
 
-  // 🌌 Mode "Visualiser mon Magic Clock" : plein écran
+    // 🌌 Mode "Visualiser mon Magic Clock" : plein écran
   if (showPreview) {
     return (
       <MagicDisplayPreviewShell
         display={displayState}
         onBack={() => setShowPreview(false)}
+        onOpenFace={(faceIndex) => {
+          const seg = segments[faceIndex];
+          if (!seg) return;
+
+          // On ferme la preview et on ouvre directement la Face universelle
+          setSelectedId(seg.id);
+          setShowPreview(false);
+          setIsFaceDetailOpen(true);
+        }}
       />
     );
   }
