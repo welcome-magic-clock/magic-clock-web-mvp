@@ -53,7 +53,7 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
 }
 
 /**
- * Mapping des faces dans l'espace 3D (vrai cube 220×220)
+ * Placement des faces dans l'espace 3D (cube 220×220).
  * index:
  *   0 -> Face 1 (TOP)
  *   1 -> Face 2 (FRONT)
@@ -81,8 +81,7 @@ function getFaceTransform(index: number, depth: number): string {
   }
 }
 
-// Presets de rotation pour que chaque face se stabilise correctement
-// (on veut Face 2 en front par défaut)
+// Presets de rotation pour chaque face (on veut Face 2 en front par défaut)
 const FACE_PRESETS = [
   { x: -90, y: 0 },   // Face 1 (top)
   { x: 0, y: 0 },     // Face 2 (front)
@@ -103,7 +102,7 @@ export default function MagicDisplayPreviewShell({
   // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
   const [activeFaceIndex, setActiveFaceIndex] = useState(1);
 
-  // Rotation actuelle du cube (X / Y)
+  // Rotation actuelle du cube
   const [rotation, setRotation] = useState<{ x: number; y: number }>(
     () => FACE_PRESETS[1],
   );
@@ -113,7 +112,7 @@ export default function MagicDisplayPreviewShell({
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const rotationStartRef = useRef<{ x: number; y: number }>(FACE_PRESETS[1]);
 
-  // sécuriser l’index si le nombre de faces change
+  // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
@@ -129,17 +128,15 @@ export default function MagicDisplayPreviewShell({
     return () => window.clearInterval(id);
   }, [hasFaces, isDragging]);
 
-  // Navigation flèches + stabilisation de la face
+  // Navigation flèches
   function goToFace(nextIndex: number) {
     if (!hasFaces) return;
-
     const maxIndex = Math.max(0, faces.length - 1);
     const wrapped =
       ((nextIndex % (maxIndex + 1)) + (maxIndex + 1)) % (maxIndex + 1);
 
     setActiveFaceIndex(wrapped);
 
-    // preset de rotation pour cette face
     const preset = FACE_PRESETS[wrapped] ?? FACE_PRESETS[1];
     setRotation(preset);
     rotationStartRef.current = preset;
@@ -172,7 +169,7 @@ export default function MagicDisplayPreviewShell({
     const nextX = rotationStartRef.current.x - dy * factor;
     const nextY = rotationStartRef.current.y + dx * factor;
 
-    // on limite juste l'inclinaison verticale
+    // On laisse l’utilisateur atteindre presque top/bottom
     const clampedX = Math.max(-88, Math.min(88, nextX));
 
     setRotation({ x: clampedX, y: nextY });
@@ -215,7 +212,7 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D – vrai cube 220×220 avec auto + drag + snap face */}
+            {/* ⭐️ Scène 3D – cube parfait 220×220 */}
             <section className="flex flex-1 flex-col items-center gap-6">
               <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
@@ -242,13 +239,13 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
-                <div className="mx-auto h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
+                {/* Cube 3D central */}
+                <div className="mx-auto mt-2 h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
                   {hasFaces && (
                     <div
-                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-300 ease-out"
+                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-200 ease-out"
                       style={{
-                        // léger scale pour ne pas dépasser le halo
+                        // léger scale pour que le cube reste bien dans le halo
                         transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                       }}
                       onPointerDown={handleCubePointerDown}
@@ -291,7 +288,7 @@ export default function MagicDisplayPreviewShell({
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900">
+                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
                                   <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
                                     Face {index + 1}
                                   </p>
@@ -301,8 +298,8 @@ export default function MagicDisplayPreviewShell({
                                 </div>
                               )}
 
-                              {/* Légende en bas de la face */}
-                              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-2 pt-6">
+                              {/* Légende en bas */}
+                              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
                                 <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
                                   Face {index + 1}
                                 </p>
