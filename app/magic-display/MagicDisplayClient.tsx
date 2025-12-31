@@ -638,25 +638,46 @@ export default function MagicDisplayClient() {
     setIsOptionsOpen(false);
   }
 
-  // 🔄 Quand la Face universelle est ouverte, on affiche UNIQUEMENT l'éditeur
-    // 🌌 Reconstitution minimale du Display pour la preview
-  const displayState = {
+   // 🔄 Quand la Face universelle est ouverte, on affiche UNIQUEMENT l'éditeur
+
+  // 🌌 Types locaux pour la preview (alignés avec MagicDisplayPreviewShell)
+  type PreviewMedia = {
+    type: "photo" | "video" | "file";
+    url: string;
+    filename?: string;
+  };
+
+  type PreviewSegment = {
+    id: number;
+    title: string;
+    description?: string;
+    notes?: string;
+    media?: PreviewMedia[];
+  };
+
+  type PreviewFace = {
+    title: string;
+    notes?: string;
+    segments: PreviewSegment[];
+  };
+
+  // 🌌 Reconstitution minimale du Display pour la preview
+  const displayState: { faces: PreviewFace[] } = {
     faces: segments.map((seg) => {
-      const mediaArray =
-        seg.mediaUrl
-          ? [
-              {
-                type:
-                  seg.mediaType === "video"
-                    ? "video"
-                    : seg.mediaType === "photo"
-                    ? "photo"
-                    : "file",
-                url: seg.mediaUrl,
-                filename: undefined,
-              },
-            ]
-          : [];
+      const mediaArray: PreviewMedia[] = seg.mediaUrl
+        ? [
+            {
+              type:
+                seg.mediaType === "video"
+                  ? "video"
+                  : seg.mediaType === "photo"
+                  ? "photo"
+                  : "file",
+              url: seg.mediaUrl,
+              filename: undefined,
+            },
+          ]
+        : [];
 
       return {
         title: seg.label,
@@ -673,7 +694,6 @@ export default function MagicDisplayClient() {
       };
     }),
   };
-
     // 🌌 Mode "Visualiser mon Magic Clock" : plein écran
   if (showPreview) {
     return (
