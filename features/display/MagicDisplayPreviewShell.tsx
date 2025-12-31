@@ -1,7 +1,8 @@
 // features/display/MagicDisplayPreviewShell.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState, useRef } from "react";
 import BackButton from "@/components/navigation/BackButton";
 
 export type MediaKind = "photo" | "video" | "file";
@@ -60,37 +61,86 @@ export default function MagicDisplayPreviewShell({
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
+  // 🔵 États du cube (face active + rotations)
   const [activeFaceIndex, setActiveFaceIndex] = useState(0);
-  const [autoAngle, setAutoAngle] = useState(0);
+  const [autoAngle, setAutoAngle] = useState(0); // rotation automatique (Y)
+  const [userAngles, setUserAngles] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const userAnglesStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // sécuriser l’index si le nombre de faces change
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
-  // 🔁 rotation douce automatique du cube
+  // 🎛 Orientation du cube selon la face active
+  const FACE_ROTATIONS = [
+    { x: -18, y: 0 }, // Face 1 : devant
+    { x: -18, y: -90 }, // Face 2 : côté droit
+    { x: -18, y: -180 }, // Face 3 : derrière
+    { x: -18, y: -270 }, // Face 4 : côté gauche
+    { x: -55, y: 0 }, // Face 5 : dessus légèrement incliné
+    { x: 55, y: 0 }, // Face 6 : dessous légèrement incliné
+  ];
+
+  const rotation = FACE_ROTATIONS[safeIndex % FACE_ROTATIONS.length];
+
+  // 🔁 Rotation automatique douce (Y) — pause pendant le drag
   useEffect(() => {
-    if (!hasFaces) return;
+    if (!hasFaces || isDragging) return;
 
     const id = window.setInterval(() => {
-      setAutoAngle((prev) => (prev + 0.4) % 360); // rotation lente
+      setAutoAngle((prev) => (prev + 0.25) % 360); // vitesse douce
     }, 40);
 
     return () => window.clearInterval(id);
-  }, [hasFaces]);
+  }, [hasFaces, isDragging]);
 
   function goPrevFace() {
     if (!hasFaces) return;
-    setActiveFaceIndex((prev) =>
-      prev <= 0 ? faces.length - 1 : prev - 1,
-    );
+    setActiveFaceIndex((prev) => (prev <= 0 ? faces.length - 1 : prev - 1));
   }
 
   function goNextFace() {
     if (!hasFaces) return;
-    setActiveFaceIndex((prev) =>
-      prev >= faces.length - 1 ? 0 : prev + 1,
-    );
+    setActiveFaceIndex((prev) => (prev >= faces.length - 1 ? 0 : prev + 1));
+  }
+
+  // 🖐️ Drag du cube (desktop + mobile)
+  function handleCubePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!hasFaces) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    userAnglesStartRef.current = { ...userAngles };
+  }
+
+  function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging || !dragStartRef.current) return;
+
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+
+    // Sensibilité du drag
+    const factor = 0.4;
+    const newY = userAnglesStartRef.current.y + dx * factor; // gauche/droite
+    const newX = userAnglesStartRef.current.x - dy * factor; // haut/bas
+
+    setUserAngles({ x: newX, y: newY });
+  }
+
+  function handleCubePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // no-op
+    }
+    setIsDragging(false);
   }
 
   return (
@@ -147,85 +197,87 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-            {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
-<div className="mx-auto h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
-  {hasFaces && (
-    <div
-      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-700 ease-out"
-      style={{
-        // Légère vue en plongée + rotation autour d’un coin
-        transform: `rotateX(-26deg) rotateY(${autoAngle + 35}deg)`,
-      }}
-    >
-      {(() => {
-        // On garantit toujours 6 faces pour le cube
-        const facesForCube: PreviewFace[] =
-          faces.length >= 6
-            ? faces.slice(0, 6)
-            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
+                <div className="mx-auto h-[min(380px,70vh)] w-full max-w-sm [perspective:1600px]">
+                  {hasFaces && (
+                    <div
+                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+                      style={{
+                        transform: `rotateX(${
+                          rotation.x + userAngles.x
+                        }deg) rotateY(${
+                          rotation.y + autoAngle + userAngles.y
+                        }deg)`,
+                      }}
+                      onPointerDown={handleCubePointerDown}
+                      onPointerMove={handleCubePointerMove}
+                      onPointerUp={handleCubePointerUp}
+                      onPointerLeave={handleCubePointerUp}
+                    >
+                      {(() => {
+                        const facesForCube: PreviewFace[] =
+                          faces.length >= 6
+                            ? faces.slice(0, 6)
+                            : Array.from(
+                                { length: 6 },
+                                (_, i) => faces[i % faces.length],
+                              );
 
-        // Taille réelle du cube (carré)
-        const size = 220; // px
-        const depth = size / 2;
+                        const depth = 90;
 
-        const transforms = [
-          `rotateY(0deg) translateZ(${depth}px)`,   // front
-          `rotateY(90deg) translateZ(${depth}px)`,  // right
-          `rotateY(180deg) translateZ(${depth}px)`, // back
-          `rotateY(-90deg) translateZ(${depth}px)`, // left
-          `rotateX(90deg) translateZ(${depth}px)`,  // top
-          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
-        ];
+                        const transforms = [
+                          `rotateY(0deg) translateZ(${depth}px)`,
+                          `rotateY(90deg) translateZ(${depth}px)`,
+                          `rotateY(180deg) translateZ(${depth}px)`,
+                          `rotateY(-90deg) translateZ(${depth}px)`,
+                          `rotateX(90deg) translateZ(${depth}px)`,
+                          `rotateX(-90deg) translateZ(${depth}px)`,
+                        ];
 
-        return facesForCube.map((face, index) => {
-          const imgUrl = getFaceMainPhotoUrl(face);
-          const label = face.title || `Face ${index + 1}`;
+                        return facesForCube.map((face, index) => {
+                          const imgUrl = getFaceMainPhotoUrl(face);
+                          const label =
+                            face.title || `Face ${index + 1}`;
 
-          return (
-            <div
-              key={index}
-              className="absolute left-1/2 top-1/2 overflow-hidden rounded-[22px] bg-slate-900/90 shadow-2xl shadow-slate-900/60 [backface-visibility:hidden]"
-              style={{
-                width: size,
-                height: size,
-                // on applique la transf 3D + recentrage
-               transform: `translate(-50%, -50%) ${transforms[index]}`,
-              }}
-            >
-              {imgUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imgUrl}
-                  alt={label}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                    Face {index + 1}
-                  </p>
-                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
-                    {label}
-                  </p>
+                          return (
+                            <div
+                              key={index}
+                              className="absolute inset-1 rounded-[24px] overflow-hidden shadow-xl bg-slate-200 [backface-visibility:hidden]"
+                              style={{ transform: transforms[index] }}
+                            >
+                              {imgUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={imgUrl}
+                                  alt={label}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
+                                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-500">
+                                    Face {index + 1}
+                                  </p>
+                                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-800">
+                                    {label}
+                                  </p>
+                                </div>
+                              )}
+
+                              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-2 pt-6">
+                                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
+                                  Face {index + 1}
+                                </p>
+                                <p className="truncate text-xs font-semibold text-slate-50">
+                                  {label}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* Légende en bas de la face */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-2 pt-6">
-                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
-                  Face {index + 1}
-                </p>
-                <p className="truncate text-xs font-semibold text-slate-50">
-                  {label}
-                </p>
-              </div>
-            </div>
-          );
-        });
-      })()}
-    </div>
-  )}
-</div>
 
                 {/* Flèches mobile en dessous */}
                 <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
@@ -262,7 +314,8 @@ export default function MagicDisplayPreviewShell({
                       {activeFace?.title || `Face ${safeIndex + 1}`}
                     </p>
                     <p className="text-[11px] text-slate-600">
-                      {activeFace?.notes && activeFace.notes.trim().length > 0
+                      {activeFace?.notes &&
+                      activeFace.notes.trim().length > 0
                         ? activeFace.notes
                         : "Pas de notes pédagogiques, tout est dit dans le titre."}
                     </p>
