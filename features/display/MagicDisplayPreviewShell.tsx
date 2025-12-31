@@ -53,7 +53,7 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
 }
 
 /**
- * Placement des faces dans l'espace 3D (cube 220×220).
+ * Placement des faces dans l'espace 3D (même logique que MagicCube3D).
  * index:
  *   0 -> Face 1 (TOP)
  *   1 -> Face 2 (FRONT)
@@ -62,33 +62,36 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
  */
-function getFaceTransform(index: number, depth: number): string {
+function faceTransform(index: number): string {
+  // ⇩ cube plus compact
+  const depth = "5.5rem";
+
   switch (index) {
     case 0:
-      return `rotateX(90deg) translateZ(${depth}px)`; // TOP
+      return `rotateX(90deg) translateZ(${depth})`; // TOP
     case 1:
-      return `rotateY(0deg) translateZ(${depth}px)`; // FRONT
+      return `translateZ(${depth})`; // FRONT
     case 2:
-      return `rotateY(90deg) translateZ(${depth}px)`; // RIGHT
+      return `rotateY(90deg) translateZ(${depth})`; // RIGHT
     case 3:
-      return `rotateY(180deg) translateZ(${depth}px)`; // BACK
+      return `rotateY(180deg) translateZ(${depth})`; // BACK
     case 4:
-      return `rotateY(-90deg) translateZ(${depth}px)`; // LEFT
+      return `rotateY(-90deg) translateZ(${depth})`; // LEFT
     case 5:
-      return `rotateX(-90deg) translateZ(${depth}px)`; // BOTTOM
+      return `rotateX(-90deg) translateZ(${depth})`; // BOTTOM
     default:
-      return `rotateY(0deg) translateZ(${depth}px)`;
+      return `translateZ(${depth})`;
   }
 }
 
 // Presets de rotation pour chaque face (on veut Face 2 en front par défaut)
 const FACE_PRESETS = [
-  { x: -90, y: 0 },   // Face 1 (top)
-  { x: 0, y: 0 },     // Face 2 (front)
-  { x: 0, y: -90 },   // Face 3 (right)
-  { x: 0, y: -180 },  // Face 4 (back)
-  { x: 0, y: -270 },  // Face 5 (left)
-  { x: 90, y: 0 },    // Face 6 (bottom)
+  { x: -90, y: 0 }, // Face 1 (top)
+  { x: 0, y: 0 }, // Face 2 (front)
+  { x: 0, y: -90 }, // Face 3 (right)
+  { x: 0, y: -180 }, // Face 4 (back)
+  { x: 0, y: -270 }, // Face 5 (left)
+  { x: 90, y: 0 }, // Face 6 (bottom)
 ];
 
 export default function MagicDisplayPreviewShell({
@@ -212,7 +215,7 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D – cube parfait 220×220 */}
+            {/* ⭐️ Scène 3D – cube parfait */}
             <section className="flex flex-1 flex-col items-center gap-6">
               <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
@@ -240,83 +243,64 @@ export default function MagicDisplayPreviewShell({
                 </button>
 
                 {/* Cube 3D central */}
-                <div className="mx-auto mt-2 h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
-                  {hasFaces && (
-                    <div
-                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                      style={{
-                        // léger scale pour que le cube reste bien dans le halo
-                        transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                      }}
-                      onPointerDown={handleCubePointerDown}
-                      onPointerMove={handleCubePointerMove}
-                      onPointerUp={handleCubePointerUp}
-                      onPointerLeave={handleCubePointerUp}
-                    >
-                      {(() => {
-                        // On garantit toujours 6 faces pour le cube
-                        const facesForCube: PreviewFace[] =
-                          faces.length >= 6
-                            ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                <div className="relative mx-auto mt-2 aspect-square w-full max-w-xs [perspective:1400px] sm:max-w-sm">
+                  <div
+                    className="absolute inset-0 transition-transform duration-200 ease-out [transform-style:preserve-3d]"
+                    style={{
+                      transform: `scale(0.86) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                    }}
+                    onPointerDown={handleCubePointerDown}
+                    onPointerMove={handleCubePointerMove}
+                    onPointerUp={handleCubePointerUp}
+                    onPointerLeave={handleCubePointerUp}
+                  >
+                    {faces.slice(0, 6).map((face, index) => {
+                      const imgUrl = getFaceMainPhotoUrl(face);
+                      const label = face.title || `Face ${index + 1}`;
 
-                        const size = 220; // px
-                        const depth = size / 2;
-
-                        return facesForCube.map((face, index) => {
-                          const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
-
-                          return (
-                            <div
-                              key={index}
-                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-[22px] bg-slate-900/90 shadow-2xl shadow-slate-900/60 [backface-visibility:hidden]"
-                              style={{
-                                width: size,
-                                height: size,
-                                transform: `translate(-50%, -50%) ${getFaceTransform(
-                                  index,
-                                  depth,
-                                )}`,
-                              }}
-                            >
-                              {imgUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={imgUrl}
-                                  alt={label}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-                                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                                    Face {index + 1}
-                                  </p>
-                                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
-                                    {label}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* Légende en bas */}
-                              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
-                                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
+                      return (
+                        <div
+                          key={index}
+                          style={{ transform: faceTransform(index) }}
+                          className="absolute inset-[18%] [transform-style:preserve-3d]"
+                        >
+                          <div className="relative h-full w-full overflow-hidden rounded-[2.4rem] border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40">
+                            {imgUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={imgUrl}
+                                alt={label}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+                                <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
                                   Face {index + 1}
                                 </p>
-                                <p className="truncate text-xs font-semibold text-slate-50">
+                                <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
                                   {label}
                                 </p>
                               </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  )}
-                </div>
+                            )}
 
-                {/* halo global */}
-                <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
+                            {/* Légende en bas */}
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
+                              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
+                                Face {index + 1}
+                              </p>
+                              <p className="truncate text-xs font-semibold text-slate-50">
+                                {label}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* halo global */}
+                  <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
+                </div>
               </div>
 
               {/* Flèches mobile */}
