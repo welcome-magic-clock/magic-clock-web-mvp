@@ -48,11 +48,10 @@ export default function MagicDisplayPreviewShell({
   const [autoAngle, setAutoAngle] = useState(0);
 
   // sécuriser l’index si le nombre de faces change
-  const safeIndex =
-    !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
-  const activeFace = hasFaces ? faces[safeIndex] : undefined;
-  const firstSegment = activeFace?.segments?.[0];
-  const mainMedia = firstSegment?.media?.[0];
+const safeIndex =
+  !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
+const activeFace = hasFaces ? faces[safeIndex] : undefined;
+const firstSegment = activeFace?.segments?.[0];
 
   // 🔁 rotation douce automatique du “cube/carte”
   useEffect(() => {
@@ -61,6 +60,16 @@ export default function MagicDisplayPreviewShell({
     const id = window.setInterval(() => {
       setAutoAngle((prev) => (prev + 0.4) % 360); // rotation lente
     }, 40);
+
+      // 🖼 Récupérer la première photo d'une face (pour texturer le cube)
+  function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
+    if (!face) return null;
+    const firstSeg = face.segments?.[0];
+    if (!firstSeg?.media || firstSeg.media.length === 0) return null;
+
+    const photo = firstSeg.media.find((m) => m.type === "photo") ?? firstSeg.media[0];
+    return photo?.url ?? null;
+  }
 
     return () => window.clearInterval(id);
   }, [hasFaces]);
@@ -79,8 +88,8 @@ export default function MagicDisplayPreviewShell({
     );
   }
 
-  return (
-    <main className="min-h-screen bg-white text-slate-900">
+ return (
+  <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
         {/* Haut : retour + titre */}
         <header className="mb-6 flex items-center justify-between gap-3">
@@ -133,70 +142,76 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Carte 3D centrale */}
-                <div className="mx-auto h-[min(420px,70vh)] w-full max-w-4xl [perspective:1600px]">
-                  <div
-                    className="relative h-full w-full overflow-hidden rounded-[32px] border border-slate-200 bg-slate-900/95 shadow-[0_40px_120px_rgba(15,23,42,0.45)] backdrop-blur-xl [transform-style:preserve-3d]"
-                    style={{
-                      transform: `rotateY(${autoAngle}deg) rotateX(6deg)`,
-                    }}
-                  >
-                    {/* Contenu de la face : média si présent, sinon carte texte épurée */}
-                    <div className="absolute inset-0">
-                      {mainMedia && mainMedia.type === "photo" && mainMedia.url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={mainMedia.url}
-                          alt={firstSegment?.title ?? activeFace?.title ?? ""}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
+             {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
+<div className="mx-auto h-[min(380px,70vh)] w-full max-w-sm [perspective:1600px]">
+  {hasFaces && (
+    <div
+      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+      style={{
+        transform: `rotateX(-18deg) rotateY(${autoAngle}deg)`,
+      }}
+    >
+      {(() => {
+        const facesForCube: PreviewFace[] =
+          faces.length >= 6
+            ? faces.slice(0, 6)
+            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-                      {mainMedia && mainMedia.type === "video" && mainMedia.url && (
-                        <video
-                          src={mainMedia.url}
-                          className="h-full w-full object-cover"
-                          controls
-                        />
-                      )}
+        const depth = 90; // distance du centre en px
 
-                      {!mainMedia && (
-                        <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950">
-                          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-400">
-                            Face {safeIndex + 1}
-                          </p>
-                          <p className="max-w-md text-center text-lg font-semibold text-slate-50 sm:text-2xl">
-                            {activeFace?.title || `Face ${safeIndex + 1}`}
-                          </p>
-                          <p className="max-w-md text-center text-xs text-slate-300 sm:text-sm">
-                            {firstSegment?.description ||
-                              "Aucun média associé pour l’instant."}
-                          </p>
-                        </div>
-                      )}
+        const transforms = [
+          `rotateY(0deg) translateZ(${depth}px)`, // front
+          `rotateY(90deg) translateZ(${depth}px)`, // right
+          `rotateY(180deg) translateZ(${depth}px)`, // back
+          `rotateY(-90deg) translateZ(${depth}px)`, // left
+          `rotateX(90deg) translateZ(${depth}px)`, // top
+          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
+        ];
 
-                      {/* Légende en bas de la carte */}
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent px-6 pb-4 pt-10">
-                        <div className="flex flex-wrap items-end justify-between gap-2">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-300">
-                              Face {safeIndex + 1}
-                            </p>
-                            <p className="text-sm font-semibold text-slate-50 sm:text-base">
-                              {activeFace?.title || "Face sans titre"}
-                            </p>
-                          </div>
-                          {firstSegment?.title && (
-                            <p className="max-w-xs truncate text-[11px] text-slate-200 sm:text-xs">
-                              {firstSegment.title}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+        return facesForCube.map((face, index) => {
+          const imgUrl = getFaceMainPhotoUrl(face);
+          const label = face.title || `Face ${index + 1}`;
+
+          return (
+            <div
+              key={index}
+              className="absolute inset-1 rounded-[24px] overflow-hidden shadow-xl bg-slate-200 [backface-visibility:hidden]"
+              style={{ transform: transforms[index] }}
+            >
+              {imgUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imgUrl}
+                  alt={label}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-500">
+                    Face {index + 1}
+                  </p>
+                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-800">
+                    {label}
+                  </p>
                 </div>
+              )}
 
+              {/* Légende en bas de la face */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-2 pt-6">
+                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
+                  Face {index + 1}
+                </p>
+                <p className="truncate text-xs font-semibold text-slate-50">
+                  {label}
+                </p>
+              </div>
+            </div>
+          );
+        });
+      })()}
+    </div>
+  )}
+</div>
                 {/* Flèches mobile en dessous */}
                 <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
                   <button
