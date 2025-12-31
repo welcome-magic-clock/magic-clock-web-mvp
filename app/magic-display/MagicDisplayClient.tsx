@@ -24,7 +24,13 @@ import { listCreators } from "@/core/domain/repository";
 import BackButton from "@/components/navigation/BackButton";
 import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
 import MagicCube3D from "@/features/display/MagicCube3D";
-import MagicDisplayPreviewShell from "@/features/display/MagicDisplayPreviewShell";
+import MagicDisplayPreviewShell, {
+  type PreviewDisplay,
+  type PreviewFace,
+  type PreviewSegment,
+  type PreviewMedia,
+  type MediaKind,
+} from "@/features/display/MagicDisplayPreviewShell";
 import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
@@ -661,23 +667,18 @@ export default function MagicDisplayClient() {
     segments: PreviewSegment[];
   };
 
-  // 🌌 Reconstitution minimale du Display pour la preview
-  const displayState: { faces: PreviewFace[] } = {
-    faces: segments.map((seg) => {
-      const mediaArray: PreviewMedia[] = seg.mediaUrl
-        ? [
-            {
-              type:
-                seg.mediaType === "video"
-                  ? "video"
-                  : seg.mediaType === "photo"
-                  ? "photo"
-                  : "file",
-              url: seg.mediaUrl,
-              filename: undefined,
-            },
-          ]
-        : [];
+   // 🌌 Reconstitution minimale du Display pour la preview
+  const displayState: PreviewDisplay = {
+    faces: segments.map<PreviewFace>((seg) => {
+      const mediaArray: PreviewMedia[] =
+        seg.mediaUrl && seg.mediaType
+          ? [
+              {
+                type: (seg.mediaType ?? "file") as MediaKind,
+                url: seg.mediaUrl,
+              },
+            ]
+          : [];
 
       return {
         title: seg.label,
@@ -688,12 +689,13 @@ export default function MagicDisplayClient() {
             title: seg.label,
             description: seg.description,
             notes: seg.notes ?? "",
-            media: mediaArray,
+            media: mediaArray, // toujours un tableau, jamais undefined
           },
         ],
       };
     }),
   };
+  
     // 🌌 Mode "Visualiser mon Magic Clock" : plein écran
   if (showPreview) {
     return (
