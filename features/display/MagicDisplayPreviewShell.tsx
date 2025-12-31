@@ -154,6 +154,31 @@ export default function MagicDisplayPreviewShell({
       // no-op
     }
     setIsDragging(false);
+
+    if (!hasFaces) return;
+
+    // 🔒 Snap automatique sur la face la plus proche
+    setRotation((prev) => {
+      let bestIndex = 0;
+      let bestScore = Number.POSITIVE_INFINITY;
+
+      FACE_PRESETS.forEach((preset, index) => {
+        const dx = prev.x - preset.x;
+        const dy = prev.y - preset.y;
+        const score = dx * dx + dy * dy;
+        if (score < bestScore) {
+          bestScore = score;
+          bestIndex = index;
+        }
+      });
+
+      const snapped = FACE_PRESETS[bestIndex] ?? prev;
+
+      setActiveFaceIndex(bestIndex);
+      rotationStartRef.current = snapped;
+
+      return snapped;
+    });
   }
 
   return (
@@ -227,7 +252,6 @@ export default function MagicDisplayPreviewShell({
                     <div
                       className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
                       style={{
-                        // légère réduction + rotation actuelle
                         transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                       }}
                       onPointerDown={handleCubePointerDown}
@@ -265,7 +289,6 @@ export default function MagicDisplayPreviewShell({
                               style={{
                                 width: size,
                                 height: size,
-                                // centrage + placement 3D
                                 transform: `translate(-50%, -50%) ${transforms[index]}`,
                               }}
                             >
