@@ -210,92 +210,89 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Cube 3D central – cube 220×220 parfaitement carré */}
-                <div className="mx-auto mt-2 h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
-                  {hasFaces && (
-                    <>
-                      <div
-                        className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                        style={{
-                          transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                        }}
-                        onPointerDown={handleCubePointerDown}
-                        onPointerMove={handleCubePointerMove}
-                        onPointerUp={handleCubePointerUp}
-                        onPointerLeave={handleCubePointerUp}
-                      >
-                        {(() => {
-                          // Toujours 6 faces pour le cube
-                          const facesForCube: PreviewFace[] =
-                            faces.length >= 6
-                              ? faces.slice(0, 6)
-                              : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                          {/* Cube 3D central */}
+                <div className="relative mx-auto mt-2 aspect-square w-full max-w-xs [perspective:1400px] sm:max-w-sm">
+                  <div
+                    className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+                    style={{
+                      // légère réduction + rotation actuelle
+                      transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                    }}
+                    onPointerDown={handleCubePointerDown}
+                    onPointerMove={handleCubePointerMove}
+                    onPointerUp={handleCubePointerUp}
+                    onPointerLeave={handleCubePointerUp}
+                  >
+                    {(() => {
+                      // Toujours 6 faces pour le cube
+                      const facesForCube: PreviewFace[] =
+                        faces.length >= 6
+                          ? faces.slice(0, 6)
+                          : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-                          const size = 220; // côté du cube en px
-                          const depth = size / 2;
+                      const size = 220; // cube parfaitement carré 220×220
+                      const depth = size / 2;
 
-                          const transforms = [
-                            `rotateY(0deg) translateZ(${depth}px)`, // front
-                            `rotateY(90deg) translateZ(${depth}px)`, // right
-                            `rotateY(180deg) translateZ(${depth}px)`, // back
-                            `rotateY(-90deg) translateZ(${depth}px)`, // left
-                            `rotateX(90deg) translateZ(${depth}px)`, // top
-                            `rotateX(-90deg) translateZ(${depth}px)`, // bottom
-                          ];
+                      const transforms = [
+                        `rotateY(0deg) translateZ(${depth}px)`,   // front
+                        `rotateY(90deg) translateZ(${depth}px)`,  // right
+                        `rotateY(180deg) translateZ(${depth}px)`, // back
+                        `rotateY(-90deg) translateZ(${depth}px)`, // left
+                        `rotateX(90deg) translateZ(${depth}px)`,  // top
+                        `rotateX(-90deg) translateZ(${depth}px)`, // bottom
+                      ];
 
-                          return facesForCube.map((face, index) => {
-                            const imgUrl = getFaceMainPhotoUrl(face);
-                            const label = face.title || `Face ${index + 1}`;
+                      return facesForCube.map((face, index) => {
+                        const imgUrl = getFaceMainPhotoUrl(face);
+                        const label = face.title || `Face ${index + 1}`;
 
-                            return (
-                              <div
-                                key={index}
-                                className="absolute left-1/2 top-1/2 overflow-hidden rounded-[22px] bg-slate-900/90 shadow-2xl shadow-slate-900/60 [backface-visibility:hidden]"
-                                style={{
-                                  width: size,
-                                  height: size,
-                                  transform: `translate(-50%, -50%) ${transforms[index]}`,
-                                }}
-                              >
-                                {imgUrl ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={imgUrl}
-                                    alt={label}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-                                    <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                                      Face {index + 1}
-                                    </p>
-                                    <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
-                                      {label}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {/* Légende en bas */}
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
-                                  <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
-                                    Face {index + 1}
-                                  </p>
-                                  <p className="truncate text-xs font-semibold text-slate-50">
-                                    {label}
-                                  </p>
-                                </div>
+                        return (
+                          <div
+                            key={index}
+                            className="absolute left-1/2 top-1/2 overflow-hidden rounded-[2.4rem] border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+                            style={{
+                              width: size,
+                              height: size,
+                              // centrage + placement 3D
+                              transform: `translate(-50%, -50%) ${transforms[index]}`,
+                            }}
+                          >
+                            {imgUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={imgUrl}
+                                alt={label}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+                                <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
+                                  Face {index + 1}
+                                </p>
+                                <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
+                                  {label}
+                                </p>
                               </div>
-                            );
-                          });
-                        })()}
-                      </div>
+                            )}
 
-                      {/* halo global – même dôme que avant */}
-                      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
-                    </>
-                  )}
+                            {/* Légende en bas */}
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
+                              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
+                                Face {index + 1}
+                              </p>
+                              <p className="truncate text-xs font-semibold text-slate-50">
+                                {label}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+
+                  {/* halo global (on le laisse tel quel) */}
+                  <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
                 </div>
-              </div>
 
               {/* Flèches mobile */}
               <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
