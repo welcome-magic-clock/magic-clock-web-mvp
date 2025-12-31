@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import MagicCube3D from "@/features/display/MagicCube3D";
 
 type MediaItem = {
-  type: "photo" | "video" | "file";
+  // on assouplit le type pour matcher ce qui vient de MagicDisplayClient
+  type: string;
   url: string;
   filename?: string;
 };
