@@ -63,7 +63,8 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   5 -> Face 6 (BOTTOM)
  */
 function faceTransform(index: number): string {
-  const depth = "6.5rem";
+  // ⇩ cube plus compact
+  const depth = "5.5rem";
 
   switch (index) {
     case 0:
@@ -242,11 +243,11 @@ export default function MagicDisplayPreviewShell({
                 </button>
 
                 {/* Cube 3D central */}
-                <div className="relative mx-auto mt-2 aspect-square w-full max-w-xs [perspective:1100px] sm:max-w-sm">
+                <div className="relative mx-auto mt-2 aspect-square w-full max-w-xs [perspective:1400px] sm:max-w-sm">
                   <div
                     className="absolute inset-0 transition-transform duration-200 ease-out [transform-style:preserve-3d]"
                     style={{
-                      transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                      transform: `scale(0.86) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                     }}
                     onPointerDown={handleCubePointerDown}
                     onPointerMove={handleCubePointerMove}
@@ -261,7 +262,7 @@ export default function MagicDisplayPreviewShell({
                         <div
                           key={index}
                           style={{ transform: faceTransform(index) }}
-                          className="absolute inset-[14%] [transform-style:preserve-3d]"
+                          className="absolute inset-[18%] [transform-style:preserve-3d]"
                         >
                           <div className="relative h-full w-full overflow-hidden rounded-[2.4rem] border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40">
                             {imgUrl ? (
