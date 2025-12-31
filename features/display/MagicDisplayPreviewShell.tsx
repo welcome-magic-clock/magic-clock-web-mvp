@@ -147,77 +147,85 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
-                <div className="mx-auto h-[260px] w-[260px] [perspective:1200px] sm:h-[320px] sm:w-[320px]">
-                  {hasFaces && (
-                    <div
-                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
-                      style={{
-                        transform: `rotateX(-18deg) rotateY(${autoAngle}deg)`,
-                      }}
-                    >
-                      {(() => {
-                        // On garantit toujours 6 faces pour le cube
-                        const facesForCube: PreviewFace[] =
-                          faces.length >= 6
-                            ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+            {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
+<div className="mx-auto h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
+  {hasFaces && (
+    <div
+      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-700 ease-out"
+      style={{
+        // Légère vue en plongée + rotation autour d’un coin
+        transform: `rotateX(-26deg) rotateY(${autoAngle + 35}deg)`,
+      }}
+    >
+      {(() => {
+        // On garantit toujours 6 faces pour le cube
+        const facesForCube: PreviewFace[] =
+          faces.length >= 6
+            ? faces.slice(0, 6)
+            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-                        const depth = 130; // moitié de 260px → cube fermé
+        // Taille réelle du cube (carré)
+        const size = 220; // px
+        const depth = size / 2;
 
-                        const transforms = [
-                          `rotateY(0deg) translateZ(${depth}px)`, // front
-                          `rotateY(90deg) translateZ(${depth}px)`, // right
-                          `rotateY(180deg) translateZ(${depth}px)`, // back
-                          `rotateY(-90deg) translateZ(${depth}px)`, // left
-                          `rotateX(90deg) translateZ(${depth}px)`, // top
-                          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
-                        ];
+        const transforms = [
+          `rotateY(0deg) translateZ(${depth}px)`,   // front
+          `rotateY(90deg) translateZ(${depth}px)`,  // right
+          `rotateY(180deg) translateZ(${depth}px)`, // back
+          `rotateY(-90deg) translateZ(${depth}px)`, // left
+          `rotateX(90deg) translateZ(${depth}px)`,  // top
+          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
+        ];
 
-                        return facesForCube.map((face, index) => {
-                          const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
+        return facesForCube.map((face, index) => {
+          const imgUrl = getFaceMainPhotoUrl(face);
+          const label = face.title || `Face ${index + 1}`;
 
-                          return (
-                            <div
-                              key={index}
-                              className="absolute inset-0 overflow-hidden rounded-[20px] bg-slate-200 shadow-xl [backface-visibility:hidden]"
-                              style={{ transform: transforms[index] }}
-                            >
-                              {imgUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={imgUrl}
-                                  alt={label}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
-                                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-500">
-                                    Face {index + 1}
-                                  </p>
-                                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-800">
-                                    {label}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* Légende en bas de la face */}
-                              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-2 pt-6">
-                                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
-                                  Face {index + 1}
-                                </p>
-                                <p className="truncate text-xs font-semibold text-slate-50">
-                                  {label}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  )}
+          return (
+            <div
+              key={index}
+              className="absolute left-1/2 top-1/2 overflow-hidden rounded-[22px] bg-slate-900/90 shadow-2xl shadow-slate-900/60 [backface-visibility:hidden]"
+              style={{
+                width: size,
+                height: size,
+                // on applique la transf 3D + recentrage
+                transform: `${transforms[index]} translate(-50%, -50%)`,
+              }}
+            >
+              {imgUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imgUrl}
+                  alt={label}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
+                    Face {index + 1}
+                  </p>
+                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
+                    {label}
+                  </p>
                 </div>
+              )}
+
+              {/* Légende en bas de la face */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-2 pt-6">
+                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
+                  Face {index + 1}
+                </p>
+                <p className="truncate text-xs font-semibold text-slate-50">
+                  {label}
+                </p>
+              </div>
+            </div>
+          );
+        });
+      })()}
+    </div>
+  )}
+</div>
 
                 {/* Flèches mobile en dessous */}
                 <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
