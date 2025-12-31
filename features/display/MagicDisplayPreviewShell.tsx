@@ -1,7 +1,8 @@
 // features/display/MagicDisplayPreviewShell.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type React from "react";
 import BackButton from "@/components/navigation/BackButton";
 
 export type MediaKind = "photo" | "video" | "file";
@@ -39,7 +40,6 @@ type MagicDisplayPreviewShellProps = {
 
 /**
  * Récupère la première photo d'une face (pour texturer le cube).
- * Si aucune photo, on prend le premier média disponible.
  */
 function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
   if (!face) return null;
@@ -52,6 +52,46 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
   return photo?.url ?? null;
 }
 
+/**
+ * Mapping des faces dans l'espace 3D (vrai cube 220×220)
+ * index:
+ *   0 -> Face 1 (TOP)
+ *   1 -> Face 2 (FRONT)
+ *   2 -> Face 3 (RIGHT)
+ *   3 -> Face 4 (BACK)
+ *   4 -> Face 5 (LEFT)
+ *   5 -> Face 6 (BOTTOM)
+ */
+function getFaceTransform(index: number, depth: number): string {
+  switch (index) {
+    case 0:
+      return `rotateX(90deg) translateZ(${depth}px)`; // TOP
+    case 1:
+      return `rotateY(0deg) translateZ(${depth}px)`; // FRONT
+    case 2:
+      return `rotateY(90deg) translateZ(${depth}px)`; // RIGHT
+    case 3:
+      return `rotateY(180deg) translateZ(${depth}px)`; // BACK
+    case 4:
+      return `rotateY(-90deg) translateZ(${depth}px)`; // LEFT
+    case 5:
+      return `rotateX(-90deg) translateZ(${depth}px)`; // BOTTOM
+    default:
+      return `rotateY(0deg) translateZ(${depth}px)`;
+  }
+}
+
+// Presets de rotation pour que chaque face se stabilise correctement
+// (on veut Face 2 en front par défaut)
+const FACE_PRESETS = [
+  { x: -90, y: 0 },   // Face 1 (top)
+  { x: 0, y: 0 },     // Face 2 (front)
+  { x: 0, y: -90 },   // Face 3 (right)
+  { x: 0, y: -180 },  // Face 4 (back)
+  { x: 0, y: -270 },  // Face 5 (left)
+  { x: 90, y: 0 },    // Face 6 (bottom)
+];
+
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
@@ -60,35 +100,92 @@ export default function MagicDisplayPreviewShell({
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
-  const [activeFaceIndex, setActiveFaceIndex] = useState(0);
-  const [autoAngle, setAutoAngle] = useState(0);
+  // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
+  const [activeFaceIndex, setActiveFaceIndex] = useState(1);
+
+  // Rotation actuelle du cube (X / Y)
+  const [rotation, setRotation] = useState<{ x: number; y: number }>(
+    () => FACE_PRESETS[1],
+  );
+
+  // Drag manuel
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const rotationStartRef = useRef<{ x: number; y: number }>(FACE_PRESETS[1]);
 
   // sécuriser l’index si le nombre de faces change
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
-  // 🔁 rotation douce automatique du cube
+  // 🔁 Auto-rotation lente sur l’axe Y (pause pendant le drag)
   useEffect(() => {
-    if (!hasFaces) return;
+    if (!hasFaces || isDragging) return;
 
     const id = window.setInterval(() => {
-      setAutoAngle((prev) => (prev + 0.4) % 360); // rotation lente
+      setRotation((prev) => ({ ...prev, y: prev.y + 0.25 }));
     }, 40);
 
     return () => window.clearInterval(id);
-  }, [hasFaces]);
+  }, [hasFaces, isDragging]);
+
+  // Navigation flèches + stabilisation de la face
+  function goToFace(nextIndex: number) {
+    if (!hasFaces) return;
+
+    const maxIndex = Math.max(0, faces.length - 1);
+    const wrapped =
+      ((nextIndex % (maxIndex + 1)) + (maxIndex + 1)) % (maxIndex + 1);
+
+    setActiveFaceIndex(wrapped);
+
+    // preset de rotation pour cette face
+    const preset = FACE_PRESETS[wrapped] ?? FACE_PRESETS[1];
+    setRotation(preset);
+    rotationStartRef.current = preset;
+  }
 
   function goPrevFace() {
-    if (!hasFaces) return;
-    setActiveFaceIndex((prev) => (prev <= 0 ? faces.length - 1 : prev - 1));
+    goToFace(activeFaceIndex - 1);
   }
 
   function goNextFace() {
+    goToFace(activeFaceIndex + 1);
+  }
+
+  // 🎮 Drag manuel sur le cube
+  function handleCubePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (!hasFaces) return;
-    setActiveFaceIndex((prev) =>
-      prev >= faces.length - 1 ? 0 : prev + 1,
-    );
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    rotationStartRef.current = { ...rotation };
+  }
+
+  function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging || !dragStartRef.current) return;
+
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    const factor = 0.4;
+
+    const nextX = rotationStartRef.current.x - dy * factor;
+    const nextY = rotationStartRef.current.y + dx * factor;
+
+    // on limite juste l'inclinaison verticale
+    const clampedX = Math.max(-88, Math.min(88, nextX));
+
+    setRotation({ x: clampedX, y: nextY });
+  }
+
+  function handleCubePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // no-op
+    }
+    setIsDragging(false);
   }
 
   return (
@@ -118,7 +215,7 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D – VRAI cube */}
+            {/* ⭐️ Scène 3D – vrai cube 220×220 avec auto + drag + snap face */}
             <section className="flex flex-1 flex-col items-center gap-6">
               <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
@@ -149,11 +246,15 @@ export default function MagicDisplayPreviewShell({
                 <div className="mx-auto h-[280px] w-full max-w-sm [perspective:1100px] sm:h-[340px]">
                   {hasFaces && (
                     <div
-                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-700 ease-out"
+                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-300 ease-out"
                       style={{
-                        // Légère vue en plongée + rotation autour d’un coin
-                        transform: `rotateX(-26deg) rotateY(${autoAngle + 35}deg)`,
+                        // léger scale pour ne pas dépasser le halo
+                        transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                       }}
+                      onPointerDown={handleCubePointerDown}
+                      onPointerMove={handleCubePointerMove}
+                      onPointerUp={handleCubePointerUp}
+                      onPointerLeave={handleCubePointerUp}
                     >
                       {(() => {
                         // On garantit toujours 6 faces pour le cube
@@ -162,18 +263,8 @@ export default function MagicDisplayPreviewShell({
                             ? faces.slice(0, 6)
                             : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-                        // Taille réelle du cube (carré)
                         const size = 220; // px
                         const depth = size / 2;
-
-                        const transforms = [
-                          `rotateY(0deg) translateZ(${depth}px)`, // front
-                          `rotateY(90deg) translateZ(${depth}px)`, // right
-                          `rotateY(180deg) translateZ(${depth}px)`, // back
-                          `rotateY(-90deg) translateZ(${depth}px)`, // left
-                          `rotateX(90deg) translateZ(${depth}px)`, // top
-                          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
-                        ];
 
                         return facesForCube.map((face, index) => {
                           const imgUrl = getFaceMainPhotoUrl(face);
@@ -186,8 +277,10 @@ export default function MagicDisplayPreviewShell({
                               style={{
                                 width: size,
                                 height: size,
-                                // on applique la transf 3D + recentrage
-                                transform: `translate(-50%, -50%) ${transforms[index]}`,
+                                transform: `translate(-50%, -50%) ${getFaceTransform(
+                                  index,
+                                  depth,
+                                )}`,
                               }}
                             >
                               {imgUrl ? (
@@ -225,31 +318,34 @@ export default function MagicDisplayPreviewShell({
                   )}
                 </div>
 
-                {/* Flèches mobile en dessous */}
-                <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
-                  <button
-                    type="button"
-                    onClick={goPrevFace}
-                    aria-label="Face précédente"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
-                  >
-                    ←
-                  </button>
-                  <span className="text-[11px] text-slate-500">
-                    Face {safeIndex + 1} / {faces.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={goNextFace}
-                    aria-label="Face suivante"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
-                  >
-                    →
-                  </button>
-                </div>
+                {/* halo global */}
+                <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
               </div>
 
-              {/* Panneau face active – thème clair */}
+              {/* Flèches mobile */}
+              <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
+                <button
+                  type="button"
+                  onClick={goPrevFace}
+                  aria-label="Face précédente"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
+                >
+                  ←
+                </button>
+                <span className="text-[11px] text-slate-500">
+                  Face {safeIndex + 1} / {faces.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={goNextFace}
+                  aria-label="Face suivante"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
+                >
+                  →
+                </button>
+              </div>
+
+              {/* Panneau face active */}
               <div className="mt-6 w-full max-w-4xl rounded-3xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-6 sm:py-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
