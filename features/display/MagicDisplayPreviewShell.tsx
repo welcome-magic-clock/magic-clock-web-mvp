@@ -189,7 +189,7 @@ export default function MagicDisplayPreviewShell({
                 width: size,
                 height: size,
                 // on applique la transf 3D + recentrage
-                transform: `${transforms[index]} translate(-50%, -50%)`,
+               transform: `translate(-50%, -50%) ${transforms[index]}`,
               }}
             >
               {imgUrl ? (
