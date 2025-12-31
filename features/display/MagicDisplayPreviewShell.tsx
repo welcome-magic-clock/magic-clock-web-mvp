@@ -322,10 +322,10 @@ export default function MagicDisplayPreviewShell({
     </div>
   )}
 
-  {/* halo global – même dôme que avant */}
+ {/* halo global – même dôme que avant */}
 <div
   className="pointer-events-none absolute -inset-x-[10%] -inset-y-[6%] rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_70%)]"
-</div>
+/>
                 </div>
 
               {/* Flèches mobile */}
