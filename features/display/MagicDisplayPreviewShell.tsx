@@ -62,6 +62,9 @@ const FACE_PRESETS = [
   { x: 90, y: 0 }, // Face 6 (bottom)
 ];
 
+// Angle de vue premium par défaut (légère plongée + 3/4)
+const INITIAL_ROTATION = { x: -18, y: 26 };
+
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
@@ -75,13 +78,13 @@ export default function MagicDisplayPreviewShell({
 
   // Rotation actuelle du cube
   const [rotation, setRotation] = useState<{ x: number; y: number }>(
-    () => FACE_PRESETS[1],
+    () => INITIAL_ROTATION,
   );
 
   // Drag manuel
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
-  const rotationStartRef = useRef<{ x: number; y: number }>(FACE_PRESETS[1]);
+  const rotationStartRef = useRef<{ x: number; y: number }>(INITIAL_ROTATION);
 
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
@@ -210,7 +213,7 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                          {/* Cube 3D central */}
+                {/* Cube 3D central */}
                 <div className="relative mx-auto mt-2 aspect-square w-full max-w-xs [perspective:1400px] sm:max-w-sm">
                   <div
                     className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
@@ -234,12 +237,12 @@ export default function MagicDisplayPreviewShell({
                       const depth = size / 2;
 
                       const transforms = [
-                        `rotateY(0deg) translateZ(${depth}px)`,   // front
-                        `rotateY(90deg) translateZ(${depth}px)`,  // right
-                        `rotateY(180deg) translateZ(${depth}px)`, // back
-                        `rotateY(-90deg) translateZ(${depth}px)`, // left
-                        `rotateX(90deg) translateZ(${depth}px)`,  // top
-                        `rotateX(-90deg) translateZ(${depth}px)`, // bottom
+                        `rotateX(90deg) translateZ(${depth}px)`, // Face 1 : top
+                        `rotateY(0deg) translateZ(${depth}px)`, // Face 2 : front
+                        `rotateY(90deg) translateZ(${depth}px)`, // Face 3 : right
+                        `rotateY(180deg) translateZ(${depth}px)`, // Face 4 : back
+                        `rotateY(-90deg) translateZ(${depth}px)`, // Face 5 : left
+                        `rotateX(-90deg) translateZ(${depth}px)`, // Face 6 : bottom
                       ];
 
                       return facesForCube.map((face, index) => {
@@ -290,10 +293,10 @@ export default function MagicDisplayPreviewShell({
                     })()}
                   </div>
 
-                                  {/* halo global (on le laisse tel quel) */}
+                  {/* halo global (inchangé) */}
                   <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
-                </div> {/* ferme le cube (mx-auto ...) */}
-              </div>   {/* ✅ nouveau : ferme le conteneur relative w-full max-w-5xl */}
+                </div>
+              </div>
 
               {/* Flèches mobile */}
               <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
