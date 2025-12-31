@@ -40,7 +40,6 @@ type MagicDisplayPreviewShellProps = {
 
 /**
  * Récupère la première photo d'une face (pour texturer le cube).
- * Si aucune photo, on prend le premier média disponible.
  */
 function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
   if (!face) return null;
@@ -61,9 +60,9 @@ export default function MagicDisplayPreviewShell({
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
-  // 🔵 États du cube (face active + rotations)
+  // 🔵 États du cube
   const [activeFaceIndex, setActiveFaceIndex] = useState(0);
-  const [autoAngle, setAutoAngle] = useState(0); // rotation automatique (Y)
+  const [autoAngle, setAutoAngle] = useState(0); // tourne tout seul sur Y
   const [userAngles, setUserAngles] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -78,23 +77,25 @@ export default function MagicDisplayPreviewShell({
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
   // 🎛 Orientation du cube selon la face active
+  // même logique que dans MagicCube3D.tsx
   const FACE_ROTATIONS = [
-    { x: -18, y: 0 }, // Face 1 : devant
-    { x: -18, y: -90 }, // Face 2 : côté droit
-    { x: -18, y: -180 }, // Face 3 : derrière
-    { x: -18, y: -270 }, // Face 4 : côté gauche
-    { x: -55, y: 0 }, // Face 5 : dessus légèrement incliné
-    { x: 55, y: 0 }, // Face 6 : dessous légèrement incliné
-  ];
+    { x: -90, y: 0 }, // Face 1 (top)
+    { x: 0, y: 0 }, // Face 2 (front)
+    { x: 0, y: -90 }, // Face 3 (right)
+    { x: 0, y: -180 }, // Face 4 (back)
+    { x: 0, y: -270 }, // Face 5 (left)
+    { x: 90, y: 0 }, // Face 6 (bottom)
+  ] as const;
 
-  const rotation = FACE_ROTATIONS[safeIndex % FACE_ROTATIONS.length];
+  const baseRotation = FACE_ROTATIONS[safeIndex % FACE_ROTATIONS.length];
 
-  // 🔁 Rotation automatique douce (Y) — pause pendant le drag
+  // 🔁 Rotation automatique douce (Y) — sans retour arrière
   useEffect(() => {
     if (!hasFaces || isDragging) return;
 
     const id = window.setInterval(() => {
-      setAutoAngle((prev) => (prev + 0.25) % 360); // vitesse douce
+      // on n’utilise PLUS de modulo ici → pas d’effet “ressort”
+      setAutoAngle((prev) => prev + 0.25);
     }, 40);
 
     return () => window.clearInterval(id);
@@ -103,11 +104,14 @@ export default function MagicDisplayPreviewShell({
   function goPrevFace() {
     if (!hasFaces) return;
     setActiveFaceIndex((prev) => (prev <= 0 ? faces.length - 1 : prev - 1));
+    // on recentre légèrement la rotation manuelle
+    setUserAngles({ x: 0, y: 0 });
   }
 
   function goNextFace() {
     if (!hasFaces) return;
     setActiveFaceIndex((prev) => (prev >= faces.length - 1 ? 0 : prev + 1));
+    setUserAngles({ x: 0, y: 0 });
   }
 
   // 🖐️ Drag du cube (desktop + mobile)
@@ -125,7 +129,6 @@ export default function MagicDisplayPreviewShell({
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
 
-    // Sensibilité du drag
     const factor = 0.4;
     const newY = userAnglesStartRef.current.y + dx * factor; // gauche/droite
     const newX = userAnglesStartRef.current.x - dy * factor; // haut/bas
@@ -198,15 +201,15 @@ export default function MagicDisplayPreviewShell({
                 </button>
 
                 {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
-                <div className="mx-auto h-[min(380px,70vh)] w-full max-w-sm [perspective:1600px]">
+                <div className="mx-auto h-[min(380px,70vh)] w-full max-w-sm [perspective:1100px]">
                   {hasFaces && (
                     <div
-                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-300 ease-out"
                       style={{
                         transform: `rotateX(${
-                          rotation.x + userAngles.x
+                          baseRotation.x + userAngles.x
                         }deg) rotateY(${
-                          rotation.y + autoAngle + userAngles.y
+                          baseRotation.y + autoAngle + userAngles.y
                         }deg)`,
                       }}
                       onPointerDown={handleCubePointerDown}
@@ -223,15 +226,16 @@ export default function MagicDisplayPreviewShell({
                                 (_, i) => faces[i % faces.length],
                               );
 
-                        const depth = 90;
+                        const depth = 90; // distance du centre
 
+                        // ⚠️ même mapping que faceTransform() dans MagicCube3D.tsx
                         const transforms = [
-                          `rotateY(0deg) translateZ(${depth}px)`,
-                          `rotateY(90deg) translateZ(${depth}px)`,
-                          `rotateY(180deg) translateZ(${depth}px)`,
-                          `rotateY(-90deg) translateZ(${depth}px)`,
-                          `rotateX(90deg) translateZ(${depth}px)`,
-                          `rotateX(-90deg) translateZ(${depth}px)`,
+                          `rotateX(90deg) translateZ(${depth}px)`, // index 0 → TOP (Face 1)
+                          `translateZ(${depth}px)`, // index 1 → FRONT (Face 2)
+                          `rotateY(90deg) translateZ(${depth}px)`, // index 2 → RIGHT (Face 3)
+                          `rotateY(180deg) translateZ(${depth}px)`, // index 3 → BACK (Face 4)
+                          `rotateY(-90deg) translateZ(${depth}px)`, // index 4 → LEFT (Face 5)
+                          `rotateX(-90deg) translateZ(${depth}px)`, // index 5 → BOTTOM (Face 6)
                         ];
 
                         return facesForCube.map((face, index) => {
@@ -242,7 +246,7 @@ export default function MagicDisplayPreviewShell({
                           return (
                             <div
                               key={index}
-                              className="absolute inset-1 rounded-[24px] overflow-hidden shadow-xl bg-slate-200 [backface-visibility:hidden]"
+                              className="absolute inset-[14%] rounded-[2.4rem] overflow-hidden bg-slate-200 shadow-xl [backface-visibility:hidden]"
                               style={{ transform: transforms[index] }}
                             >
                               {imgUrl ? (
