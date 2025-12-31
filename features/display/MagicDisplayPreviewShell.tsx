@@ -80,7 +80,7 @@ export default function MagicDisplayPreviewShell({
   }
 
   return (
-    <main className="min-h-screen bg-black text-slate-50">
+    <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
         {/* Haut : retour + titre */}
         <header className="mb-6 flex items-center justify-between gap-3">
@@ -89,10 +89,10 @@ export default function MagicDisplayPreviewShell({
             label="Retour au Magic Display"
           />
           <div className="text-right text-[11px] sm:text-xs">
-            <p className="font-medium uppercase tracking-[0.28em] text-slate-300">
+            <p className="font-medium uppercase tracking-[0.28em] text-slate-500">
               Visualiser mon Magic Clock
             </p>
-            <p className="mt-1 text-[10px] text-slate-500">
+            <p className="mt-1 text-[10px] text-slate-400">
               Vue utilisateur finale, 100&nbsp;% lecture seule.
             </p>
           </div>
@@ -106,9 +106,9 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D premium */}
+            {/* ⭐️ Scène 3D pseudo-cube */}
             <section className="flex flex-1 flex-col items-center gap-6">
-              <p className="text-[11px] uppercase tracking-[0.32em] text-slate-400">
+              <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
               </p>
 
@@ -118,7 +118,7 @@ export default function MagicDisplayPreviewShell({
                   type="button"
                   onClick={goPrevFace}
                   aria-label="Face précédente"
-                  className="absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 transform items-center justify-center rounded-full border border-slate-700/70 bg-black/60 px-3 py-2 text-xs text-slate-100 backdrop-blur-sm hover:border-slate-500 hover:bg-black/80 sm:flex"
+                  className="absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 transform items-center justify-center rounded-full border border-slate-300 bg-white/90 px-3 py-2 text-xs text-slate-700 shadow-sm backdrop-blur-sm hover:border-slate-400 hover:bg-white sm:flex"
                 >
                   <span className="text-sm leading-none">←</span>
                 </button>
@@ -128,7 +128,7 @@ export default function MagicDisplayPreviewShell({
                   type="button"
                   onClick={goNextFace}
                   aria-label="Face suivante"
-                  className="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 transform items-center justify-center rounded-full border border-slate-700/70 bg-black/60 px-3 py-2 text-xs text-slate-100 backdrop-blur-sm hover:border-slate-500 hover:bg-black/80 sm:flex"
+                  className="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 transform items-center justify-center rounded-full border border-slate-300 bg-white/90 px-3 py-2 text-xs text-slate-700 shadow-sm backdrop-blur-sm hover:border-slate-400 hover:bg-white sm:flex"
                 >
                   <span className="text-sm leading-none">→</span>
                 </button>
@@ -136,7 +136,7 @@ export default function MagicDisplayPreviewShell({
                 {/* Carte 3D centrale */}
                 <div className="mx-auto h-[min(420px,70vh)] w-full max-w-4xl [perspective:1600px]">
                   <div
-                    className="relative h-full w-full overflow-hidden rounded-[32px] border border-white/10 bg-slate-900/70 shadow-[0_40px_120px_rgba(0,0,0,0.9)] backdrop-blur-xl [transform-style:preserve-3d]"
+                    className="relative h-full w-full overflow-hidden rounded-[32px] border border-slate-200 bg-slate-900/95 shadow-[0_40px_120px_rgba(15,23,42,0.45)] backdrop-blur-xl [transform-style:preserve-3d]"
                     style={{
                       transform: `rotateY(${autoAngle}deg) rotateX(6deg)`,
                     }}
@@ -203,35 +203,35 @@ export default function MagicDisplayPreviewShell({
                     type="button"
                     onClick={goPrevFace}
                     aria-label="Face précédente"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700/70 bg-black/60 text-xs text-slate-100 backdrop-blur-sm hover:border-slate-500 hover:bg-black/80"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
                   >
                     ←
                   </button>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-slate-500">
                     Face {safeIndex + 1} / {faces.length}
                   </span>
                   <button
                     type="button"
                     onClick={goNextFace}
                     aria-label="Face suivante"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700/70 bg-black/60 text-xs text-slate-100 backdrop-blur-sm hover:border-slate-500 hover:bg-black/80"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
                   >
                     →
                   </button>
                 </div>
               </div>
 
-              {/* Panneau face active */}
-              <div className="mt-6 w-full max-w-4xl rounded-3xl border border-slate-800 bg-black/60 px-4 py-4 text-xs text-slate-100 shadow-[0_24px_80px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:px-6 sm:py-5">
+              {/* Panneau face active – thème clair */}
+              <div className="mt-6 w-full max-w-4xl rounded-3xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-6 sm:py-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-400">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
                       Face active
                     </p>
-                    <p className="text-sm font-semibold text-slate-50">
+                    <p className="text-sm font-semibold text-slate-900">
                       {activeFace?.title || `Face ${safeIndex + 1}`}
                     </p>
-                    <p className="text-[11px] text-slate-300">
+                    <p className="text-[11px] text-slate-600">
                       {activeFace?.notes && activeFace.notes.trim().length > 0
                         ? activeFace.notes
                         : "Pas de notes pédagogiques, tout est dit dans le titre."}
@@ -242,7 +242,7 @@ export default function MagicDisplayPreviewShell({
                     <button
                       type="button"
                       onClick={() => onOpenFace?.(safeIndex)}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-600 bg-black/70 px-3 py-1.5 text-[11px] font-medium text-slate-100 hover:border-slate-400 hover:bg-black/90"
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-800 hover:border-slate-400 hover:bg-white"
                     >
                       <span>Ouvrir cette face</span>
                       <span aria-hidden>↗︎</span>
