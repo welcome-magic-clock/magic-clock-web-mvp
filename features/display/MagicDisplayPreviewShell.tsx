@@ -250,16 +250,15 @@ export default function MagicDisplayPreviewShell({
                         const label = face.title || `Face ${index + 1}`;
 
                         return (
-                          <div
-                            key={index}
-                            className="absolute left-1/2 top-1/2 overflow-hidden rounded-[2.4rem] border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
-                            style={{
-                              width: size,
-                              height: size,
-                              // centrage + placement 3D
-                              transform: `translate(-50%, -50%) ${transforms[index]}`,
-                            }}
-                          >
+                           <div
+  key={index}
+  className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+  style={{
+    width: size,
+    height: size,
+    transform: `translate(-50%, -50%) ${transforms[index]}`,
+  }}
+>
                             {imgUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
