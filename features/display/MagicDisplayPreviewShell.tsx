@@ -1,3 +1,4 @@
+// features/display/MagicDisplayPreviewShell.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,7 +18,7 @@ export type PreviewSegment = {
   description?: string;
   notes?: string;
   /** Médias associés à ce segment (photo / vidéo / fichier) */
-  media?: PreviewMedia[]; // ⬅️ IMPORTANT : optionnel
+  media?: PreviewMedia[]; // optionnel
 };
 
 export type PreviewFace = {
@@ -36,6 +37,21 @@ type MagicDisplayPreviewShellProps = {
   onOpenFace?: (faceIndex: number) => void;
 };
 
+/**
+ * Récupère la première photo d'une face (pour texturer le cube).
+ * Si aucune photo, on prend le premier média disponible.
+ */
+function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
+  if (!face) return null;
+  const firstSeg = face.segments?.[0];
+  if (!firstSeg?.media || firstSeg.media.length === 0) return null;
+
+  const photo =
+    firstSeg.media.find((m) => m.type === "photo") ?? firstSeg.media[0];
+
+  return photo?.url ?? null;
+}
+
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
@@ -47,7 +63,7 @@ export default function MagicDisplayPreviewShell({
   const [activeFaceIndex, setActiveFaceIndex] = useState(0);
   const [autoAngle, setAutoAngle] = useState(0);
 
-  // 🔒 sécuriser l’index si le nombre de faces change
+  // sécuriser l’index si le nombre de faces change
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
@@ -62,17 +78,6 @@ export default function MagicDisplayPreviewShell({
 
     return () => window.clearInterval(id);
   }, [hasFaces]);
-
-  // 🖼 Récupérer la première photo d'une face (pour texturer le cube)
-  function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
-    if (!face) return null;
-    const firstSeg = face.segments?.[0];
-    if (!firstSeg?.media || firstSeg.media.length === 0) return null;
-
-    const photo =
-      firstSeg.media.find((m) => m.type === "photo") ?? firstSeg.media[0];
-    return photo?.url ?? null;
-  }
 
   function goPrevFace() {
     if (!hasFaces) return;
@@ -115,7 +120,7 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D — Cube Magic Clock */}
+            {/* ⭐️ Scène 3D – VRAI cube */}
             <section className="flex flex-1 flex-col items-center gap-6">
               <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
@@ -142,8 +147,8 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* 🧊 Cube 3D central alimenté par le JSON PreviewDisplay */}
-                <div className="mx-auto h-[min(380px,70vh)] w-full max-w-sm [perspective:1600px]">
+                {/* Cube 3D central alimenté par le JSON PreviewDisplay */}
+                <div className="mx-auto h-[260px] w-[260px] [perspective:1200px] sm:h-[320px] sm:w-[320px]">
                   {hasFaces && (
                     <div
                       className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
@@ -152,12 +157,13 @@ export default function MagicDisplayPreviewShell({
                       }}
                     >
                       {(() => {
+                        // On garantit toujours 6 faces pour le cube
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
                             : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-                        const depth = 90; // distance du centre en px
+                        const depth = 130; // moitié de 260px → cube fermé
 
                         const transforms = [
                           `rotateY(0deg) translateZ(${depth}px)`, // front
@@ -175,7 +181,7 @@ export default function MagicDisplayPreviewShell({
                           return (
                             <div
                               key={index}
-                              className="absolute inset-1 rounded-[24px] overflow-hidden shadow-xl bg-slate-200 [backface-visibility:hidden]"
+                              className="absolute inset-0 overflow-hidden rounded-[20px] bg-slate-200 shadow-xl [backface-visibility:hidden]"
                               style={{ transform: transforms[index] }}
                             >
                               {imgUrl ? (
