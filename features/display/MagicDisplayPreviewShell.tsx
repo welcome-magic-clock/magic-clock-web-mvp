@@ -249,7 +249,7 @@ export default function MagicDisplayPreviewShell({
                 </button>
 
                 <div className="mx-auto mt-2 flex flex-col items-center">
-              {/* Titre de la face active au-dessus du cube */}
+             {/* Titre de la face active au-dessus du cube */}
 <div className="mb-3 text-center">
   <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
     Face active
@@ -257,18 +257,28 @@ export default function MagicDisplayPreviewShell({
 
   {(() => {
     const faceNumberLabel = `Face ${safeIndex + 1}`;
-    const rawTitle = activeFace?.title?.trim();
 
-    // On n’affiche le titre personnalisé que s’il est différent de "Face N"
-    const displayTitle =
+    const rawTitle = activeFace?.title?.trim();
+    const rawDescription = activeFace?.segments?.[0]?.description?.trim();
+
+    // On évite de répéter "Face 2" si c'est juste le titre par défaut
+    let displayTitle: string | null = null;
+
+    if (
       rawTitle &&
       rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
-        ? rawTitle
-        : null;
+    ) {
+      displayTitle = rawTitle;
+    } else if (
+      rawDescription &&
+      rawDescription.toLowerCase() !== faceNumberLabel.toLowerCase()
+    ) {
+      displayTitle = rawDescription;
+    }
 
     return (
       <>
-        {/* Face 1 / Face 2 / etc. */}
+        {/* Face 1 / Face 2 / Face 3... */}
         <p className="mt-1 text-sm font-semibold text-slate-900">
           {faceNumberLabel}
         </p>
