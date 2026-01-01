@@ -63,15 +63,15 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   5 -> Face 6 (BOTTOM)
  */
 const FACE_PRESETS = [
-  { x: -70, y: 26 }, // top
-  { x: -18, y: 26 }, // front
-  { x: -18, y: 116 }, // right  = 26 + 90
-  { x: -18, y: -154 }, // back   = 26 + 180
-  { x: -18, y: -64 }, // left   = 26 + 270
-  { x: 70, y: 26 }, // bottom
+  { x: -60, y: 35 },   // top
+  { x: -20, y: 35 },   // front
+  { x: -20, y: 125 },  // right  (≈ front + 90°)
+  { x: -20, y: 215 },  // back   (≈ front + 180°)
+  { x: -20, y: -55 },  // left   (≈ front - 90°)
+  { x: 60, y: 35 },    // bottom
 ];
 
-const INITIAL_ROTATION = FACE_PRESETS[1];
+const INITIAL_ROTATION = FACE_PRESETS[1]; // Face 2 en front par défaut
 
 export default function MagicDisplayPreviewShell({
   display,
@@ -84,7 +84,7 @@ export default function MagicDisplayPreviewShell({
   // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
   const [activeFaceIndex, setActiveFaceIndex] = useState(1);
 
-  // Rotation actuelle du cube (stabilisée, plus d'auto-rotation)
+  // Rotation actuelle du cube
   const [rotation, setRotation] = useState<{ x: number; y: number }>(
     () => INITIAL_ROTATION,
   );
@@ -99,7 +99,7 @@ export default function MagicDisplayPreviewShell({
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
-  // Navigation flèches : on change la face active + on la met en vue premium
+  // Navigation flèches : on change la face active + preset associé
   function goToFace(nextIndex: number) {
     if (!hasFaces) return;
     const maxIndex = Math.max(0, faces.length - 1);
@@ -154,31 +154,7 @@ export default function MagicDisplayPreviewShell({
       // no-op
     }
     setIsDragging(false);
-
-    if (!hasFaces) return;
-
-    // 🔒 Snap automatique sur la face la plus proche
-    setRotation((prev) => {
-      let bestIndex = 0;
-      let bestScore = Number.POSITIVE_INFINITY;
-
-      FACE_PRESETS.forEach((preset, index) => {
-        const dx = prev.x - preset.x;
-        const dy = prev.y - preset.y;
-        const score = dx * dx + dy * dy;
-        if (score < bestScore) {
-          bestScore = score;
-          bestIndex = index;
-        }
-      });
-
-      const snapped = FACE_PRESETS[bestIndex] ?? prev;
-
-      setActiveFaceIndex(bestIndex);
-      rotationStartRef.current = snapped;
-
-      return snapped;
-    });
+    // Pas de snap pour l’instant : on garde la position choisie par l’utilisateur.
   }
 
   return (
@@ -270,9 +246,9 @@ export default function MagicDisplayPreviewShell({
                         const depth = size / 2;
 
                         const transforms = [
-                          `rotateX(90deg) translateZ(${depth}px)`, // Face 1 : top
-                          `rotateY(0deg) translateZ(${depth}px)`, // Face 2 : front
-                          `rotateY(90deg) translateZ(${depth}px)`, // Face 3 : right
+                          `rotateX(90deg) translateZ(${depth}px)`,  // Face 1 : top
+                          `rotateY(0deg) translateZ(${depth}px)`,   // Face 2 : front
+                          `rotateY(90deg) translateZ(${depth}px)`,  // Face 3 : right
                           `rotateY(180deg) translateZ(${depth}px)`, // Face 4 : back
                           `rotateY(-90deg) translateZ(${depth}px)`, // Face 5 : left
                           `rotateX(-90deg) translateZ(${depth}px)`, // Face 6 : bottom
