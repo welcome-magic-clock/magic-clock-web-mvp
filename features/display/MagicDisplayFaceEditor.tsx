@@ -19,6 +19,27 @@ type MagicDisplayFaceEditorProps = {
   faceId?: number;
   faceLabel?: string;
   onBack?: () => void;
+
+  /**
+   * 🔁 Callback pour remonter l'état de la face vers le parent
+   * afin d'alimenter display.faces[...] (MagicDisplay).
+   */
+  onFaceChange?: (payload: {
+    faceId: number;
+    faceLabel?: string;
+    segmentCount: number;
+    segments: {
+      id: number;
+      title: string;
+      description?: string;
+      notes?: string;
+      media?: {
+        type: MediaType;
+        url: string;
+        filename?: string;
+      }[];
+    }[];
+  }) => void;
 };
 
 type Segment = {
@@ -219,6 +240,7 @@ export default function MagicDisplayFaceEditor({
   faceId = 1,
   faceLabel = "Face 1",
   onBack,
+  onFaceChange,
 }: MagicDisplayFaceEditorProps) {
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
     [faceId]: {
@@ -310,15 +332,60 @@ export default function MagicDisplayFaceEditor({
     return () => window.removeEventListener("resize", compute);
   }, [segmentCount]);
 
+  /**
+   * 🔁 Transforme l'état interne de la face en payload simplifié
+   * utilisable pour display.faces[...] (MagicDisplayPreview).
+   */
+  function emitFaceChangeFromState(state: FaceState) {
+    if (!onFaceChange) return;
+
+    const segmentsForDisplay = state.segments
+      .slice(0, state.segmentCount)
+      .map((seg) => {
+        const hasMedia = !!seg.mediaUrl;
+        const media = hasMedia
+          ? [
+              {
+                type: (seg.mediaType ?? "photo") as MediaType,
+                url: seg.mediaUrl as string,
+                filename: undefined,
+              },
+            ]
+          : [];
+
+        return {
+          id: seg.id,
+          title: seg.label,
+          description: "",
+          notes: seg.notes,
+          media,
+        };
+      });
+
+    onFaceChange({
+      faceId: state.faceId,
+      faceLabel,
+      segmentCount: state.segmentCount,
+      segments: segmentsForDisplay,
+    });
+  }
+
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
       const existing = prev[faceId] ?? fallbackFace;
       const updated = updater(existing);
+
+      // 🔔 À CHAQUE MISE À JOUR → remonter au parent
+      emitFaceChangeFromState(updated);
+
       return { ...prev, [faceId]: updated };
     });
   }
 
-  function updateSegment(segmentId: number, updater: (prev: Segment) => Segment) {
+  function updateSegment(
+    segmentId: number,
+    updater: (prev: Segment) => Segment,
+  ) {
     updateFace((existing) => {
       const updatedSegments = existing.segments.map((s) =>
         s.id === segmentId ? updater(s) : s,
@@ -623,40 +690,40 @@ export default function MagicDisplayFaceEditor({
 
         {/* Liste + détail */}
         <div className="space-y-4">
-         {/* Liste des segments */}
-<div className="space-y-2">
-  {segments.slice(0, segmentCount).map((seg) => {
-    const isSelected = seg.id === selectedId;
-    return (
-      <button
-        key={seg.id}
-        type="button"
-        onClick={() => setSelectedId(seg.id)}
-        className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition ${
-          isSelected
-            ? "border-brand-500 bg-brand-50/70"
-            : "border-transparent bg-slate-50 hover:border-slate-200"
-        }`}
-      >
-        <div className="min-w-0">
-          <p className="font-medium text-slate-800">
-            Segment {seg.id}
-          </p>
-          {seg.label && (
-            <p className="mt-0.5 truncate text-[11px] text-slate-500">
-              {seg.label}
-            </p>
-          )}
-        </div>
-        <span
-          className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-            seg.status,
-          )}`}
-        />
-      </button>
-    );
-  })}
-</div>
+          {/* Liste des segments */}
+          <div className="space-y-2">
+            {segments.slice(0, segmentCount).map((seg) => {
+              const isSelected = seg.id === selectedId;
+              return (
+                <button
+                  key={seg.id}
+                  type="button"
+                  onClick={() => setSelectedId(seg.id)}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs transition ${
+                    isSelected
+                      ? "border-brand-500 bg-brand-50/70"
+                      : "border-transparent bg-slate-50 hover:border-slate-200"
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-800">
+                      Segment {seg.id}
+                    </p>
+                    {seg.label && (
+                      <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                        {seg.label}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
+                      seg.status,
+                    )}`}
+                  />
+                </button>
+              );
+            })}
+          </div>
 
           {/* Détail du segment sélectionné */}
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
