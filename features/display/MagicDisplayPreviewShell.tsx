@@ -53,21 +53,22 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
 }
 
 /**
-// Presets de rotation pour chaque face (vue 4/4, frontale).
-// index:
-//   0 -> Face 1 (TOP)
-//   1 -> Face 2 (FRONT)
-//   2 -> Face 3 (RIGHT)
-//   3 -> Face 4 (BACK)
-//   4 -> Face 5 (LEFT)
-//   5 -> Face 6 (BOTTOM)
+ * Presets de rotation pour chaque face (vue 4/4, frontale).
+ * index:
+ *   0 -> Face 1 (TOP)
+ *   1 -> Face 2 (FRONT)
+ *   2 -> Face 3 (RIGHT)
+ *   3 -> Face 4 (BACK)
+ *   4 -> Face 5 (LEFT)
+ *   5 -> Face 6 (BOTTOM)
+ */
 const FACE_PRESETS = [
-  { x: -90, y: 0 },   // top
-  { x: 0,   y: 0 },   // front (Face 2)
-  { x: 0,   y: 90 },  // right (Face 3)
-  { x: 0,   y: 180 }, // back  (Face 4)
-  { x: 0,   y: 270 }, // ✅ left (Face 5) → 270° au lieu de -90°
-  { x: 90,  y: 0 },   // bottom (Face 6)
+  { x: -90, y: 0 }, // top
+  { x: 0, y: 0 }, // front
+  { x: 0, y: 90 }, // right
+  { x: 0, y: 180 }, // back
+  { x: 0, y: 270 }, // left (au lieu de -90 pour garder la rotation dans le même sens)
+  { x: 90, y: 0 }, // bottom
 ];
 
 const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
@@ -183,7 +184,6 @@ export default function MagicDisplayPreviewShell({
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
-        {/* Haut : retour + titre */}
         <header className="mb-6 flex items-center justify-between gap-3">
           <BackButton
             fallbackHref="/magic-display"
@@ -263,10 +263,7 @@ export default function MagicDisplayPreviewShell({
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
-                            : Array.from(
-                                { length: 6 },
-                                (_, i) => faces[i % faces.length],
-                              );
+                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
                         const size = 220; // cube parfaitement carré 220×220
                         const depth = size / 2;
@@ -276,7 +273,7 @@ export default function MagicDisplayPreviewShell({
                           `rotateY(0deg) translateZ(${depth}px)`, // Face 2 : front
                           `rotateY(90deg) translateZ(${depth}px)`, // Face 3 : right
                           `rotateY(180deg) translateZ(${depth}px)`, // Face 4 : back
-                          `rotateY(-90deg) translateZ(${depth}px)`, // Face 5 : left
+                          `rotateY(270deg) translateZ(${depth}px)`, // Face 5 : left
                           `rotateX(-90deg) translateZ(${depth}px)`, // Face 6 : bottom
                         ];
 
