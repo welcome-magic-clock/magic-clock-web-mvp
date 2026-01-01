@@ -77,7 +77,7 @@ function normalizeAngle(angle: number): number {
  *   - front :  rotateY(0deg)   => preset y =   0
  *   - right :  rotateY(90deg)  => preset y =  -90
  *   - back :   rotateY(180deg) => preset y = -180
- *   - left :   rotateY(-90deg) => preset y =  90 (≡ -270 pour une interpolation courte)
+ *   - left :   rotateY(-90deg) => preset y = -270 (interpolation courte)
  *   - top :    rotateX(90deg)  => preset x =  -90
  *   - bottom:  rotateX(-90deg) => preset x =  +90
  */
@@ -86,12 +86,13 @@ const FACE_PRESETS: { x: number; y: number }[] = [
   { x: 0,   y: 0 },    // index 1 : front (Face 2)
   { x: 0,   y: -90 },  // index 2 : right (Face 3)
   { x: 0,   y: -180 }, // index 3 : back (Face 4)
-  { x: 0,   y: -270 }, // index 4 : left (Face 5) ✅ fix
+  { x: 0,   y: -270 }, // index 4 : left (Face 5)
   { x: 90,  y: 0 },    // index 5 : bottom (Face 6)
 ];
 
 const INITIAL_FACE_INDEX = 1; // Face 2 (front)
 const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
+
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
@@ -156,11 +157,11 @@ export default function MagicDisplayPreviewShell({
     const dy = e.clientY - dragStartRef.current.y;
     const factor = 0.4;
 
-    // X = bas/haut (on garde la logique actuelle)
+    // X = bas/haut
     const nextX = rotationStartRef.current.x - dy * factor;
 
-    // Y = gauche/droite → IMPORTANT : drag vers la droite => angle Y POSITIF
-    let nextY = rotationStartRef.current.y + dx * factor;
+    // Y = gauche/droite → drag vers la droite => angle Y POSITIF
+    const nextY = rotationStartRef.current.y + dx * factor;
 
     const clampedX = Math.max(-88, Math.min(88, nextX));
     const wrappedY = normalizeAngle(nextY);
@@ -276,53 +277,54 @@ export default function MagicDisplayPreviewShell({
                     </p>
                   </div>
 
-                 {/* Cube 3D central */}
-<div className="relative mx-auto aspect-square w-full max-w-[340px] sm:max-w-[420px] [perspective:1400px]">
-  <div
-    className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-    style={{
-      // on enlève le scale(0.9) pour profiter du maximum d'espace
-      transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-    }}
-    onPointerDown={handleCubePointerDown}
-    onPointerMove={handleCubePointerMove}
-    onPointerUp={handleCubePointerUp}
-    onPointerLeave={handleCubePointerUp}
-  >
-    {(() => {
-      // Toujours 6 faces pour le cube
-      const facesForCube: PreviewFace[] =
-        faces.length >= 6
-          ? faces.slice(0, 6)
-          : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                  {/* Cube 3D central (agrandi) */}
+                  <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
+                    <div
+                      className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+                      style={{
+                        // plein format, sans scale(0.9)
+                        transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                      }}
+                      onPointerDown={handleCubePointerDown}
+                      onPointerMove={handleCubePointerMove}
+                      onPointerUp={handleCubePointerUp}
+                      onPointerLeave={handleCubePointerUp}
+                    >
+                      {(() => {
+                        // Toujours 6 faces pour le cube
+                        const facesForCube: PreviewFace[] =
+                          faces.length >= 6
+                            ? faces.slice(0, 6)
+                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-      // 🔥 Taille du cube agrandie pour mobile
-      const size = 280; // au lieu de 220
-      const depth = size / 2;
+                        // Taille du cube agrandie
+                        const size = 280;
+                        const depth = size / 2;
 
-      const transforms = [
-        `rotateX(90deg) translateZ(${depth}px)`,  // top
-        `rotateY(0deg) translateZ(${depth}px)`,  // front
-        `rotateY(90deg) translateZ(${depth}px)`, // right
-        `rotateY(180deg) translateZ(${depth}px)`,// back
-        `rotateY(-90deg) translateZ(${depth}px)`,// left
-        `rotateX(-90deg) translateZ(${depth}px)`,// bottom
-      ];
+                        // Alignement 1–1 avec FACE_PRESETS
+                        const transforms = [
+                          `rotateX(90deg) translateZ(${depth}px)`,  // top (Face 1)
+                          `rotateY(0deg) translateZ(${depth}px)`,  // front (Face 2)
+                          `rotateY(90deg) translateZ(${depth}px)`, // right (Face 3)
+                          `rotateY(180deg) translateZ(${depth}px)`,// back (Face 4)
+                          `rotateY(-90deg) translateZ(${depth}px)`,// left (Face 5)
+                          `rotateX(-90deg) translateZ(${depth}px)`,// bottom (Face 6)
+                        ];
 
-      return facesForCube.map((face, index) => {
-        const imgUrl = getFaceMainPhotoUrl(face);
-        const label = face.title || `Face ${index + 1}`;
+                        return facesForCube.map((face, index) => {
+                          const imgUrl = getFaceMainPhotoUrl(face);
+                          const label = face.title || `Face ${index + 1}`;
 
-        return (
-          <div
-            key={index}
-            className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
-            style={{
-              width: size,
-              height: size,
-              transform: `translate(-50%, -50%) ${transforms[index]}`,
-            }}
-          >
+                          return (
+                            <div
+                              key={index}
+                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+                              style={{
+                                width: size,
+                                height: size,
+                                transform: `translate(-50%, -50%) ${transforms[index]}`,
+                              }}
+                            >
                               {imgUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -368,8 +370,8 @@ export default function MagicDisplayPreviewShell({
                       })()}
                     </div>
 
-                    {/* halo global */}
-                    <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_60%)]" />
+                    {/* Halo agrandi */}
+                    <div className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
                   </div>
 
                   {/* Note pédagogique sous le cube */}
@@ -377,6 +379,18 @@ export default function MagicDisplayPreviewShell({
                     {activeFace?.notes && activeFace.notes.trim().length > 0
                       ? activeFace.notes
                       : "Pas de notes pédagogiques, tout est dit dans le titre."}
+                  </div>
+
+                  {/* Bouton plein écran (ouvre la face active) */}
+                  <div className="mt-3 flex w-full max-w-xl justify-end">
+                    <button
+                      type="button"
+                      onClick={() => onOpenFace?.(safeIndex)}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      <span>Plein écran</span>
+                      <span aria-hidden>⤢</span>
+                    </button>
                   </div>
                 </div>
               </div>
