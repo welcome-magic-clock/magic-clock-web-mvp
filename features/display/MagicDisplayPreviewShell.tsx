@@ -24,7 +24,7 @@ export type PreviewSegment = {
 
 export type PreviewFace = {
   title: string;
-  description?: string;  // 👈 on ajoute cette ligne
+  description?: string;
   notes?: string;
   segments: PreviewSegment[];
 };
@@ -274,7 +274,7 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                               {/* Bloc centré : titre + cube + note pédagogique */}
+                {/* Bloc centré : titre + cube + note pédagogique */}
                 <div className="mx-auto mt-2 flex flex-col items-center">
                   {/* Titre de la face active au-dessus du cube */}
                   <div className="mb-3 text-center">
@@ -326,8 +326,8 @@ export default function MagicDisplayPreviewShell({
 
                   {/* Cube 3D central (agrandi) */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-                    {/* 🌕 Halo derrière le cube, version pâle */}
-                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
+                    {/* 🌕 Halo derrière le cube, version plus pâle */}
+                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
 
                     {/* 🧊 Cube au-dessus */}
                     <div
@@ -345,7 +345,9 @@ export default function MagicDisplayPreviewShell({
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                            : Array.from({ length: 6 }, (_, i) =>
+                                faces[i % faces.length],
+                              );
 
                         const size = 280;
                         const depth = size / 2;
@@ -419,7 +421,9 @@ export default function MagicDisplayPreviewShell({
                                 <span className="text-xs" aria-hidden>
                                   ↗︎
                                 </span>
-                                <span className="sr-only">Ouvrir cette face</span>
+                                <span className="sr-only">
+                                  Ouvrir cette face
+                                </span>
                               </button>
                             </div>
                           );
@@ -435,6 +439,7 @@ export default function MagicDisplayPreviewShell({
                       : "Pas de notes pédagogiques, tout est dit dans le titre."}
                   </div>
                 </div>
+              </div>
 
               {/* Flèches mobile */}
               <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
