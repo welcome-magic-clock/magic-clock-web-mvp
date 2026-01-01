@@ -37,8 +37,7 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  /** Gardé pour compat éventuelle */
-  onOpenFace?: (faceIndex: number) => void;
+  onOpenFace?: (faceIndex: number) => void; // gardé pour compat, mais plus utilisé
 };
 
 /**
@@ -67,6 +66,16 @@ function normalizeAngle(angle: number): number {
 
 /**
  * Presets de rotation pour chaque face, vue 4/4 frontale.
+ *
+ * Index / Face :
+ *   0 -> Face 1 (TOP)
+ *   1 -> Face 2 (FRONT)
+ *   2 -> Face 3 (RIGHT)
+ *   3 -> Face 4 (BACK)
+ *   4 -> Face 5 (LEFT)
+ *   5 -> Face 6 (BOTTOM)
+ *
+ * On prend l'INVERSE des rotations locales du cube.
  */
 const FACE_PRESETS: { x: number; y: number }[] = [
   { x: -90, y: 0 }, // 0 : top (Face 1)
@@ -106,17 +115,23 @@ export default function MagicDisplayPreviewShell({
     null,
   );
 
-  // Face + segment dont on affiche le détail
-  const [openedFaceForDetails, setOpenedFaceForDetails] =
-    useState<number | null>(null);
-  const [openedSegmentId, setOpenedSegmentId] =
-    useState<string | number | null>(null);
+  // 👉 Nouvelle logique : face & segment dont on affiche le contenu
+  const [openedFaceForDetails, setOpenedFaceForDetails] = useState<
+    number | null
+  >(null);
+  const [openedSegmentId, setOpenedSegmentId] = useState<
+    string | number | null
+  >(null);
+
+  // 👉 Etat de flip de la face (porte qui pivote)
+  const [isFaceFlipped, setIsFaceFlipped] = useState(false);
 
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
+  // Face + segment actifs pour le panneau "Contenu du segment sélectionné"
   const detailFace =
     openedFaceForDetails !== null ? faces[openedFaceForDetails] : undefined;
   const detailSegments: PreviewSegment[] = detailFace?.segments ?? [];
@@ -164,7 +179,8 @@ export default function MagicDisplayPreviewShell({
     setRotation(preset);
     rotationStartRef.current = preset;
 
-    // si on change de face, on referme l’aperçu détaillé
+    // si on navigue, on referme la "porte"
+    setIsFaceFlipped(false);
     setOpenedFaceForDetails(null);
     setOpenedSegmentId(null);
   }
@@ -179,7 +195,7 @@ export default function MagicDisplayPreviewShell({
 
   // 🎮 Drag manuel sur le cube
   function handleCubePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (!hasFaces) return;
+    if (!hasFaces || isFaceFlipped) return; // pas de drag quand la face est retournée
     e.currentTarget.setPointerCapture(e.pointerId);
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY };
@@ -216,7 +232,7 @@ export default function MagicDisplayPreviewShell({
 
     if (!hasFaces) return;
 
-    // 🔒 Snap automatique sur le preset le plus proche
+    // 🔒 Snap automatique sur le preset le plus proche (distance angulaire circulaire)
     setRotation((prev) => {
       const prevX = prev.x;
       const prevY = normalizeAngle(prev.y);
@@ -229,7 +245,7 @@ export default function MagicDisplayPreviewShell({
         const targetY = normalizeAngle(preset.y);
 
         const dx = prevX - targetX;
-        const dy = normalizeAngle(prevY - targetY);
+        const dy = normalizeAngle(prevY - targetY); // distance circulaire sur Y
         const score = dx * dx + dy * dy;
 
         if (score < bestScore) {
@@ -282,7 +298,7 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D – cube + face active */}
+            {/* ⭐️ Scène 3D – cube + titre */}
             <section className="flex flex-1 flex-col items-center gap-6">
               <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
@@ -309,9 +325,9 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Bloc centré : titre + cube */}
+                {/* Bloc centré : titre + cube/preview */}
                 <div className="mx-auto mt-2 flex flex-col items-center">
-                  {/* Titre de la face active au-dessus du cube */}
+                  {/* Titre de la face active */}
                   <div className="mb-3 text-center">
                     <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
                       Face active
@@ -324,6 +340,7 @@ export default function MagicDisplayPreviewShell({
                       const rawDescription =
                         activeFace?.segments?.[0]?.description?.trim();
 
+                      // On évite de répéter "Face 2" si c'est juste le titre par défaut
                       let displayTitle: string | null = null;
 
                       if (
@@ -356,229 +373,187 @@ export default function MagicDisplayPreviewShell({
                     })()}
                   </div>
 
-                  {/* Zone cube + preview derrière */}
+                  {/* 🎬 Container de flip : front = cube, back = FacePreview */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-                    {/* 🌕 Halo */}
-                    <div className="pointer-events-none absolute -inset-8 -z-20 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
+                    {/* Halo derrière */}
+                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
 
-                    {/* Cercle FacePreview derrière la face (inline) */}
-                    {detailFace && (
-                      <div className="absolute inset-0 z-0 flex items-center justify-center">
-                        <div className="h-[86%] w-[86%]">
-                          <MagicDisplayFacePreview
-                            face={detailFace}
-                            faceIndex={openedFaceForDetails!}
-                            openedSegmentId={openedSegmentId}
-                            onSegmentChange={(id) => setOpenedSegmentId(id)}
-                            creatorName="Créateur Magic Clock"
-                            creatorInitials="MC"
-                            variant="inline"
-                          />
+                    {/* Inner qui pivote comme une porte verticale */}
+                    <div
+                      className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+                      style={{
+                        transform: isFaceFlipped
+                          ? "rotateY(180deg)"
+                          : "rotateY(0deg)",
+                      }}
+                    >
+                      {/* FACE AVANT : cube 3D */}
+                      <div
+                        className="absolute inset-0 [backface-visibility:hidden]"
+                        style={{
+                          pointerEvents: isFaceFlipped ? "none" : "auto",
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+                          style={{
+                            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                          }}
+                          onPointerDown={handleCubePointerDown}
+                          onPointerMove={handleCubePointerMove}
+                          onPointerUp={handleCubePointerUp}
+                          onPointerLeave={handleCubePointerUp}
+                        >
+                          {(() => {
+                            // Toujours 6 faces pour le cube
+                            const facesForCube: PreviewFace[] =
+                              faces.length >= 6
+                                ? faces.slice(0, 6)
+                                : Array.from({ length: 6 }, (_, i) =>
+                                    faces[i % faces.length],
+                                  );
+
+                            const size = 280;
+                            const depth = size / 2;
+
+                            // Alignement 1–1 avec FACE_PRESETS
+                            const transforms = [
+                              `rotateX(90deg) translateZ(${depth}px)`, // top (Face 1)
+                              `rotateY(0deg) translateZ(${depth}px)`, // front (Face 2)
+                              `rotateY(90deg) translateZ(${depth}px)`, // right (Face 3)
+                              `rotateY(180deg) translateZ(${depth}px)`, // back (Face 4)
+                              `rotateY(-90deg) translateZ(${depth}px)`, // left (Face 5)
+                              `rotateX(-90deg) translateZ(${depth}px)`, // bottom (Face 6)
+                            ];
+
+                            return facesForCube.map((face, index) => {
+                              const imgUrl = getFaceMainPhotoUrl(face);
+                              const label = face.title || `Face ${index + 1}`;
+
+                              return (
+                                <div
+                                  key={index}
+                                  className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+                                  style={{
+                                    width: size,
+                                    height: size,
+                                    transform: `translate(-50%, -50%) ${transforms[index]}`,
+                                  }}
+                                >
+                                  {imgUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={imgUrl}
+                                      alt={label}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+                                      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
+                                        Face {index + 1}
+                                      </p>
+                                      <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
+                                        {label}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {/* Légère ombre en bas de la face */}
+                                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
+                                  {/* Bouton plein écran en bas à gauche */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setFullScreenFaceIndex(index);
+                                    }}
+                                    className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                  >
+                                    <span aria-hidden>⤢</span>
+                                    <span className="sr-only">
+                                      Afficher cette face en plein écran
+                                    </span>
+                                  </button>
+
+                                  {/* Bouton "ouvrir cette face" → pivot + preview */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+
+                                      // on fige bien la face active sur celle qu'on ouvre
+                                      setActiveFaceIndex(index);
+                                      const preset =
+                                        FACE_PRESETS[index] ??
+                                        FACE_PRESETS[INITIAL_FACE_INDEX];
+                                      setRotation(preset);
+                                      rotationStartRef.current = preset;
+
+                                      // on choisit la face et le 1er segment pour le détail
+                                      setOpenedFaceForDetails(index);
+                                      const f = faces[index];
+                                      const segs: PreviewSegment[] =
+                                        f?.segments ?? [];
+                                      const firstId =
+                                        segs[0]?.id ??
+                                        (segs.length > 0
+                                          ? (segs[0] as any).id ?? 0
+                                          : null);
+
+                                      setOpenedSegmentId(
+                                        firstId ?? null,
+                                      );
+
+                                      // et on "pousse" la porte → affiche le cercle derrière
+                                      setIsFaceFlipped(true);
+                                    }}
+                                    className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                  >
+                                    <span className="text-xs" aria-hidden>
+                                      ↗︎
+                                    </span>
+                                    <span className="sr-only">
+                                      Voir le détail de cette face
+                                    </span>
+                                  </button>
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
-                    )}
 
-                    {/* 🧊 Cube au-dessus */}
-                    <div
-                      className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                      style={{
-                        transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                      }}
-                      onPointerDown={handleCubePointerDown}
-                      onPointerMove={handleCubePointerMove}
-                      onPointerUp={handleCubePointerUp}
-                      onPointerLeave={handleCubePointerUp}
-                    >
-                      {(() => {
-                        // Toujours 6 faces pour le cube
-                        const facesForCube: PreviewFace[] =
-                          faces.length >= 6
-                            ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) =>
-                                faces[i % faces.length],
-                              );
-
-                        const size = 280;
-                        const depth = size / 2;
-
-                        const transforms = [
-                          `rotateX(90deg) translateZ(${depth}px)`, // top
-                          `rotateY(0deg) translateZ(${depth}px)`, // front
-                          `rotateY(90deg) translateZ(${depth}px)`, // right
-                          `rotateY(180deg) translateZ(${depth}px)`, // back
-                          `rotateY(-90deg) translateZ(${depth}px)`, // left
-                          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
-                        ];
-
-                        return facesForCube.map((face, index) => {
-                          const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
-                          const isDoorOpen =
-                            openedFaceForDetails === index;
-
-                          return (
-                            <div
-                              key={index}
-                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden] transition-transform duration-500 ease-out"
-                              style={{
-                                width: size,
-                                height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]}${
-                                  isDoorOpen ? " rotateX(-95deg)" : ""
-                                }`,
-                                transformOrigin: "50% 0%", // pivot en haut
-                              }}
-                            >
-                              {imgUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={imgUrl}
-                                  alt={label}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-                                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                                    Face {index + 1}
-                                  </p>
-                                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
-                                    {label}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* Ombre en bas */}
-                              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-                              {/* Bouton plein écran */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setFullScreenFaceIndex(index);
-                                }}
-                                className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
-                              >
-                                <span aria-hidden>⤢</span>
-                                <span className="sr-only">
-                                  Afficher cette face en plein écran
-                                </span>
-                              </button>
-
-                              {/* Bouton ouvrir cette face → pivot + preview + contenu */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenedFaceForDetails(index);
-
-                                  const f = faces[index];
-                                  const segs: PreviewSegment[] =
-                                    f?.segments ?? [];
-                                  const first = segs[0];
-
-                                  const firstId =
-                                    (first?.id as any) ??
-                                    (segs.length > 0
-                                      ? (segs[0] as any).id ?? 0
-                                      : null);
-
-                                  setOpenedSegmentId(firstId ?? null);
-                                }}
-                                className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
-                              >
-                                <span className="text-xs" aria-hidden>
-                                  ↗︎
-                                </span>
-                                <span className="sr-only">
-                                  Voir le détail de cette face
-                                </span>
-                              </button>
+                      {/* FACE ARRIÈRE : cercle / aiguille en mode FacePreview */}
+                      <div
+                        className="absolute inset-0 [backface-visibility:hidden]"
+                        style={{
+                          transform: "rotateY(180deg)",
+                          pointerEvents: isFaceFlipped ? "auto" : "none",
+                        }}
+                      >
+                        {detailFace && (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <div className="h-[88%] w-[88%]">
+                              <MagicDisplayFacePreview
+                                face={detailFace}
+                                faceIndex={openedFaceForDetails!}
+                                openedSegmentId={openedSegmentId}
+                                onSegmentChange={(id) =>
+                                  setOpenedSegmentId(id)
+                                }
+                                // Cohérence avec l'Editor : Aiko Tanaka
+                                creatorName="Aiko Tanaka"
+                                creatorInitials="AT"
+                              />
                             </div>
-                          );
-                        });
-                      })()}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* 📝 Bloc "Contenu du segment sélectionné" (sans cercle dessous) */}
-                  {detailFace &&
-                    detailSegments.length > 0 &&
-                    activeDetailSegment && (
-                      <div className="mt-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
-                              Contenu du segment sélectionné
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              Face {openedFaceForDetails! + 1} ·{" "}
-                              {detailFace.title?.trim() || "Sans titre"}
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenedFaceForDetails(null);
-                              setOpenedSegmentId(null);
-                            }}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
-                          >
-                            Masquer
-                          </button>
-                        </div>
-
-                        {/* Liste de segments sous forme de puces */}
-                        <div className="mb-3 flex flex-wrap gap-2">
-                          {detailSegments.map((seg, index) => {
-                            const id =
-                              (seg as any).id ?? (seg as any).key ?? index;
-                            const label =
-                              (seg.title as string | undefined)?.trim() ||
-                              `Segment ${index + 1}`;
-                            const selected =
-                              openedSegmentId === id ||
-                              activeDetailIndex === index;
-
-                            return (
-                              <button
-                                key={id}
-                                type="button"
-                                onClick={() => setOpenedSegmentId(id)}
-                                className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] transition ${
-                                  selected
-                                    ? "border-brand-400 bg-brand-500/10 text-brand-600"
-                                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Média principal */}
-                        <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          {renderSegmentMedia(activeDetailSegment)}
-                        </div>
-
-                        {/* Notes du segment */}
-                        <div className="space-y-1">
-                          {segmentTitle && (
-                            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                              {segmentTitle}
-                            </p>
-                          )}
-                          <p className="whitespace-pre-line text-[13px] text-slate-700">
-                            {segmentNotes ||
-                              "Pas de notes pédagogiques, tout est dit dans le titre."}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                  {/* Note pédagogique globale (si aucune face ouverte, on garde) */}
+                  {/* Note pédagogique de la face (globale) */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
                     {activeFace?.notes && activeFace.notes.trim().length > 0
                       ? activeFace.notes
@@ -610,6 +585,85 @@ export default function MagicDisplayPreviewShell({
                 </button>
               </div>
             </section>
+
+            {/* 📝 Bloc "Contenu du segment sélectionné" (sous la zone cube/preview) */}
+            {detailFace && detailSegments.length > 0 && activeDetailSegment && (
+              <section className="mt-6 flex w-full justify-center">
+                <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                        Contenu du segment sélectionné
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Face {openedFaceForDetails! + 1} ·{" "}
+                        {detailFace.title?.trim() || "Sans titre"}
+                      </p>
+                    </div>
+
+                    {/* Masquer = refermer la porte + cacher les détails */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsFaceFlipped(false);
+                        setOpenedFaceForDetails(null);
+                        setOpenedSegmentId(null);
+                      }}
+                      className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      Masquer
+                    </button>
+                  </div>
+
+                  {/* Liste de segments sous forme de puces */}
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {detailSegments.map((seg, index) => {
+                      const id =
+                        (seg as any).id ?? (seg as any).key ?? index;
+                      const label =
+                        (seg.title as string | undefined)?.trim() ||
+                        `Segment ${index + 1}`;
+                      const selected =
+                        openedSegmentId === id ||
+                        activeDetailIndex === index;
+
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setOpenedSegmentId(id)}
+                          className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] transition ${
+                            selected
+                              ? "border-brand-400 bg-brand-500/10 text-brand-600"
+                              : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Média principal */}
+                  <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    {renderSegmentMedia(activeDetailSegment)}
+                  </div>
+
+                  {/* Notes du segment */}
+                  <div className="space-y-1">
+                    {segmentTitle && (
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                        {segmentTitle}
+                      </p>
+                    )}
+                    <p className="whitespace-pre-line text-[13px] text-slate-700">
+                      {segmentNotes ||
+                        "Pas de notes pédagogiques, tout est dit dans le titre."}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
           </>
         )}
       </div>
