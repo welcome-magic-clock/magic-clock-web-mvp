@@ -363,18 +363,18 @@ export default function MagicDisplayPreviewShell({
                                 </p>
                               </div>
 
-                              {/* Bouton plein écran en bas à droite de la face */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setFullScreenFaceIndex(index);
-                                }}
-                                className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/95 px-2.5 py-1 text-[10px] font-medium text-slate-900 shadow-sm backdrop-blur hover:bg-white"
-                              >
-                                <span>Plein écran</span>
-                                <span aria-hidden>⤢</span>
-                              </button>
+                             {/* Bouton plein écran en bas à droite de la face (icône seule) */}
+<button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation();
+    setFullScreenFaceIndex(index);
+  }}
+  className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+>
+  <span aria-hidden>⤢</span>
+  <span className="sr-only">Afficher cette face en plein écran</span>
+</button>
                             </div>
                           );
                         });
