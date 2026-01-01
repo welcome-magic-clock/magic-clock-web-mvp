@@ -3,7 +3,7 @@
 
 import { useRef, useState } from "react";
 import type React from "react";
-import { useRouter } from "next/navigation";
+import BackButton from "@/components/navigation/BackButton";
 
 export type MediaKind = "photo" | "video" | "file";
 
@@ -34,7 +34,7 @@ export type PreviewDisplay = {
 
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
-  onBack: () => void; // encore présent pour compatibilité mais non utilisé
+  onBack: () => void; // plus utilisé mais gardé pour compatibilité
   onOpenFace?: (faceIndex: number) => void;
 };
 
@@ -72,8 +72,6 @@ function normalizeAngle(angle: number): number {
  *   3 -> Face 4 (BACK)
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
- *
- * On prend l'INVERSE des rotations locales du cube.
  */
 const FACE_PRESETS: { x: number; y: number }[] = [
   { x: -90, y: 0 }, // top (Face 1)
@@ -89,10 +87,9 @@ const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 
 export default function MagicDisplayPreviewShell({
   display,
+  onBack, // non utilisé, mais gardé dans la signature
   onOpenFace,
 }: MagicDisplayPreviewShellProps) {
-  const router = useRouter();
-
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
@@ -220,15 +217,10 @@ export default function MagicDisplayPreviewShell({
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
         {/* Haut : retour + titre */}
         <header className="mb-6 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/magic-display")}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
-          >
-            <span className="sr-only">Retour au Magic Display</span>
-            <span aria-hidden>←</span>
-          </button>
-
+          <BackButton
+            fallbackHref="/magic-display"
+            label="Retour au Magic Display"
+          />
           <div className="text-right text-[11px] sm:text-xs">
             <p className="font-medium uppercase tracking-[0.28em] text-slate-500">
               Visualiser mon Magic Clock
@@ -408,7 +400,7 @@ export default function MagicDisplayPreviewShell({
               </div>
 
               {/* Flèches mobile */}
-              <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
+              <div className="mt-4 flex items-center justifycenter gap-4 sm:hidden">
                 <button
                   type="button"
                   onClick={goPrevFace}
