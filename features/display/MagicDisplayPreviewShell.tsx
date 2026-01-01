@@ -63,15 +63,13 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   5 -> Face 6 (BOTTOM)
  */
 const FACE_PRESETS = [
-  { x: -90, y: 0 },   // top
-  { x: 0,   y: 0 },   // front
-  { x: 0,   y: 90 },  // right
-  { x: 0,   y: 180 }, // back
-  { x: 0,   y: -90 }, // left
-  { x: 90,  y: 0 },   // bottom
+  { x: -90, y: 0 }, // top
+  { x: 0, y: 0 }, // front
+  { x: 0, y: 90 }, // right
+  { x: 0, y: 180 }, // back
+  { x: 0, y: -90 }, // left
+  { x: 90, y: 0 }, // bottom
 ];
-
-const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
 
 const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
 
@@ -159,7 +157,7 @@ export default function MagicDisplayPreviewShell({
 
     if (!hasFaces) return;
 
-    // 🔒 Snap automatique sur le preset le plus proche (même logique que dans le cube d’édition)
+    // 🔒 Snap automatique sur le preset le plus proche
     setRotation((prev) => {
       let bestIndex = 0;
       let bestScore = Number.POSITIVE_INFINITY;
@@ -266,7 +264,10 @@ export default function MagicDisplayPreviewShell({
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                            : Array.from(
+                                { length: 6 },
+                                (_, i) => faces[i % faces.length],
+                              );
 
                         const size = 220; // cube parfaitement carré 220×220
                         const depth = size / 2;
@@ -316,7 +317,7 @@ export default function MagicDisplayPreviewShell({
                               <button
                                 type="button"
                                 onClick={() => onOpenFace?.(index)}
-                                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justifycenter rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
                                 <span className="text-xs" aria-hidden>
                                   ↗︎
