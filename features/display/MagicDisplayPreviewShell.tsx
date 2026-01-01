@@ -137,13 +137,16 @@ export default function MagicDisplayPreviewShell({
   const dy = e.clientY - dragStartRef.current.y;
   const factor = 0.4;
 
+  // X = haut / bas (on garde comme avant)
   const nextX = rotationStartRef.current.x - dy * factor;
-  const nextY = rotationStartRef.current.y - dx * factor; // sens inversé
+  // Y = gauche / droite → on remet le signe POSITIF
+  const nextY = rotationStartRef.current.y + dx * factor;
+
   const clampedX = Math.max(-88, Math.min(88, nextX));
 
   setRotation({ x: clampedX, y: nextY });
 }
-
+  
   function handleCubePointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (!isDragging) return;
     try {
