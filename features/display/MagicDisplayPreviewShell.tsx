@@ -63,15 +63,15 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   5 -> Face 6 (BOTTOM)
  */
 const FACE_PRESETS = [
-  { x: -90, y: 0 },  // top
-  { x: 0,   y: 0 },  // front
-  { x: 0,   y: 90 }, // right
-  { x: 0,   y: 180 },// back
-  { x: 0,   y: -90 },// left
-  { x: 90,  y: 0 },  // bottom
+  { x: -90, y: 0 },   // top
+  { x: 0,   y: 0 },   // front
+  { x: 0,   y: 90 },  // right
+  { x: 0,   y: 180 }, // back
+  { x: 0,   y: -90 }, // left
+  { x: 90,  y: 0 },   // bottom
 ];
 
-const INITIAL_ROTATION = FACE_PRESETS[1]; // Face 2 de face au chargement
+const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
 
 const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
 
