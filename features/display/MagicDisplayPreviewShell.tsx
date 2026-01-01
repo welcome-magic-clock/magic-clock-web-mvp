@@ -24,6 +24,7 @@ export type PreviewSegment = {
 
 export type PreviewFace = {
   title: string;
+  description?: string;  // 👈 on ajoute cette ligne
   notes?: string;
   segments: PreviewSegment[];
 };
@@ -276,20 +277,38 @@ export default function MagicDisplayPreviewShell({
                 {/* Bloc centré : titre + cube + note pédagogique */}
                 <div className="mx-auto mt-2 flex flex-col items-center">
                   {/* Titre de la face active au-dessus du cube */}
-                  <div className="mb-3 text-center">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
-                      Face active
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {`Face ${safeIndex + 1}`}
-                    </p>
-                    {activeFace?.title && (
-                      <p className="mt-1 text-xs text-slate-500">
-                        {activeFace.title}
-                      </p>
-                    )}
-                  </div>
+<div className="mb-3 text-center">
+  <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
+    Face active
+  </p>
+  <p className="mt-1 text-sm font-semibold text-slate-900">
+    {`Face ${safeIndex + 1}`}
+  </p>
 
+  {(() => {
+    if (!activeFace) return null;
+
+    const rawDescription =
+      (activeFace as any).description as string | undefined;
+    const cleanedDescription = rawDescription?.trim();
+    const cleanedTitle = activeFace.title?.trim();
+
+    const subtitle =
+      cleanedDescription && cleanedDescription.length > 0
+        ? cleanedDescription
+        : cleanedTitle && cleanedTitle.length > 0
+          ? cleanedTitle
+          : undefined;
+
+    if (!subtitle) return null;
+
+    return (
+      <p className="mt-1 text-xs text-slate-500">
+        {subtitle}
+      </p>
+    );
+  })()}
+</div>
                   {/* Cube 3D central (agrandi) */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
                     <div
