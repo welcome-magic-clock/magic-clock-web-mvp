@@ -36,7 +36,7 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  onOpenFace?: (faceIndex: number) => void;
+  onOpenFace?: (faceIndex: number) => void; // on le garde pour plus tard si besoin
 };
 
 /**
@@ -73,8 +73,6 @@ function normalizeAngle(angle: number): number {
  *   3 -> Face 4 (BACK)
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
- *
- * On prend l'INVERSE des rotations locales du cube.
  */
 const FACE_PRESETS: { x: number; y: number }[] = [
   { x: -90, y: 0 }, // 0 : top (Face 1)
@@ -115,10 +113,28 @@ export default function MagicDisplayPreviewShell({
     null,
   );
 
+  // Face "ouverte" (effet porte) : index d'affichage (0 à 5) ou null
+  const [openedDisplayFaceIndex, setOpenedDisplayFaceIndex] = useState<number | null>(null);
+  const [openedSegmentId, setOpenedSegmentId] = useState<number | null>(null);
+
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
+
+  // Face/segments pour le panneau de détail sous le cube
+  let openedFace: PreviewFace | undefined;
+  if (openedDisplayFaceIndex !== null && hasFaces) {
+    // Si on a moins de 6 faces, on boucle
+    const realIndex =
+      faces.length >= 6
+        ? Math.min(openedDisplayFaceIndex, faces.length - 1)
+        : openedDisplayFaceIndex % faces.length;
+    openedFace = faces[realIndex];
+  }
+  const openedSegments = openedFace?.segments ?? [];
+  const activeSegment =
+    openedSegments.find((s) => s.id === openedSegmentId) ?? openedSegments[0] ?? null;
 
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
@@ -210,6 +226,35 @@ export default function MagicDisplayPreviewShell({
 
       return snapped;
     });
+  }
+
+  // 🔓 Ouverture d'une face (effet "porte" + panneau détails)
+  function handleOpenFace(index: number) {
+    if (!hasFaces) return;
+
+    // On aligne d'abord le cube sur la face choisie
+    const preset = FACE_PRESETS[index] ?? FACE_PRESETS[INITIAL_FACE_INDEX];
+    setRotation(preset);
+    rotationStartRef.current = preset;
+    setActiveFaceIndex(index);
+
+    // On marque cette face comme "ouverte" (pour l'animation locale)
+    setOpenedDisplayFaceIndex(index);
+
+    // On initialise le segment actif pour le panneau
+    if (faces.length > 0) {
+      const realIndex =
+        faces.length >= 6
+          ? Math.min(index, faces.length - 1)
+          : index % faces.length;
+      const face = faces[realIndex];
+      const firstSegment = face?.segments?.[0];
+      setOpenedSegmentId(firstSegment ? firstSegment.id : null);
+    }
+  }
+
+  function handleSelectSegment(segmentId: number) {
+    setOpenedSegmentId(segmentId);
   }
 
   return (
@@ -326,8 +371,8 @@ export default function MagicDisplayPreviewShell({
 
                   {/* Cube 3D central (agrandi) */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-                    {/* 🌕 Halo derrière le cube, version plus pâle */}
-                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
+                    {/* 🌕 Halo derrière le cube, version pâle */}
+                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
 
                     {/* 🧊 Cube au-dessus */}
                     <div
@@ -345,9 +390,7 @@ export default function MagicDisplayPreviewShell({
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) =>
-                                faces[i % faces.length],
-                              );
+                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
                         const size = 280;
                         const depth = size / 2;
@@ -365,6 +408,8 @@ export default function MagicDisplayPreviewShell({
                         return facesForCube.map((face, index) => {
                           const imgUrl = getFaceMainPhotoUrl(face);
                           const label = face.title || `Face ${index + 1}`;
+                          const isOpened = openedDisplayFaceIndex === index;
+                          const extraRotate = isOpened ? " rotateY(-95deg)" : "";
 
                           return (
                             <div
@@ -373,7 +418,9 @@ export default function MagicDisplayPreviewShell({
                               style={{
                                 width: size,
                                 height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]}`,
+                                transformOrigin: "center right",
+                                transform: `translate(-50%, -50%) ${transforms[index]}${extraRotate}`,
+                                transition: "transform 220ms ease-out",
                               }}
                             >
                               {imgUrl ? (
@@ -412,17 +459,21 @@ export default function MagicDisplayPreviewShell({
                                 </span>
                               </button>
 
-                              {/* Bouton éditeur (↗︎) en bas à droite */}
+                              {/* Bouton "ouvrir la face" (effet porte + panneau dessous) */}
                               <button
                                 type="button"
-                                onClick={() => onOpenFace?.(index)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenFace(index);
+                                  // onOpenFace?.(index); // on pourra le réutiliser plus tard si nécessaire
+                                }}
                                 className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
                                 <span className="text-xs" aria-hidden>
                                   ↗︎
                                 </span>
                                 <span className="sr-only">
-                                  Ouvrir cette face
+                                  Ouvrir la face (aperçu détaillé)
                                 </span>
                               </button>
                             </div>
@@ -439,6 +490,97 @@ export default function MagicDisplayPreviewShell({
                       : "Pas de notes pédagogiques, tout est dit dans le titre."}
                   </div>
                 </div>
+
+                {/* 🧩 Panneau de détail de la face ouverte */}
+                {openedFace && (
+                  <div className="mt-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-500">
+                          Face détaillée
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-900">
+                          {openedFace.title || "Face sans titre"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setOpenedDisplayFaceIndex(null)}
+                        className="inline-flex h-7 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-[11px] text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+                      >
+                        Fermer la face
+                      </button>
+                    </div>
+
+                    {openedSegments.length > 0 ? (
+                      <>
+                        {/* Tabs segments */}
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          {openedSegments.map((seg) => (
+                            <button
+                              key={seg.id}
+                              type="button"
+                              onClick={() => handleSelectSegment(seg.id)}
+                              className={[
+                                "inline-flex items-center rounded-full border px-3 py-1 text-[11px] transition",
+                                activeSegment && activeSegment.id === seg.id
+                                  ? "border-slate-800 bg-slate-900 text-slate-50"
+                                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                              ].join(" ")}
+                            >
+                              {seg.title || `Segment ${seg.id}`}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Contenu segment actif */}
+                        {activeSegment && (
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-[11px] text-slate-700">
+                            {activeSegment.description && (
+                              <p className="mb-1 text-[12px] font-medium text-slate-900">
+                                {activeSegment.description}
+                              </p>
+                            )}
+                            {activeSegment.notes && (
+                              <p className="mb-2 text-[11px] text-slate-600">
+                                {activeSegment.notes}
+                              </p>
+                            )}
+                            {activeSegment.media && activeSegment.media.length > 0 && (
+                              <ul className="mt-1 space-y-1">
+                                {activeSegment.media.map((m, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-2 py-1"
+                                  >
+                                    <span className="text-[11px] text-slate-600">
+                                      {m.filename || `${m.type.toUpperCase()} ${idx + 1}`}
+                                    </span>
+                                    <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                                      {m.type}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {!activeSegment.description &&
+                              !activeSegment.notes &&
+                              (!activeSegment.media ||
+                                activeSegment.media.length === 0) && (
+                                <p className="text-[11px] text-slate-500">
+                                  Aucun détail supplémentaire pour ce segment.
+                                </p>
+                              )}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-[11px] text-slate-500">
+                        Aucun segment n’est défini sur cette face.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Flèches mobile */}
