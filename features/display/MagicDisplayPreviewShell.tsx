@@ -274,68 +274,72 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Bloc centré : titre + cube + note pédagogique */}
+                               {/* Bloc centré : titre + cube + note pédagogique */}
                 <div className="mx-auto mt-2 flex flex-col items-center">
-                 {/* Titre de la face active au-dessus du cube */}
-<div className="mb-3 text-center">
-  <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
-    Face active
-  </p>
+                  {/* Titre de la face active au-dessus du cube */}
+                  <div className="mb-3 text-center">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
+                      Face active
+                    </p>
 
-  {(() => {
-    const faceNumberLabel = `Face ${safeIndex + 1}`;
+                    {(() => {
+                      const faceNumberLabel = `Face ${safeIndex + 1}`;
 
-    const rawTitle = activeFace?.title?.trim();
-    const rawDescription = activeFace?.segments?.[0]?.description?.trim();
+                      const rawTitle = activeFace?.title?.trim();
+                      const rawDescription =
+                        activeFace?.segments?.[0]?.description?.trim();
 
-    // On évite de répéter "Face 2" si c'est juste le titre par défaut
-    let displayTitle: string | null = null;
+                      // On évite de répéter "Face 2" si c'est juste le titre par défaut
+                      let displayTitle: string | null = null;
 
-    if (
-      rawTitle &&
-      rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
-    ) {
-      displayTitle = rawTitle;
-    } else if (
-      rawDescription &&
-      rawDescription.toLowerCase() !== faceNumberLabel.toLowerCase()
-    ) {
-      displayTitle = rawDescription;
-    }
+                      if (
+                        rawTitle &&
+                        rawTitle.toLowerCase() !==
+                          faceNumberLabel.toLowerCase()
+                      ) {
+                        displayTitle = rawTitle;
+                      } else if (
+                        rawDescription &&
+                        rawDescription.toLowerCase() !==
+                          faceNumberLabel.toLowerCase()
+                      ) {
+                        displayTitle = rawDescription;
+                      }
 
-    return (
-      <>
-        {/* Face 1 / Face 2 / Face 3... */}
-        <p className="mt-1 text-sm font-semibold text-slate-900">
-          {faceNumberLabel}
-        </p>
+                      return (
+                        <>
+                          {/* Face 1 / Face 2 / Face 3... */}
+                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                            {faceNumberLabel}
+                          </p>
 
-        {/* Titre saisi par le créateur, ex. "Préparation / sectionnement" */}
-        {displayTitle && (
-          <p className="mt-1 text-[13px] text-slate-600">
-            {displayTitle}
-          </p>
-        )}
-      </>
-    );
-  })()}
-</div>
-                {/* Cube 3D central (agrandi) */}
-<div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-  {/* 🌕 Halo derrière le cube */}
-  <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
+                          {/* Titre saisi par le créateur, ex. "Préparation / sectionnement" */}
+                          {displayTitle && (
+                            <p className="mt-1 text-[13px] text-slate-600">
+                              {displayTitle}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
 
-  {/* 🧊 Cube au-dessus */}
-  <div
-    className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-    style={{
-      transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-    }}
-    onPointerDown={handleCubePointerDown}
-    onPointerMove={handleCubePointerMove}
-    onPointerUp={handleCubePointerUp}
-    onPointerLeave={handleCubePointerUp}
-  >
+                  {/* Cube 3D central (agrandi) */}
+                  <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
+                    {/* 🌕 Halo derrière le cube, version pâle */}
+                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
+
+                    {/* 🧊 Cube au-dessus */}
+                    <div
+                      className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+                      style={{
+                        transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                      }}
+                      onPointerDown={handleCubePointerDown}
+                      onPointerMove={handleCubePointerMove}
+                      onPointerUp={handleCubePointerUp}
+                      onPointerLeave={handleCubePointerUp}
+                    >
                       {(() => {
                         // Toujours 6 faces pour le cube
                         const facesForCube: PreviewFace[] =
@@ -422,11 +426,7 @@ export default function MagicDisplayPreviewShell({
                         });
                       })()}
                     </div>
-
-                   {/* Halo agrandi, version plus pâle comme avant */}
-<div
-  className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]"
-/>
+                  </div>
 
                   {/* Note pédagogique */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
@@ -435,7 +435,6 @@ export default function MagicDisplayPreviewShell({
                       : "Pas de notes pédagogiques, tout est dit dans le titre."}
                   </div>
                 </div>
-              </div>
 
               {/* Flèches mobile */}
               <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
