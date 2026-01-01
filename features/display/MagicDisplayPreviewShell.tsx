@@ -217,25 +217,25 @@ export default function MagicDisplayPreviewShell({
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
         {/* Haut : retour + titre */}
-        <header className="mb-6 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
-          >
-            <span className="sr-only">Retour à l’écran précédent</span>
-            <span aria-hidden>←</span>
-          </button>
+      <header className="mb-6 flex items-center justify-between gap-3">
+  <button
+    type="button"
+    onClick={() => router.push("/magic-display")}
+    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+  >
+    <span className="sr-only">Retour au Magic Display</span>
+    <span aria-hidden>←</span>
+  </button>
 
-          <div className="text-right text-[11px] sm:text-xs">
-            <p className="font-medium uppercase tracking-[0.28em] text-slate-500">
-              Visualiser mon Magic Clock
-            </p>
-            <p className="mt-1 text-[10px] text-slate-400">
-              Vue utilisateur finale, 100&nbsp;% lecture seule.
-            </p>
-          </div>
-        </header>
+  <div className="text-right text-[11px] sm:text-xs">
+    <p className="font-medium uppercase tracking-[0.28em] text-slate-500">
+      Visualiser mon Magic Clock
+    </p>
+    <p className="mt-1 text-[10px] text-slate-400">
+      Vue utilisateur finale, 100&nbsp;% lecture seule.
+    </p>
+  </div>
+</header>
 
         {!hasFaces ? (
           <div className="flex flex-1 items-center justify-center">
