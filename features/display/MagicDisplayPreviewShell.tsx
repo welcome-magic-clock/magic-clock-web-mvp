@@ -37,7 +37,8 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  onOpenFace?: (faceIndex: number) => void; // ✅ remis, optionnel
+  /** Gardé pour compatibilité, mais non utilisé dans le cube maintenant */
+  onOpenFace?: (faceIndex: number) => void;
 };
 
 /**
@@ -92,7 +93,6 @@ const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
-  onOpenFace, // ✅ ici aussi
 }: MagicDisplayPreviewShellProps) {
   const router = useRouter();
   const faces = display.faces ?? [];
@@ -112,22 +112,21 @@ export default function MagicDisplayPreviewShell({
   const rotationStartRef = useRef<{ x: number; y: number }>(INITIAL_ROTATION);
 
   // Face actuellement en plein écran (ou null)
-  const [fullScreenFaceIndex, setFullScreenFaceIndex] =
-    useState<number | null>(null);
+  const [fullScreenFaceIndex, setFullScreenFaceIndex] = useState<number | null>(
+    null,
+  );
 
-  // 👉 Nouvelle logique : face & segment dont on affiche le contenu sous le cube
+  // 👉 Face + segment dont on affiche le contenu sous le cube
   const [openedFaceForDetails, setOpenedFaceForDetails] =
     useState<number | null>(null);
-  const [openedSegmentId, setOpenedSegmentId] = useState<
-    string | number | null
-  >(null);
+  const [openedSegmentId, setOpenedSegmentId] =
+    useState<string | number | null>(null);
 
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
-  // Face + segment actifs pour le panneau "Contenu du segment sélectionné"
   const detailFace =
     openedFaceForDetails !== null ? faces[openedFaceForDetails] : undefined;
   const detailSegments: PreviewSegment[] = detailFace?.segments ?? [];
@@ -331,7 +330,6 @@ export default function MagicDisplayPreviewShell({
                       const rawDescription =
                         activeFace?.segments?.[0]?.description?.trim();
 
-                      // On évite de répéter "Face 2" si c'est juste le titre par défaut
                       let displayTitle: string | null = null;
 
                       if (
@@ -350,12 +348,10 @@ export default function MagicDisplayPreviewShell({
 
                       return (
                         <>
-                          {/* Face 1 / Face 2 / Face 3... */}
                           <p className="mt-1 text-sm font-semibold text-slate-900">
                             {faceNumberLabel}
                           </p>
 
-                          {/* Titre saisi par le créateur, ex. "Préparation / sectionnement" */}
                           {displayTitle && (
                             <p className="mt-1 text-[13px] text-slate-600">
                               {displayTitle}
@@ -383,9 +379,7 @@ export default function MagicDisplayPreviewShell({
                       onPointerLeave={handleCubePointerUp}
                     >
                       {(() => {
-                        if (!faces.length) return null;
-
-                        // Toujours 6 faces pour le cube ; si <6 on boucle
+                        // Toujours 6 faces pour le cube
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
@@ -396,7 +390,6 @@ export default function MagicDisplayPreviewShell({
                         const size = 280;
                         const depth = size / 2;
 
-                        // Alignement 1–1 avec FACE_PRESETS
                         const transforms = [
                           `rotateX(90deg) translateZ(${depth}px)`, // top (Face 1)
                           `rotateY(0deg) translateZ(${depth}px)`, // front (Face 2)
@@ -407,22 +400,20 @@ export default function MagicDisplayPreviewShell({
                         ];
 
                         return facesForCube.map((face, index) => {
-                          // Index réel dans faces[] (utile si <6 faces)
-                          const realFaceIndex =
-                            faces.length >= 6 ? index : index % faces.length;
-
                           const imgUrl = getFaceMainPhotoUrl(face);
-                          const label =
-                            face.title || `Face ${realFaceIndex + 1}`;
+                          const label = face.title || `Face ${index + 1}`;
+                          const isDoorOpen =
+                            openedFaceForDetails === index;
 
                           return (
                             <div
                               key={index}
-                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden] transition-transform duration-500 ease-out"
                               style={{
                                 width: size,
                                 height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]}`,
+                                transform: `translate(-50%, -50%) ${transforms[index]} rotateY(${isDoorOpen ? "-18deg" : "0deg"})`,
+                                transformOrigin: "50% 50%",
                               }}
                             >
                               {imgUrl ? (
@@ -435,7 +426,7 @@ export default function MagicDisplayPreviewShell({
                               ) : (
                                 <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
                                   <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                                    Face {realFaceIndex + 1}
+                                    Face {index + 1}
                                   </p>
                                   <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
                                     {label}
@@ -451,7 +442,7 @@ export default function MagicDisplayPreviewShell({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setFullScreenFaceIndex(realFaceIndex);
+                                  setFullScreenFaceIndex(index);
                                 }}
                                 className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
@@ -461,26 +452,26 @@ export default function MagicDisplayPreviewShell({
                                 </span>
                               </button>
 
-                              {/* Bouton "ouvrir cette face" → active le preview + panneau sous le cube */}
+                              {/* Bouton "ouvrir cette face" → pivot + FacePreview + contenu sous le cube */}
                               <button
                                 type="button"
                                 onClick={(e) => {
-  e.stopPropagation();
+                                  e.stopPropagation();
+                                  setOpenedFaceForDetails(index);
 
-  // 🔁 1) Logique preview (face + segment)
-  setOpenedFaceForDetails(realFaceIndex);
+                                  const f = faces[index];
+                                  const segs: PreviewSegment[] =
+                                    f?.segments ?? [];
+                                  const first = segs[0];
 
-  const f = faces[realFaceIndex];
-  const segs: PreviewSegment[] = f?.segments ?? [];
-  const firstId =
-    segs[0]?.id ??
-    (segs.length > 0 ? segs[0].id ?? 0 : null);
+                                  const firstId =
+                                    (first?.id as any) ??
+                                    (segs.length > 0
+                                      ? (segs[0] as any).id ?? 0
+                                      : null);
 
-  setOpenedSegmentId(firstId ?? null);
-
-  // 🚪 2) Callback externe (ex: ouvrir FaceEditor) si fourni
-  onOpenFace?.(realFaceIndex);
-}}
+                                  setOpenedSegmentId(firstId ?? null);
+                                }}
                                 className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
                                 <span className="text-xs" aria-hidden>
@@ -497,7 +488,7 @@ export default function MagicDisplayPreviewShell({
                     </div>
                   </div>
 
-                  {/* 🧩 FacePreview en lecture seule, derrière la face */}
+                  {/* 🧩 FacePreview (style FaceEditor) en lecture seule, "derrière la face" */}
                   {detailFace && (
                     <div className="mt-6 w-full max-w-3xl">
                       <MagicDisplayFacePreview
@@ -527,7 +518,6 @@ export default function MagicDisplayPreviewShell({
                             </p>
                           </div>
 
-                          {/* Mini bouton pour "fermer" les détails si besoin */}
                           <button
                             type="button"
                             onClick={() => {
@@ -641,8 +631,7 @@ export default function MagicDisplayPreviewShell({
             {(() => {
               const face = faces[fullScreenFaceIndex]!;
               const imgUrl = getFaceMainPhotoUrl(face);
-              const label =
-                face.title || `Face ${fullScreenFaceIndex + 1}`;
+              const label = face.title || `Face ${fullScreenFaceIndex + 1}`;
 
               return (
                 <>
@@ -745,8 +734,8 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
         {filename}
       </div>
       <p className="max-w-xs text-center text-[11px] text-slate-500">
-        Ce type de fichier sera téléchargeable dans la version
-        utilisateur finale.
+        Ce type de fichier sera téléchargeable dans la version utilisateur
+        finale.
       </p>
     </div>
   );
