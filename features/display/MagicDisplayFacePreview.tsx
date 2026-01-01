@@ -18,6 +18,8 @@ type MagicDisplayFacePreviewProps = {
   creatorInitials?: string;
   openedSegmentId: string | number | null;
   onSegmentChange?: (id: string | number) => void;
+  /** "full" = carte complète, "inline" = juste le cercle (derrière le cube) */
+  variant?: "full" | "inline";
 };
 
 const MAX_SEGMENTS = 12;
@@ -107,7 +109,10 @@ export default function MagicDisplayFacePreview({
   creatorInitials = "MC",
   openedSegmentId,
   onSegmentChange,
+  variant = "full",
 }: MagicDisplayFacePreviewProps) {
+  const isInline = variant === "inline";
+
   const segments = (face?.segments ?? []) as PreviewSegment[];
   const segmentCount = segments.length
     ? Math.min(MAX_SEGMENTS, segments.length)
@@ -165,39 +170,55 @@ export default function MagicDisplayFacePreview({
   }
 
   return (
-    <section className="w-full rounded-3xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-      {/* Ligne titre */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Face {faceIndex + 1} / 6
-          </span>
-          <span className="text-sm font-semibold text-slate-900">
-            {face.title?.trim() || "Sans titre"}
-          </span>
-        </div>
+    <section
+      className={
+        isInline
+          ? "h-full w-full"
+          : "w-full rounded-3xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5"
+      }
+    >
+      {/* Ligne titre (vue carte uniquement) */}
+      {!isInline && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Face {faceIndex + 1} / 6
+            </span>
+            <span className="text-sm font-semibold text-slate-900">
+              {face.title?.trim() || "Sans titre"}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
-          <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-            {creatorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
-                alt={creatorName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold">{creatorInitials}</span>
-            )}
-          </span>
-          <span className="font-medium truncate max-w-[120px] sm:max-w-[180px]">
-            {creatorName}
-          </span>
+          <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
+            <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+              {creatorAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-semibold">
+                  {creatorInitials}
+                </span>
+              )}
+            </span>
+            <span className="font-medium truncate max-w-[120px] sm:max-w-[180px]">
+              {creatorName}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Cercle + bulles (read-only) */}
-      <div className="flex items-center justify-center">
+      {/* Cercle + bulles */}
+      <div
+        className={
+          isInline
+            ? "flex h-full w-full items-center justify-center"
+            : "flex items-center justify-center"
+        }
+      >
         <div ref={circleRef} className="relative h-64 w-64 max-w-full">
           {/* Décor z-10 */}
           <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
@@ -205,7 +226,10 @@ export default function MagicDisplayFacePreview({
           <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
           {/* Demi-segments depuis le centre */}
-          <div className="pointer-events-none absolute inset-0" style={{ zIndex: 15 }}>
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ zIndex: 15 }}
+          >
             {Array.from({ length: segmentCount }, (_, index) => {
               const count = segmentCount || 1;
               if (count <= 1) return null;
@@ -266,8 +290,7 @@ export default function MagicDisplayFacePreview({
           {/* Bulles segments z-40 */}
           {segments.slice(0, segmentCount).map((seg, index) => {
             const isSelected =
-              seg.id === selectedId ||
-              String(seg.id) === String(selectedId);
+              seg.id === selectedId || String(seg.id) === String(selectedId);
 
             const status = computeStatus(seg);
 
@@ -300,10 +323,12 @@ export default function MagicDisplayFacePreview({
         </div>
       </div>
 
-      {/* Petite légende sous le cercle */}
-      <p className="mt-3 text-center text-[10px] text-slate-500">
-        Tap sur une bulle pour explorer le segment associé à cette étape.
-      </p>
+      {/* Légende sous le cercle (vue carte uniquement) */}
+      {!isInline && (
+        <p className="mt-3 text-center text-[10px] text-slate-500">
+          Tap sur une bulle pour explorer le segment associé à cette étape.
+        </p>
+      )}
     </section>
   );
 }
