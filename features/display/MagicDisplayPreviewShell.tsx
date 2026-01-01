@@ -143,23 +143,22 @@ export default function MagicDisplayPreviewShell({
   }
 
   function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging || !dragStartRef.current) return;
+  if (!isDragging || !dragStartRef.current) return;
 
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
-    const factor = 0.4;
+  const dx = e.clientX - dragStartRef.current.x;
+  const dy = e.clientY - dragStartRef.current.y;
+  const factor = 0.4;
 
-    // X = bas/haut (on garde la logique actuelle)
-    const nextX = rotationStartRef.current.x - dy * factor;
+  const nextX = rotationStartRef.current.x - dy * factor;
 
-    // Y = gauche/droite → IMPORTANT : drag vers la droite => angle Y POSITIF
-    let nextY = rotationStartRef.current.y + dx * factor;
+  // 🔁 inversion du sens de rotation horizontal
+  let nextY = rotationStartRef.current.y - dx * factor;
 
-    const clampedX = Math.max(-88, Math.min(88, nextX));
-    const wrappedY = normalizeAngle(nextY);
+  const clampedX = Math.max(-88, Math.min(88, nextX));
+  const wrappedY = normalizeAngle(nextY);
 
-    setRotation({ x: clampedX, y: wrappedY });
-  }
+  setRotation({ x: clampedX, y: wrappedY });
+}
 
   function handleCubePointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (!isDragging) return;
