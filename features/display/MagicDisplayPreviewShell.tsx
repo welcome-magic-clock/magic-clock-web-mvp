@@ -423,9 +423,10 @@ export default function MagicDisplayPreviewShell({
                       })()}
                     </div>
 
-                    {/* Halo agrandi */}
-                    <div className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
-                  </div>
+                   {/* Halo agrandi, version plus pâle comme avant */}
+<div
+  className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]"
+/>
 
                   {/* Note pédagogique */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
