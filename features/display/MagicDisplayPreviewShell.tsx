@@ -37,6 +37,8 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
+  /** Optionnel, utilisé par MagicDisplayClient pour ouvrir une face */
+  onOpenFace?: (faceIndex: number) => void;
 };
 
 /**
@@ -91,6 +93,7 @@ const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
+  onOpenFace, // actuellement non utilisé, mais accepté pour compatibilité
 }: MagicDisplayPreviewShellProps) {
   const router = useRouter();
   const faces = display.faces ?? [];
