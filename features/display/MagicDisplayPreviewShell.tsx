@@ -53,22 +53,21 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
 }
 
 /**
- * Presets de rotation pour chaque face (vue 4/4, frontale).
- * index:
- *   0 -> Face 1 (TOP)
- *   1 -> Face 2 (FRONT)
- *   2 -> Face 3 (RIGHT)
- *   3 -> Face 4 (BACK)
- *   4 -> Face 5 (LEFT)
- *   5 -> Face 6 (BOTTOM)
- */
+// Presets de rotation pour chaque face (vue 4/4, frontale).
+// index:
+//   0 -> Face 1 (TOP)
+//   1 -> Face 2 (FRONT)
+//   2 -> Face 3 (RIGHT)
+//   3 -> Face 4 (BACK)
+//   4 -> Face 5 (LEFT)
+//   5 -> Face 6 (BOTTOM)
 const FACE_PRESETS = [
-  { x: -90, y: 0 }, // top
-  { x: 0, y: 0 }, // front
-  { x: 0, y: 90 }, // right
-  { x: 0, y: 180 }, // back
-  { x: 0, y: -90 }, // left
-  { x: 90, y: 0 }, // bottom
+  { x: -90, y: 0 },   // top
+  { x: 0,   y: 0 },   // front (Face 2)
+  { x: 0,   y: 90 },  // right (Face 3)
+  { x: 0,   y: 180 }, // back  (Face 4)
+  { x: 0,   y: 270 }, // ✅ left (Face 5) → 270° au lieu de -90°
+  { x: 90,  y: 0 },   // bottom (Face 6)
 ];
 
 const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
