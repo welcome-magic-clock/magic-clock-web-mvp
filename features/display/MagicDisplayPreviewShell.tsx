@@ -261,17 +261,16 @@ export default function MagicDisplayPreviewShell({
 
                   {/* Cube 3D */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-                    <div
-                      className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                      style={{
-                        rotateX: `${rotation.x}deg`,
-                        rotateY: `${rotation.y}deg`,
-                      }}
-                      onPointerDown={handleCubePointerDown}
-                      onPointerMove={handleCubePointerMove}
-                      onPointerUp={handleCubePointerUp}
-                      onPointerLeave={handleCubePointerUp}
-                    >
+                   <div
+  className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+  style={{
+    transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+  }}
+  onPointerDown={handleCubePointerDown}
+  onPointerMove={handleCubePointerMove}
+  onPointerUp={handleCubePointerUp}
+  onPointerLeave={handleCubePointerUp}
+>
                       {(() => {
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
