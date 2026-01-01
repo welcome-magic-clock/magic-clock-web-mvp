@@ -276,36 +276,47 @@ export default function MagicDisplayPreviewShell({
 
                 {/* Bloc centré : titre + cube + note pédagogique */}
                 <div className="mx-auto mt-2 flex flex-col items-center">
-                  {/* Titre de la face active au-dessus du cube */}
+                 {/* Titre de la face active au-dessus du cube */}
 <div className="mb-3 text-center">
   <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
     Face active
   </p>
-  <p className="mt-1 text-sm font-semibold text-slate-900">
-    {`Face ${safeIndex + 1}`}
-  </p>
 
   {(() => {
-    if (!activeFace) return null;
+    const faceNumberLabel = `Face ${safeIndex + 1}`;
 
-    const rawDescription =
-      (activeFace as any).description as string | undefined;
-    const cleanedDescription = rawDescription?.trim();
-    const cleanedTitle = activeFace.title?.trim();
+    const rawTitle = activeFace?.title?.trim();
+    const rawDescription = activeFace?.segments?.[0]?.description?.trim();
 
-    const subtitle =
-      cleanedDescription && cleanedDescription.length > 0
-        ? cleanedDescription
-        : cleanedTitle && cleanedTitle.length > 0
-          ? cleanedTitle
-          : undefined;
+    // On évite de répéter "Face 2" si c'est juste le titre par défaut
+    let displayTitle: string | null = null;
 
-    if (!subtitle) return null;
+    if (
+      rawTitle &&
+      rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
+    ) {
+      displayTitle = rawTitle;
+    } else if (
+      rawDescription &&
+      rawDescription.toLowerCase() !== faceNumberLabel.toLowerCase()
+    ) {
+      displayTitle = rawDescription;
+    }
 
     return (
-      <p className="mt-1 text-xs text-slate-500">
-        {subtitle}
-      </p>
+      <>
+        {/* Face 1 / Face 2 / Face 3... */}
+        <p className="mt-1 text-sm font-semibold text-slate-900">
+          {faceNumberLabel}
+        </p>
+
+        {/* Titre saisi par le créateur, ex. "Préparation / sectionnement" */}
+        {displayTitle && (
+          <p className="mt-1 text-[13px] text-slate-600">
+            {displayTitle}
+          </p>
+        )}
+      </>
     );
   })()}
 </div>
