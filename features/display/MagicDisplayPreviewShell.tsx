@@ -324,81 +324,68 @@ export default function MagicDisplayPreviewShell({
                           `rotateX(-90deg) translateZ(${depth}px)`,// bottom
                         ];
 
-                        return facesForCube.map((face, index) => {
-                          const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
+                     return facesForCube.map((face, index) => {
+  const imgUrl = getFaceMainPhotoUrl(face);
+  const label = face.title || `Face ${index + 1}`;
 
-                          return (
-                            <div
-                              key={index}
-                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
-                              style={{
-                                width: size,
-                                height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]}`,
-                              }}
-                            >
-                              {imgUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={imgUrl}
-                                  alt={label}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-                                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                                    Face {index + 1}
-                                  </p>
-                                  <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
-                                    {label}
-                                  </p>
-                                </div>
-                              )}
+  return (
+    <div
+      key={index}
+      className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+      style={{
+        width: size,
+        height: size,
+        transform: `translate(-50%, -50%) ${transforms[index]}`,
+      }}
+    >
+      {imgUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imgUrl}
+          alt={label}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
+            Face {index + 1}
+          </p>
+          <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
+            {label}
+          </p>
+        </div>
+      )}
 
-                              {/* Bouton éditeur */}
-                              <button
-                                type="button"
-                                onClick={() => onOpenFace?.(index)}
-                                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
-                              >
-                                <span className="text-xs" aria-hidden>
-                                  ↗︎
-                                </span>
-                                <span className="sr-only">
-                                  Ouvrir cette face
-                                </span>
-                              </button>
+      {/* Légère ombre en bas de la face, SANS texte */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                              {/* Légende bas */}
-                              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
-                                <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
-                                  Face {index + 1}
-                                </p>
-                                <p className="truncate text-xs font-semibold text-slate-50">
-                                  {label}
-                                </p>
-                              </div>
+      {/* Bouton plein écran -> en bas à GAUCHE */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setFullScreenFaceIndex(index);
+        }}
+        className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+      >
+        <span aria-hidden>⤢</span>
+        <span className="sr-only">Afficher cette face en plein écran</span>
+      </button>
 
-                              {/* Bouton plein écran */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setFullScreenFaceIndex(index);
-                                }}
-                                className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
-                              >
-                                <span aria-hidden>⤢</span>
-                                <span className="sr-only">
-                                  Afficher cette face en plein écran
-                                </span>
-                              </button>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
+      {/* Bouton éditeur (↗︎) déplacé en bas à DROITE */}
+      <button
+        type="button"
+        onClick={() => onOpenFace?.(index)}
+        className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+      >
+        <span className="text-xs" aria-hidden>
+          ↗︎
+        </span>
+        <span className="sr-only">Ouvrir cette face</span>
+      </button>
+    </div>
+  );
+});
 
                     {/* Halo agrandi */}
                     <div className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
