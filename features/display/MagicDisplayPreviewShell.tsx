@@ -36,7 +36,7 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  onOpenFace?: (faceIndex: number) => void;
+  onOpenFace?: (faceIndex: number) => void; // gardé pour compat mais plus utilisé ici
 };
 
 /**
@@ -91,7 +91,6 @@ const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
-  onOpenFace,
 }: MagicDisplayPreviewShellProps) {
   const router = useRouter();
   const faces = display.faces ?? [];
@@ -115,10 +114,51 @@ export default function MagicDisplayPreviewShell({
     null,
   );
 
+  // 👉 Nouvelle logique : face & segment dont on affiche le contenu sous le cube
+  const [openedFaceForDetails, setOpenedFaceForDetails] = useState<number | null>(null);
+  const [openedSegmentId, setOpenedSegmentId] = useState<string | number | null>(
+    null,
+  );
+
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
+
+  // Face + segment actifs pour le panneau "Contenu du segment sélectionné"
+  const detailFace =
+    openedFaceForDetails !== null ? faces[openedFaceForDetails] : undefined;
+  const detailSegments: PreviewSegment[] = detailFace?.segments ?? [];
+
+  let activeDetailSegment: PreviewSegment | undefined;
+  if (detailSegments.length > 0) {
+    activeDetailSegment =
+      detailSegments.find(
+        (seg: any) =>
+          seg.id === openedSegmentId || (seg as any).key === openedSegmentId,
+      ) ?? detailSegments[0];
+  }
+
+  const activeDetailIndex = activeDetailSegment
+    ? detailSegments.indexOf(activeDetailSegment)
+    : -1;
+
+  const segmentTitle =
+    activeDetailSegment &&
+    ((activeDetailSegment.title as string | undefined) ?? "").trim()
+      ? (activeDetailSegment.title as string).trim()
+      : activeDetailIndex >= 0
+        ? `Segment ${activeDetailIndex + 1}`
+        : "";
+
+  const segmentNotes =
+    (activeDetailSegment &&
+      (
+        (activeDetailSegment.notes as string | undefined) ??
+        (activeDetailSegment.description as string | undefined) ??
+        ""
+      ).trim()) ||
+    "";
 
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
@@ -274,7 +314,7 @@ export default function MagicDisplayPreviewShell({
                   <span className="text-sm leading-none">→</span>
                 </button>
 
-                {/* Bloc centré : titre + cube + note pédagogique */}
+                {/* Bloc centré : titre + cube */}
                 <div className="mx-auto mt-2 flex flex-col items-center">
                   {/* Titre de la face active au-dessus du cube */}
                   <div className="mb-3 text-center">
@@ -412,17 +452,28 @@ export default function MagicDisplayPreviewShell({
                                 </span>
                               </button>
 
-                              {/* Bouton éditeur (↗︎) en bas à droite */}
+                              {/* Bouton "ouvrir cette face" → active le panneau sous le cube */}
                               <button
                                 type="button"
-                                onClick={() => onOpenFace?.(index)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenedFaceForDetails(index);
+
+                                  const f = faces[index];
+                                  const segs: PreviewSegment[] = f?.segments ?? [];
+                                  const firstId =
+                                    segs[0]?.id ??
+                                    (segs.length > 0 ? segs[0].id ?? 0 : null);
+
+                                  setOpenedSegmentId(firstId ?? null);
+                                }}
                                 className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
                                 <span className="text-xs" aria-hidden>
                                   ↗︎
                                 </span>
                                 <span className="sr-only">
-                                  Ouvrir cette face
+                                  Voir le détail de cette face
                                 </span>
                               </button>
                             </div>
@@ -432,7 +483,81 @@ export default function MagicDisplayPreviewShell({
                     </div>
                   </div>
 
-                  {/* Note pédagogique */}
+                  {/* 📝 Bloc "Contenu du segment sélectionné" */}
+                  {detailFace && detailSegments.length > 0 && activeDetailSegment && (
+                    <div className="mt-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                            Contenu du segment sélectionné
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Face {openedFaceForDetails! + 1} ·{" "}
+                            {detailFace.title?.trim() || "Sans titre"}
+                          </p>
+                        </div>
+
+                        {/* Mini bouton pour "fermer" les détails si besoin */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenedFaceForDetails(null);
+                            setOpenedSegmentId(null);
+                          }}
+                          className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+                        >
+                          Masquer
+                        </button>
+                      </div>
+
+                      {/* Liste de segments */}
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {detailSegments.map((seg, index) => {
+                          const id = (seg as any).id ?? (seg as any).key ?? index;
+                          const label =
+                            (seg.title as string | undefined)?.trim() ||
+                            `Segment ${index + 1}`;
+                          const selected =
+                            openedSegmentId === id || activeDetailIndex === index;
+
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => setOpenedSegmentId(id)}
+                              className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] transition ${
+                                selected
+                                  ? "border-brand-400 bg-brand-500/10 text-brand-600"
+                                  : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Média principal */}
+                      <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        {renderSegmentMedia(activeDetailSegment)}
+                      </div>
+
+                      {/* Notes du segment */}
+                      <div className="space-y-1">
+                        {segmentTitle && (
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                            {segmentTitle}
+                          </p>
+                        )}
+                        <p className="whitespace-pre-line text-[13px] text-slate-700">
+                          {segmentNotes ||
+                            "Pas de notes pédagogiques, tout est dit dans le titre."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Note pédagogique de la face (globale) */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
                     {activeFace?.notes && activeFace.notes.trim().length > 0
                       ? activeFace.notes
@@ -526,5 +651,74 @@ export default function MagicDisplayPreviewShell({
         </div>
       )}
     </main>
+  );
+}
+
+/**
+ * Affiche le premier média du segment en grand (lecture seule).
+ */
+function renderSegmentMedia(segment: PreviewSegment | undefined) {
+  if (!segment) {
+    return (
+      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+        Aucun segment sélectionné.
+      </div>
+    );
+  }
+
+  const mediaList =
+    (segment.media as any[]) ??
+    [];
+
+  if (!mediaList.length) {
+    return (
+      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+        Aucun média pour ce segment.
+      </div>
+    );
+  }
+
+  const media = mediaList[0];
+  const url = (media?.url as string | undefined) ?? "";
+  const type =
+    (media?.type as string | undefined) ??
+    "";
+
+  if (!url) {
+    return (
+      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+        Média non disponible.
+      </div>
+    );
+  }
+
+  if (type === "video") {
+    return <video src={url} controls className="h-full w-full object-cover" />;
+  }
+
+  if (type === "photo" || type === "image") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={segment.title ?? "Média"}
+        className="h-full w-full object-cover"
+      />
+    );
+  }
+
+  const filename =
+    (media?.filename as string | undefined) ??
+    "Fichier";
+
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-600">
+      <div className="rounded-full border border-slate-300 bg-white/70 px-3 py-1">
+        {filename}
+      </div>
+      <p className="max-w-xs text-center text-[11px] text-slate-500">
+        Ce type de fichier sera téléchargeable dans la version utilisateur finale.
+      </p>
+    </div>
   );
 }
