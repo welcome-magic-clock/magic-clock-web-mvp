@@ -37,6 +37,7 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
+  onOpenFace?: (faceIndex: number) => void; // ✅ remis, optionnel
 };
 
 /**
@@ -91,6 +92,7 @@ const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
+  onOpenFace, // ✅ ici aussi
 }: MagicDisplayPreviewShellProps) {
   const router = useRouter();
   const faces = display.faces ?? [];
@@ -463,18 +465,22 @@ export default function MagicDisplayPreviewShell({
                               <button
                                 type="button"
                                 onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenedFaceForDetails(realFaceIndex);
+  e.stopPropagation();
 
-                                  const f = faces[realFaceIndex];
-                                  const segs: PreviewSegment[] =
-                                    f?.segments ?? [];
-                                  const firstId =
-                                    segs[0]?.id ??
-                                    (segs.length > 0 ? segs[0].id ?? 0 : null);
+  // 🔁 1) Logique preview (face + segment)
+  setOpenedFaceForDetails(realFaceIndex);
 
-                                  setOpenedSegmentId(firstId ?? null);
-                                }}
+  const f = faces[realFaceIndex];
+  const segs: PreviewSegment[] = f?.segments ?? [];
+  const firstId =
+    segs[0]?.id ??
+    (segs.length > 0 ? segs[0].id ?? 0 : null);
+
+  setOpenedSegmentId(firstId ?? null);
+
+  // 🚪 2) Callback externe (ex: ouvrir FaceEditor) si fourni
+  onOpenFace?.(realFaceIndex);
+}}
                                 className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
                                 <span className="text-xs" aria-hidden>
