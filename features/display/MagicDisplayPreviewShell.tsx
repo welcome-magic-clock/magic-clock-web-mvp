@@ -1,9 +1,8 @@
-// features/display/MagicDisplayPreviewShell.tsx
 "use client";
 
 import { useRef, useState } from "react";
 import type React from "react";
-import BackButton from "@/components/navigation/BackButton";
+import { useRouter } from "next/navigation";
 
 export type MediaKind = "photo" | "video" | "file";
 
@@ -34,7 +33,7 @@ export type PreviewDisplay = {
 
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
-  onBack: () => void; // plus utilisé mais gardé pour compatibilité
+  onBack: () => void; // gardé pour compatibilité mais non utilisé
   onOpenFace?: (faceIndex: number) => void;
 };
 
@@ -87,9 +86,11 @@ const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 
 export default function MagicDisplayPreviewShell({
   display,
-  onBack, // non utilisé, mais gardé dans la signature
+  onBack, // non utilisé, on gère tout avec router.back()
   onOpenFace,
 }: MagicDisplayPreviewShellProps) {
+  const router = useRouter();
+
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
@@ -217,10 +218,15 @@ export default function MagicDisplayPreviewShell({
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
         {/* Haut : retour + titre */}
         <header className="mb-6 flex items-center justify-between gap-3">
-          <BackButton
-            fallbackHref="/magic-display"
-            label="Retour au Magic Display"
-          />
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+          >
+            <span className="sr-only">Retour à l’écran précédent</span>
+            <span aria-hidden>←</span>
+          </button>
+
           <div className="text-right text-[11px] sm:text-xs">
             <p className="font-medium uppercase tracking-[0.28em] text-slate-500">
               Visualiser mon Magic Clock
@@ -297,6 +303,7 @@ export default function MagicDisplayPreviewShell({
                             ? faces.slice(0, 6)
                             : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
+                        // Taille du cube agrandie
                         const size = 280;
                         const depth = size / 2;
 
@@ -366,7 +373,7 @@ export default function MagicDisplayPreviewShell({
                                 </p>
                               </div>
 
-                              {/* Bouton plein écran en bas à droite de la face (icône seule) */}
+                              {/* Bouton plein écran en bas à droite (icône seule) */}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -400,7 +407,7 @@ export default function MagicDisplayPreviewShell({
               </div>
 
               {/* Flèches mobile */}
-              <div className="mt-4 flex items-center justifycenter gap-4 sm:hidden">
+              <div className="mt-4 flex items-center justify-center gap-4 sm:hidden">
                 <button
                   type="button"
                   onClick={goPrevFace}
