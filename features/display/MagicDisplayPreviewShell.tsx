@@ -73,13 +73,7 @@ function normalizeAngle(angle: number): number {
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
  *
- * On prend l'INVERSE des rotations locales du cube :
- *   - front :  rotateY(0deg)   => preset y =   0
- *   - right :  rotateY(90deg)  => preset y =  -90
- *   - back :   rotateY(180deg) => preset y = -180
- *   - left :   rotateY(-90deg) => preset y = -270 (interpolation courte)
- *   - top :    rotateX(90deg)  => preset x =  -90
- *   - bottom:  rotateX(-90deg) => preset x =  +90
+ * On prend l'INVERSE des rotations locales du cube.
  */
 const FACE_PRESETS: { x: number; y: number }[] = [
   { x: -90, y: 0 },    // index 0 : top (Face 1)
@@ -113,6 +107,11 @@ export default function MagicDisplayPreviewShell({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const rotationStartRef = useRef<{ x: number; y: number }>(INITIAL_ROTATION);
+
+  // Face actuellement en plein écran (ou null)
+  const [fullScreenFaceIndex, setFullScreenFaceIndex] = useState<number | null>(
+    null,
+  );
 
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
@@ -282,7 +281,6 @@ export default function MagicDisplayPreviewShell({
                     <div
                       className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
                       style={{
-                        // plein format, sans scale(0.9)
                         transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                       }}
                       onPointerDown={handleCubePointerDown}
@@ -343,7 +341,7 @@ export default function MagicDisplayPreviewShell({
                                 </div>
                               )}
 
-                              {/* Flèche d’ouverture en haut à droite */}
+                              {/* Bouton éditeur (↗︎) en haut à droite */}
                               <button
                                 type="button"
                                 onClick={() => onOpenFace?.(index)}
@@ -355,7 +353,7 @@ export default function MagicDisplayPreviewShell({
                                 <span className="sr-only">Ouvrir cette face</span>
                               </button>
 
-                              {/* Légende en bas de la face */}
+                              {/* Légende + bouton plein écran en bas */}
                               <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-6">
                                 <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-200">
                                   Face {index + 1}
@@ -364,6 +362,19 @@ export default function MagicDisplayPreviewShell({
                                   {label}
                                 </p>
                               </div>
+
+                              {/* Bouton plein écran en bas à droite de la face */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFullScreenFaceIndex(index);
+                                }}
+                                className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/95 px-2.5 py-1 text-[10px] font-medium text-slate-900 shadow-sm backdrop-blur hover:bg-white"
+                              >
+                                <span>Plein écran</span>
+                                <span aria-hidden>⤢</span>
+                              </button>
                             </div>
                           );
                         });
@@ -379,18 +390,6 @@ export default function MagicDisplayPreviewShell({
                     {activeFace?.notes && activeFace.notes.trim().length > 0
                       ? activeFace.notes
                       : "Pas de notes pédagogiques, tout est dit dans le titre."}
-                  </div>
-
-                  {/* Bouton plein écran (ouvre la face active) */}
-                  <div className="mt-3 flex w-full max-w-xl justify-end">
-                    <button
-                      type="button"
-                      onClick={() => onOpenFace?.(safeIndex)}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-400 hover:bg-slate-50"
-                    >
-                      <span>Plein écran</span>
-                      <span aria-hidden>⤢</span>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -421,6 +420,64 @@ export default function MagicDisplayPreviewShell({
           </>
         )}
       </div>
+
+      {/* 🔍 Overlay plein écran pour la face sélectionnée */}
+      {fullScreenFaceIndex !== null && faces[fullScreenFaceIndex] && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-[520px] mx-4 rounded-3xl bg-slate-950 shadow-2xl overflow-hidden">
+            {/* Bouton fermer */}
+            <button
+              type="button"
+              onClick={() => setFullScreenFaceIndex(null)}
+              className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-slate-100 text-sm shadow hover:bg-black/80"
+            >
+              ✕
+            </button>
+
+            {(() => {
+              const face = faces[fullScreenFaceIndex]!;
+              const imgUrl = getFaceMainPhotoUrl(face);
+              const label = face.title || `Face ${fullScreenFaceIndex + 1}`;
+
+              return (
+                <>
+                  {imgUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={imgUrl}
+                      alt={label}
+                      className="h-[60vh] w-full object-contain bg-slate-950"
+                    />
+                  ) : (
+                    <div className="flex h-[60vh] w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
+                        Face {fullScreenFaceIndex + 1}
+                      </p>
+                      <p className="mt-2 max-w-[70%] text-center text-base font-semibold text-slate-50">
+                        {label}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 text-xs text-slate-100">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                      Face {fullScreenFaceIndex + 1}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-50">
+                      {label}
+                    </p>
+                    {face.notes && face.notes.trim().length > 0 && (
+                      <p className="mt-1 text-[11px] text-slate-300">
+                        {face.notes}
+                      </p>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
