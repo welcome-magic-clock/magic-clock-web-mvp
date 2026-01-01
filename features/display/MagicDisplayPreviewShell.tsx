@@ -276,52 +276,53 @@ export default function MagicDisplayPreviewShell({
                     </p>
                   </div>
 
-                  {/* Cube 3D central */}
-                  <div className="relative mx-auto aspect-square w-full max-w-xs [perspective:1400px] sm:max-w-sm">
-                    <div
-                      className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                      style={{
-                        transform: `scale(0.9) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                      }}
-                      onPointerDown={handleCubePointerDown}
-                      onPointerMove={handleCubePointerMove}
-                      onPointerUp={handleCubePointerUp}
-                      onPointerLeave={handleCubePointerUp}
-                    >
-                      {(() => {
-                        // Toujours 6 faces pour le cube
-                        const facesForCube: PreviewFace[] =
-                          faces.length >= 6
-                            ? faces.slice(0, 6)
-                            : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
+                 {/* Cube 3D central */}
+<div className="relative mx-auto aspect-square w-full max-w-[340px] sm:max-w-[420px] [perspective:1400px]">
+  <div
+    className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+    style={{
+      // on enlève le scale(0.9) pour profiter du maximum d'espace
+      transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+    }}
+    onPointerDown={handleCubePointerDown}
+    onPointerMove={handleCubePointerMove}
+    onPointerUp={handleCubePointerUp}
+    onPointerLeave={handleCubePointerUp}
+  >
+    {(() => {
+      // Toujours 6 faces pour le cube
+      const facesForCube: PreviewFace[] =
+        faces.length >= 6
+          ? faces.slice(0, 6)
+          : Array.from({ length: 6 }, (_, i) => faces[i % faces.length]);
 
-                        const size = 220; // cube parfaitement carré 220×220
-                        const depth = size / 2;
+      // 🔥 Taille du cube agrandie pour mobile
+      const size = 280; // au lieu de 220
+      const depth = size / 2;
 
-                        // IMPORTANT : index 0..5 alignés avec FACE_PRESETS
-                        const transforms = [
-                          `rotateX(90deg) translateZ(${depth}px)`, // index 0 : top (Face 1)
-                          `rotateY(0deg) translateZ(${depth}px)`, // index 1 : front (Face 2)
-                          `rotateY(90deg) translateZ(${depth}px)`, // index 2 : right (Face 3)
-                          `rotateY(180deg) translateZ(${depth}px)`, // index 3 : back (Face 4)
-                          `rotateY(-90deg) translateZ(${depth}px)`, // index 4 : left (Face 5)
-                          `rotateX(-90deg) translateZ(${depth}px)`, // index 5 : bottom (Face 6)
-                        ];
+      const transforms = [
+        `rotateX(90deg) translateZ(${depth}px)`,  // top
+        `rotateY(0deg) translateZ(${depth}px)`,  // front
+        `rotateY(90deg) translateZ(${depth}px)`, // right
+        `rotateY(180deg) translateZ(${depth}px)`,// back
+        `rotateY(-90deg) translateZ(${depth}px)`,// left
+        `rotateX(-90deg) translateZ(${depth}px)`,// bottom
+      ];
 
-                        return facesForCube.map((face, index) => {
-                          const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
+      return facesForCube.map((face, index) => {
+        const imgUrl = getFaceMainPhotoUrl(face);
+        const label = face.title || `Face ${index + 1}`;
 
-                          return (
-                            <div
-                              key={index}
-                              className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
-                              style={{
-                                width: size,
-                                height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]}`,
-                              }}
-                            >
+        return (
+          <div
+            key={index}
+            className="absolute left-1/2 top-1/2 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]"
+            style={{
+              width: size,
+              height: size,
+              transform: `translate(-50%, -50%) ${transforms[index]}`,
+            }}
+          >
                               {imgUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
