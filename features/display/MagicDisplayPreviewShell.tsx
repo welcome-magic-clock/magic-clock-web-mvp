@@ -53,8 +53,19 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
 }
 
 /**
- * Presets de rotation pour chaque face (vue 4/4, frontale).
- * index:
+ * Normalise un angle en degrés dans l'intervalle [-180, 180].
+ */
+function normalizeAngle(angle: number): number {
+  let a = ((angle + 180) % 360) - 180;
+  if (a <= -180) a += 360;
+  if (a > 180) a -= 360;
+  return a;
+}
+
+/**
+ * Presets de rotation pour chaque face, vue 4/4 frontale.
+ *
+ * Index / Face :
  *   0 -> Face 1 (TOP)
  *   1 -> Face 2 (FRONT)
  *   2 -> Face 3 (RIGHT)
@@ -62,16 +73,17 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
  */
-const FACE_PRESETS = [
-  { x: -90, y: 0 }, // top
+const FACE_PRESETS: { x: number; y: number }[] = [
+  { x: 90, y: 0 }, // top
   { x: 0, y: 0 }, // front
   { x: 0, y: 90 }, // right
   { x: 0, y: 180 }, // back
-  { x: 0, y: 270 }, // left (au lieu de -90 pour garder la rotation dans le même sens)
-  { x: 90, y: 0 }, // bottom
+  { x: 0, y: -90 }, // left
+  { x: -90, y: 0 }, // bottom
 ];
 
-const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
+const INITIAL_FACE_INDEX = 1; // Face 2 (front)
+const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
 
 export default function MagicDisplayPreviewShell({
   display,
@@ -82,7 +94,7 @@ export default function MagicDisplayPreviewShell({
   const hasFaces = faces.length > 0;
 
   // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
-  const [activeFaceIndex, setActiveFaceIndex] = useState(1);
+  const [activeFaceIndex, setActiveFaceIndex] = useState(INITIAL_FACE_INDEX);
 
   // Rotation actuelle du cube
   const [rotation, setRotation] = useState<{ x: number; y: number }>(
@@ -99,7 +111,7 @@ export default function MagicDisplayPreviewShell({
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
-  // Navigation flèches : on change la face active + vue preset
+  // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
     if (!hasFaces) return;
     const maxIndex = Math.max(0, faces.length - 1);
@@ -108,7 +120,7 @@ export default function MagicDisplayPreviewShell({
 
     setActiveFaceIndex(wrapped);
 
-    const preset = FACE_PRESETS[wrapped] ?? FACE_PRESETS[1];
+    const preset = FACE_PRESETS[wrapped] ?? FACE_PRESETS[INITIAL_FACE_INDEX];
     setRotation(preset);
     rotationStartRef.current = preset;
   }
@@ -130,23 +142,25 @@ export default function MagicDisplayPreviewShell({
     rotationStartRef.current = { ...rotation };
   }
 
-function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-  if (!isDragging || !dragStartRef.current) return;
+  function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging || !dragStartRef.current) return;
 
-  const dx = e.clientX - dragStartRef.current.x;
-  const dy = e.clientY - dragStartRef.current.y;
-  const factor = 0.4;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    const factor = 0.4;
 
-  // X = haut / bas (on garde pareil)
-  const nextX = rotationStartRef.current.x - dy * factor;
-  // Y = gauche / droite → on inverse le sens
-  const nextY = rotationStartRef.current.y - dx * factor;
+    // X = bas/haut (on garde la logique actuelle)
+    const nextX = rotationStartRef.current.x - dy * factor;
 
-  const clampedX = Math.max(-88, Math.min(88, nextX));
+    // Y = gauche/droite → IMPORTANT : drag vers la droite => angle Y POSITIF
+    let nextY = rotationStartRef.current.y + dx * factor;
 
-  setRotation({ x: clampedX, y: nextY });
-}
-  
+    const clampedX = Math.max(-88, Math.min(88, nextX));
+    const wrappedY = normalizeAngle(nextY);
+
+    setRotation({ x: clampedX, y: wrappedY });
+  }
+
   function handleCubePointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (!isDragging) return;
     try {
@@ -158,15 +172,22 @@ function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
 
     if (!hasFaces) return;
 
-    // 🔒 Snap automatique sur le preset le plus proche
+    // 🔒 Snap automatique sur le preset le plus proche (distance angulaire circulaire)
     setRotation((prev) => {
-      let bestIndex = 0;
+      const prevX = prev.x;
+      const prevY = normalizeAngle(prev.y);
+
+      let bestIndex = INITIAL_FACE_INDEX;
       let bestScore = Number.POSITIVE_INFINITY;
 
       FACE_PRESETS.forEach((preset, index) => {
-        const dx = prev.x - preset.x;
-        const dy = prev.y - preset.y;
+        const targetX = preset.x;
+        const targetY = normalizeAngle(preset.y);
+
+        const dx = prevX - targetX;
+        const dy = normalizeAngle(prevY - targetY); // distance circulaire sur Y
         const score = dx * dx + dy * dy;
+
         if (score < bestScore) {
           bestScore = score;
           bestIndex = index;
@@ -185,6 +206,7 @@ function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
+        {/* Haut : retour + titre */}
         <header className="mb-6 flex items-center justify-between gap-3">
           <BackButton
             fallbackHref="/magic-display"
@@ -269,13 +291,14 @@ function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
                         const size = 220; // cube parfaitement carré 220×220
                         const depth = size / 2;
 
+                        // IMPORTANT : index 0..5 alignés avec FACE_PRESETS
                         const transforms = [
-                          `rotateX(90deg) translateZ(${depth}px)`, // Face 1 : top
-                          `rotateY(0deg) translateZ(${depth}px)`, // Face 2 : front
-                          `rotateY(90deg) translateZ(${depth}px)`, // Face 3 : right
-                          `rotateY(180deg) translateZ(${depth}px)`, // Face 4 : back
-                          `rotateY(270deg) translateZ(${depth}px)`, // Face 5 : left
-                          `rotateX(-90deg) translateZ(${depth}px)`, // Face 6 : bottom
+                          `rotateX(90deg) translateZ(${depth}px)`, // index 0 : top (Face 1)
+                          `rotateY(0deg) translateZ(${depth}px)`, // index 1 : front (Face 2)
+                          `rotateY(90deg) translateZ(${depth}px)`, // index 2 : right (Face 3)
+                          `rotateY(180deg) translateZ(${depth}px)`, // index 3 : back (Face 4)
+                          `rotateY(-90deg) translateZ(${depth}px)`, // index 4 : left (Face 5)
+                          `rotateX(-90deg) translateZ(${depth}px)`, // index 5 : bottom (Face 6)
                         ];
 
                         return facesForCube.map((face, index) => {
