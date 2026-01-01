@@ -77,22 +77,21 @@ function normalizeAngle(angle: number): number {
  *   - front :  rotateY(0deg)   => preset y =   0
  *   - right :  rotateY(90deg)  => preset y =  -90
  *   - back :   rotateY(180deg) => preset y = -180
- *   - left :   rotateY(-90deg) => preset y =  +90
+ *   - left :   rotateY(-90deg) => preset y =  90 (≡ -270 pour une interpolation courte)
  *   - top :    rotateX(90deg)  => preset x =  -90
  *   - bottom:  rotateX(-90deg) => preset x =  +90
  */
 const FACE_PRESETS: { x: number; y: number }[] = [
-  { x: -90, y: 0 },   // index 0 : top (Face 1)
-  { x: 0,   y: 0 },   // index 1 : front (Face 2)
-  { x: 0,   y: -90 }, // index 2 : right (Face 3)
-  { x: 0,   y: -180 },// index 3 : back (Face 4)
-  { x: 0,   y: 90 },  // index 4 : left (Face 5)
-  { x: 90,  y: 0 },   // index 5 : bottom (Face 6)
+  { x: -90, y: 0 },    // index 0 : top (Face 1)
+  { x: 0,   y: 0 },    // index 1 : front (Face 2)
+  { x: 0,   y: -90 },  // index 2 : right (Face 3)
+  { x: 0,   y: -180 }, // index 3 : back (Face 4)
+  { x: 0,   y: -270 }, // index 4 : left (Face 5) ✅ fix
+  { x: 90,  y: 0 },    // index 5 : bottom (Face 6)
 ];
 
 const INITIAL_FACE_INDEX = 1; // Face 2 (front)
 const INITIAL_ROTATION = FACE_PRESETS[INITIAL_FACE_INDEX];
-
 export default function MagicDisplayPreviewShell({
   display,
   onBack,
