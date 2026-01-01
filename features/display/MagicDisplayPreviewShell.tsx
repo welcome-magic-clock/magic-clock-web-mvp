@@ -249,15 +249,24 @@ export default function MagicDisplayPreviewShell({
                 </button>
 
                 <div className="mx-auto mt-2 flex flex-col items-center">
-                  {/* Titre face active */}
-                  <div className="mb-3 text-center">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
-                      Face active
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {activeFace?.title || `Face ${safeIndex + 1}`}
-                    </p>
-                  </div>
+                {/* Titre de la face active au-dessus du cube */}
+<div className="mb-3 text-center">
+  <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-slate-500">
+    Face active
+  </p>
+
+  {/* Libellé Face 1 / Face 2 / etc. */}
+  <p className="mt-1 text-sm font-semibold text-slate-900">
+    {`Face ${safeIndex + 1}`}
+  </p>
+
+  {/* Titre pédagogique de la face */}
+  {activeFace?.title && activeFace.title.trim().length > 0 && (
+    <p className="mt-1 text-[13px] text-slate-600">
+      {activeFace.title}
+    </p>
+  )}
+</div>
 
                   {/* Cube 3D */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
