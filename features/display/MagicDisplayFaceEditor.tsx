@@ -233,6 +233,62 @@ function WatchHandOneWayRefined({
   );
 }
 
+/* 🧠 Persistance locale par faceId (localStorage) */
+
+const STORAGE_PREFIX = "mc-face-editor-v1";
+
+type PersistedFaceState = {
+  faceId: number;
+  segmentCount: number;
+  segments: Segment[];
+  needles: FaceNeedles;
+};
+
+function getStorageKey(faceId: number) {
+  return `${STORAGE_PREFIX}-${faceId}`;
+}
+
+function persistFaceState(faceId: number, state: FaceState) {
+  try {
+    if (typeof window === "undefined") return;
+    const payload: PersistedFaceState = {
+      faceId: state.faceId,
+      segmentCount: state.segmentCount,
+      segments: state.segments,
+      needles: state.needles,
+    };
+    window.localStorage.setItem(getStorageKey(faceId), JSON.stringify(payload));
+  } catch {
+    // no-op
+  }
+}
+
+function loadFaceState(faceId: number): FaceState | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = window.localStorage.getItem(getStorageKey(faceId));
+    if (!raw) return null;
+    const data = JSON.parse(raw) as PersistedFaceState;
+
+    const baseSegments = INITIAL_SEGMENTS.map((s) => ({ ...s }));
+    const mergedSegments = baseSegments.map((s) => {
+      const override =
+        data.segments.find((p) => p.id === s.id) ??
+        data.segments[s.id - 1];
+      return override ? { ...s, ...override } : s;
+    });
+
+    return {
+      faceId,
+      segmentCount: data.segmentCount ?? DEFAULT_SEGMENTS,
+      segments: mergedSegments,
+      needles: data.needles ?? defaultNeedles(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function MagicDisplayFaceEditor({
   creatorName = "Aiko Tanaka",
   creatorAvatar,
@@ -261,28 +317,78 @@ export default function MagicDisplayFaceEditor({
   const circleRef = useRef<HTMLDivElement | null>(null);
   const [frontLenPx, setFrontLenPx] = useState<number>(92);
 
-  useEffect(() => {
-    setFaces((prev) => {
-      if (prev[faceId]) return prev;
-      return {
-        ...prev,
-        [faceId]: {
-          faceId,
-          segmentCount: DEFAULT_SEGMENTS,
-          segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
-          needles: defaultNeedles(),
-        },
-      };
-    });
-    setSelectedId(1);
-  }, [faceId]);
-
   const fallbackFace: FaceState = {
     faceId,
     segmentCount: DEFAULT_SEGMENTS,
     segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
     needles: defaultNeedles(),
   };
+
+  /**
+   * 🔁 Transforme l'état interne de la face en payload simplifié
+   * utilisable pour display.faces[...] (MagicDisplayPreview).
+   */
+  function emitFaceChangeFromState(state: FaceState) {
+    if (!onFaceChange) return;
+
+    const segmentsForDisplay = state.segments
+      .slice(0, state.segmentCount)
+      .map((seg) => {
+        const hasMedia = !!seg.mediaUrl;
+        const media = hasMedia
+          ? [
+              {
+                type: (seg.mediaType ?? "photo") as MediaType,
+                url: seg.mediaUrl as string,
+                filename: undefined,
+              },
+            ]
+          : [];
+
+        return {
+          id: seg.id,
+          title: seg.label,
+          description: "",
+          notes: seg.notes,
+          media,
+        };
+      });
+
+    onFaceChange({
+      faceId: state.faceId,
+      faceLabel,
+      segmentCount: state.segmentCount,
+      segments: segmentsForDisplay,
+    });
+  }
+
+  // 🧷 Initialisation / changement de faceId : on recharge depuis localStorage si dispo
+  useEffect(() => {
+    setFaces((prev) => {
+      const fromStorage = loadFaceState(faceId);
+      if (fromStorage) {
+        emitFaceChangeFromState(fromStorage);
+        return { ...prev, [faceId]: fromStorage };
+      }
+
+      if (prev[faceId]) {
+        emitFaceChangeFromState(prev[faceId]);
+        return prev;
+      }
+
+      const initial: FaceState = {
+        faceId,
+        segmentCount: DEFAULT_SEGMENTS,
+        segments: INITIAL_SEGMENTS.map((s) => ({ ...s })),
+        needles: defaultNeedles(),
+      };
+      persistFaceState(faceId, initial);
+      emitFaceChangeFromState(initial);
+      return { ...prev, [faceId]: initial };
+    });
+    setSelectedId(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faceId]);
 
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
@@ -332,51 +438,14 @@ export default function MagicDisplayFaceEditor({
     return () => window.removeEventListener("resize", compute);
   }, [segmentCount]);
 
-  /**
-   * 🔁 Transforme l'état interne de la face en payload simplifié
-   * utilisable pour display.faces[...] (MagicDisplayPreview).
-   */
-  function emitFaceChangeFromState(state: FaceState) {
-    if (!onFaceChange) return;
-
-    const segmentsForDisplay = state.segments
-      .slice(0, state.segmentCount)
-      .map((seg) => {
-        const hasMedia = !!seg.mediaUrl;
-        const media = hasMedia
-          ? [
-              {
-                type: (seg.mediaType ?? "photo") as MediaType,
-                url: seg.mediaUrl as string,
-                filename: undefined,
-              },
-            ]
-          : [];
-
-        return {
-          id: seg.id,
-          title: seg.label,
-          description: "",
-          notes: seg.notes,
-          media,
-        };
-      });
-
-    onFaceChange({
-      faceId: state.faceId,
-      faceLabel,
-      segmentCount: state.segmentCount,
-      segments: segmentsForDisplay,
-    });
-  }
-
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
       const existing = prev[faceId] ?? fallbackFace;
       const updated = updater(existing);
 
-      // 🔔 À CHAQUE MISE À JOUR → remonter au parent
+      // 🔔 À CHAQUE MISE À JOUR → remonter au parent + persister
       emitFaceChangeFromState(updated);
+      persistFaceState(faceId, updated);
 
       return { ...prev, [faceId]: updated };
     });
