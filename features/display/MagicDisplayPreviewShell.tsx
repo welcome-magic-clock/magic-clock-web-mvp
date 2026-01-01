@@ -37,7 +37,7 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  /** Gardé pour compatibilité, mais non utilisé dans le cube maintenant */
+  /** Gardé pour compat éventuelle */
   onOpenFace?: (faceIndex: number) => void;
 };
 
@@ -67,16 +67,6 @@ function normalizeAngle(angle: number): number {
 
 /**
  * Presets de rotation pour chaque face, vue 4/4 frontale.
- *
- * Index / Face :
- *   0 -> Face 1 (TOP)
- *   1 -> Face 2 (FRONT)
- *   2 -> Face 3 (RIGHT)
- *   3 -> Face 4 (BACK)
- *   4 -> Face 5 (LEFT)
- *   5 -> Face 6 (BOTTOM)
- *
- * On prend l'INVERSE des rotations locales du cube.
  */
 const FACE_PRESETS: { x: number; y: number }[] = [
   { x: -90, y: 0 }, // 0 : top (Face 1)
@@ -116,7 +106,7 @@ export default function MagicDisplayPreviewShell({
     null,
   );
 
-  // 👉 Face + segment dont on affiche le contenu sous le cube
+  // Face + segment dont on affiche le détail
   const [openedFaceForDetails, setOpenedFaceForDetails] =
     useState<number | null>(null);
   const [openedSegmentId, setOpenedSegmentId] =
@@ -173,6 +163,10 @@ export default function MagicDisplayPreviewShell({
     const preset = FACE_PRESETS[wrapped] ?? FACE_PRESETS[INITIAL_FACE_INDEX];
     setRotation(preset);
     rotationStartRef.current = preset;
+
+    // si on change de face, on referme l’aperçu détaillé
+    setOpenedFaceForDetails(null);
+    setOpenedSegmentId(null);
   }
 
   function goPrevFace() {
@@ -222,7 +216,7 @@ export default function MagicDisplayPreviewShell({
 
     if (!hasFaces) return;
 
-    // 🔒 Snap automatique sur le preset le plus proche (distance angulaire circulaire)
+    // 🔒 Snap automatique sur le preset le plus proche
     setRotation((prev) => {
       const prevX = prev.x;
       const prevY = normalizeAngle(prev.y);
@@ -235,7 +229,7 @@ export default function MagicDisplayPreviewShell({
         const targetY = normalizeAngle(preset.y);
 
         const dx = prevX - targetX;
-        const dy = normalizeAngle(prevY - targetY); // distance circulaire sur Y
+        const dy = normalizeAngle(prevY - targetY);
         const score = dx * dx + dy * dy;
 
         if (score < bestScore) {
@@ -288,7 +282,7 @@ export default function MagicDisplayPreviewShell({
           </div>
         ) : (
           <>
-            {/* ⭐️ Scène 3D – cube + titre/notes de la face active */}
+            {/* ⭐️ Scène 3D – cube + face active */}
             <section className="flex flex-1 flex-col items-center gap-6">
               <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
                 Vue 3D du Magic Clock
@@ -362,10 +356,27 @@ export default function MagicDisplayPreviewShell({
                     })()}
                   </div>
 
-                  {/* Cube 3D central (agrandi) */}
+                  {/* Zone cube + preview derrière */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-                    {/* 🌕 Halo derrière le cube, version plus pâle */}
-                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
+                    {/* 🌕 Halo */}
+                    <div className="pointer-events-none absolute -inset-8 -z-20 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
+
+                    {/* Cercle FacePreview derrière la face (inline) */}
+                    {detailFace && (
+                      <div className="absolute inset-0 z-0 flex items-center justify-center">
+                        <div className="h-[86%] w-[86%]">
+                          <MagicDisplayFacePreview
+                            face={detailFace}
+                            faceIndex={openedFaceForDetails!}
+                            openedSegmentId={openedSegmentId}
+                            onSegmentChange={(id) => setOpenedSegmentId(id)}
+                            creatorName="Créateur Magic Clock"
+                            creatorInitials="MC"
+                            variant="inline"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* 🧊 Cube au-dessus */}
                     <div
@@ -391,12 +402,12 @@ export default function MagicDisplayPreviewShell({
                         const depth = size / 2;
 
                         const transforms = [
-                          `rotateX(90deg) translateZ(${depth}px)`, // top (Face 1)
-                          `rotateY(0deg) translateZ(${depth}px)`, // front (Face 2)
-                          `rotateY(90deg) translateZ(${depth}px)`, // right (Face 3)
-                          `rotateY(180deg) translateZ(${depth}px)`, // back (Face 4)
-                          `rotateY(-90deg) translateZ(${depth}px)`, // left (Face 5)
-                          `rotateX(-90deg) translateZ(${depth}px)`, // bottom (Face 6)
+                          `rotateX(90deg) translateZ(${depth}px)`, // top
+                          `rotateY(0deg) translateZ(${depth}px)`, // front
+                          `rotateY(90deg) translateZ(${depth}px)`, // right
+                          `rotateY(180deg) translateZ(${depth}px)`, // back
+                          `rotateY(-90deg) translateZ(${depth}px)`, // left
+                          `rotateX(-90deg) translateZ(${depth}px)`, // bottom
                         ];
 
                         return facesForCube.map((face, index) => {
@@ -412,8 +423,10 @@ export default function MagicDisplayPreviewShell({
                               style={{
                                 width: size,
                                 height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]} rotateY(${isDoorOpen ? "-18deg" : "0deg"})`,
-                                transformOrigin: "50% 50%",
+                                transform: `translate(-50%, -50%) ${transforms[index]}${
+                                  isDoorOpen ? " rotateX(-95deg)" : ""
+                                }`,
+                                transformOrigin: "50% 0%", // pivot en haut
                               }}
                             >
                               {imgUrl ? (
@@ -434,10 +447,10 @@ export default function MagicDisplayPreviewShell({
                                 </div>
                               )}
 
-                              {/* Légère ombre en bas de la face */}
+                              {/* Ombre en bas */}
                               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                              {/* Bouton plein écran en bas à gauche */}
+                              {/* Bouton plein écran */}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -452,7 +465,7 @@ export default function MagicDisplayPreviewShell({
                                 </span>
                               </button>
 
-                              {/* Bouton "ouvrir cette face" → pivot + FacePreview + contenu sous le cube */}
+                              {/* Bouton ouvrir cette face → pivot + preview + contenu */}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -488,25 +501,11 @@ export default function MagicDisplayPreviewShell({
                     </div>
                   </div>
 
-                  {/* 🧩 FacePreview (style FaceEditor) en lecture seule, "derrière la face" */}
-                  {detailFace && (
-                    <div className="mt-6 w-full max-w-3xl">
-                      <MagicDisplayFacePreview
-                        face={detailFace}
-                        faceIndex={openedFaceForDetails!}
-                        openedSegmentId={openedSegmentId}
-                        onSegmentChange={(id) => setOpenedSegmentId(id)}
-                        creatorName="Créateur Magic Clock"
-                        creatorInitials="MC"
-                      />
-                    </div>
-                  )}
-
-                  {/* 📝 Bloc "Contenu du segment sélectionné" */}
+                  {/* 📝 Bloc "Contenu du segment sélectionné" (sans cercle dessous) */}
                   {detailFace &&
                     detailSegments.length > 0 &&
                     activeDetailSegment && (
-                      <div className="mt-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+                      <div className="mt-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
                         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
@@ -579,7 +578,7 @@ export default function MagicDisplayPreviewShell({
                       </div>
                     )}
 
-                  {/* Note pédagogique de la face (globale) */}
+                  {/* Note pédagogique globale (si aucune face ouverte, on garde) */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
                     {activeFace?.notes && activeFace.notes.trim().length > 0
                       ? activeFace.notes
