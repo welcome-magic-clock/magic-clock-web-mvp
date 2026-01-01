@@ -62,13 +62,15 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
  */
+const BASE_Y = 35;
+
 const FACE_PRESETS = [
-  { x: -60, y: 35 },   // top
-  { x: -20, y: 35 },   // front
-  { x: -20, y: 125 },  // right  (≈ front + 90°)
-  { x: -20, y: 215 },  // back   (≈ front + 180°)
-  { x: -20, y: -55 },  // left   (≈ front - 90°)
-  { x: 60, y: 35 },    // bottom
+  { x: -60, y: BASE_Y }, // top
+  { x: -20, y: BASE_Y }, // front
+  { x: -20, y: BASE_Y + 90 }, // right
+  { x: -20, y: BASE_Y + 180 }, // back
+  { x: -20, y: BASE_Y + 270 }, // left
+  { x: 60, y: BASE_Y }, // bottom
 ];
 
 const INITIAL_ROTATION = FACE_PRESETS[1]; // Face 2 en front par défaut
@@ -154,7 +156,42 @@ export default function MagicDisplayPreviewShell({
       // no-op
     }
     setIsDragging(false);
-    // Pas de snap pour l’instant : on garde la position choisie par l’utilisateur.
+
+    if (!hasFaces) return;
+
+    // 🔒 Snap automatique sur la face la plus proche (même logique que le cube d’édition)
+    setRotation((prev) => {
+      const pitch = prev.x;
+      let yaw = prev.y;
+
+      // Normaliser le yaw entre 0 et 360
+      yaw = yaw % 360;
+      if (yaw < 0) yaw += 360;
+
+      let snappedIndex: number;
+
+      // Top / bottom d’abord
+      if (pitch < -45) {
+        snappedIndex = 0; // Face 1 top
+      } else if (pitch > 45) {
+        snappedIndex = 5; // Face 6 bottom
+      } else {
+        // Faces latérales 2–5
+        let delta = yaw - BASE_Y;
+        delta = delta % 360;
+        if (delta < 0) delta += 360;
+
+        const quadrant = Math.round(delta / 90) % 4; // 0..3
+        snappedIndex = 1 + quadrant; // 1..4  => Faces 2,3,4,5
+      }
+
+      const snapped = FACE_PRESETS[snappedIndex] ?? prev;
+
+      setActiveFaceIndex(snappedIndex);
+      rotationStartRef.current = snapped;
+
+      return snapped;
+    });
   }
 
   return (
@@ -246,9 +283,9 @@ export default function MagicDisplayPreviewShell({
                         const depth = size / 2;
 
                         const transforms = [
-                          `rotateX(90deg) translateZ(${depth}px)`,  // Face 1 : top
-                          `rotateY(0deg) translateZ(${depth}px)`,   // Face 2 : front
-                          `rotateY(90deg) translateZ(${depth}px)`,  // Face 3 : right
+                          `rotateX(90deg) translateZ(${depth}px)`, // Face 1 : top
+                          `rotateY(0deg) translateZ(${depth}px)`, // Face 2 : front
+                          `rotateY(90deg) translateZ(${depth}px)`, // Face 3 : right
                           `rotateY(180deg) translateZ(${depth}px)`, // Face 4 : back
                           `rotateY(-90deg) translateZ(${depth}px)`, // Face 5 : left
                           `rotateX(-90deg) translateZ(${depth}px)`, // Face 6 : bottom
