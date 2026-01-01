@@ -320,18 +320,22 @@ export default function MagicDisplayPreviewShell({
     );
   })()}
 </div>
-                  {/* Cube 3D central (agrandi) */}
-                  <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
-                    <div
-                      className="absolute inset-0 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                      style={{
-                        transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                      }}
-                      onPointerDown={handleCubePointerDown}
-                      onPointerMove={handleCubePointerMove}
-                      onPointerUp={handleCubePointerUp}
-                      onPointerLeave={handleCubePointerUp}
-                    >
+                {/* Cube 3D central (agrandi) */}
+<div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
+  {/* 🌕 Halo derrière le cube */}
+  <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.35),_transparent_75%)]" />
+
+  {/* 🧊 Cube au-dessus */}
+  <div
+    className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+    style={{
+      transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+    }}
+    onPointerDown={handleCubePointerDown}
+    onPointerMove={handleCubePointerMove}
+    onPointerUp={handleCubePointerUp}
+    onPointerLeave={handleCubePointerUp}
+  >
                       {(() => {
                         // Toujours 6 faces pour le cube
                         const facesForCube: PreviewFace[] =
