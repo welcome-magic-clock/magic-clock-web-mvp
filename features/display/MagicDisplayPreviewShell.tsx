@@ -37,7 +37,6 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  onOpenFace?: (faceIndex: number) => void; // plus utilisé pour la navigation, mais conservé pour compat éventuelle
 };
 
 /**
@@ -111,17 +110,15 @@ export default function MagicDisplayPreviewShell({
   const rotationStartRef = useRef<{ x: number; y: number }>(INITIAL_ROTATION);
 
   // Face actuellement en plein écran (ou null)
-  const [fullScreenFaceIndex, setFullScreenFaceIndex] = useState<number | null>(
-    null,
-  );
+  const [fullScreenFaceIndex, setFullScreenFaceIndex] =
+    useState<number | null>(null);
 
   // 👉 Nouvelle logique : face & segment dont on affiche le contenu sous le cube
-  const [openedFaceForDetails, setOpenedFaceForDetails] = useState<number | null>(
-    null,
-  );
-  const [openedSegmentId, setOpenedSegmentId] = useState<string | number | null>(
-    null,
-  );
+  const [openedFaceForDetails, setOpenedFaceForDetails] =
+    useState<number | null>(null);
+  const [openedSegmentId, setOpenedSegmentId] = useState<
+    string | number | null
+  >(null);
 
   // sécuriser l’index si nombre de faces < 6 (au cas où)
   const safeIndex =
@@ -384,7 +381,9 @@ export default function MagicDisplayPreviewShell({
                       onPointerLeave={handleCubePointerUp}
                     >
                       {(() => {
-                        // Toujours 6 faces pour le cube
+                        if (!faces.length) return null;
+
+                        // Toujours 6 faces pour le cube ; si <6 on boucle
                         const facesForCube: PreviewFace[] =
                           faces.length >= 6
                             ? faces.slice(0, 6)
@@ -406,8 +405,13 @@ export default function MagicDisplayPreviewShell({
                         ];
 
                         return facesForCube.map((face, index) => {
+                          // Index réel dans faces[] (utile si <6 faces)
+                          const realFaceIndex =
+                            faces.length >= 6 ? index : index % faces.length;
+
                           const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
+                          const label =
+                            face.title || `Face ${realFaceIndex + 1}`;
 
                           return (
                             <div
@@ -429,7 +433,7 @@ export default function MagicDisplayPreviewShell({
                               ) : (
                                 <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
                                   <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
-                                    Face {index + 1}
+                                    Face {realFaceIndex + 1}
                                   </p>
                                   <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
                                     {label}
@@ -445,7 +449,7 @@ export default function MagicDisplayPreviewShell({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setFullScreenFaceIndex(index);
+                                  setFullScreenFaceIndex(realFaceIndex);
                                 }}
                                 className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
@@ -460,10 +464,11 @@ export default function MagicDisplayPreviewShell({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setOpenedFaceForDetails(index);
+                                  setOpenedFaceForDetails(realFaceIndex);
 
-                                  const f = faces[index];
-                                  const segs: PreviewSegment[] = f?.segments ?? [];
+                                  const f = faces[realFaceIndex];
+                                  const segs: PreviewSegment[] =
+                                    f?.segments ?? [];
                                   const firstId =
                                     segs[0]?.id ??
                                     (segs.length > 0 ? segs[0].id ?? 0 : null);
@@ -486,7 +491,7 @@ export default function MagicDisplayPreviewShell({
                     </div>
                   </div>
 
-                  {/* 🧩 FaceEditor (style) en lecture seule, derrière la face */}
+                  {/* 🧩 FacePreview en lecture seule, derrière la face */}
                   {detailFace && (
                     <div className="mt-6 w-full max-w-3xl">
                       <MagicDisplayFacePreview
@@ -501,78 +506,82 @@ export default function MagicDisplayPreviewShell({
                   )}
 
                   {/* 📝 Bloc "Contenu du segment sélectionné" */}
-                  {detailFace && detailSegments.length > 0 && activeDetailSegment && (
-                    <div className="mt-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
-                            Contenu du segment sélectionné
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            Face {openedFaceForDetails! + 1} ·{" "}
-                            {detailFace.title?.trim() || "Sans titre"}
-                          </p>
+                  {detailFace &&
+                    detailSegments.length > 0 &&
+                    activeDetailSegment && (
+                      <div className="mt-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                              Contenu du segment sélectionné
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Face {openedFaceForDetails! + 1} ·{" "}
+                              {detailFace.title?.trim() || "Sans titre"}
+                            </p>
+                          </div>
+
+                          {/* Mini bouton pour "fermer" les détails si besoin */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenedFaceForDetails(null);
+                              setOpenedSegmentId(null);
+                            }}
+                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+                          >
+                            Masquer
+                          </button>
                         </div>
 
-                        {/* Mini bouton pour "fermer" les détails si besoin */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpenedFaceForDetails(null);
-                            setOpenedSegmentId(null);
-                          }}
-                          className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
-                        >
-                          Masquer
-                        </button>
-                      </div>
+                        {/* Liste de segments sous forme de puces */}
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          {detailSegments.map((seg, index) => {
+                            const id =
+                              (seg as any).id ?? (seg as any).key ?? index;
+                            const label =
+                              (seg.title as string | undefined)?.trim() ||
+                              `Segment ${index + 1}`;
+                            const selected =
+                              openedSegmentId === id ||
+                              activeDetailIndex === index;
 
-                      {/* Liste de segments sous forme de puces */}
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        {detailSegments.map((seg, index) => {
-                          const id = (seg as any).id ?? (seg as any).key ?? index;
-                          const label =
-                            (seg.title as string | undefined)?.trim() ||
-                            `Segment ${index + 1}`;
-                          const selected =
-                            openedSegmentId === id || activeDetailIndex === index;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                onClick={() => setOpenedSegmentId(id)}
+                                className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] transition ${
+                                  selected
+                                    ? "border-brand-400 bg-brand-500/10 text-brand-600"
+                                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                          return (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={() => setOpenedSegmentId(id)}
-                              className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] transition ${
-                                selected
-                                  ? "border-brand-400 bg-brand-500/10 text-brand-600"
-                                  : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                              }`}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
+                        {/* Média principal */}
+                        <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                          {renderSegmentMedia(activeDetailSegment)}
+                        </div>
 
-                      {/* Média principal */}
-                      <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                        {renderSegmentMedia(activeDetailSegment)}
-                      </div>
-
-                      {/* Notes du segment */}
-                      <div className="space-y-1">
-                        {segmentTitle && (
-                          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                            {segmentTitle}
+                        {/* Notes du segment */}
+                        <div className="space-y-1">
+                          {segmentTitle && (
+                            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                              {segmentTitle}
+                            </p>
+                          )}
+                          <p className="whitespace-pre-line text-[13px] text-slate-700">
+                            {segmentNotes ||
+                              "Pas de notes pédagogiques, tout est dit dans le titre."}
                           </p>
-                        )}
-                        <p className="whitespace-pre-line text-[13px] text-slate-700">
-                          {segmentNotes ||
-                            "Pas de notes pédagogiques, tout est dit dans le titre."}
-                        </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Note pédagogique de la face (globale) */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
@@ -626,7 +635,8 @@ export default function MagicDisplayPreviewShell({
             {(() => {
               const face = faces[fullScreenFaceIndex]!;
               const imgUrl = getFaceMainPhotoUrl(face);
-              const label = face.title || `Face ${fullScreenFaceIndex + 1}`;
+              const label =
+                face.title || `Face ${fullScreenFaceIndex + 1}`;
 
               return (
                 <>
@@ -712,12 +722,16 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
 
   if (type === "photo" || type === "image") {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={segment.title ?? "Média"} className="h-full w-full object-cover" />;
+    return (
+      <img
+        src={url}
+        alt={segment.title ?? "Média"}
+        className="h-full w-full object-cover"
+      />
+    );
   }
 
-  const filename =
-    (media?.filename as string | undefined) ??
-    "Fichier";
+  const filename = (media?.filename as string | undefined) ?? "Fichier";
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-600">
@@ -725,7 +739,8 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
         {filename}
       </div>
       <p className="max-w-xs text-center text-[11px] text-slate-500">
-        Ce type de fichier sera téléchargeable dans la version utilisateur finale.
+        Ce type de fichier sera téléchargeable dans la version
+        utilisateur finale.
       </p>
     </div>
   );
