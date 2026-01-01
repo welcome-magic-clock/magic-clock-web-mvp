@@ -53,7 +53,7 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
 }
 
 /**
- * Presets de rotation pour chaque face (vue 3/4 premium).
+ * Presets de rotation pour chaque face (vue 3/4 premium), IDENTIQUES au cube d’édition.
  * index:
  *   0 -> Face 1 (TOP)
  *   1 -> Face 2 (FRONT)
@@ -62,18 +62,16 @@ function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
  *   4 -> Face 5 (LEFT)
  *   5 -> Face 6 (BOTTOM)
  */
-const BASE_Y = 35;
-
 const FACE_PRESETS = [
-  { x: -60, y: BASE_Y }, // top
-  { x: -20, y: BASE_Y }, // front
-  { x: -20, y: BASE_Y + 90 }, // right
-  { x: -20, y: BASE_Y + 180 }, // back
-  { x: -20, y: BASE_Y + 270 }, // left
-  { x: 60, y: BASE_Y }, // bottom
+  { x: -70, y: 26 },   // top
+  { x: -18, y: 26 },   // front
+  { x: -18, y: 116 },  // right  = 26 + 90
+  { x: -18, y: -154 }, // back   = 26 + 180
+  { x: -18, y: -64 },  // left   = 26 + 270
+  { x: 70,  y: 26 },   // bottom
 ];
 
-const INITIAL_ROTATION = FACE_PRESETS[1]; // Face 2 en front par défaut
+const INITIAL_ROTATION = FACE_PRESETS[1]; // on commence sur la face 2 (front)
 
 export default function MagicDisplayPreviewShell({
   display,
@@ -101,7 +99,7 @@ export default function MagicDisplayPreviewShell({
     !hasFaces ? 0 : Math.min(Math.max(activeFaceIndex, 0), faces.length - 1);
   const activeFace = hasFaces ? faces[safeIndex] : undefined;
 
-  // Navigation flèches : on change la face active + preset associé
+  // Navigation flèches : on change la face active + vue preset
   function goToFace(nextIndex: number) {
     if (!hasFaces) return;
     const maxIndex = Math.max(0, faces.length - 1);
@@ -159,35 +157,24 @@ export default function MagicDisplayPreviewShell({
 
     if (!hasFaces) return;
 
-    // 🔒 Snap automatique sur la face la plus proche (même logique que le cube d’édition)
+    // 🔒 Snap automatique sur le preset le plus proche (même logique que dans le cube d’édition)
     setRotation((prev) => {
-      const pitch = prev.x;
-      let yaw = prev.y;
+      let bestIndex = 0;
+      let bestScore = Number.POSITIVE_INFINITY;
 
-      // Normaliser le yaw entre 0 et 360
-      yaw = yaw % 360;
-      if (yaw < 0) yaw += 360;
+      FACE_PRESETS.forEach((preset, index) => {
+        const dx = prev.x - preset.x;
+        const dy = prev.y - preset.y;
+        const score = dx * dx + dy * dy;
+        if (score < bestScore) {
+          bestScore = score;
+          bestIndex = index;
+        }
+      });
 
-      let snappedIndex: number;
+      const snapped = FACE_PRESETS[bestIndex] ?? prev;
 
-      // Top / bottom d’abord
-      if (pitch < -45) {
-        snappedIndex = 0; // Face 1 top
-      } else if (pitch > 45) {
-        snappedIndex = 5; // Face 6 bottom
-      } else {
-        // Faces latérales 2–5
-        let delta = yaw - BASE_Y;
-        delta = delta % 360;
-        if (delta < 0) delta += 360;
-
-        const quadrant = Math.round(delta / 90) % 4; // 0..3
-        snappedIndex = 1 + quadrant; // 1..4  => Faces 2,3,4,5
-      }
-
-      const snapped = FACE_PRESETS[snappedIndex] ?? prev;
-
-      setActiveFaceIndex(snappedIndex);
+      setActiveFaceIndex(bestIndex);
       rotationStartRef.current = snapped;
 
       return snapped;
@@ -327,7 +314,7 @@ export default function MagicDisplayPreviewShell({
                               <button
                                 type="button"
                                 onClick={() => onOpenFace?.(index)}
-                                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justifycenter rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
                               >
                                 <span className="text-xs" aria-hidden>
                                   ↗︎
