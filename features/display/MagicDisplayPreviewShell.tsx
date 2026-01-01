@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
+import MagicDisplayFacePreview from "./MagicDisplayFacePreview";
 
 export type MediaKind = "photo" | "video" | "file";
 
@@ -36,7 +37,7 @@ export type PreviewDisplay = {
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
   onBack?: () => void;
-  onOpenFace?: (faceIndex: number) => void; // gardé pour compat mais plus utilisé ici
+  onOpenFace?: (faceIndex: number) => void; // plus utilisé pour la navigation, mais conservé pour compat éventuelle
 };
 
 /**
@@ -115,7 +116,9 @@ export default function MagicDisplayPreviewShell({
   );
 
   // 👉 Nouvelle logique : face & segment dont on affiche le contenu sous le cube
-  const [openedFaceForDetails, setOpenedFaceForDetails] = useState<number | null>(null);
+  const [openedFaceForDetails, setOpenedFaceForDetails] = useState<number | null>(
+    null,
+  );
   const [openedSegmentId, setOpenedSegmentId] = useState<string | number | null>(
     null,
   );
@@ -452,7 +455,7 @@ export default function MagicDisplayPreviewShell({
                                 </span>
                               </button>
 
-                              {/* Bouton "ouvrir cette face" → active le panneau sous le cube */}
+                              {/* Bouton "ouvrir cette face" → active le preview + panneau sous le cube */}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -483,9 +486,23 @@ export default function MagicDisplayPreviewShell({
                     </div>
                   </div>
 
+                  {/* 🧩 FaceEditor (style) en lecture seule, derrière la face */}
+                  {detailFace && (
+                    <div className="mt-6 w-full max-w-3xl">
+                      <MagicDisplayFacePreview
+                        face={detailFace}
+                        faceIndex={openedFaceForDetails!}
+                        openedSegmentId={openedSegmentId}
+                        onSegmentChange={(id) => setOpenedSegmentId(id)}
+                        creatorName="Créateur Magic Clock"
+                        creatorInitials="MC"
+                      />
+                    </div>
+                  )}
+
                   {/* 📝 Bloc "Contenu du segment sélectionné" */}
                   {detailFace && detailSegments.length > 0 && activeDetailSegment && (
-                    <div className="mt-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+                    <div className="mt-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
@@ -510,7 +527,7 @@ export default function MagicDisplayPreviewShell({
                         </button>
                       </div>
 
-                      {/* Liste de segments */}
+                      {/* Liste de segments sous forme de puces */}
                       <div className="mb-3 flex flex-wrap gap-2">
                         {detailSegments.map((seg, index) => {
                           const id = (seg as any).id ?? (seg as any).key ?? index;
@@ -666,9 +683,7 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
     );
   }
 
-  const mediaList =
-    (segment.media as any[]) ??
-    [];
+  const mediaList = (segment.media as any[]) ?? [];
 
   if (!mediaList.length) {
     return (
@@ -680,9 +695,7 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
 
   const media = mediaList[0];
   const url = (media?.url as string | undefined) ?? "";
-  const type =
-    (media?.type as string | undefined) ??
-    "";
+  const type = (media?.type as string | undefined) ?? "";
 
   if (!url) {
     return (
@@ -693,18 +706,13 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
   }
 
   if (type === "video") {
+    // eslint-disable-next-line jsx-a11y/media-has-caption
     return <video src={url} controls className="h-full w-full object-cover" />;
   }
 
   if (type === "photo" || type === "image") {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={url}
-        alt={segment.title ?? "Média"}
-        className="h-full w-full object-cover"
-      />
-    );
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={url} alt={segment.title ?? "Média"} className="h-full w-full object-cover" />;
   }
 
   const filename =
