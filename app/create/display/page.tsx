@@ -18,13 +18,13 @@ type FaceEditorPayload = {
   segments: {
     id: number;
     title: string;
-    description: string;
-    notes: string;
-    media: {
+    description?: string; // ⬅️ maintenant optionnel, comme dans MagicDisplayFaceEditor
+    notes?: string;       // ⬅️ optionnel aussi
+    media?: {
       type: "photo" | "video" | "file";
       url: string;
       filename?: string;
-    }[];
+    }[];                  // ⬅️ le tableau lui-même est optionnel
   }[];
 };
 
@@ -57,14 +57,16 @@ export default function MagicDisplayEditorPage() {
       const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
       const previous = faces[index];
 
-      const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
-        id: seg.id,
-        title: seg.title,
-        description: seg.description,
-        notes: seg.notes,
-        media: seg.media,
-      }));
-
+    const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
+  id: seg.id,
+  title: seg.title,
+  // PreviewSegment autorise déjà description/notes/media optionnels,
+  // donc on peut juste les relayer tels quels :
+  description: seg.description,
+  notes: seg.notes,
+  media: seg.media,
+}));
+      
       const nextFace: PreviewFace = {
         title: payload.faceLabel || previous?.title || `Face ${payload.faceId}`,
         description: previous?.description ?? "",
