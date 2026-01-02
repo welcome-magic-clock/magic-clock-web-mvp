@@ -63,9 +63,13 @@ export default function MagicDisplayFacePreview({
     };
   });
 
-  const selectedId =
-    openedSegmentId ??
-    (dialSegments.length > 0 ? dialSegments[0].id : null);
+  // ✅ On force un number | undefined pour le dial
+  const selectedId: number | undefined =
+    typeof openedSegmentId === "number"
+      ? openedSegmentId
+      : dialSegments.length > 0
+        ? dialSegments[0].id
+        : undefined;
 
   return (
     <section className="flex h-full w-full flex-col rounded-3xl bg-white px-4 pb-4 pt-3">
@@ -82,7 +86,16 @@ export default function MagicDisplayFacePreview({
 
         <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
           <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-            <span className="text-xs font-semibold">{creatorInitials}</span>
+            {creatorAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={creatorAvatar}
+                alt={creatorName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-xs font-semibold">{creatorInitials}</span>
+            )}
           </span>
           <span className="font-medium">{creatorName}</span>
         </div>
@@ -96,7 +109,7 @@ export default function MagicDisplayFacePreview({
           creatorInitials={creatorInitials}
           segmentCount={segmentCount}
           segments={dialSegments}
-          selectedId={selectedId ?? undefined}
+          selectedId={selectedId}
           needles={{ needle2Enabled: false }}
           mode="preview"
           onSegmentClick={(seg) => onSegmentChange(seg.id)}
