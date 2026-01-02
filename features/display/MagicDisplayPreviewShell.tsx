@@ -4,7 +4,6 @@
 import { useRef, useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
-import MagicDisplayFacePreview from "./MagicDisplayFacePreview";
 import MagicDisplayFaceBackCircle from "./MagicDisplayFaceBackCircle";
 
 export type MediaKind = "photo" | "video" | "file";
@@ -33,6 +32,11 @@ export type PreviewFace = {
 
 export type PreviewDisplay = {
   faces: PreviewFace[];
+
+  // Métadonnées optionnelles du “créateur” pour la face arrière
+  creatorName?: string;
+  creatorInitials?: string;
+  creatorAvatarUrl?: string | null;
 };
 
 type MagicDisplayPreviewShellProps = {
@@ -98,6 +102,11 @@ export default function MagicDisplayPreviewShell({
   const router = useRouter();
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
+
+  // Infos créateur pour le cercle (fallbacks si non fournies)
+  const creatorName = display.creatorName ?? "Aiko Tanaka";
+  const creatorInitials = display.creatorInitials ?? "AT";
+  const creatorAvatar = display.creatorAvatarUrl ?? null;
 
   // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
   const [activeFaceIndex, setActiveFaceIndex] = useState(INITIAL_FACE_INDEX);
@@ -494,38 +503,39 @@ export default function MagicDisplayPreviewShell({
                                 </button>
                               </div>
 
-                          {/* FACE ARRIÈRE : cercle Aiko en lecture seule */}
-<div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-  <div className="relative flex h-full w-full items-center justify-center">
-    <MagicDisplayFaceBackCircle
-      face={face}
-      openedSegmentId={openedSegmentId}
-      onSegmentChange={(id) => {
-        // On garde la face courante comme source des détails sous le cube
-        setOpenedFaceForDetails(index);
-        setOpenedSegmentId(id);
-      }}
-      creatorName="Aiko Tanaka"
-      creatorInitials="AT"
-      creatorAvatar={null} // on branchera l'image plus tard si tu veux
-    />
+                              {/* FACE ARRIÈRE : cercle en lecture seule */}
+                              <div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                                <div className="relative flex h-full w-full items-center justify-center">
+                                  <MagicDisplayFaceBackCircle
+                                    face={face}
+                                    openedSegmentId={openedSegmentId}
+                                    onSegmentChange={(id) => {
+                                      setOpenedFaceForDetails(index);
+                                      setOpenedSegmentId(id);
+                                    }}
+                                    creatorName={creatorName}
+                                    creatorInitials={creatorInitials}
+                                    creatorAvatar={creatorAvatar}
+                                  />
 
-    {/* Bouton pour refermer et revenir à la face avant */}
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        setFlippedFaceIndex(null);
-        setOpenedFaceForDetails(null);
-        setOpenedSegmentId(null);
-      }}
-      className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
-    >
-      <span aria-hidden>↺</span>
-      <span className="sr-only">Revenir à la vue cube</span>
-    </button>
-  </div>
-</div>
+                                  {/* Bouton pour refermer et revenir à la face avant */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setFlippedFaceIndex(null);
+                                      setOpenedFaceForDetails(null);
+                                      setOpenedSegmentId(null);
+                                    }}
+                                    className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
+                                  >
+                                    <span aria-hidden>↺</span>
+                                    <span className="sr-only">
+                                      Revenir à la vue cube
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           );
                         });
