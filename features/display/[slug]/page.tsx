@@ -1,57 +1,36 @@
 // app/display/[slug]/page.tsx
 
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-import MagicDisplayPreviewShell, {
-  type PreviewDisplay,
-} from "@/features/display/MagicDisplayPreviewShell";
+import MagicDisplayPreviewShell from "@/features/display/MagicDisplayPreviewShell";
 import { DISPLAY_PRESETS } from "@/features/display/displayPresets";
+import type { PreviewDisplay } from "@/features/display/MagicDisplayPreviewShell";
 
-/**
- * Optionnel : SEO de base – tu pourras le rendre dynamique selon le slug.
- */
-export const metadata: Metadata = {
-  title: "Magic Clock – Display",
-};
-
-/**
- * Récupère un Display à partir du slug.
- * Pour l’instant, on utilise DISPLAY_PRESETS (mock).
- * Plus tard : fetch depuis ta base de données.
- */
-function getDisplayForSlug(slug: string): PreviewDisplay | null {
-  const display = DISPLAY_PRESETS[slug];
-  return display ?? null;
-}
-
-type DisplayPageProps = {
+type PageProps = {
   params: {
     slug: string;
   };
 };
 
-export default function DisplayPage({ params }: DisplayPageProps) {
+function getDisplayForSlug(slug: string): PreviewDisplay | null {
+  // 1) Presets (Bear, autres tutos officiels)
+  const preset = DISPLAY_PRESETS[slug];
+  if (preset) return preset;
+
+  // 2) Plus tard : fetch Supabase / API ici
+  // if (data) return mapRowToPreviewDisplay(data);
+
+  return null;
+}
+
+export default function DisplayPage({ params }: PageProps) {
   const { slug } = params;
 
   const display = getDisplayForSlug(slug);
 
   if (!display) {
-    // Si le slug n'existe pas, on renvoie sur la 404 Next
+    // Si aucun preset ou enregistrement trouvé → 404 propre
     notFound();
   }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      {/* Tu peux ajouter un petit header si tu veux */}
-      {/* <header className="border-b border-white/10 px-4 py-3">
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-          Magic Clock · Display
-        </p>
-        <h1 className="text-lg font-semibold">{slug}</h1>
-      </header> */}
-
-      <MagicDisplayPreviewShell display={display} />
-    </div>
-  );
+  return <MagicDisplayPreviewShell display={display} />;
 }
