@@ -493,43 +493,39 @@ export default function MagicDisplayPreviewShell({
                                 </button>
                               </div>
 
-                              {/* FACE ARRIÈRE : FacePreview collée derrière la carte */}
-                              <div
-                                className="absolute inset-0 rounded-none border border-slate-200 bg-transparent text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden]"
-                                style={{ transform: "rotateY(180deg)" }}
-                              >
-                                <div className="flex h-full w-full items-center justify-center bg-white/95">
-                                  <div className="h-[94%] w-[94%] scale-[0.9]">
-                                    <MagicDisplayFacePreview
-                                      face={face}
-                                      faceIndex={index}
-                                      openedSegmentId={openedSegmentId}
-                                      onSegmentChange={(id) =>
-                                        setOpenedSegmentId(id)
-                                      }
-                                      creatorName="Aiko Tanaka"
-                                      creatorInitials="AT"
-                                    />
-                                  </div>
+                              {/* FACE ARRIÈRE : cercle Aiko en mode compact */}
+<div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+  <div className="relative flex h-full w-full items-center justify-center">
+    <MagicDisplayFacePreview
+      face={face}
+      faceIndex={index}
+      openedSegmentId={openedSegmentId}
+      onSegmentChange={(id) => {
+        // On garde la face courante comme source des détails sous le cube
+        setOpenedFaceForDetails(index);
+        setOpenedSegmentId(id);
+      }}
+      creatorName="Aiko Tanaka"
+      creatorInitials="AT"
+      variant="circle-only"
+    />
 
-                                  {/* Bouton pour refermer et revenir au cube */}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setFlippedFaceIndex(null);
-                                      setOpenedFaceForDetails(null);
-                                      setOpenedSegmentId(null);
-                                    }}
-                                    className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
-                                  >
-                                    <span aria-hidden>↺</span>
-                                    <span className="sr-only">
-                                      Revenir à la vue cube
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>
+    {/* Bouton pour refermer et revenir à la face avant */}
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        setFlippedFaceIndex(null);
+        setOpenedFaceForDetails(null);
+        setOpenedSegmentId(null);
+      }}
+      className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
+    >
+      <span aria-hidden>↺</span>
+      <span className="sr-only">Revenir à la vue cube</span>
+    </button>
+  </div>
+</div>
                             </div>
                           );
                         });
