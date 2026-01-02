@@ -501,13 +501,13 @@ export default function MagicDisplayPreviewShell({
       faceIndex={index}
       openedSegmentId={openedSegmentId}
       onSegmentChange={(id) => {
-          creatorAvatar="/chemin/vers/aiko.jpg"
         // On garde la face courante comme source des détails sous le cube
         setOpenedFaceForDetails(index);
         setOpenedSegmentId(id);
       }}
       creatorName="Aiko Tanaka"
       creatorInitials="AT"
+      creatorAvatar="/images/aiko-tanaka.jpg" 
       variant="circle-only"
     />
 
