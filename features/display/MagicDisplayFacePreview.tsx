@@ -26,6 +26,7 @@ export type MagicDisplayFacePreviewProps = {
   onSegmentChange: (id: string | number) => void;
   creatorName: string;
   creatorInitials: string;
+  creatorAvatar?: string | null;
 };
 
 export default function MagicDisplayFacePreview({
@@ -35,6 +36,7 @@ export default function MagicDisplayFacePreview({
   onSegmentChange,
   creatorName,
   creatorInitials,
+  creatorAvatar,
 }: MagicDisplayFacePreviewProps) {
   const rawSegments = face.segments ?? [];
   const segmentCount = rawSegments.length || 1;
@@ -90,7 +92,7 @@ export default function MagicDisplayFacePreview({
       <div className="flex flex-1 items-center justify-center">
         <MagicDisplayFaceDialBase
           creatorName={creatorName}
-          creatorAvatar={null}
+          creatorAvatar={creatorAvatar ?? null}
           creatorInitials={creatorInitials}
           segmentCount={segmentCount}
           segments={dialSegments}
