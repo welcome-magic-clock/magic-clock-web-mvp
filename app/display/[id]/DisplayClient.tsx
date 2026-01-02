@@ -1,12 +1,27 @@
+// app/display/[id]/DisplayClient.tsx
 "use client";
 
 import Link from "next/link";
 import MagicDisplayViewer from "../MagicDisplayViewer";
 import { findContentById } from "@/core/domain/repository";
 
+import MagicDisplayPreviewShell, {
+  type PreviewDisplay,
+} from "@/features/display/MagicDisplayPreviewShell";
+import { DISPLAY_PRESETS } from "@/features/display/displayPresets";
+
 export default function DisplayClient({ id }: { id: string }) {
   const rawId = decodeURIComponent(id);
 
+  // 👉 1) Cas “preset” (Bear & futurs onboarding)
+  const presetDisplay: PreviewDisplay | undefined = DISPLAY_PRESETS[rawId];
+
+  if (presetDisplay) {
+    // Vue finale 100 % lecture seule : cube 3D + cercle Aiko
+    return <MagicDisplayPreviewShell display={presetDisplay} />;
+  }
+
+  // 👉 2) Cas normal MVP : ancien comportement
   const content = findContentById(rawId);
 
   const title = content?.title ?? `Magic Display #${rawId}`;
