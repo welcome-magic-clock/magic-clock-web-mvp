@@ -1,54 +1,49 @@
-// features/display/MagicDisplayFaceDialBase.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { PreviewSegment } from "./MagicDisplayPreviewShell";
+import { Camera, Clapperboard, FileText } from "lucide-react";
+
+export type SegmentStatus = "empty" | "in-progress" | "complete";
+export type MediaType = "photo" | "video" | "file";
+
+export type FaceNeedles = {
+  needle2Enabled: boolean;
+};
+
+export type DialSegmentLike = {
+  id: number;
+  status?: SegmentStatus;
+  mediaType?: MediaType | null;
+};
 
 export type MagicDisplayFaceDialMode = "editor" | "preview";
 
-type MagicDisplayFaceDialBaseProps = {
-  mode?: MagicDisplayFaceDialMode; // pour plus tard, si l’éditeur a besoin de variantes
-  segments: PreviewSegment[];
-  openedSegmentId: string | number | null;
-  onSegmentChange?: (id: string | number) => void;
+type MagicDisplayFaceDialBaseProps<
+  TSegment extends DialSegmentLike = DialSegmentLike,
+> = {
+  creatorName: string;
   creatorAvatar?: string | null;
-  creatorInitials?: string;
+  creatorInitials: string;
+  segmentCount: number;
+  segments: TSegment[];
+  selectedId: number;
+  needles: FaceNeedles;
+  mode?: MagicDisplayFaceDialMode;
+  onSegmentClick?: (segment: TSegment) => void;
 };
 
-type SegmentStatus = "empty" | "in-progress" | "complete";
-
-const MAX_SEGMENTS = 12;
-
-const statusDotClass = (status: SegmentStatus) => {
+const statusDotClass = (status?: SegmentStatus) => {
   if (status === "complete") return "bg-emerald-500";
   if (status === "in-progress") return "bg-amber-400";
   return "bg-slate-300";
 };
 
-const statusLabel = (status: SegmentStatus) => {
-  if (status === "complete") return "terminé";
-  if (status === "in-progress") return "en cours";
-  return "vide";
+const segmentIcon = (mediaType?: MediaType | null) => {
+  if (mediaType === "photo") return <Camera className="h-3.5 w-3.5" />;
+  if (mediaType === "video") return <Clapperboard className="h-3.5 w-3.5" />;
+  if (mediaType === "file") return <FileText className="h-3.5 w-3.5" />;
+  return <span className="text-xs">＋</span>;
 };
-
-const segmentIcon = (seg: PreviewSegment) => {
-  const m = seg.media?.[0];
-  const type = m?.type;
-  if (type === "photo") return "📷";
-  if (type === "video") return "🎬";
-  if (type === "file") return "📄";
-  return "＋";
-};
-
-function computeStatus(seg: PreviewSegment): SegmentStatus {
-  const hasMedia = !!(seg.media && seg.media.length > 0);
-  const hasNotes = !!seg.notes && seg.notes.trim().length > 0;
-  const hasDesc = !!seg.description && seg.description.trim().length > 0;
-
-  if (hasMedia && (hasNotes || hasDesc)) return "complete";
-  if (hasMedia || hasNotes || hasDesc) return "in-progress";
-  return "empty";
-}
 
 // angle = centre du segment sélectionné
 function segmentAngleForId(segmentId: number, count: number) {
@@ -60,7 +55,8 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (simple) – version raffinée, comme dans l’Editor.
+ * Aiguille 1 (simple)
+ * – corps plus fin au centre, qui s’élargit vers la pointe
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -68,6 +64,7 @@ function WatchHandOneWayRefined({
 }: {
   angleDeg: number;
   frontLenPx: number;
+  tailLenPx?: number; // gardé pour compatibilité d'appel
 }) {
   const width = Math.max(40, frontLenPx);
 
@@ -94,32 +91,32 @@ function WatchHandOneWayRefined({
   );
 }
 
-export default function MagicDisplayFaceDialBase({
-  mode = "preview",
+export default function MagicDisplayFaceDialBase<
+  TSegment extends DialSegmentLike = DialSegmentLike,
+>({
+  creatorName,
+  creatorAvatar,
+  creatorInitials,
+  segmentCount,
   segments,
-  openedSegmentId,
-  onSegmentChange,
-  creatorAvatar = null,
-  creatorInitials = "MC",
-}: MagicDisplayFaceDialBaseProps) {
-  const allSegments = (segments ?? []) as PreviewSegment[];
-  const segmentCount = allSegments.length
-    ? Math.min(MAX_SEGMENTS, allSegments.length)
-    : 1;
-
+  selectedId,
+  needles,
+  mode = "editor",
+  onSegmentClick,
+}: MagicDisplayFaceDialBaseProps<TSegment>) {
   const circleRef = useRef<HTMLDivElement | null>(null);
   const [frontLenPx, setFrontLenPx] = useState<number>(92);
 
-  // Longueur de l’aiguille en fonction du cercle
+  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
   useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
 
     const compute = () => {
-      const size = el.getBoundingClientRect().width;
+      const size = el.getBoundingClientRect().width; // ex: 256
       const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20;
-      const gap = 8;
+      const bubbleRadius = 20; // rayon approximatif des bulles
+      const gap = 8; // petit espace avant la bulle
 
       const len = radiusToBubbleCenter - bubbleRadius - gap;
       setFrontLenPx(Math.max(40, Math.round(len)));
@@ -130,30 +127,14 @@ export default function MagicDisplayFaceDialBase({
     return () => window.removeEventListener("resize", compute);
   }, [segmentCount]);
 
-  const firstSeg = allSegments[0];
-  const defaultId =
-    (firstSeg?.id as number | string | undefined) ?? (allSegments.length ? 1 : 0);
-
-  const selectedId =
-    openedSegmentId !== null && openedSegmentId !== undefined
-      ? openedSegmentId
-      : defaultId;
-
-  const selectedNumericId =
-    typeof selectedId === "number"
-      ? selectedId
-      : Number(selectedId) > 0
-        ? Number(selectedId)
-        : 1;
-
-  const angle1 = segmentAngleForId(selectedNumericId, segmentCount);
-  const isEven = segmentCount % 2 === 0;
+  const SAFE_COUNT = Math.max(1, segmentCount || 1);
+  const angle1 = segmentAngleForId(selectedId || 1, SAFE_COUNT);
+  const isEven = SAFE_COUNT % 2 === 0;
   const TAIL_LEN = 0;
 
   function getSegmentPositionStyle(index: number) {
-    const count = segmentCount || 1;
     const radiusPercent = 42;
-    const angleStep = 360 / count;
+    const angleStep = 360 / SAFE_COUNT;
     const startAngleDeg = -90;
     const angleDeg = startAngleDeg + angleStep * index;
     const rad = (angleDeg * Math.PI) / 180;
@@ -164,102 +145,107 @@ export default function MagicDisplayFaceDialBase({
     return { top: `${top}%`, left: `${left}%` };
   }
 
-  function handleSegmentBubbleClick(seg: PreviewSegment, index: number) {
-    const id = (seg.id as any) ?? index;
-    // en mode preview : juste changer le segment sélectionné
-    // (en mode editor, le parent pourra brancher d’autres actions)
-    onSegmentChange?.(id);
-  }
+  const visibleSegments = segments.slice(0, SAFE_COUNT);
 
   return (
-    <div className="flex items-center justify-center">
-      <div ref={circleRef} className="relative h-64 w-64 max-w-full">
-        {/* Décor z-10 */}
-        <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
-        <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
-        <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
+    <div ref={circleRef} className="relative h-64 w-64 max-w-full">
+      {/* Décor z-10 */}
+      <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
+      <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
+      <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
-        {/* Demi-segments depuis le centre */}
-        <div className="pointer-events-none absolute inset-0" style={{ zIndex: 15 }}>
-          {Array.from({ length: segmentCount }, (_, index) => {
-            const count = segmentCount || 1;
-            if (count <= 1) return null;
+      {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ zIndex: 15 }}
+      >
+        {Array.from({ length: SAFE_COUNT }, (_, index) => {
+          if (SAFE_COUNT <= 1) return null;
 
-            const step = 360 / count;
-            const startAngleDeg = -90;
-            const angleDeg = startAngleDeg + step * index + step / 2;
-
-            return (
-              <div key={index} className="absolute inset-0">
-                <div
-                  className="absolute left-1/2 top-1/2"
-                  style={{
-                    width: "42%",
-                    height: "1px",
-                    transformOrigin: "left center",
-                    transform: `translateY(-50%) rotate(${angleDeg}deg)`,
-                    background: "rgba(148,163,184,0.75)",
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Aiguilles z-20 */}
-        <div className="pointer-events-none absolute inset-0 z-20">
-          <WatchHandOneWayRefined angleDeg={angle1} frontLenPx={frontLenPx} />
-          {isEven && (
-            <WatchHandOneWayRefined angleDeg={angle1 + 180} frontLenPx={frontLenPx} />
-          )}
-        </div>
-
-        {/* Avatar centre z-30 */}
-        <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
-          {creatorAvatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={creatorAvatar}
-              alt={creatorInitials ?? "Créateur"}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-xs font-semibold text-slate-50">
-              {creatorInitials}
-            </span>
-          )}
-        </div>
-
-        {/* Bulles segments z-40 */}
-        {allSegments.slice(0, segmentCount).map((seg, index) => {
-          const isSelected =
-            seg.id === selectedId || String(seg.id) === String(selectedId);
-
-          const status = computeStatus(seg);
+          const step = 360 / SAFE_COUNT;
+          const startAngleDeg = -90;
+          const angleDeg = startAngleDeg + step * index + step / 2;
 
           return (
-            <button
-              key={seg.id ?? index}
-              type="button"
-              onClick={() => handleSegmentBubbleClick(seg, index)}
-              className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
-                isSelected
-                  ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
-                  : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
-              }`}
-              style={getSegmentPositionStyle(index)}
-              aria-label={`Segment ${seg.id ?? index + 1} – ${statusLabel(status)}`}
-            >
-              <span className="text-[13px] leading-none">{segmentIcon(seg)}</span>
+            <div key={index} className="absolute inset-0">
+              <div
+                className="absolute left-1/2 top-1/2"
+                style={{
+                  width: "42%",
+                  height: "1px",
+                  transformOrigin: "left center",
+                  transform: `translateY(-50%) rotate(${angleDeg}deg)`,
+                  background: "rgba(148,163,184,0.75)",
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Aiguilles z-20 */}
+      <div className="pointer-events-none absolute inset-0 z-20">
+        <WatchHandOneWayRefined
+          angleDeg={angle1}
+          frontLenPx={frontLenPx}
+          tailLenPx={TAIL_LEN}
+        />
+        {isEven && needles.needle2Enabled && (
+          <WatchHandOneWayRefined
+            angleDeg={angle1 + 180}
+            frontLenPx={frontLenPx}
+            tailLenPx={TAIL_LEN}
+          />
+        )}
+      </div>
+
+      {/* Avatar z-30 */}
+      <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
+        {creatorAvatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={creatorAvatar}
+            alt={creatorName}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-xs font-semibold text-slate-50">
+            {creatorInitials}
+          </span>
+        )}
+      </div>
+
+      {/* Bulles z-40 */}
+      {visibleSegments.map((seg, index) => {
+        const isSelected = seg.id === selectedId;
+        const status = seg.status ?? "empty";
+
+        return (
+          <button
+            key={seg.id}
+            type="button"
+            onClick={() => {
+              if (onSegmentClick) onSegmentClick(seg);
+            }}
+            className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
+              isSelected
+                ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
+                : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
+            }`}
+            style={getSegmentPositionStyle(index)}
+            aria-label={`Segment ${seg.id}`}
+          >
+            {segmentIcon(seg.mediaType as MediaType | null)}
+            {mode === "editor" && (
               <span
                 className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
                   status,
                 )}`}
               />
-            </button>
-          );
-        })}
-      </div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
