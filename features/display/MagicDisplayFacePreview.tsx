@@ -15,6 +15,8 @@ type MagicDisplayFacePreviewProps = {
   creatorInitials?: string;
   openedSegmentId: string | number | null;
   onSegmentChange?: (id: string | number) => void;
+  // Optionnel : utilisé par certains appels existants (ex. "circle-only")
+  variant?: "circle-only" | "full";
 };
 
 export default function MagicDisplayFacePreview({
