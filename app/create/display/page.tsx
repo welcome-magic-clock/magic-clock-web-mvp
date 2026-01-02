@@ -1,27 +1,127 @@
 // app/create/display/page.tsx
+"use client";
 
+import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 
+import MagicDisplayFaceEditor from "@/features/display/MagicDisplayFaceEditor";
+import MagicDisplayPreviewShell, {
+  type PreviewDisplay,
+  type PreviewFace,
+  type PreviewSegment,
+} from "@/features/display/MagicDisplayPreviewShell";
+
+type FaceEditorPayload = {
+  faceId: number;
+  faceLabel?: string;
+  segmentCount: number;
+  segments: {
+    id: number;
+    title: string;
+    description: string;
+    notes: string;
+    media: {
+      type: "photo" | "video" | "file";
+      url: string;
+      filename?: string;
+    }[];
+  }[];
+};
+
+function createInitialDisplay(): PreviewDisplay {
+  const faces: PreviewFace[] = Array.from({ length: 6 }, (_, index) => ({
+    title: `Face ${index + 1}`,
+    description: "",
+    notes: "",
+    segments: [],
+  }));
+
+  return { faces };
+}
+
 export default function MagicDisplayEditorPage() {
+  const [displayDraft, setDisplayDraft] = useState<PreviewDisplay>(
+    () => createInitialDisplay(),
+  );
+
+  // face en cours d’édition (0 → 5)
+  const [editingFaceIndex, setEditingFaceIndex] = useState(0);
+
+  // ancre pour scroller sur la preview 3D
+  const previewRef = useRef<HTMLDivElement | null>(null);
+
+  const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
+    setDisplayDraft((prev) => {
+      const faces = [...(prev.faces ?? [])];
+
+      const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
+      const previous = faces[index];
+
+      const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
+        id: seg.id,
+        title: seg.title,
+        description: seg.description,
+        notes: seg.notes,
+        media: seg.media,
+      }));
+
+      const nextFace: PreviewFace = {
+        title: payload.faceLabel || previous?.title || `Face ${payload.faceId}`,
+        description: previous?.description ?? "",
+        notes: previous?.notes ?? "",
+        segments: mappedSegments,
+      };
+
+      faces[index] = nextFace;
+
+      return {
+        ...prev,
+        faces,
+      };
+    });
+  }, []);
+
+  const currentFaceId = editingFaceIndex + 1;
+  const currentFaceLabel = `Face ${currentFaceId}`;
+
+  const handleScrollToPreview = () => {
+    previewRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      <h1 className="text-xl font-semibold sm:text-2xl">
-        Éditeur Magic Display (MVP)
-      </h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Ici tu prépares l&apos;affichage final de ton Magic Clock : avant/après,
-        overlay du profil créateur et niveau d&apos;accès (FREE / Abonnement / PPV).
-        Pour l&apos;instant, tout est visuel, sans sauvegarde.
-      </p>
+      {/* HEADER + bouton Visualiser */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold sm:text-2xl">Magic Display</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Étape 2 : tu prépares ici l&apos;affichage final de ton Magic Clock :
+            carte avant/après + cube 3D interactif. Ce rendu sera ensuite
+            utilisé sur Amazing (FREE / Abonnement / PPV).
+          </p>
+        </div>
 
+        <button
+          type="button"
+          onClick={handleScrollToPreview}
+          className="inline-flex items-center justify-center rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-700"
+        >
+          Visualiser mon Magic Clock
+        </button>
+      </div>
+
+      {/* SECTION 1 : Aperçu carte Magic Studio (Avant / Après) */}
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6">
         <h2 className="text-sm font-semibold tracking-wide text-slate-500">
-          APERÇU MAGIC DISPLAY
+          APERÇU MAGIC STUDIO
         </h2>
 
         <div className="mt-3 rounded-3xl bg-slate-50 p-3 sm:p-4">
           <h3 className="text-sm font-medium text-slate-700">
-            Aperçu avant / après
+            Carte avant / après (vitrine)
           </h3>
 
           <div className="mt-3 rounded-3xl bg-slate-100 p-3">
@@ -72,6 +172,69 @@ export default function MagicDisplayEditorPage() {
                 ton Magic Studio (avant / après choisi pour ce Magic Clock).
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2 : Faces + Cube 3D Preview */}
+      <section
+        ref={previewRef}
+        className="mt-8 grid gap-6 rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 lg:grid-cols-2"
+      >
+        {/* Colonne gauche : Editor des faces */}
+        <div>
+          <h2 className="mb-2 text-sm font-semibold text-slate-900">
+            Faces du Magic Display
+          </h2>
+          <p className="mb-3 text-xs text-slate-500">
+            Atelier : choisis une face, définis ses segments, notes et médias.
+            Le cube 3D à droite se met à jour en temps réel avec ton travail.
+          </p>
+
+          {/* Sélecteur Face 1 → 6 */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            {Array.from({ length: 6 }, (_, idx) => {
+              const id = idx + 1;
+              const isActive = idx === editingFaceIndex;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setEditingFaceIndex(idx)}
+                  className={[
+                    "rounded-full border px-3 py-1 text-xs transition",
+                    isActive
+                      ? "border-violet-500 bg-violet-500/10 text-violet-600"
+                      : "border-slate-300 bg-slate-100 text-slate-600 hover:border-slate-400 hover:bg-slate-200",
+                  ].join(" ")}
+                >
+                  Face {id}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+            <MagicDisplayFaceEditor
+              faceId={currentFaceId}
+              faceLabel={currentFaceLabel}
+              onFaceChange={handleFaceChange}
+            />
+          </div>
+        </div>
+
+        {/* Colonne droite : Cube 3D + détails segment */}
+        <div className="flex flex-col">
+          <h2 className="mb-2 text-sm font-semibold text-slate-900">
+            Aperçu du Magic Clock (cube 3D)
+          </h2>
+          <p className="mb-3 text-xs text-slate-500">
+            Vitrine read-only : ce cube correspond à ce que verront les
+            utilisateurs quand ils ouvriront ton Magic Clock depuis Amazing.
+          </p>
+
+          <div className="flex-1 rounded-2xl border border-slate-200 bg-slate-50">
+            <MagicDisplayPreviewShell display={displayDraft} />
           </div>
         </div>
       </section>
