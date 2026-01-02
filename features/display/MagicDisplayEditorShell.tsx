@@ -30,13 +30,13 @@ type FaceEditorPayload = {
   segments: {
     id: number;
     title: string;
-    description: string;
-    notes: string;
-    media: {
+    description?: string; // ⬅️ optionnel
+    notes?: string;       // ⬅️ optionnel
+    media?: {
       type: "photo" | "video" | "file";
       url: string;
       filename?: string;
-    }[];
+    }[];                  // ⬅️ optionnel
   }[];
 };
 
@@ -59,13 +59,13 @@ export default function MagicDisplayEditorShell() {
       const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
       const previous = faces[index];
 
-      const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
-        id: seg.id,
-        title: seg.title,
-        description: seg.description,
-        notes: seg.notes,
-        media: seg.media,
-      }));
+     const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
+  id: seg.id,
+  title: seg.title,
+  description: seg.description,
+  notes: seg.notes,
+  media: seg.media,
+}));
 
       const nextFace: PreviewFace = {
         title: payload.faceLabel || previous?.title || `Face ${payload.faceId}`,
