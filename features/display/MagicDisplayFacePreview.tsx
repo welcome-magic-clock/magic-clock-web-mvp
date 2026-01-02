@@ -25,7 +25,7 @@ export type MagicDisplayFacePreviewProps = {
   openedSegmentId: string | number | null;
   onSegmentChange: (id: string | number) => void;
   creatorName: string;
-  creatorInitials: string;
+ creatorAvatar?: string | null;
   creatorAvatar?: string | null;
 };
 
@@ -103,18 +103,17 @@ export default function MagicDisplayFacePreview({
 
       {/* Dial commun en mode preview */}
       <div className="flex flex-1 items-center justify-center">
-        <MagicDisplayFaceDialBase
-          creatorName={creatorName}
-          creatorAvatar={creatorAvatar ?? null}
-          creatorInitials={creatorInitials}
-          segmentCount={segmentCount}
-          segments={dialSegments}
-          selectedId={selectedId}
-          needles={{ needle2Enabled: false }}
-          mode="preview"
-          onSegmentClick={(seg) => onSegmentChange(seg.id)}
-        />
-      </div>
+       <MagicDisplayFaceDialBase
+  creatorName={creatorName}
+  creatorAvatar={creatorAvatar ?? null}
+  creatorInitials={creatorInitials}
+  segmentCount={segmentCount}
+  segments={dialSegments}
+  selectedId={selectedId ?? undefined}
+  needles={{ needle2Enabled: false }}
+  mode={variant === "circle-only" ? "preview" : "preview"} // pour l’instant même mode
+  onSegmentClick={(seg) => onSegmentChange(seg.id)}
+/>
 
       <p className="mt-3 text-center text-[11px] text-slate-500">
         Tap sur une bulle pour explorer le segment associé à cette étape.
