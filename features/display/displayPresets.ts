@@ -7,156 +7,186 @@ import type {
 } from "./MagicDisplayPreviewShell";
 
 /**
- * Médias Bear depuis /public/images/magic-clock-bear/
+ * Medias principaux pour texturer chaque face du cube Bear.
+ * Les fichiers sont déjà présents dans :
+ * public/images/magic-clock-bear/
  */
-const BEAR_MEDIA = {
-  before: {
-    type: "photo",
-    url: "/images/magic-clock-bear/before.jpg",
-    filename: "Avant – Bear",
-  } satisfies PreviewMedia,
-  beforeThumb: {
-    type: "photo",
-    url: "/images/magic-clock-bear/before-thumb.jpg",
-    filename: "Avant – Bear (miniature)",
-  } satisfies PreviewMedia,
-  after: {
-    type: "photo",
-    url: "/images/magic-clock-bear/after.jpg",
-    filename: "Après – Bear",
-  } satisfies PreviewMedia,
-  afterThumb: {
-    type: "photo",
-    url: "/images/magic-clock-bear/after-thumb.jpg",
-    filename: "Après – Bear (miniature)",
-  } satisfies PreviewMedia,
-  faces: [
-    "/images/magic-clock-bear/face-1.jpg",
-    "/images/magic-clock-bear/face-2.jpg",
-    "/images/magic-clock-bear/face-3.jpg",
-    "/images/magic-clock-bear/face-4.jpg",
-    "/images/magic-clock-bear/face-5.jpg",
-    "/images/magic-clock-bear/face-6.jpg",
-  ] as const,
+
+const bearFace1Photo: PreviewMedia = {
+  type: "photo",
+  url: "/images/magic-clock-bear/face-1.jpg",
+  filename: "Face 1 – Résultat & vue globale",
 };
 
-const bearFace1Segments: PreviewSegment[] = [
-  {
-    id: 1,
-    title: "Résultat final",
-    description: "Vue globale du balayage caramel réalisé sur la cliente.",
-    notes:
-      "Image principale utilisée pour donner envie d’ouvrir le Display Bear.",
-    media: [BEAR_MEDIA.after],
-  },
-  {
-    id: 2,
-    title: "Avant la transformation",
-    description: "État initial des cheveux avant le travail du Bear horloger.",
-    notes:
-      "Cheveux sensibilisés, reflets chauds non contrôlés, besoin de douceur.",
-    media: [BEAR_MEDIA.before],
-  },
-  {
-    id: 3,
-    title: "Avant / Après (thumb)",
-    description: "Miniatures avant/après pour les vignettes et aperçus.",
-    notes: "Utilisé pour certaines cartes ou résumés.",
-    media: [BEAR_MEDIA.beforeThumb, BEAR_MEDIA.afterThumb],
-  },
-  {
-    id: 4,
-    title: "Face 1 – texture cube",
-    description: "Texture spécifique utilisée pour la face 1 du cube.",
-    notes:
-      "Permet de garder un lien direct entre la face 1 et le visuel 3D correspondant.",
-    media: [
-      {
-        type: "photo",
-        url: BEAR_MEDIA.faces[0],
-        filename: "Bear – Face 1",
-      },
-    ],
-  },
-];
+const bearFace2Photo: PreviewMedia = {
+  type: "photo",
+  url: "/images/magic-clock-bear/face-2.jpg",
+  filename: "Face 2 – Technique & processus",
+};
 
-const bearFace2Segments: PreviewSegment[] = [
-  {
-    id: 1,
-    title: "Diagnostic – point de départ",
-    description: "Analyse de la base, historique, porosité, zones sensibles.",
-    notes:
-      "Identifier les risques de sur-sensibilisation avant d’appliquer le balayage.",
-    media: [],
-  },
-  {
-    id: 2,
-    title: "Sectionnement",
-    description: "Organisation de la tête en zones de travail.",
-    notes:
-      "Découpage en 4 zones principales pour bien contrôler la répartition des lumières.",
-    media: [],
-  },
-  {
-    id: 3,
-    title: "Formule / Mélange",
-    description: "Choix des produits, oxydant, proportions.",
-    notes:
-      "Décolorant à faible volume + protection fibre pour limiter la casse.",
-    media: [],
-  },
-  {
-    id: 4,
-    title: "Application",
-    description: "Technique, placement, temps de pose.",
-    notes:
-      "Balayage en V, très aéré, en évitant les longueurs déjà sensibilisées.",
-    media: [],
-  },
-];
+const bearFace3Photo: PreviewMedia = {
+  type: "photo",
+  url: "/images/magic-clock-bear/face-3.jpg",
+  filename: "Face 3 – Détails de l’application",
+};
 
+const bearFace4Photo: PreviewMedia = {
+  type: "photo",
+  url: "/images/magic-clock-bear/face-4.jpg",
+  filename: "Face 4 – Avant / diagnostic",
+};
+
+const bearFace5Photo: PreviewMedia = {
+  type: "photo",
+  url: "/images/magic-clock-bear/face-5.jpg",
+  filename: "Face 5 – Processus en cours",
+};
+
+const bearFace6Photo: PreviewMedia = {
+  type: "photo",
+  url: "/images/magic-clock-bear/face-6.jpg",
+  filename: "Face 6 – Résultat alternatif",
+};
+
+/**
+ * Face 1 – Résultat & vue globale
+ */
 const bearFace1: PreviewFace = {
   title: "Face 1 – Résultat & vue globale",
   description:
-    "Vue d'ensemble du balayage caramel réalisé sur la cliente, après la transformation du Bear horloger.",
-  notes:
     "Face principale utilisée pour texturer le cube et donner envie d’ouvrir le Display.",
-  segments: bearFace1Segments,
+  notes:
+    "Vue finale du balayage caramel, avec le Bear en arrière-plan : c’est la promesse visuelle.",
+  segments: [
+    {
+      id: 1,
+      title: "Résultat final",
+      description: "Vue globale de la transformation terminée.",
+      notes:
+        "Montre le rendu final avant d’entrer dans le détail technique.",
+      media: [bearFace1Photo],
+    },
+  ],
 };
 
+/**
+ * Face 2 – Technique & processus
+ */
 const bearFace2: PreviewFace = {
   title: "Face 2 – Technique & processus",
   description:
-    "Détail du chemin technique : diagnostic, sectionnement, formules et application.",
-  notes: "Permet de comprendre la logique complète de la transformation.",
-  segments: bearFace2Segments,
+    "Permet de comprendre la logique complète de la transformation.",
+  notes:
+    "Vue synthétique du chemin technique : diagnostic, sectionnement, application, patine.",
+  segments: [
+    {
+      id: 1,
+      title: "Technique & processus",
+      description:
+        "Résumé des grandes étapes : sectionnement, application, patine.",
+      notes:
+        "Face pédagogique pour expliquer la méthode aux coiffeurs.",
+      media: [bearFace2Photo],
+    },
+  ],
 };
 
-// Faces 3 → 6 encore vides (tu pourras les remplir plus tard)
-const emptyFace = (index: number): PreviewFace => ({
-  title: `Face ${index} – (à venir)`,
-  description: "Face encore vide dans ce preset.",
-  notes: "",
-  segments: [],
-});
+/**
+ * Face 3 – Détails de l’application
+ */
+const bearFace3: PreviewFace = {
+  title: "Face 3 – Détails de l’application",
+  description:
+    "Zoom sur les placements de lumière et les transitions.",
+  notes:
+    "Montre la précision des placements de mèches et la douceur des transitions.",
+  segments: [
+    {
+      id: 1,
+      title: "Détails de l’application",
+      description:
+        "Vue rapprochée sur les placements du balayage et la répartition des lumières.",
+      notes: "",
+      media: [bearFace3Photo],
+    },
+  ],
+};
+
+/**
+ * Face 4 – Avant / diagnostic
+ */
+const bearFace4: PreviewFace = {
+  title: "Face 4 – Avant & diagnostic",
+  description:
+    "Met en avant l’état initial de la chevelure avant la transformation.",
+  notes:
+    "Permet de comparer l’avant / après et de valoriser le travail effectué.",
+  segments: [
+    {
+      id: 1,
+      title: "Avant",
+      description: "État de départ de la cliente avant le balayage.",
+      notes: "",
+      media: [bearFace4Photo],
+    },
+  ],
+};
+
+/**
+ * Face 5 – Processus en cours
+ */
+const bearFace5: PreviewFace = {
+  title: "Face 5 – Processus en cours",
+  description:
+    "Instantanés pendant la réalisation pour montrer le geste et la technique.",
+  notes:
+    "Permet de rassurer et d’éduquer : le travail se fait étape par étape.",
+  segments: [
+    {
+      id: 1,
+      title: "Processus en cours",
+      description: "Moments clés du travail en salon.",
+      notes: "",
+      media: [bearFace5Photo],
+    },
+  ],
+};
+
+/**
+ * Face 6 – Résultat alternatif / mood
+ */
+const bearFace6: PreviewFace = {
+  title: "Face 6 – Ambiance & mood",
+  description:
+    "Met l’accent sur l’ambiance, le sourire et la complicité avec le Bear.",
+  notes:
+    "Face plus émotionnelle, pour renforcer la dimension storytelling.",
+  segments: [
+    {
+      id: 1,
+      title: "Ambiance",
+      description: "Focus sur l’émotion et l’expérience cliente.",
+      notes: "",
+      media: [bearFace6Photo],
+    },
+  ],
+};
 
 /**
  * Display complet pour mcw-onboarding-bear-001
  */
 export const BEAR_ONBOARDING_DISPLAY: PreviewDisplay = {
-  faces: [
-    bearFace1,
-    bearFace2,
-    emptyFace(3),
-    emptyFace(4),
-    emptyFace(5),
-    emptyFace(6),
-  ],
+  faces: [bearFace1, bearFace2, bearFace3, bearFace4, bearFace5, bearFace6],
+
+  // 🐻 Métadonnées créateur pour le cercle Aiko
+  creatorName: "Magic Bear",
+  creatorInitials: "MB",
+  creatorAvatarUrl: "/images/magic-clock-bear/avatar.png",
 };
 
 /**
  * Registre de presets, par slug.
- * Plus tard : on fera un fetch DB et on gardera ceci en fallback.
+ * (Plus tard Supabase/API viendront alimenter ceci dynamiquement.)
  */
 export const DISPLAY_PRESETS: Record<string, PreviewDisplay> = {
   "mcw-onboarding-bear-001": BEAR_ONBOARDING_DISPLAY,
