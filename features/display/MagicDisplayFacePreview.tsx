@@ -25,8 +25,9 @@ export type MagicDisplayFacePreviewProps = {
   openedSegmentId: string | number | null;
   onSegmentChange: (id: string | number) => void;
   creatorName: string;
- creatorAvatar?: string | null;
+  creatorInitials: string;
   creatorAvatar?: string | null;
+  variant?: "circle-only" | "default";
 };
 
 export default function MagicDisplayFacePreview({
@@ -41,6 +42,7 @@ export default function MagicDisplayFacePreview({
   const rawSegments = face.segments ?? [];
   const segmentCount = rawSegments.length || 1;
 
+  // On reconstruit les "segments" au format attendu par MagicDisplayFaceDialBase
   const dialSegments = rawSegments.map((seg, index) => {
     const media = seg.media?.[0];
     const mediaType = (media?.type as MediaType | undefined) ?? undefined;
@@ -63,13 +65,13 @@ export default function MagicDisplayFacePreview({
     };
   });
 
-  // ✅ Toujours un number (jamais undefined)
-  const selectedId: number =
+  // Toujours un number pour le dial (ou undefined si aucun segment)
+  const selectedId: number | undefined =
     typeof openedSegmentId === "number"
       ? openedSegmentId
       : dialSegments.length > 0
         ? dialSegments[0].id
-        : 1;
+        : undefined;
 
   return (
     <section className="flex h-full w-full flex-col rounded-3xl bg-white px-4 pb-4 pt-3">
@@ -103,17 +105,18 @@ export default function MagicDisplayFacePreview({
 
       {/* Dial commun en mode preview */}
       <div className="flex flex-1 items-center justify-center">
-       <MagicDisplayFaceDialBase
-  creatorName={creatorName}
-  creatorAvatar={creatorAvatar ?? null}
-  creatorInitials={creatorInitials}
-  segmentCount={segmentCount}
-  segments={dialSegments}
-  selectedId={selectedId ?? undefined}
-  needles={{ needle2Enabled: false }}
-  mode={variant === "circle-only" ? "preview" : "preview"} // pour l’instant même mode
-  onSegmentClick={(seg) => onSegmentChange(seg.id)}
-/>
+        <MagicDisplayFaceDialBase
+          creatorName={creatorName}
+          creatorAvatar={creatorAvatar ?? null}
+          creatorInitials={creatorInitials}
+          segmentCount={segmentCount}
+          segments={dialSegments}
+          selectedId={selectedId}
+          needles={{ needle2Enabled: false }}
+          mode="preview"
+          onSegmentClick={(seg) => onSegmentChange(seg.id)}
+        />
+      </div>
 
       <p className="mt-3 text-center text-[11px] text-slate-500">
         Tap sur une bulle pour explorer le segment associé à cette étape.
