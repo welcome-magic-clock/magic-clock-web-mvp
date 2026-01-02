@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   MoreHorizontal,
 } from "lucide-react";
+import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video" | "file";
@@ -314,9 +315,6 @@ export default function MagicDisplayFaceEditor({
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const circleRef = useRef<HTMLDivElement | null>(null);
-  const [frontLenPx, setFrontLenPx] = useState<number>(92);
-
   const fallbackFace: FaceState = {
     faceId,
     segmentCount: DEFAULT_SEGMENTS,
@@ -417,26 +415,6 @@ export default function MagicDisplayFaceEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEven, segmentCount]);
-
-  // calc longueur avant-bulle (dépend du cercle et du radiusPercent=42)
-  useEffect(() => {
-    const el = circleRef.current;
-    if (!el) return;
-
-    const compute = () => {
-      const size = el.getBoundingClientRect().width; // ex: 256
-      const radiusToBubbleCenter = 0.42 * size;
-      const bubbleRadius = 20; // rayon approximatif des bulles
-      const gap = 8; // petit espace avant la bulle
-
-      const len = radiusToBubbleCenter - bubbleRadius - gap;
-      setFrontLenPx(Math.max(40, Math.round(len)));
-    };
-
-    compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, [segmentCount]);
 
   function updateFace(updater: (prev: FaceState) => FaceState) {
     setFaces((prev) => {
@@ -544,9 +522,6 @@ export default function MagicDisplayFaceEditor({
       photoInputRef.current.click();
     }
   }
-
-  const angle1 = segmentAngleForId(selectedId, segmentCount);
-  const TAIL_LEN = 0; // on ne dessine pas de queue, mais on garde l’argument
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
@@ -663,98 +638,17 @@ export default function MagicDisplayFaceEditor({
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         {/* Cercle */}
         <div className="flex items-center justify-center">
-          <div ref={circleRef} className="relative h-64 w-64 max-w-full">
-            {/* Décor z-10 */}
-            <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
-            <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
-            <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
-
-            {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
-            <div className="pointer-events-none absolute inset-0" style={{ zIndex: 15 }}>
-              {Array.from({ length: segmentCount }, (_, index) => {
-                const count = segmentCount || 1;
-                if (count <= 1) return null;
-
-                const step = 360 / count;
-                const startAngleDeg = -90;
-                const angleDeg = startAngleDeg + step * index + step / 2;
-
-                return (
-                  <div key={index} className="absolute inset-0">
-                    <div
-                      className="absolute left-1/2 top-1/2"
-                      style={{
-                        width: "42%",
-                        height: "1px",
-                        transformOrigin: "left center",
-                        transform: `translateY(-50%) rotate(${angleDeg}deg)`,
-                        background: "rgba(148,163,184,0.75)",
-                      }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Aiguilles z-20 */}
-            <div className="pointer-events-none absolute inset-0 z-20">
-              <WatchHandOneWayRefined
-                angleDeg={angle1}
-                frontLenPx={frontLenPx}
-                tailLenPx={TAIL_LEN}
-              />
-              {isEven && needles.needle2Enabled && (
-                <WatchHandOneWayRefined
-                  angleDeg={angle1 + 180}
-                  frontLenPx={frontLenPx}
-                  tailLenPx={TAIL_LEN}
-                />
-              )}
-            </div>
-
-            {/* Avatar z-30 */}
-            <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
-              {creatorAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={creatorAvatar}
-                  alt={creatorName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-xs font-semibold text-slate-50">
-                  {creatorInitials}
-                </span>
-              )}
-            </div>
-
-            {/* Bulles z-40 */}
-            {segments.slice(0, segmentCount).map((seg, index) => {
-              const isSelected = seg.id === selectedId;
-
-              return (
-                <button
-                  key={seg.id}
-                  type="button"
-                  onClick={() => handleSegmentBubbleClick(seg)}
-                  className={`absolute z-40 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs backdrop-blur-sm transition ${
-                    isSelected
-                      ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
-                      : "border-slate-300 bg-white/90 text-slate-700 hover:border-slate-400"
-                  }`}
-                  style={getSegmentPositionStyle(index)}
-                  aria-label={`Segment ${seg.id} – ${statusLabel(seg.status)}`}
-                >
-                  {segmentIcon(seg.mediaType)}
-                  <span
-                    className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                      seg.status,
-                    )}`}
-                  />
-                </button>
-              );
-            })}
-          </div>
+          <MagicDisplayFaceDialBase
+            creatorName={creatorName}
+            creatorAvatar={creatorAvatar}
+            creatorInitials={creatorInitials}
+            segmentCount={segmentCount}
+            segments={segments}
+            selectedId={selectedId}
+            needles={needles}
+            mode="editor"
+            onSegmentClick={(seg) => handleSegmentBubbleClick(seg as Segment)}
+          />
         </div>
 
         {/* Liste + détail */}
