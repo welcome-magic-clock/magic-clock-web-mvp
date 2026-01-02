@@ -18,6 +18,11 @@ type MagicDisplayFacePreviewProps = {
   creatorInitials?: string;
   openedSegmentId: string | number | null;
   onSegmentChange?: (id: string | number) => void;
+  /** 
+   * variant = "card" (par défaut) pour l’affichage complet,
+   * "circle-only" pour la version compacte à coller derrière le cube.
+   */
+  variant?: "card" | "circle-only";
 };
 
 const MAX_SEGMENTS = 12;
@@ -64,7 +69,7 @@ function segmentAngleForId(segmentId: number, count: number) {
 }
 
 /**
- * Aiguille 1 (simple) – version raffinée, comme dans l’Editor.
+ * Aiguille 1 (simple) – version raffinée.
  */
 function WatchHandOneWayRefined({
   angleDeg,
@@ -102,11 +107,12 @@ function WatchHandOneWayRefined({
 export default function MagicDisplayFacePreview({
   face,
   faceIndex,
-  creatorName = "Aiko Tanaka",
+  creatorName = "Créateur",
   creatorAvatar = null,
-  creatorInitials = "AT",
+  creatorInitials = "MC",
   openedSegmentId,
   onSegmentChange,
+  variant = "card",
 }: MagicDisplayFacePreviewProps) {
   const segments = (face?.segments ?? []) as PreviewSegment[];
   const segmentCount = segments.length
@@ -115,6 +121,8 @@ export default function MagicDisplayFacePreview({
 
   const circleRef = useRef<HTMLDivElement | null>(null);
   const [frontLenPx, setFrontLenPx] = useState<number>(92);
+
+  const isCompact = variant === "circle-only";
 
   // Calcul de la longueur de l’aiguille en fonction du cercle
   useEffect(() => {
@@ -165,39 +173,49 @@ export default function MagicDisplayFacePreview({
   }
 
   return (
-    <section className="flex h-full w-full flex-col rounded-3xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-      {/* Ligne titre */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Face {faceIndex + 1} / 6
-          </span>
-          <span className="text-sm font-semibold text-slate-900">
-            {face.title?.trim() || "Sans titre"}
-          </span>
-        </div>
+    <section
+      className={
+        isCompact
+          ? "flex h-full w-full items-center justify-center"
+          : "w-full rounded-3xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5"
+      }
+    >
+      {/* Ligne titre (seulement en mode carte) */}
+      {!isCompact && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Face {faceIndex + 1} / 6
+            </span>
+            <span className="text-sm font-semibold text-slate-900">
+              {face.title?.trim() || "Sans titre"}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
-          <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-            {creatorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
-                alt={creatorName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold">{creatorInitials}</span>
-            )}
-          </span>
-          <span className="font-medium truncate max-w-[120px] sm:max-w-[180px]">
-            {creatorName}
-          </span>
+          <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
+            <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+              {creatorAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-semibold">
+                  {creatorInitials}
+                </span>
+              )}
+            </span>
+            <span className="max-w-[120px] truncate font-medium sm:max-w-[180px]">
+              {creatorName}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Cercle + bulles */}
-      <div className="flex flex-1 items-center justify-center">
+      {/* Cercle + bulles (read-only) */}
+      <div className="flex items-center justify-center">
         <div ref={circleRef} className="relative h-64 w-64 max-w-full">
           {/* Décor z-10 */}
           <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
@@ -205,10 +223,7 @@ export default function MagicDisplayFacePreview({
           <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
 
           {/* Demi-segments depuis le centre */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ zIndex: 15 }}
-          >
+          <div className="pointer-events-none absolute inset-0" style={{ zIndex: 15 }}>
             {Array.from({ length: segmentCount }, (_, index) => {
               const count = segmentCount || 1;
               if (count <= 1) return null;
@@ -269,8 +284,7 @@ export default function MagicDisplayFacePreview({
           {/* Bulles segments z-40 */}
           {segments.slice(0, segmentCount).map((seg, index) => {
             const isSelected =
-              seg.id === selectedId ||
-              String(seg.id) === String(selectedId);
+              seg.id === selectedId || String(seg.id) === String(selectedId);
 
             const status = computeStatus(seg);
 
@@ -303,10 +317,12 @@ export default function MagicDisplayFacePreview({
         </div>
       </div>
 
-      {/* Petite légende */}
-      <p className="mt-3 text-center text-[10px] text-slate-500">
-        Tap sur une bulle pour explorer le segment associé à cette étape.
-      </p>
+      {/* Petite légende sous le cercle – uniquement en mode carte */}
+      {!isCompact && (
+        <p className="mt-3 text-center text-[10px] text-slate-500">
+          Tap sur une bulle pour explorer le segment associé à cette étape.
+        </p>
+      )}
     </section>
   );
 }
