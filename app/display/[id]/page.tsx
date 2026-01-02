@@ -7,7 +7,7 @@ import MagicDisplayPreviewShell, {
 } from "@/features/display/MagicDisplayPreviewShell";
 import { DISPLAY_PRESETS } from "@/features/display/displayPresets";
 import { findContentById } from "@/core/domain/repository";
-import MagicDisplayViewer from "./MagicDisplayViewer";
+import MagicDisplayViewer from "../MagicDisplayViewer";
 
 // Ids utilisés pour la génération statique
 const STATIC_DISPLAY_IDS = [
