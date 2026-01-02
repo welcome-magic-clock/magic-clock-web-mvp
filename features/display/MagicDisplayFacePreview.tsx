@@ -63,13 +63,13 @@ export default function MagicDisplayFacePreview({
     };
   });
 
-  // ✅ On force un number | undefined pour le dial
-  const selectedId: number | undefined =
+  // ✅ Toujours un number (jamais undefined)
+  const selectedId: number =
     typeof openedSegmentId === "number"
       ? openedSegmentId
       : dialSegments.length > 0
         ? dialSegments[0].id
-        : undefined;
+        : 1;
 
   return (
     <section className="flex h-full w-full flex-col rounded-3xl bg-white px-4 pb-4 pt-3">
