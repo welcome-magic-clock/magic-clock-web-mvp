@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import MagicDisplayFacePreview from "./MagicDisplayFacePreview";
+import MagicDisplayFaceBackCircle from "./MagicDisplayFaceBackCircle";
 
 export type MediaKind = "photo" | "video" | "file";
 
@@ -493,12 +494,11 @@ export default function MagicDisplayPreviewShell({
                                 </button>
                               </div>
 
-                              {/* FACE ARRIÈRE : cercle Aiko en mode compact */}
+                          {/* FACE ARRIÈRE : cercle Aiko en lecture seule */}
 <div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
   <div className="relative flex h-full w-full items-center justify-center">
-    <MagicDisplayFacePreview
+    <MagicDisplayFaceBackCircle
       face={face}
-      faceIndex={index}
       openedSegmentId={openedSegmentId}
       onSegmentChange={(id) => {
         // On garde la face courante comme source des détails sous le cube
@@ -507,8 +507,7 @@ export default function MagicDisplayPreviewShell({
       }}
       creatorName="Aiko Tanaka"
       creatorInitials="AT"
-      creatorAvatar="/images/aiko-tanaka.jpg" 
-      variant="circle-only"
+      creatorAvatar={null} // on branchera l'image plus tard si tu veux
     />
 
     {/* Bouton pour refermer et revenir à la face avant */}
