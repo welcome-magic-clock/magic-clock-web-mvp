@@ -26,8 +26,13 @@ export type MagicDisplayFacePreviewProps = {
   onSegmentChange: (id: string | number) => void;
   creatorName: string;
   creatorInitials: string;
+  /** Avatar du créateur (Aiko Tanaka) */
   creatorAvatar?: string | null;
-  variant?: "circle-only" | "default";
+  /**
+   * "full"       → header + cercle + texte (layout complet)
+   * "circle-only"→ uniquement le cadran (pour le dos du cube)
+   */
+  variant?: "full" | "circle-only";
 };
 
 export default function MagicDisplayFacePreview({
@@ -37,12 +42,12 @@ export default function MagicDisplayFacePreview({
   onSegmentChange,
   creatorName,
   creatorInitials,
-  creatorAvatar,
+  creatorAvatar = null,
+  variant = "full",
 }: MagicDisplayFacePreviewProps) {
   const rawSegments = face.segments ?? [];
   const segmentCount = rawSegments.length || 1;
 
-  // On reconstruit les "segments" au format attendu par MagicDisplayFaceDialBase
   const dialSegments = rawSegments.map((seg, index) => {
     const media = seg.media?.[0];
     const mediaType = (media?.type as MediaType | undefined) ?? undefined;
@@ -65,14 +70,30 @@ export default function MagicDisplayFacePreview({
     };
   });
 
-  // 🛡 Toujours un number pour le dial (jamais undefined)
+  const firstId = dialSegments[0]?.id ?? 1;
   const selectedId: number =
-    typeof openedSegmentId === "number"
-      ? openedSegmentId
-      : dialSegments.length > 0
-        ? (dialSegments[0].id as number)
-        : 1;
+    openedSegmentId != null ? Number(openedSegmentId) : Number(firstId);
 
+  // 🔁 Version compacte : uniquement le cadran (pour le dos du cube)
+  if (variant === "circle-only") {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <MagicDisplayFaceDialBase
+          creatorName={creatorName}
+          creatorAvatar={creatorAvatar}
+          creatorInitials={creatorInitials}
+          segmentCount={segmentCount}
+          segments={dialSegments}
+          selectedId={selectedId}
+          needles={{ needle2Enabled: false }}
+          mode="preview"
+          onSegmentClick={(seg) => onSegmentChange(seg.id)}
+        />
+      </div>
+    );
+  }
+
+  // 🧊 Version complète (header + cercle + texte bas) – utilisée hors cube
   return (
     <section className="flex h-full w-full flex-col rounded-3xl bg-white px-4 pb-4 pt-3">
       {/* En-tête de la face */}
@@ -107,7 +128,7 @@ export default function MagicDisplayFacePreview({
       <div className="flex flex-1 items-center justify-center">
         <MagicDisplayFaceDialBase
           creatorName={creatorName}
-          creatorAvatar={creatorAvatar ?? null}
+          creatorAvatar={creatorAvatar}
           creatorInitials={creatorInitials}
           segmentCount={segmentCount}
           segments={dialSegments}
