@@ -15,8 +15,6 @@ type SimpleBeforeAfterCardProps = {
   /** Avatar au centre (facultatif) */
   avatarSrc?: string | null;
   avatarAlt?: string;
-  /** Callback au clic sur la carte (facultatif) */
-  onClick?: () => void;
 };
 
 function MediaSlot({ src, alt }: { src: string; alt: string }) {
@@ -37,22 +35,27 @@ export default function SimpleBeforeAfterCard({
   caption,
   avatarSrc,
   avatarAlt,
-  onClick,
 }: SimpleBeforeAfterCardProps) {
-  const content = (
+  return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-      {/* Canevas Avant / Après */}
+      {/* Canevas Avant / Après – même gabarit que MagicDisplayClient */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
           <div className="grid h-full w-full grid-cols-2">
-            <MediaSlot src={beforeSrc} alt={`${title || beforeLabel} - avant`} />
-            <MediaSlot src={afterSrc} alt={`${title || afterLabel} - après`} />
+            <MediaSlot
+              src={beforeSrc}
+              alt={`${title || beforeLabel} - avant`}
+            />
+            <MediaSlot
+              src={afterSrc}
+              alt={`${title || afterLabel} - après`}
+            />
           </div>
 
-          {/* Ligne centrale */}
+          {/* Ligne verticale centrale */}
           <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
 
-          {/* Avatar centré (optionnel) */}
+          {/* Avatar central optionnel */}
           {avatarSrc && (
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
               <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
@@ -67,7 +70,7 @@ export default function SimpleBeforeAfterCard({
           )}
         </div>
 
-        {/* Labels "Avant / Après" dans le bas de chaque moitié */}
+        {/* Labels bas gauche / bas droite */}
         <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-between px-4 text-[11px] font-medium text-white drop-shadow">
           <span>{beforeLabel}</span>
           <span>{afterLabel}</span>
@@ -85,18 +88,4 @@ export default function SimpleBeforeAfterCard({
       </div>
     </article>
   );
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="block w-full text-left"
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return content;
 }
