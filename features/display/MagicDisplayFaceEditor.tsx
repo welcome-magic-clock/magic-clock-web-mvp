@@ -354,13 +354,14 @@ export default function MagicDisplayFaceEditor({
         };
       });
 
-    onFaceChange({
-      faceId: state.faceId,
-      faceLabel,
-      segmentCount: state.segmentCount,
-      segments: segmentsForDisplay,
-    });
-  }
+     onFaceChange({
+    faceId: state.faceId,
+    faceLabel,
+    segmentCount: state.segmentCount,
+    segments: segmentsForDisplay,
+    needles: state.needles,        // 🔹 on transporte les aiguilles
+  });
+}
 
   // 🧷 Initialisation / changement de faceId : on recharge depuis localStorage si dispo
   useEffect(() => {
