@@ -712,195 +712,39 @@ export default function MagicDisplayFaceEditor({
             })}
           </div>
 
-                    {/* Détail du segment sélectionné */}
-          {needles.needle2Enabled && isEven && oppositeSegment ? (
-            // 🔁 MODE DUO (aiguille symétrique active)
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Duo symétrique — comme un Avant / Après
-                </p>
-                <p className="text-xs text-slate-600">
-                  Tu édites le segment{" "}
-                  <span className="font-semibold">
-                    {selectedSegment.id}
-                  </span>{" "}
-                  et tu vois en miroir son opposé{" "}
-                  <span className="font-semibold">
-                    {oppositeSegment.id}
-                  </span>
-                  . Clique la bulle de l&apos;autre côté du cercle pour inverser.
-                </p>
-              </div>
+                        {/* Détail du segment sélectionné */}
+      {needles.needle2Enabled && isEven && oppositeSegment ? (
+        /* MODE DUO : segment sélectionné + segment opposé en parallèle */
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Duo symétrique — comme un Avant / Après
+            </p>
+            <p className="text-xs text-slate-600">
+              Tu édites le segment{" "}
+              <span className="font-semibold">{selectedSegment.id}</span>{" "}
+              et tu vois en miroir son opposé{" "}
+              <span className="font-semibold">{oppositeSegment.id}</span>.
+              Clique la bulle de l&apos;autre côté du cercle pour inverser.
+            </p>
+          </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                {/* Colonne gauche = segment sélectionné (éditable) */}
-                <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                  <p className="text-[11px] font-semibold text-slate-700">
-                    Segment {selectedSegment.id}
-                  </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {/* Colonne gauche : segment sélectionné (éditable) */}
+            <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+              <p className="text-[11px] font-semibold text-slate-700">
+                Segment {selectedSegment.id}
+              </p>
 
-                  {/* Titre */}
-                  <input
-                    type="text"
-                    maxLength={27}
-                    value={selectedSegment.label}
-                    onChange={handleLabelChange}
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-                    placeholder="Diagnostic / observation"
-                  />
+              <input
+                type="text"
+                maxLength={27}
+                value={selectedSegment.label}
+                onChange={handleLabelChange}
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                placeholder="Diagnostic / observation"
+              />
 
-                  {/* Notes pédagogiques */}
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-medium text-slate-600">
-                      Notes pédagogiques
-                    </p>
-                    <textarea
-                      rows={3}
-                      value={selectedSegment.notes}
-                      onChange={handleNotesChange}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-                      placeholder="Décris ce côté : point de départ, problème, symptôme…"
-                    />
-                  </div>
-
-                  <p className="text-[10px] text-slate-400">
-                    Statut :{" "}
-                    <span className="font-semibold">
-                      {statusLabel(selectedSegment.status)}
-                    </span>
-                  </p>
-
-                  {/* Boutons médias */}
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleChooseMedia("photo")}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                    >
-                      <Camera className="h-3.5 w-3.5" />
-                      <span>Ajouter une photo</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleChooseMedia("video")}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                    >
-                      <Clapperboard className="h-3.5 w-3.5" />
-                      <span>Ajouter une vidéo</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleChooseMedia("file")}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-                    >
-                      <FileText className="h-3.5 w-3.5" />
-                      <span>Ajouter un fichier</span>
-                    </button>
-                  </div>
-
-                  {/* Prévisualisation média */}
-                  {selectedSegment.mediaUrl && (
-                    <div className="mt-2 w-full">
-                      {selectedSegment.mediaType === "photo" ? (
-                        <img
-                          src={selectedSegment.mediaUrl}
-                          alt="Prévisualisation"
-                          className="h-40 w-full rounded-2xl object-cover"
-                        />
-                      ) : selectedSegment.mediaType === "video" ? (
-                        <video
-                          src={selectedSegment.mediaUrl}
-                          className="h-40 w-full rounded-2xl object-cover"
-                          controls
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
-                          <FileText className="h-4 w-4" />
-                          <span>Fichier ajouté pour ce segment.</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Colonne droite = segment opposé (lecture seule) */}
-                <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-3">
-                  <p className="text-[11px] font-semibold text-slate-700">
-                    Segment {oppositeSegment.id} (opposé)
-                  </p>
-
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-slate-500">Titre</p>
-                    <div className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700">
-                      {oppositeSegment.label || "Titre non renseigné"}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-slate-500">Notes</p>
-                    <div className="min-h-[60px] rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
-                      {oppositeSegment.notes ||
-                        "Pas encore de notes. Clique la bulle de ce segment sur le cercle pour l’éditer en détail."}
-                    </div>
-                  </div>
-
-                  {oppositeSegment.mediaUrl && (
-                    <div className="mt-2 w-full">
-                      {oppositeSegment.mediaType === "photo" ? (
-                        <img
-                          src={oppositeSegment.mediaUrl}
-                          alt="Prévisualisation opposée"
-                          className="h-28 w-full rounded-2xl object-cover"
-                        />
-                      ) : oppositeSegment.mediaType === "video" ? (
-                        <video
-                          src={oppositeSegment.mediaUrl}
-                          className="h-28 w-full rounded-2xl object-cover"
-                          controls
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
-                          <FileText className="h-4 w-4" />
-                          <span>Fichier ajouté pour ce segment opposé.</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <p className="text-[10px] text-slate-400">
-                    Astuce : cette colonne est en lecture seule. Pour modifier ce
-                    côté du duo, clique sa bulle sur le cercle pour le passer en
-                    “segment sélectionné”.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // 🔹 MODE SIMPLE (comme aujourd’hui)
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Segment sélectionné
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  Segment {selectedSegment.id}
-                </p>
-              </div>
-
-              {/* Champ texte court (affiché sur le cube) */}
-              <div className="space-y-1">
-                <input
-                  type="text"
-                  maxLength={27}
-                  value={selectedSegment.label}
-                  onChange={handleLabelChange}
-                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-                  placeholder="Diagnostic / observation"
-                />
-              </div>
-
-              {/* Notes pédagogiques */}
               <div className="space-y-1">
                 <p className="text-[11px] font-medium text-slate-600">
                   Notes pédagogiques
@@ -910,7 +754,7 @@ export default function MagicDisplayFaceEditor({
                   value={selectedSegment.notes}
                   onChange={handleNotesChange}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-                  placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
+                  placeholder="Décris ce côté : point de départ, problème, symptôme…"
                 />
               </div>
 
@@ -921,7 +765,6 @@ export default function MagicDisplayFaceEditor({
                 </span>
               </p>
 
-              {/* Boutons médias */}
               <div className="mt-1 flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -949,7 +792,6 @@ export default function MagicDisplayFaceEditor({
                 </button>
               </div>
 
-              {/* Prévisualisation média */}
               {selectedSegment.mediaUrl && (
                 <div className="mt-2 w-full">
                   {selectedSegment.mediaType === "photo" ? (
@@ -973,85 +815,155 @@ export default function MagicDisplayFaceEditor({
                 </div>
               )}
             </div>
-          )}
 
-            {/* Notes pédagogiques */}
-            <div className="space-y-1">
-              <p className="text-[11px] font-medium text-slate-600">
-                Notes pédagogiques
+            {/* Colonne droite : segment opposé (lecture seule) */}
+            <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-3">
+              <p className="text-[11px] font-semibold text-slate-700">
+                Segment {oppositeSegment.id} (opposé)
               </p>
-              <textarea
-                rows={3}
-                value={selectedSegment.notes}
-                onChange={handleNotesChange}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-                placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
-              />
-            </div>
 
-            <p className="text-[10px] text-slate-400">
-              Statut :{" "}
-              <span className="font-semibold">
-                {statusLabel(selectedSegment.status)}
-              </span>
-            </p>
-
-            {/* Boutons médias */}
-            <div className="mt-1 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => handleChooseMedia("photo")}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-              >
-                <Camera className="h-3.5 w-3.5" />
-                <span>Ajouter une photo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleChooseMedia("video")}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-              >
-                <Clapperboard className="h-3.5 w-3.5" />
-                <span>Ajouter une vidéo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleChooseMedia("file")}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                <span>Ajouter un fichier</span>
-              </button>
-            </div>
-
-            {/* Prévisualisation média */}
-            {selectedSegment.mediaUrl && (
-              <div className="mt-2 w-full">
-                {selectedSegment.mediaType === "photo" ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedSegment.mediaUrl}
-                    alt="Prévisualisation"
-                    className="h-40 w-full rounded-2xl object-cover"
-                  />
-                ) : selectedSegment.mediaType === "video" ? (
-                  // eslint-disable-next-line jsx-a11y/media-has-caption
-                  <video
-                    src={selectedSegment.mediaUrl}
-                    className="h-40 w-full rounded-2xl object-cover"
-                    controls
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
-                    <FileText className="h-4 w-4" />
-                    <span>Fichier ajouté pour ce segment.</span>
-                  </div>
-                )}
+              <div className="space-y-1">
+                <p className="text-[11px] text-slate-500">Titre</p>
+                <div className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700">
+                  {oppositeSegment.label || "Titre non renseigné"}
+                </div>
               </div>
-            )}
+
+              <div className="space-y-1">
+                <p className="text-[11px] text-slate-500">Notes</p>
+                <div className="min-h-[60px] rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
+                  {oppositeSegment.notes ||
+                    "Pas encore de notes. Clique la bulle de ce segment sur le cercle pour l’éditer en détail."}
+                </div>
+              </div>
+
+              {oppositeSegment.mediaUrl && (
+                <div className="mt-2 w-full">
+                  {oppositeSegment.mediaType === "photo" ? (
+                    <img
+                      src={oppositeSegment.mediaUrl}
+                      alt="Prévisualisation opposée"
+                      className="h-28 w-full rounded-2xl object-cover"
+                    />
+                  ) : oppositeSegment.mediaType === "video" ? (
+                    <video
+                      src={oppositeSegment.mediaUrl}
+                      className="h-28 w-full rounded-2xl object-cover"
+                      controls
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
+                      <FileText className="h-4 w-4" />
+                      <span>Fichier ajouté pour ce segment opposé.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="text-[10px] text-slate-400">
+                Astuce : cette colonne est en lecture seule. Pour modifier ce
+                côté du duo, clique sa bulle sur le cercle pour le passer en
+                « segment sélectionné ».
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* MODE SIMPLE : panneau d’origine */
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Segment sélectionné
+            </p>
+            <p className="text-sm font-semibold text-slate-900">
+              Segment {selectedSegment.id}
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <input
+              type="text"
+              maxLength={27}
+              value={selectedSegment.label}
+              onChange={handleLabelChange}
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+              placeholder="Diagnostic / observation"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium text-slate-600">
+              Notes pédagogiques
+            </p>
+            <textarea
+              rows={3}
+              value={selectedSegment.notes}
+              onChange={handleNotesChange}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+              placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
+            />
+          </div>
+
+          <p className="text-[10px] text-slate-400">
+            Statut :{" "}
+            <span className="font-semibold">
+              {statusLabel(selectedSegment.status)}
+            </span>
+          </p>
+
+          <div className="mt-1 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleChooseMedia("photo")}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+            >
+              <Camera className="h-3.5 w-3.5" />
+              <span>Ajouter une photo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChooseMedia("video")}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+            >
+              <Clapperboard className="h-3.5 w-3.5" />
+              <span>Ajouter une vidéo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChooseMedia("file")}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Ajouter un fichier</span>
+            </button>
+          </div>
+
+          {selectedSegment.mediaUrl && (
+            <div className="mt-2 w-full">
+              {selectedSegment.mediaType === "photo" ? (
+                <img
+                  src={selectedSegment.mediaUrl}
+                  alt="Prévisualisation"
+                  className="h-40 w-full rounded-2xl object-cover"
+                />
+              ) : selectedSegment.mediaType === "video" ? (
+                <video
+                  src={selectedSegment.mediaUrl}
+                  className="h-40 w-full rounded-2xl object-cover"
+                  controls
+                />
+              ) : (
+                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
+                  <FileText className="h-4 w-4" />
+                  <span>Fichier ajouté pour ce segment.</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
 
       {/* Inputs cachés */}
       <input
