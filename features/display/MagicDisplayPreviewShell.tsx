@@ -28,6 +28,19 @@ export type PreviewFace = {
   description?: string;
   notes?: string;
   segments: PreviewSegment[];
+
+  /**
+   * Nombre de segments sur cette face.
+   * Si non fourni → on utilise segments.length.
+   */
+  segmentCount?: number;
+
+  /**
+   * État des aiguilles pour cette face (même structure que FaceEditor).
+   */
+  needles?: {
+    needle2Enabled?: boolean;
+  };
 };
 
 export type PreviewDisplay = {
