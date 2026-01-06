@@ -1,29 +1,14 @@
+// features/display/MagicDisplayFaceBackCircle.tsx
 "use client";
 
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
+import type {
+  PreviewFace,
+  PreviewSegment,
+  PreviewMedia,
+} from "./MagicDisplayPreviewShell";
 
 type MediaType = "photo" | "video" | "file";
-
-type BackCircleProps = {
-  face: {
-    segments: {
-      id: number;
-      title?: string;
-      description?: string;
-      notes?: string;
-      media?: {
-        type: MediaType | string;
-        url: string;
-        filename?: string;
-      }[];
-    }[];
-  };
-  openedSegmentId: string | number | null;
-  onSegmentChange: (id: string | number) => void;
-  creatorName: string;
-  creatorInitials: string;
-  creatorAvatar?: string | null;
-};
 
 type DialStatus = "empty" | "in-progress" | "complete";
 
@@ -35,19 +20,34 @@ type DialSegment = {
   mediaUrl?: string | null;
 };
 
+type MagicDisplayFaceBackCircleProps = {
+  face: PreviewFace;
+  openedSegmentId: number | string | null;
+  onSegmentChange?: (id: number | string | null) => void;
+
+  creatorName: string;
+  creatorInitials: string;
+  creatorAvatar: string | null;
+};
+
 export default function MagicDisplayFaceBackCircle({
   face,
   openedSegmentId,
   onSegmentChange,
   creatorName,
   creatorInitials,
-  creatorAvatar = null,
-}: BackCircleProps) {
-  const rawSegments = face.segments ?? [];
-  const segmentCount = rawSegments.length || 1;
+  creatorAvatar,
+}: MagicDisplayFaceBackCircleProps) {
+  const rawSegments = (face.segments as PreviewSegment[]) ?? [];
+  const safeSegmentCount =
+    face.segmentCount && face.segmentCount > 0
+      ? face.segmentCount
+      : rawSegments.length || 1;
+
+  const needles = face.needles ?? { needle2Enabled: false };
 
   const dialSegments: DialSegment[] = rawSegments.map((seg, index) => {
-    const media = seg.media?.[0];
+    const media = (seg.media?.[0] as PreviewMedia | undefined) ?? undefined;
     const mediaType = (media?.type as MediaType | undefined) ?? undefined;
     const mediaUrl = media?.url ?? "";
 
@@ -60,7 +60,7 @@ export default function MagicDisplayFaceBackCircle({
     else if (hasTitle) status = "in-progress";
 
     return {
-      id: seg.id ?? index + 1,
+      id: (seg.id as number) ?? index + 1,
       label: seg.title?.trim() || `Segment ${index + 1}`,
       status,
       mediaType: mediaType ?? (hasMedia ? "photo" : undefined),
@@ -68,24 +68,34 @@ export default function MagicDisplayFaceBackCircle({
     };
   });
 
-  // Toujours un nombre pour MagicDisplayFaceDialBase
-  const selectedId: number =
+  // 🔎 Sélection du segment actif (toujours un nombre pour le DialBase)
+  let selectedId: number =
     typeof openedSegmentId === "number"
       ? openedSegmentId
       : dialSegments[0]?.id ?? 1;
+
+  if (dialSegments.length > 0) {
+    const exists = dialSegments.some((s) => s.id === selectedId);
+    if (!exists) {
+      selectedId = dialSegments[0].id;
+    }
+  }
 
   return (
     <div className="flex h-full w-full items-center justify-center">
       <MagicDisplayFaceDialBase
         creatorName={creatorName}
-        creatorAvatar={creatorAvatar}
+        creatorAvatar={creatorAvatar ?? undefined}
         creatorInitials={creatorInitials}
-        segmentCount={segmentCount}
+        segmentCount={safeSegmentCount}
         segments={dialSegments}
         selectedId={selectedId}
-        needles={{ needle2Enabled: false }}
+        needles={needles}
         mode="preview"
-        onSegmentClick={(seg) => onSegmentChange(seg.id)}
+        onSegmentClick={(seg: any) => {
+          const id = seg?.id ?? seg;
+          onSegmentChange?.(id);
+        }}
       />
     </div>
   );
