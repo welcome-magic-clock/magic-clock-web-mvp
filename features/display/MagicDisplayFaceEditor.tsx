@@ -40,6 +40,8 @@ type MagicDisplayFaceEditorProps = {
         filename?: string;
       }[];
     }[];
+    /** ➕ Nouveauté : état des aiguilles pour cette face */
+    needles: FaceNeedles;
   }) => void;
 };
 
