@@ -89,6 +89,11 @@ const bearFace2: PreviewFace = {
     "Vue synthétique du chemin technique : diagnostic, sectionnement, application, patine.",
   notes:
     "Face de survol pour un coiffeur : il comprend d’un coup d’œil la logique d’ensemble avant d’entrer dans le détail.",
+
+  // 🔹 Nouveau : on indique le nombre de segments + l’aiguille symétrique
+  segmentCount: 4,
+  needles: { needle2Enabled: true },
+
   segments: [
     {
       id: 1,
