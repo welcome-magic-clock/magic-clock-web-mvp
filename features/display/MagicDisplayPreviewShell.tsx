@@ -246,7 +246,7 @@ export default function MagicDisplayPreviewShell({
       ).trim()) ||
     "";
 
-  // 🔁 État détaillé issu du FaceEditor (pour les duos symétriques)
+    // 🔁 État détaillé issu du FaceEditor (pour les duos symétriques)
   const [detailEditorState, setDetailEditorState] =
     useState<PersistedFaceState | null>(null);
 
@@ -260,23 +260,61 @@ export default function MagicDisplayPreviewShell({
     setDetailEditorState(state);
   }, [openedFaceForDetails]);
 
-  const editorSegmentsForDetail: EditorSegmentState[] =
-    detailEditorState?.segments?.slice(
-      0,
-      detailEditorState.segmentCount ??
-        (detailEditorState.segments
-          ? detailEditorState.segments.length
-          : 0),
-    ) ?? [];
+  // On construit une vue "éditeur" des segments :
+  // 1) si un état FaceEditor existe en localStorage → on l'utilise
+  // 2) sinon on se base sur les segments de la face (PreviewSegment)
+  let editorSegmentsForDetail: EditorSegmentState[] = [];
 
-  const detailNeedles: FaceNeedlesState =
-    detailEditorState?.needles ?? {};
+  if (detailEditorState?.segments && detailEditorState.segments.length > 0) {
+    const countFromState =
+      detailEditorState.segmentCount ?? detailEditorState.segments.length;
+    editorSegmentsForDetail = detailEditorState.segments.slice(0, countFromState);
+  } else if (detailSegments.length > 0) {
+    editorSegmentsForDetail = detailSegments.map((seg, index) => {
+      const firstMedia = (seg.media && seg.media[0]) ?? undefined;
+
+      let mediaType: EditorMediaType | null = null;
+      let mediaUrl: string | null = null;
+
+      if (firstMedia?.url) {
+        mediaUrl = firstMedia.url;
+        if (firstMedia.type === "video") mediaType = "video";
+        else if (firstMedia.type === "photo") mediaType = "photo";
+        else mediaType = "file";
+      }
+
+      return {
+        id: typeof seg.id === "number" ? seg.id : index + 1,
+        label:
+          (seg.title as string | undefined)?.trim() ||
+          `Segment ${index + 1}`,
+        mediaType,
+        mediaUrl,
+        notes:
+          (seg.notes as string | undefined) ??
+          (seg.description as string | undefined) ??
+          "",
+      };
+    });
+  }
 
   const detailSegmentCount =
-    editorSegmentsForDetail.length || detailSegments.length || 0;
+    editorSegmentsForDetail.length ||
+    detailEditorState?.segmentCount ||
+    detailSegments.length ||
+    0;
 
   const isEvenSegmentCountForDetail =
     detailSegmentCount > 0 && detailSegmentCount % 2 === 0;
+
+  // ✅ On prend d'abord les aiguilles du FaceEditor (localStorage),
+  // puis on retombe sur celles de la face (PreviewFace.needles) si besoin.
+  const detailNeedles: FaceNeedlesState = {
+    needle2Enabled:
+      detailEditorState?.needles?.needle2Enabled ??
+      detailFace?.needles?.needle2Enabled ??
+      false,
+  };
 
   const openedSegmentNumericId =
     typeof openedSegmentId === "string"
@@ -285,7 +323,9 @@ export default function MagicDisplayPreviewShell({
 
   const editorSelectedSegment =
     editorSegmentsForDetail.find((seg) =>
-      openedSegmentNumericId != null ? seg.id === openedSegmentNumericId : seg.id === 1,
+      openedSegmentNumericId != null
+        ? seg.id === openedSegmentNumericId
+        : seg.id === 1,
     ) ?? editorSegmentsForDetail[0];
 
   const editorSelectedSegmentId = editorSelectedSegment?.id ?? null;
