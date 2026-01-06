@@ -1,7 +1,7 @@
 // features/display/MagicDisplayPreviewShell.tsx
-"use client";
 
-import { useRef, useState, useEffect } from "react";
+"use client";
+import { useRef, useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import MagicDisplayFaceBackCircle from "./MagicDisplayFaceBackCircle";
@@ -51,63 +51,6 @@ export type PreviewDisplay = {
   creatorInitials?: string;
   creatorAvatarUrl?: string | null;
 };
-
-// 🔗 État persistant du FaceEditor (localStorage) pour alimenter la preview
-type EditorMediaType = "photo" | "video" | "file";
-
-type EditorSegmentState = {
-  id: number;
-  label: string;
-  status?: "empty" | "in-progress" | "complete";
-  mediaType?: EditorMediaType | null;
-  mediaUrl?: string | null;
-  notes?: string;
-};
-
-type FaceNeedlesState = {
-  needle2Enabled?: boolean;
-};
-
-type PersistedFaceState = {
-  faceId: number;
-  segmentCount: number;
-  segments: EditorSegmentState[];
-  needles?: FaceNeedlesState;
-};
-
-const FACE_EDITOR_STORAGE_PREFIX = "mc-face-editor-v1";
-
-function getFaceEditorStorageKey(faceId: number) {
-  return `${FACE_EDITOR_STORAGE_PREFIX}-${faceId}`;
-}
-
-function loadFaceEditorState(faceId: number): PersistedFaceState | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(getFaceEditorStorageKey(faceId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PersistedFaceState;
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Calcule l'id du segment opposé dans un duo symétrique.
- * Exemple : sur 4 segments, 1 ↔︎ 3, 2 ↔︎ 4.
- */
-function getOppositeSegmentId(
-  segmentId: number,
-  segmentCount: number,
-): number | null {
-  if (!segmentId || segmentCount < 2 || segmentCount % 2 !== 0) return null;
-  const zeroIndex = segmentId - 1;
-  const offset = segmentCount / 2;
-  const oppositeZeroIndex = (zeroIndex + offset) % segmentCount;
-  return oppositeZeroIndex + 1;
-}
 
 type MagicDisplayPreviewShellProps = {
   display: PreviewDisplay;
@@ -245,104 +188,6 @@ export default function MagicDisplayPreviewShell({
         ""
       ).trim()) ||
     "";
-
-    // 🔁 État détaillé issu du FaceEditor (pour les duos symétriques)
-  const [detailEditorState, setDetailEditorState] =
-    useState<PersistedFaceState | null>(null);
-
-  useEffect(() => {
-    if (openedFaceForDetails == null) {
-      setDetailEditorState(null);
-      return;
-    }
-    const faceId = openedFaceForDetails + 1; // Faces 1 → 6
-    const state = loadFaceEditorState(faceId);
-    setDetailEditorState(state);
-  }, [openedFaceForDetails]);
-
-  // On construit une vue "éditeur" des segments :
-  // 1) si un état FaceEditor existe en localStorage → on l'utilise
-  // 2) sinon on se base sur les segments de la face (PreviewSegment)
-  let editorSegmentsForDetail: EditorSegmentState[] = [];
-
-  if (detailEditorState?.segments && detailEditorState.segments.length > 0) {
-    const countFromState =
-      detailEditorState.segmentCount ?? detailEditorState.segments.length;
-    editorSegmentsForDetail = detailEditorState.segments.slice(0, countFromState);
-  } else if (detailSegments.length > 0) {
-    editorSegmentsForDetail = detailSegments.map((seg, index) => {
-      const firstMedia = (seg.media && seg.media[0]) ?? undefined;
-
-      let mediaType: EditorMediaType | null = null;
-      let mediaUrl: string | null = null;
-
-      if (firstMedia?.url) {
-        mediaUrl = firstMedia.url;
-        if (firstMedia.type === "video") mediaType = "video";
-        else if (firstMedia.type === "photo") mediaType = "photo";
-        else mediaType = "file";
-      }
-
-      return {
-        id: typeof seg.id === "number" ? seg.id : index + 1,
-        label:
-          (seg.title as string | undefined)?.trim() ||
-          `Segment ${index + 1}`,
-        mediaType,
-        mediaUrl,
-        notes:
-          (seg.notes as string | undefined) ??
-          (seg.description as string | undefined) ??
-          "",
-      };
-    });
-  }
-
-  const detailSegmentCount =
-    editorSegmentsForDetail.length ||
-    detailEditorState?.segmentCount ||
-    detailSegments.length ||
-    0;
-
-  const isEvenSegmentCountForDetail =
-    detailSegmentCount > 0 && detailSegmentCount % 2 === 0;
-
-  // ✅ On prend d'abord les aiguilles du FaceEditor (localStorage),
-  // puis on retombe sur celles de la face (PreviewFace.needles) si besoin.
-  const detailNeedles: FaceNeedlesState = {
-    needle2Enabled:
-      detailEditorState?.needles?.needle2Enabled ??
-      detailFace?.needles?.needle2Enabled ??
-      false,
-  };
-
-  const openedSegmentNumericId =
-    typeof openedSegmentId === "string"
-      ? Number.parseInt(openedSegmentId, 10)
-      : (openedSegmentId as number | null);
-
-  const editorSelectedSegment =
-    editorSegmentsForDetail.find((seg) =>
-      openedSegmentNumericId != null
-        ? seg.id === openedSegmentNumericId
-        : seg.id === 1,
-    ) ?? editorSegmentsForDetail[0];
-
-  const editorSelectedSegmentId = editorSelectedSegment?.id ?? null;
-
-  const oppositeSegmentIdForDetail =
-    detailNeedles.needle2Enabled &&
-    isEvenSegmentCountForDetail &&
-    editorSelectedSegmentId != null
-      ? getOppositeSegmentId(editorSelectedSegmentId, detailSegmentCount)
-      : null;
-
-  const editorOppositeSegment =
-    oppositeSegmentIdForDetail != null
-      ? editorSegmentsForDetail.find(
-          (seg) => seg.id === oppositeSegmentIdForDetail,
-        ) ?? null
-      : null;
 
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
@@ -653,9 +498,9 @@ export default function MagicDisplayPreviewShell({
                                     const segs: PreviewSegment[] =
                                       face?.segments ?? [];
                                     const firstId =
-                                      (segs[0] as any)?.id ??
+                                      segs[0]?.id ??
                                       (segs.length > 0
-                                        ? (segs[0] as any).id ?? 0
+                                        ? segs[0].id ?? 0
                                         : null);
 
                                     setOpenedSegmentId(firstId ?? null);
@@ -744,7 +589,7 @@ export default function MagicDisplayPreviewShell({
               </div>
             </section>
 
-            {/* 📝 Bloc "Contenu du segment sélectionné" (avec duo symétrique) */}
+            {/* 📝 Bloc "Contenu du segment sélectionné" (sans cercle sous le cube) */}
             {detailFace && detailSegments.length > 0 && activeDetailSegment && (
               <section className="mt-6 w-full max-w-3xl self-center rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -798,82 +643,23 @@ export default function MagicDisplayPreviewShell({
                   })}
                 </div>
 
-                {/* Duo symétrique (Avant / Après) ou vue simple */}
-                {detailNeedles.needle2Enabled &&
-                isEvenSegmentCountForDetail &&
-                editorSelectedSegment &&
-                editorOppositeSegment ? (
-                  <div className="space-y-3">
+                {/* Média principal */}
+                <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                  {renderSegmentMedia(activeDetailSegment)}
+                </div>
+
+                {/* Notes du segment */}
+                <div className="space-y-1">
+                  {segmentTitle && (
                     <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                      Duo symétrique — comme un Avant / Après
+                      {segmentTitle}
                     </p>
-                    <p className="text-[11px] text-slate-500">
-                      Tu édites un segment et tu vois son opposé en miroir. Clique une autre
-                      pastille du cercle pour changer le duo.
-                    </p>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {/* Colonne gauche : segment sélectionné */}
-                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[11px] font-semibold text-slate-700">
-                          Segment {editorSelectedSegment.id}
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {segmentTitle ||
-                            editorSelectedSegment.label ||
-                            "Diagnostic / observation"}
-                        </p>
-                        <div className="relative mb-1 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          {renderEditorSegmentMedia(editorSelectedSegment)}
-                        </div>
-                        {editorSelectedSegment.notes && (
-                          <p className="whitespace-pre-line text-[13px] text-slate-700">
-                            {editorSelectedSegment.notes}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Colonne droite : segment opposé (miroir) */}
-                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[11px] font-semibold text-slate-700">
-                          Segment {editorOppositeSegment.id} (opposé)
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {editorOppositeSegment.label ||
-                            "Préparation / sectionnement"}
-                        </p>
-                        <div className="relative mb-1 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          {renderEditorSegmentMedia(editorOppositeSegment)}
-                        </div>
-                        {editorOppositeSegment.notes && (
-                          <p className="whitespace-pre-line text-[13px] text-slate-700">
-                            {editorOppositeSegment.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Média principal */}
-                    <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                      {renderSegmentMedia(activeDetailSegment)}
-                    </div>
-
-                    {/* Notes du segment */}
-                    <div className="space-y-1">
-                      {segmentTitle && (
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                          {segmentTitle}
-                        </p>
-                      )}
-                      <p className="whitespace-pre-line text-[13px] text-slate-700">
-                        {segmentNotes ||
-                          "Pas de notes pédagogiques, tout est dit dans le titre."}
-                      </p>
-                    </div>
-                  </>
-                )}
+                  )}
+                  <p className="whitespace-pre-line text-[13px] text-slate-700">
+                    {segmentNotes ||
+                      "Pas de notes pédagogiques, tout est dit dans le titre."}
+                  </p>
+                </div>
               </section>
             )}
           </>
@@ -980,7 +766,7 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
     return <video src={url} controls className="h-full w-full object-cover" />;
   }
 
- if (type === "photo") {
+  if (type === "photo" || type === "image") {
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
@@ -1002,44 +788,6 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
         Ce type de fichier sera téléchargeable dans la version utilisateur
         finale.
       </p>
-    </div>
-  );
-}
-
-/**
- * Affiche le média d'un segment issu directement du FaceEditor (localStorage).
- */
-function renderEditorSegmentMedia(seg?: EditorSegmentState | null) {
-  if (!seg || !seg.mediaUrl) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-[11px] text-slate-500">
-        Aucun média pour ce segment.
-      </div>
-    );
-  }
-
-  const url = seg.mediaUrl;
-  const type = seg.mediaType ?? "photo";
-
-  if (type === "video") {
-    // eslint-disable-next-line jsx-a11y/media-has-caption
-    return <video src={url} controls className="h-full w-full object-cover" />;
-  }
-
- if (type === "photo") {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src={url}
-        alt={seg.label ?? "Média"}
-        className="h-full w-full object-cover"
-      />
-    );
-  }
-
-  return (
-    <div className="flex h-full w-full items-center justify-center text-[11px] text-slate-500">
-      Média non disponible.
     </div>
   );
 }
