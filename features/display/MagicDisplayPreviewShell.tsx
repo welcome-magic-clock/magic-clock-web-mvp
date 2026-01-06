@@ -940,7 +940,7 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
     return <video src={url} controls className="h-full w-full object-cover" />;
   }
 
-  if (type === "photo" || type === "image") {
+ if (type === "photo") {
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
@@ -986,7 +986,7 @@ function renderEditorSegmentMedia(seg?: EditorSegmentState | null) {
     return <video src={url} controls className="h-full w-full object-cover" />;
   }
 
-  if (type === "photo" || type === "image") {
+ if (type === "photo") {
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
