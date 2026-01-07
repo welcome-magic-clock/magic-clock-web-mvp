@@ -567,17 +567,17 @@ export default function MagicDisplayFaceEditor({
             </button>
           )}
 
-          {/* Face + titre sur une seule ligne */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm font-semibold text-slate-900">
-              Face {faceId}
-            </span>
-            {faceLabel && faceLabel !== `Face ${faceId}` && (
-              <span className="text-[11px] font-medium text-slate-500">
-                • {faceLabel}
-              </span>
-            )}
-          </div>
+         {/* Face + titre sur une seule ligne */}
+<div className="flex items-baseline gap-2">
+  <span className="text-sm font-semibold text-slate-900">
+    Face {faceId}
+  </span>
+  {faceLabel && (
+    <span className="text-[11px] font-medium text-slate-500">
+      • {faceLabel}
+    </span>
+  )}
+</div>
         </div>
 
         {/* Bouton options compact avec icône réglages */}
