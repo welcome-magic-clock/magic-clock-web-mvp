@@ -402,6 +402,15 @@ export default function MagicDisplayFaceEditor({
 
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
+    // 🧠 Titre affiché dans le header de l’éditeur
+  // 1) on prend le label du premier segment s'il existe
+  // 2) sinon on tombe sur le faceLabel passé par le parent
+  // 3) sinon "Face X"
+  const firstSegmentLabel =
+    currentFace.segments?.[0]?.label?.trim() ?? "";
+
+  const computedFaceLabel =
+    firstSegmentLabel || faceLabel || `Face ${faceId}`;
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
@@ -576,8 +585,8 @@ export default function MagicDisplayFaceEditor({
         <>
           <span className="text-xs text-slate-400">•</span>
           <span className="text-[11px] font-medium text-slate-500">
-            {faceLabel}
-          </span>
+  {computedFaceLabel}
+</span>
         </>
       )}
     </div>
