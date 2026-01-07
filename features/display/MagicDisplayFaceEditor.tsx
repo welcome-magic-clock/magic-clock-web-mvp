@@ -386,22 +386,37 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
-  const currentFace = faces[faceId] ?? fallbackFace;
+    const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
- // 🧠 Titre affiché dans le header
-// 👉 IMPORTANT : on n'utilise PLUS le Segment 1 comme fallback.
-// Seule la page Display (Faces de ce cube) peut définir un titre humain via faceLabel.
-const defaultSystemLabel = `Face ${faceId}`;
-const trimmedFaceLabel = (faceLabel ?? "").trim();
+  // 🧠 Titre affiché dans le header (même logique que la preview 3D)
+  const faceNumberLabel = `Face ${faceId}`;
 
-// On affiche "• Titre" UNIQUEMENT si faceLabel existe
-// et qu'il est différent de "Face X".
-const showHeaderDescription =
-  !!trimmedFaceLabel && trimmedFaceLabel !== defaultSystemLabel;
+  // Titre envoyé par la page Display ("Faces de ce cube")
+  const rawTitle = (faceLabel ?? "").trim();
 
-// Titre à afficher à droite du "Face X"
-const computedFaceLabel = showHeaderDescription ? trimmedFaceLabel : "";
+  // Fallback possible : label du Segment 1 (si présent)
+  const rawFromSegment = currentFace.segments?.[0]?.label?.trim() ?? "";
+
+  let computedFaceLabel: string | null = null;
+
+  // 1️⃣ On prend d’abord le titre de face s’il est différent de "Face X"
+  if (
+    rawTitle &&
+    rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
+  ) {
+    computedFaceLabel = rawTitle;
+  }
+  // 2️⃣ Sinon, on retombe sur le Segment 1, en évitant aussi "Face X"
+  else if (
+    rawFromSegment &&
+    rawFromSegment.toLowerCase() !== faceNumberLabel.toLowerCase()
+  ) {
+    computedFaceLabel = rawFromSegment;
+  }
+
+  // Faut-il afficher "• Titre" dans le header ?
+  const showHeaderDescription = !!computedFaceLabel;
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
