@@ -65,16 +65,15 @@ const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
       media: seg.media,
     }));
 
-    // 🧠 "description" = vrai titre humain (on prend le titre du 1er segment)
+    // 🧠 description = "titre humain" de la face, qu'on garde
     const inferredDescription =
-      payload.segments?.[0]?.title?.trim() ||
-      previous?.description?.trim() ||
-      `Face ${payload.faceId}`;
+      previous?.description?.trim() ||                // si déjà défini -> on garde
+      payload.segments?.[0]?.title?.trim() ||         // sinon, on prend le titre du 1er segment
+      `Face ${payload.faceId}`;                       // fallback
 
     const nextFace: PreviewFace = {
-      // "title" reste le titre système (Face X)
+      // title = titre système
       title: previous?.title || `Face ${payload.faceId}`,
-      // "description" = ce qu'on veut afficher dans l’UI (et dans le cube)
       description: inferredDescription,
       notes: previous?.notes ?? "",
       segments: mappedSegments,
