@@ -50,11 +50,11 @@ export default function MagicDisplayEditorPage() {
   // ancre pour scroller sur la preview 3D
   const previewRef = useRef<HTMLDivElement | null>(null);
 
-  const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
+    const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
     setDisplayDraft((prev) => {
       const faces = [...(prev.faces ?? [])];
 
-            const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
+      const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
       const previous = faces[index];
 
       const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
@@ -65,15 +65,17 @@ export default function MagicDisplayEditorPage() {
         media: seg.media,
       }));
 
-      // On infère le "titre" de la face à partir de son premier segment
-      const inferredTitle =
+      // 🧠 "description" = vrai titre humain de la face
+      const inferredDescription =
         payload.segments?.[0]?.title?.trim() ||
-        previous?.title?.trim() ||
+        previous?.description?.trim() ||
         `Face ${payload.faceId}`;
 
       const nextFace: PreviewFace = {
-        title: inferredTitle,
-        description: previous?.description ?? "",
+        // "title" reste le titre système (Face X)
+        title: previous?.title || `Face ${payload.faceId}`,
+        // "description" = ce qu'on affiche dans le header + cube 3D
+        description: inferredDescription,
         notes: previous?.notes ?? "",
         segments: mappedSegments,
       };
@@ -86,13 +88,15 @@ export default function MagicDisplayEditorPage() {
       };
     });
   }, []);
-
     const currentFaceId = editingFaceIndex + 1;
   const currentFaceData = displayDraft.faces?.[editingFaceIndex];
 
-  // Libellé affiché dans l’en-tête : titre de la face si dispo, sinon "Face X"
+  // Libellé affiché dans l’en-tête :
+  // priorité à la description (vrai titre humain), sinon title, sinon "Face X"
   const currentFaceLabel =
-    currentFaceData?.title?.trim() || `Face ${currentFaceId}`;
+    currentFaceData?.description?.trim() ||
+    currentFaceData?.title?.trim() ||
+    `Face ${currentFaceId}`;
   const handleScrollToPreview = () => {
     previewRef.current?.scrollIntoView({
       behavior: "smooth",
