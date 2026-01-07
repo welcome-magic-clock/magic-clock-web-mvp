@@ -414,6 +414,11 @@ export default function MagicDisplayFaceEditor({
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
+    // 👉 FaceLabel par défaut = "Face X" → on ne l'affiche pas en sous-titre
+  const isDefaultFaceLabel =
+    !faceLabel ||
+    faceLabel.trim().toLowerCase() === `face ${faceId}`.toLowerCase();
+
     // 👉 si l’aiguille symétrique est active et que le nombre de segments est pair,
   // on calcule le segment opposé
   const oppositeId =
@@ -572,7 +577,7 @@ export default function MagicDisplayFaceEditor({
   <span className="text-sm font-semibold text-slate-900">
     Face {faceId}
   </span>
-  {faceLabel && (
+  {!isDefaultFaceLabel && (
     <span className="text-[11px] font-medium text-slate-500">
       • {faceLabel}
     </span>
