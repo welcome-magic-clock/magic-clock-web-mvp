@@ -389,24 +389,19 @@ export default function MagicDisplayFaceEditor({
   const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
-  // 🧠 Titre affiché dans le header
-  // - "Face X" = label système
-  // - on n'affiche jamais "Face X · Face X"
-  const defaultSystemLabel = `Face ${faceId}`;
-  const firstSegmentLabel = currentFace.segments?.[0]?.label?.trim() ?? "";
-  const trimmedFaceLabel = faceLabel?.trim() ?? "";
+ // 🧠 Titre affiché dans le header
+// 👉 IMPORTANT : on n'utilise PLUS le Segment 1 comme fallback.
+// Seule la page Display (Faces de ce cube) peut définir un titre humain via faceLabel.
+const defaultSystemLabel = `Face ${faceId}`;
+const trimmedFaceLabel = (faceLabel ?? "").trim();
 
-  // true uniquement si le parent envoie un vrai titre humain différent de "Face X"
-  const hasCustomFaceLabel =
-    !!trimmedFaceLabel && trimmedFaceLabel !== defaultSystemLabel;
+// On affiche "• Titre" UNIQUEMENT si faceLabel existe
+// et qu'il est différent de "Face X".
+const showHeaderDescription =
+  !!trimmedFaceLabel && trimmedFaceLabel !== defaultSystemLabel;
 
-  // label final à afficher à droite du "Face X"
-  const computedFaceLabel =
-    (hasCustomFaceLabel ? trimmedFaceLabel : "") || firstSegmentLabel || "";
-
-  // doit-on afficher le "• Titre" dans le header ?
-  const showHeaderDescription =
-    !!computedFaceLabel && computedFaceLabel !== defaultSystemLabel;
+// Titre à afficher à droite du "Face X"
+const computedFaceLabel = showHeaderDescription ? trimmedFaceLabel : "";
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
