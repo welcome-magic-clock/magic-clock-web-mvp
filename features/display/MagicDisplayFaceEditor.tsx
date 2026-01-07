@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import {
-  Camera,
-  Clapperboard,
-  FileText,
-  ChevronLeft,
-  Settings,
-} from "lucide-react";
+import { Camera, Clapperboard, FileText, ChevronLeft } from "lucide-react";
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
@@ -179,13 +173,6 @@ const statusLabel = (status: SegmentStatus) => {
   return "vide";
 };
 
-const segmentIcon = (mediaType?: MediaType | null) => {
-  if (mediaType === "photo") return <Camera className="h-3.5 w-3.5" />;
-  if (mediaType === "video") return <Clapperboard className="h-3.5 w-3.5" />;
-  if (mediaType === "file") return <FileText className="h-3.5 w-3.5" />;
-  return <span className="text-xs">＋</span>;
-};
-
 const defaultNeedles = (): FaceNeedles => ({
   needle2Enabled: false,
 });
@@ -285,8 +272,7 @@ function loadFaceState(faceId: number): FaceState | null {
     const baseSegments = INITIAL_SEGMENTS.map((s) => ({ ...s }));
     const mergedSegments = baseSegments.map((s) => {
       const override =
-        data.segments.find((p) => p.id === s.id) ??
-        data.segments[s.id - 1];
+        data.segments.find((p) => p.id === s.id) ?? data.segments[s.id - 1];
       return override ? { ...s, ...override } : s;
     });
 
@@ -363,14 +349,14 @@ export default function MagicDisplayFaceEditor({
         };
       });
 
-     onFaceChange({
-    faceId: state.faceId,
-    faceLabel,
-    segmentCount: state.segmentCount,
-    segments: segmentsForDisplay,
-    needles: state.needles,        // 🔹 on transporte les aiguilles
-  });
-}
+    onFaceChange({
+      faceId: state.faceId,
+      faceLabel,
+      segmentCount: state.segmentCount,
+      segments: segmentsForDisplay,
+      needles: state.needles,
+    });
+  }
 
   // 🧷 Initialisation / changement de faceId : on recharge depuis localStorage si dispo
   useEffect(() => {
@@ -400,31 +386,27 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
- const currentFace = faces[faceId] ?? fallbackFace;
-const segments = currentFace.segments;
+  const currentFace = faces[faceId] ?? fallbackFace;
+  const segments = currentFace.segments;
 
-// 🧠 Titre affiché dans le header
-// - "Face X" = label système
-// - on n'affiche jamais "Face X · Face X"
-const defaultSystemLabel = `Face ${faceId}`;
-const firstSegmentLabel =
-  currentFace.segments?.[0]?.label?.trim() ?? "";
+  // 🧠 Titre affiché dans le header
+  // - "Face X" = label système
+  // - on n'affiche jamais "Face X · Face X"
+  const defaultSystemLabel = `Face ${faceId}`;
+  const firstSegmentLabel = currentFace.segments?.[0]?.label?.trim() ?? "";
+  const trimmedFaceLabel = faceLabel?.trim() ?? "";
 
-const trimmedFaceLabel = faceLabel?.trim() ?? "";
+  // true uniquement si le parent envoie un vrai titre humain différent de "Face X"
+  const hasCustomFaceLabel =
+    !!trimmedFaceLabel && trimmedFaceLabel !== defaultSystemLabel;
 
-// true uniquement si le parent envoie un vrai titre humain différent de "Face X"
-const hasCustomFaceLabel =
-  !!trimmedFaceLabel && trimmedFaceLabel !== defaultSystemLabel;
+  // label final à afficher à droite du "Face X"
+  const computedFaceLabel =
+    (hasCustomFaceLabel ? trimmedFaceLabel : "") || firstSegmentLabel || "";
 
-// label final à afficher à droite du "Face X"
-const computedFaceLabel =
-  (hasCustomFaceLabel ? trimmedFaceLabel : "") ||
-  firstSegmentLabel ||
-  ""; // si rien, on n'ajoute pas de sous-titre
-
-// doit-on afficher le "• Titre" dans le header ?
-const showHeaderDescription =
-  !!computedFaceLabel && computedFaceLabel !== defaultSystemLabel;
+  // doit-on afficher le "• Titre" dans le header ?
+  const showHeaderDescription =
+    !!computedFaceLabel && computedFaceLabel !== defaultSystemLabel;
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
@@ -437,7 +419,7 @@ const showHeaderDescription =
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
-    // 👉 si l’aiguille symétrique est active et que le nombre de segments est pair,
+  // 👉 si l’aiguille symétrique est active et que le nombre de segments est pair,
   // on calcule le segment opposé
   const oppositeId =
     needles.needle2Enabled && isEven
@@ -449,7 +431,7 @@ const showHeaderDescription =
       ? segments.find((s) => s.id === oppositeId) ?? null
       : null;
 
-    // Pour la carte Avant / Après
+  // Pour la carte Avant / Après
   const leftHasMedia = !!selectedSegment.mediaUrl;
   const rightHasMedia = !!(oppositeSegment && oppositeSegment.mediaUrl);
 
@@ -552,6 +534,7 @@ const showHeaderDescription =
     }));
   }
 
+  // (au cas où, si nécessaire ailleurs)
   function getSegmentPositionStyle(index: number) {
     const count = segmentCount || 1;
     const radiusPercent = 42;
@@ -576,46 +559,46 @@ const showHeaderDescription =
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
-            {/* Ligne 1 — Back + Face + titre + bouton réglages */}
-<div className="mb-4 flex items-center justify-between gap-3">
-  <div className="flex items-center gap-2">
-    {onBack && (
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
-        aria-label="Revenir au cube"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-    )}
+      {/* Ligne 1 — Back + Face + titre + bouton réglages */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+              aria-label="Revenir au cube"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
 
-    {/* ⬇️ Ligne unique : Face X • Titre */}
-   <div className="flex items-baseline gap-1">
-  <span className="text-sm font-semibold text-slate-900">
-    Face {faceId}
-  </span>
-  {showHeaderDescription && (
-    <>
-      <span className="text-xs text-slate-400">•</span>
-      <span className="text-[11px] font-medium text-slate-500">
-        {computedFaceLabel}
-      </span>
-    </>
-  )}
-</div>
-  </div>
+          {/* ⬇️ Ligne unique : Face X • Titre */}
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-semibold text-slate-900">
+              Face {faceId}
+            </span>
+            {showHeaderDescription && (
+              <>
+                <span className="text-xs text-slate-400">•</span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  {computedFaceLabel}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
 
-  <button
-    type="button"
-    onClick={() => setShowOptions((v) => !v)}
-    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
-    aria-label="Options de la face"
-  >
-    {/* petit engrenage moderne */}
-    <span className="inline-block h-4 w-4 rounded-full border border-slate-400" />
-  </button>
-</div>
+        <button
+          type="button"
+          onClick={() => setShowOptions((v) => !v)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
+          aria-label="Options de la face"
+        >
+          {/* petit engrenage moderne */}
+          <span className="inline-block h-4 w-4 rounded-full border border-slate-400" />
+        </button>
+      </div>
 
       {showOptions && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-700">
@@ -747,8 +730,8 @@ const showHeaderDescription =
             })}
           </div>
 
-                        {/* Détail du segment sélectionné */}
-             {needles.needle2Enabled && isEven && oppositeSegment ? (
+          {/* Détail du segment sélectionné */}
+          {needles.needle2Enabled && isEven && oppositeSegment ? (
             /* MODE DUO : segment sélectionné + segment opposé avec une seule carte Avant / Après */
             <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
               <div className="space-y-1">
@@ -931,101 +914,100 @@ const showHeaderDescription =
             </div>
           ) : (
             /* MODE SIMPLE : panneau d’origine */
-        /* MODE SIMPLE : panneau d’origine */
-        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
-          <div className="space-y-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-              Segment sélectionné
-            </p>
-            <p className="text-sm font-semibold text-slate-900">
-              Segment {selectedSegment.id}
-            </p>
-          </div>
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Segment sélectionné
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  Segment {selectedSegment.id}
+                </p>
+              </div>
 
-          <div className="space-y-1">
-            <input
-              type="text"
-              maxLength={27}
-              value={selectedSegment.label}
-              onChange={handleLabelChange}
-              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-              placeholder="Diagnostic / observation"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-[11px] font-medium text-slate-600">
-              Notes pédagogiques
-            </p>
-            <textarea
-              rows={3}
-              value={selectedSegment.notes}
-              onChange={handleNotesChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-              placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
-            />
-          </div>
-
-          <p className="text-[10px] text-slate-400">
-            Statut :{" "}
-            <span className="font-semibold">
-              {statusLabel(selectedSegment.status)}
-            </span>
-          </p>
-
-          <div className="mt-1 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => handleChooseMedia("photo")}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-            >
-              <Camera className="h-3.5 w-3.5" />
-              <span>Ajouter une photo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleChooseMedia("video")}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-            >
-              <Clapperboard className="h-3.5 w-3.5" />
-              <span>Ajouter une vidéo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleChooseMedia("file")}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span>Ajouter un fichier</span>
-            </button>
-          </div>
-
-          {selectedSegment.mediaUrl && (
-            <div className="mt-2 w-full">
-              {selectedSegment.mediaType === "photo" ? (
-                <img
-                  src={selectedSegment.mediaUrl}
-                  alt="Prévisualisation"
-                  className="h-40 w-full rounded-2xl object-cover"
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  maxLength={27}
+                  value={selectedSegment.label}
+                  onChange={handleLabelChange}
+                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                  placeholder="Diagnostic / observation"
                 />
-              ) : selectedSegment.mediaType === "video" ? (
-                <video
-                  src={selectedSegment.mediaUrl}
-                  className="h-40 w-full rounded-2xl object-cover"
-                  controls
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium text-slate-600">
+                  Notes pédagogiques
+                </p>
+                <textarea
+                  rows={3}
+                  value={selectedSegment.notes}
+                  onChange={handleNotesChange}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                  placeholder="Décris cette étape : produits, temps de pose, astuces, erreurs à éviter…"
                 />
-              ) : (
-                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
-                  <FileText className="h-4 w-4" />
-                  <span>Fichier ajouté pour ce segment.</span>
+              </div>
+
+              <p className="text-[10px] text-slate-400">
+                Statut :{" "}
+                <span className="font-semibold">
+                  {statusLabel(selectedSegment.status)}
+                </span>
+              </p>
+
+              <div className="mt-1 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("photo")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Ajouter une photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("video")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <Clapperboard className="h-3.5 w-3.5" />
+                  <span>Ajouter une vidéo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChooseMedia("file")}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Ajouter un fichier</span>
+                </button>
+              </div>
+
+              {selectedSegment.mediaUrl && (
+                <div className="mt-2 w-full">
+                  {selectedSegment.mediaType === "photo" ? (
+                    <img
+                      src={selectedSegment.mediaUrl}
+                      alt="Prévisualisation"
+                      className="h-40 w-full rounded-2xl object-cover"
+                    />
+                  ) : selectedSegment.mediaType === "video" ? (
+                    <video
+                      src={selectedSegment.mediaUrl}
+                      className="h-40 w-full rounded-2xl object-cover"
+                      controls
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
+                      <FileText className="h-4 w-4" />
+                      <span>Fichier ajouté pour ce segment.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
         </div>
-      )}
-    </div>
-  </div>
+      </div>
 
       {/* Inputs cachés */}
       <input
