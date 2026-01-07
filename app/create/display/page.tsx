@@ -65,16 +65,10 @@ const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
       media: seg.media,
     }));
 
-    // 🧠 description = "titre humain" de la face, qu'on garde
-    const inferredDescription =
-      previous?.description?.trim() ||                // si déjà défini -> on garde
-      payload.segments?.[0]?.title?.trim() ||         // sinon, on prend le titre du 1er segment
-      `Face ${payload.faceId}`;                       // fallback
-
+    // ❗️On NE TOUCHE PLUS à description ici
     const nextFace: PreviewFace = {
-      // title = titre système
-      title: previous?.title || `Face ${payload.faceId}`,
-      description: inferredDescription,
+      title: previous?.title || `Face ${payload.faceId}`,     // titre système
+      description: previous?.description ?? "",               // texte que tu édites dans "Faces de ce cube"
       notes: previous?.notes ?? "",
       segments: mappedSegments,
     };
@@ -87,10 +81,9 @@ const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
     };
   });
 }, []);
-   const currentFaceId = editingFaceIndex + 1;
+ const currentFaceId = editingFaceIndex + 1;
 const currentFaceData = displayDraft.faces?.[editingFaceIndex];
 
-// Libellé utilisé dans FaceEditor : priorité à la description (titre humain)
 const currentFaceLabel =
   currentFaceData?.description?.trim() ||
   currentFaceData?.title?.trim() ||
