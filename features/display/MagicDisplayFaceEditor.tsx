@@ -400,19 +400,31 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
-  const currentFace = faces[faceId] ?? fallbackFace;
-  const segments = currentFace.segments;
-    // 🧠 Titre affiché dans le header
-  // 1) on privilégie le faceLabel venant du parent (page Display)
-  // 2) sinon on prend le label du Segment 1
-  // 3) sinon "Face X"
-  const firstSegmentLabel =
-    currentFace.segments?.[0]?.label?.trim() ?? "";
+ const currentFace = faces[faceId] ?? fallbackFace;
+const segments = currentFace.segments;
 
-  const computedFaceLabel =
-    (faceLabel && faceLabel.trim()) ||
-    firstSegmentLabel ||
-    `Face ${faceId}`;
+// 🧠 Titre affiché dans le header
+// - "Face X" = label système
+// - on n'affiche jamais "Face X · Face X"
+const defaultSystemLabel = `Face ${faceId}`;
+const firstSegmentLabel =
+  currentFace.segments?.[0]?.label?.trim() ?? "";
+
+const trimmedFaceLabel = faceLabel?.trim() ?? "";
+
+// true uniquement si le parent envoie un vrai titre humain différent de "Face X"
+const hasCustomFaceLabel =
+  !!trimmedFaceLabel && trimmedFaceLabel !== defaultSystemLabel;
+
+// label final à afficher à droite du "Face X"
+const computedFaceLabel =
+  (hasCustomFaceLabel ? trimmedFaceLabel : "") ||
+  firstSegmentLabel ||
+  ""; // si rien, on n'ajoute pas de sous-titre
+
+// doit-on afficher le "• Titre" dans le header ?
+const showHeaderDescription =
+  !!computedFaceLabel && computedFaceLabel !== defaultSystemLabel;
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
@@ -579,19 +591,19 @@ export default function MagicDisplayFaceEditor({
     )}
 
     {/* ⬇️ Ligne unique : Face X • Titre */}
-    <div className="flex items-baseline gap-1">
-      <span className="text-sm font-semibold text-slate-900">
-        Face {faceId}
+   <div className="flex items-baseline gap-1">
+  <span className="text-sm font-semibold text-slate-900">
+    Face {faceId}
+  </span>
+  {showHeaderDescription && (
+    <>
+      <span className="text-xs text-slate-400">•</span>
+      <span className="text-[11px] font-medium text-slate-500">
+        {computedFaceLabel}
       </span>
-      {faceLabel && (
-        <>
-          <span className="text-xs text-slate-400">•</span>
-          <span className="text-[11px] font-medium text-slate-500">
-  {computedFaceLabel}
-</span>
-        </>
-      )}
-    </div>
+    </>
+  )}
+</div>
   </div>
 
   <button
