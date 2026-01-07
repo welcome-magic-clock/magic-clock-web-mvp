@@ -426,6 +426,10 @@ export default function MagicDisplayFaceEditor({
       ? segments.find((s) => s.id === oppositeId) ?? null
       : null;
 
+    // Pour la carte Avant / Après
+  const leftHasMedia = !!selectedSegment.mediaUrl;
+  const rightHasMedia = !!(oppositeSegment && oppositeSegment.mediaUrl);
+
   // si impair -> aiguille symétrique forcée OFF
   useEffect(() => {
     if (!isEven && needles.needle2Enabled) {
@@ -713,216 +717,189 @@ export default function MagicDisplayFaceEditor({
           </div>
 
                         {/* Détail du segment sélectionné */}
-       {needles.needle2Enabled && isEven && oppositeSegment ? (
-  /* MODE DUO : segment sélectionné + segment opposé en parallèle (avec cartes + avatar) */
-  <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
-    <div className="space-y-1">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-        Duo symétrique — comme un Avant / Après
-      </p>
-      <p className="text-xs text-slate-600">
-        Tu édites le segment{" "}
-        <span className="font-semibold">{selectedSegment.id}</span> et tu vois
-        en miroir son opposé{" "}
-        <span className="font-semibold">{oppositeSegment.id}</span>. Clique la
-        bulle de l&apos;autre côté du cercle pour inverser.
-      </p>
-    </div>
+             {needles.needle2Enabled && isEven && oppositeSegment ? (
+            /* MODE DUO : segment sélectionné + segment opposé avec une seule carte Avant / Après */
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Duo symétrique — comme un Avant / Après
+                </p>
+                <p className="text-xs text-slate-600">
+                  Tu édites le segment{" "}
+                  <span className="font-semibold">{selectedSegment.id}</span>{" "}
+                  et tu vois en miroir son opposé{" "}
+                  <span className="font-semibold">{oppositeSegment.id}</span>.
+                  Clique la bulle de l&apos;autre côté du cercle pour inverser.
+                </p>
+              </div>
 
-    <div className="grid gap-4 md:grid-cols-2">
-      {/* Colonne gauche : segment sélectionné (éditable) */}
-      <div className="space-y-3">
-        <p className="text-[11px] font-semibold text-slate-700">
-          Segment {selectedSegment.id}
-        </p>
+              {/* 🌟 Carte unique Avant / Après avec avatar au centre */}
+              <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                  <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+                    <div className="grid h-full w-full grid-cols-2">
+                      {/* Avant = segment sélectionné */}
+                      {leftHasMedia ? (
+                        selectedSegment.mediaType === "video" ? (
+                          <video
+                            src={selectedSegment.mediaUrl as string}
+                            className="h-full w-full object-cover"
+                            autoPlay
+                            loop
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={selectedSegment.mediaUrl as string}
+                            alt="Avant"
+                            className="h-full w-full object-cover"
+                          />
+                        )
+                      ) : (
+                        <div className="h-full w-full bg-slate-200" />
+                      )}
 
-        {/* 🔹 CARTE AVEC AVATAR AU CENTRE */}
-        <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-            <div className="relative mx-auto aspect-[4/5] w-full">
-              {selectedSegment.mediaUrl ? (
-                selectedSegment.mediaType === "photo" ? (
-                  <img
-                    src={selectedSegment.mediaUrl}
-                    alt="Prévisualisation"
-                    className="h-full w-full rounded-2xl object-cover"
-                  />
-                ) : selectedSegment.mediaType === "video" ? (
-                  <video
-                    src={selectedSegment.mediaUrl}
-                    className="h-full w-full rounded-2xl object-cover"
-                    controls
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-slate-100 text-[11px] text-slate-500">
-                    <FileText className="mr-1 h-4 w-4" />
-                    <span>Fichier ajouté pour ce segment.</span>
+                      {/* Après = segment opposé */}
+                      {rightHasMedia && oppositeSegment ? (
+                        oppositeSegment.mediaType === "video" ? (
+                          <video
+                            src={oppositeSegment.mediaUrl as string}
+                            className="h-full w-full object-cover"
+                            autoPlay
+                            loop
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={oppositeSegment.mediaUrl as string}
+                            alt="Après"
+                            className="h-full w-full object-cover"
+                          />
+                        )
+                      ) : (
+                        <div className="h-full w-full bg-slate-200" />
+                      )}
+                    </div>
+
+                    {/* Ligne centrale */}
+                    <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+
+                    {/* Avatar centré */}
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/90 bg-white shadow-md shadow-slate-900/30">
+                        {creatorAvatar ? (
+                          <img
+                            src={creatorAvatar}
+                            alt={creatorName}
+                            className="h-[54px] w-[54px] rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs font-semibold text-slate-800">
+                            {creatorInitials}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-slate-100 text-[11px] text-slate-400">
-                  Aucun média pour ce segment.
                 </div>
-              )}
+              </div>
 
-              {/* Avatar centré comme sur la carte Magic Studio */}
-              <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                  {creatorAvatar ? (
-                    <img
-                      src={creatorAvatar}
-                      alt={creatorName}
-                      className="h-[56px] w-[56px] rounded-full object-cover"
+              {/* 📝 Formulaires sous la carte : gauche = segment sélectionné, droite = opposé en lecture seule */}
+              <div className="grid gap-3 md:grid-cols-2">
+                {/* Colonne gauche : segment sélectionné (éditable) */}
+                <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                  <p className="text-[11px] font-semibold text-slate-700">
+                    Segment {selectedSegment.id}
+                  </p>
+
+                  <input
+                    type="text"
+                    maxLength={27}
+                    value={selectedSegment.label}
+                    onChange={handleLabelChange}
+                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                    placeholder="Diagnostic / observation"
+                  />
+
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-medium text-slate-600">
+                      Notes pédagogiques
+                    </p>
+                    <textarea
+                      rows={3}
+                      value={selectedSegment.notes}
+                      onChange={handleNotesChange}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
+                      placeholder="Décris ce côté : point de départ, problème, symptôme…"
                     />
-                  ) : (
-                    <span className="text-xs font-semibold text-slate-800">
-                      {creatorInitials}
+                  </div>
+
+                  <p className="text-[10px] text-slate-400">
+                    Statut :{" "}
+                    <span className="font-semibold">
+                      {statusLabel(selectedSegment.status)}
                     </span>
-                  )}
+                  </p>
+
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleChooseMedia("photo")}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      <span>Ajouter une photo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChooseMedia("video")}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                    >
+                      <Clapperboard className="h-3.5 w-3.5" />
+                      <span>Ajouter une vidéo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChooseMedia("file")}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>Ajouter un fichier</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Colonne droite : segment opposé (lecture seule) */}
+                <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-3">
+                  <p className="text-[11px] font-semibold text-slate-700">
+                    Segment {oppositeSegment.id} (opposé)
+                  </p>
+
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-slate-500">Titre</p>
+                    <div className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700">
+                      {oppositeSegment.label || "Titre non renseigné"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-slate-500">Notes</p>
+                    <div className="min-h-[60px] rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
+                      {oppositeSegment.notes ||
+                        "Pas encore de notes. Clique la bulle de ce segment sur le cercle pour l’éditer en détail."}
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400">
+                    Astuce : cette colonne est en lecture seule. Pour modifier ce
+                    côté du duo, clique sa bulle sur le cercle pour le passer en
+                    « segment sélectionné ».
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </article>
-
-        {/* 🔹 Champs d’édition (comme avant) */}
-        <input
-          type="text"
-          maxLength={27}
-          value={selectedSegment.label}
-          onChange={handleLabelChange}
-          className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-          placeholder="Diagnostic / observation"
-        />
-
-        <div className="space-y-1">
-          <p className="text-[11px] font-medium text-slate-600">
-            Notes pédagogiques
-          </p>
-          <textarea
-            rows={3}
-            value={selectedSegment.notes}
-            onChange={handleNotesChange}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none ring-0 focus:border-brand-500 focus:bg-white"
-            placeholder="Décris ce côté : point de départ, problème, symptôme…"
-          />
-        </div>
-
-        <p className="text-[10px] text-slate-400">
-          Statut :{" "}
-          <span className="font-semibold">
-            {statusLabel(selectedSegment.status)}
-          </span>
-        </p>
-
-        <div className="mt-1 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => handleChooseMedia("photo")}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-          >
-            <Camera className="h-3.5 w-3.5" />
-            <span>Ajouter une photo</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleChooseMedia("video")}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-          >
-            <Clapperboard className="h-3.5 w-3.5" />
-            <span>Ajouter une vidéo</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleChooseMedia("file")}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-100"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            <span>Ajouter un fichier</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Colonne droite : segment opposé (lecture seule) */}
-      <div className="space-y-3">
-        <p className="text-[11px] font-semibold text-slate-700">
-          Segment {oppositeSegment.id} (opposé)
-        </p>
-
-        {/* 🔹 CARTE AVEC AVATAR AU CENTRE (lecture seule) */}
-        <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-            <div className="relative mx-auto aspect-[4/5] w-full">
-              {oppositeSegment.mediaUrl ? (
-                oppositeSegment.mediaType === "photo" ? (
-                  <img
-                    src={oppositeSegment.mediaUrl}
-                    alt="Prévisualisation opposée"
-                    className="h-full w-full rounded-2xl object-cover"
-                  />
-                ) : oppositeSegment.mediaType === "video" ? (
-                  <video
-                    src={oppositeSegment.mediaUrl}
-                    className="h-full w-full rounded-2xl object-cover"
-                    controls
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-slate-100 text-[11px] text-slate-500">
-                    <FileText className="mr-1 h-4 w-4" />
-                    <span>Fichier ajouté pour ce segment opposé.</span>
-                  </div>
-                )
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-slate-100 text-[11px] text-slate-400">
-                  Aucun média pour ce segment opposé.
-                </div>
-              )}
-
-              {/* Avatar centré */}
-              <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                  {creatorAvatar ? (
-                    <img
-                      src={creatorAvatar}
-                      alt={creatorName}
-                      className="h-[56px] w-[56px] rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-semibold text-slate-800">
-                      {creatorInitials}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        {/* Lecture seule : titre + notes */}
-        <div className="space-y-1">
-          <p className="text-[11px] text-slate-500">Titre</p>
-          <div className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700">
-            {oppositeSegment.label || "Titre non renseigné"}
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <p className="text-[11px] text-slate-500">Notes</p>
-          <div className="min-h-[60px] rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
-            {oppositeSegment.notes ||
-              "Pas encore de notes. Clique la bulle de ce segment sur le cercle pour l’éditer en détail."}
-          </div>
-        </div>
-
-        <p className="text-[10px] text-slate-400">
-          Astuce : cette colonne est en lecture seule. Pour modifier ce côté du
-          duo, clique sa bulle sur le cercle pour le passer en « segment
-          sélectionné ».
-        </p>
-      </div>
-    </div>
-  </div>
-) : (
+          ) : (
+            /* MODE SIMPLE : panneau d’origine */
         /* MODE SIMPLE : panneau d’origine */
         <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
           <div className="space-y-1">
