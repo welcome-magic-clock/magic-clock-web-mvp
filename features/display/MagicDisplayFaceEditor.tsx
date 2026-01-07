@@ -386,25 +386,37 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
-     const currentFace = faces[faceId] ?? fallbackFace;
+       const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
   // 🧠 Titre affiché dans le header
-  // 👉 Source unique = faceLabel (défini dans "Faces de ce cube").
+  // 👉 Même logique que MagicDisplayPreviewShell
   const faceNumberLabel = `Face ${faceId}`;
-  const rawTitle = (faceLabel ?? "").trim();
 
-  let computedFaceLabel: string | null = null;
+  // 1️⃣ Titre de face venant du Display (ou de faceLabel en secours)
+  const rawTitle =
+    (currentFace.title as string | undefined)?.trim() ||
+    (faceLabel ?? "").trim();
+
+  // 2️⃣ Fallback : description du Segment 1 (comme dans la preview 3D)
+  const rawDescription =
+    (segments?.[0]?.description as string | undefined)?.trim() ?? "";
+
+  let headerDescription: string | null = null;
 
   if (
     rawTitle &&
     rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
   ) {
-    computedFaceLabel = rawTitle;
+    headerDescription = rawTitle;
+  } else if (
+    rawDescription &&
+    rawDescription.toLowerCase() !== faceNumberLabel.toLowerCase()
+  ) {
+    headerDescription = rawDescription;
   }
 
-  // Faut-il afficher "• Titre" dans le header ?
-  const showHeaderDescription = !!computedFaceLabel;
+  const showHeaderDescription = !!headerDescription;
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
@@ -417,8 +429,6 @@ export default function MagicDisplayFaceEditor({
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
-  // 👉 si l’aiguille symétrique est active et que le nombre de segments est pair,
-  // on calcule le segment opposé
   const oppositeId =
     needles.needle2Enabled && isEven
       ? getOppositeSegmentId(selectedId, segmentCount)
