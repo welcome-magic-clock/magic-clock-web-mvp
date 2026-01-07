@@ -799,81 +799,90 @@ export default function MagicDisplayPreviewShell({
                 </div>
 
                 {/* Duo symétrique (Avant / Après) ou vue simple */}
-                {detailNeedles.needle2Enabled &&
-                isEvenSegmentCountForDetail &&
-                editorSelectedSegment &&
-                editorOppositeSegment ? (
-                  <div className="space-y-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                      Duo symétrique — comme un Avant / Après
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      Tu édites un segment et tu vois son opposé en miroir. Clique une autre
-                      pastille du cercle pour changer le duo.
-                    </p>
+              {detailNeedles.needle2Enabled &&
+  isEvenSegmentCountForDetail &&
+  editorSelectedSegment &&
+  editorOppositeSegment ? (
+  <div className="mt-2 rounded-[32px] border border-slate-100 bg-white/95 px-4 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.12)] sm:px-6 sm:py-6 space-y-4">
+    <div className="space-y-1">
+      <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">
+        Duo symétrique — comme un Avant / Après
+      </p>
+      <p className="text-[12px] text-slate-500">
+        Tu édites un segment et tu vois son opposé en miroir. Clique une autre
+        pastille du cercle pour changer le duo.
+      </p>
+    </div>
 
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {/* Colonne gauche : segment sélectionné */}
-                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[11px] font-semibold text-slate-700">
-                          Segment {editorSelectedSegment.id}
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {segmentTitle ||
-                            editorSelectedSegment.label ||
-                            "Diagnostic / observation"}
-                        </p>
-                        <div className="relative mb-1 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          {renderEditorSegmentMedia(editorSelectedSegment)}
-                        </div>
-                        {editorSelectedSegment.notes && (
-                          <p className="whitespace-pre-line text-[13px] text-slate-700">
-                            {editorSelectedSegment.notes}
-                          </p>
-                        )}
-                      </div>
+    <div className="grid gap-4 md:grid-cols-2">
+      {/* Colonne gauche : segment sélectionné */}
+      <article className="flex flex-col gap-2 rounded-[28px] border border-slate-100 bg-slate-50/80 px-3 pb-4 pt-3 shadow-sm">
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold text-slate-700">
+            Segment {editorSelectedSegment.id}
+          </p>
+          <p className="text-[11px] text-slate-500">
+            {segmentTitle ||
+              editorSelectedSegment.label ||
+              "Diagnostic / observation"}
+          </p>
+        </div>
 
-                      {/* Colonne droite : segment opposé (miroir) */}
-                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[11px] font-semibold text-slate-700">
-                          Segment {editorOppositeSegment.id} (opposé)
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {editorOppositeSegment.label ||
-                            "Préparation / sectionnement"}
-                        </p>
-                        <div className="relative mb-1 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          {renderEditorSegmentMedia(editorOppositeSegment)}
-                        </div>
-                        {editorOppositeSegment.notes && (
-                          <p className="whitespace-pre-line text-[13px] text-slate-700">
-                            {editorOppositeSegment.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Média principal */}
-                    <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                      {renderSegmentMedia(activeDetailSegment)}
-                    </div>
+        <div className="relative mb-1 mt-1 aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+          {renderEditorSegmentMedia(editorSelectedSegment)}
+        </div>
 
-                    {/* Notes du segment */}
-                    <div className="space-y-1">
-                      {segmentTitle && (
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                          {segmentTitle}
-                        </p>
-                      )}
-                      <p className="whitespace-pre-line text-[13px] text-slate-700">
-                        {segmentNotes ||
-                          "Pas de notes pédagogiques, tout est dit dans le titre."}
-                      </p>
-                    </div>
-                  </>
-                )}
+        {editorSelectedSegment.notes && (
+          <p className="whitespace-pre-line text-[13px] text-slate-700">
+            {editorSelectedSegment.notes}
+          </p>
+        )}
+      </article>
+
+      {/* Colonne droite : segment opposé (miroir) */}
+      <article className="flex flex-col gap-2 rounded-[28px] border border-slate-100 bg-slate-50/80 px-3 pb-4 pt-3 shadow-sm">
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold text-slate-700">
+            Segment {editorOppositeSegment.id} (opposé)
+          </p>
+          <p className="text-[11px] text-slate-500">
+            {editorOppositeSegment.label || "Préparation / sectionnement"}
+          </p>
+        </div>
+
+        <div className="relative mb-1 mt-1 aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+          {renderEditorSegmentMedia(editorOppositeSegment)}
+        </div>
+
+        {editorOppositeSegment.notes && (
+          <p className="whitespace-pre-line text-[13px] text-slate-700">
+            {editorOppositeSegment.notes}
+          </p>
+        )}
+      </article>
+    </div>
+  </div>
+) : (
+  <>
+    {/* Média principal */}
+    <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+      {renderSegmentMedia(activeDetailSegment)}
+    </div>
+
+    {/* Notes du segment */}
+    <div className="space-y-1">
+      {segmentTitle && (
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          {segmentTitle}
+        </p>
+      )}
+      <p className="whitespace-pre-line text-[13px] text-slate-700">
+        {segmentNotes ||
+          "Pas de notes pédagogiques, tout est dit dans le titre."}
+      </p>
+    </div>
+  </>
+)}
               </section>
             )}
           </>
