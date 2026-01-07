@@ -50,53 +50,52 @@ export default function MagicDisplayEditorPage() {
   // ancre pour scroller sur la preview 3D
   const previewRef = useRef<HTMLDivElement | null>(null);
 
-    const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
-    setDisplayDraft((prev) => {
-      const faces = [...(prev.faces ?? [])];
+const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
+  setDisplayDraft((prev) => {
+    const faces = [...(prev.faces ?? [])];
 
-      const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
-      const previous = faces[index];
+    const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
+    const previous = faces[index];
 
-      const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
-        id: seg.id,
-        title: seg.title,
-        description: seg.description,
-        notes: seg.notes,
-        media: seg.media,
-      }));
+    const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
+      id: seg.id,
+      title: seg.title,
+      description: seg.description,
+      notes: seg.notes,
+      media: seg.media,
+    }));
 
-      // 🧠 "description" = vrai titre humain de la face
-      const inferredDescription =
-        payload.segments?.[0]?.title?.trim() ||
-        previous?.description?.trim() ||
-        `Face ${payload.faceId}`;
+    // 🧠 "description" = vrai titre humain (on prend le titre du 1er segment)
+    const inferredDescription =
+      payload.segments?.[0]?.title?.trim() ||
+      previous?.description?.trim() ||
+      `Face ${payload.faceId}`;
 
-      const nextFace: PreviewFace = {
-        // "title" reste le titre système (Face X)
-        title: previous?.title || `Face ${payload.faceId}`,
-        // "description" = ce qu'on affiche dans le header + cube 3D
-        description: inferredDescription,
-        notes: previous?.notes ?? "",
-        segments: mappedSegments,
-      };
+    const nextFace: PreviewFace = {
+      // "title" reste le titre système (Face X)
+      title: previous?.title || `Face ${payload.faceId}`,
+      // "description" = ce qu'on veut afficher dans l’UI (et dans le cube)
+      description: inferredDescription,
+      notes: previous?.notes ?? "",
+      segments: mappedSegments,
+    };
 
-      faces[index] = nextFace;
+    faces[index] = nextFace;
 
-      return {
-        ...prev,
-        faces,
-      };
-    });
-  }, []);
-    const currentFaceId = editingFaceIndex + 1;
-  const currentFaceData = displayDraft.faces?.[editingFaceIndex];
+    return {
+      ...prev,
+      faces,
+    };
+  });
+}, []);
+   const currentFaceId = editingFaceIndex + 1;
+const currentFaceData = displayDraft.faces?.[editingFaceIndex];
 
-  // Libellé affiché dans l’en-tête :
-  // priorité à la description (vrai titre humain), sinon title, sinon "Face X"
-  const currentFaceLabel =
-    currentFaceData?.description?.trim() ||
-    currentFaceData?.title?.trim() ||
-    `Face ${currentFaceId}`;
+// Libellé utilisé dans FaceEditor : priorité à la description (titre humain)
+const currentFaceLabel =
+  currentFaceData?.description?.trim() ||
+  currentFaceData?.title?.trim() ||
+  `Face ${currentFaceId}`;
   const handleScrollToPreview = () => {
     previewRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -228,7 +227,7 @@ export default function MagicDisplayEditorPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-            <MagicDisplayFaceEditor
+          <MagicDisplayFaceEditor
   faceId={currentFaceId}
   faceLabel={currentFaceLabel}
   onFaceChange={handleFaceChange}
