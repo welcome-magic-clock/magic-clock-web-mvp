@@ -6,7 +6,7 @@ import {
   Clapperboard,
   FileText,
   ChevronLeft,
-  MoreHorizontal,
+  Settings,
 } from "lucide-react";
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
 
@@ -553,9 +553,9 @@ export default function MagicDisplayFaceEditor({
 
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
-      {/* Ligne 1 */}
+            {/* Ligne 1 — Back + Face + titre + bouton réglages */}
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {onBack && (
             <button
               type="button"
@@ -566,23 +566,28 @@ export default function MagicDisplayFaceEditor({
               <ChevronLeft className="h-4 w-4" />
             </button>
           )}
-          <div className="flex flex-col">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Face {faceId} / 6
-            </span>
+
+          {/* Face + titre sur une seule ligne */}
+          <div className="flex items-baseline gap-2">
             <span className="text-sm font-semibold text-slate-900">
-              {faceLabel}
+              Face {faceId}
             </span>
+            {faceLabel && faceLabel !== `Face ${faceId}` && (
+              <span className="text-[11px] font-medium text-slate-500">
+                • {faceLabel}
+              </span>
+            )}
           </div>
         </div>
 
+        {/* Bouton options compact avec icône réglages */}
         <button
           type="button"
           onClick={() => setShowOptions((v) => !v)}
-          className="inline-flex h-8 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-600 shadow-sm"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
+          aria-label="Options de la face"
         >
-          <MoreHorizontal className="mr-1 h-3.5 w-3.5" />
-          Options
+          <Settings className="h-4 w-4" />
         </button>
       </div>
 
