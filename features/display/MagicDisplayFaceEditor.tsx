@@ -554,7 +554,7 @@ export default function MagicDisplayFaceEditor({
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
             {/* Ligne 1 — Back + Face + titre + bouton réglages */}
-       <div className="mb-4 flex items-center justify-between gap-3">
+<div className="mb-4 flex items-center justify-between gap-3">
   <div className="flex items-center gap-2">
     {onBack && (
       <button
@@ -566,6 +566,8 @@ export default function MagicDisplayFaceEditor({
         <ChevronLeft className="h-4 w-4" />
       </button>
     )}
+
+    {/* ⬇️ Ligne unique : Face X • Titre */}
     <div className="flex items-baseline gap-1">
       <span className="text-sm font-semibold text-slate-900">
         Face {faceId}
@@ -580,19 +582,17 @@ export default function MagicDisplayFaceEditor({
       )}
     </div>
   </div>
-  {/* ... bouton réglages ... */}
-</div>
 
-        {/* Bouton options compact avec icône réglages */}
-        <button
-          type="button"
-          onClick={() => setShowOptions((v) => !v)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
-          aria-label="Options de la face"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
-      </div>
+  <button
+    type="button"
+    onClick={() => setShowOptions((v) => !v)}
+    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
+    aria-label="Options de la face"
+  >
+    {/* petit engrenage moderne */}
+    <span className="inline-block h-4 w-4 rounded-full border border-slate-400" />
+  </button>
+</div>
 
       {showOptions && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-700">
