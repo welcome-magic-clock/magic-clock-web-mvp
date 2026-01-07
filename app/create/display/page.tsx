@@ -91,14 +91,24 @@ export default function MagicDisplayEditorPage() {
     });
   }, []);
 
-  const currentFaceId = editingFaceIndex + 1;
+    const currentFaceId = editingFaceIndex + 1;
   const currentFaceData = displayDraft.faces?.[editingFaceIndex];
 
-  // Libellé humain utilisé dans FaceEditor : priorité à la description
-  const currentFaceLabel =
-    currentFaceData?.description?.trim() ||
-    currentFaceData?.title?.trim() ||
-    `Face ${currentFaceId}`;
+  const faceNumberLabel = `Face ${currentFaceId}`;
+
+  const rawTitle = currentFaceData?.title?.trim() ?? "";
+  const rawDescription = currentFaceData?.description?.trim() ?? "";
+
+  let currentFaceLabel: string | undefined;
+
+  if (rawTitle && rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()) {
+    currentFaceLabel = rawTitle;
+  } else if (
+    rawDescription &&
+    rawDescription.toLowerCase() !== faceNumberLabel.toLowerCase()
+  ) {
+    currentFaceLabel = rawDescription;
+  }
 
   const handleScrollToPreview = () => {
     previewRef.current?.scrollIntoView({
@@ -231,11 +241,11 @@ export default function MagicDisplayEditorPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-            <MagicDisplayFaceEditor
-              faceId={currentFaceId}
-              faceLabel={currentFaceLabel}
-              onFaceChange={handleFaceChange}
-            />
+           <MagicDisplayFaceEditor
+  faceId={currentFaceId}
+  faceLabel={currentFaceLabel}
+  onFaceChange={handleFaceChange}
+/>
           </div>
         </div>
 
