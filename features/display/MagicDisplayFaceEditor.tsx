@@ -386,33 +386,21 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
-    const currentFace = faces[faceId] ?? fallbackFace;
+     const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
-  // 🧠 Titre affiché dans le header (même logique que la preview 3D)
+  // 🧠 Titre affiché dans le header
+  // 👉 Source unique = faceLabel (défini dans "Faces de ce cube").
   const faceNumberLabel = `Face ${faceId}`;
-
-  // Titre envoyé par la page Display ("Faces de ce cube")
   const rawTitle = (faceLabel ?? "").trim();
-
-  // Fallback possible : label du Segment 1 (si présent)
-  const rawFromSegment = currentFace.segments?.[0]?.label?.trim() ?? "";
 
   let computedFaceLabel: string | null = null;
 
-  // 1️⃣ On prend d’abord le titre de face s’il est différent de "Face X"
   if (
     rawTitle &&
     rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
   ) {
     computedFaceLabel = rawTitle;
-  }
-  // 2️⃣ Sinon, on retombe sur le Segment 1, en évitant aussi "Face X"
-  else if (
-    rawFromSegment &&
-    rawFromSegment.toLowerCase() !== faceNumberLabel.toLowerCase()
-  ) {
-    computedFaceLabel = rawFromSegment;
   }
 
   // Faut-il afficher "• Titre" dans le header ?
@@ -440,7 +428,6 @@ export default function MagicDisplayFaceEditor({
     oppositeId != null
       ? segments.find((s) => s.id === oppositeId) ?? null
       : null;
-
   // Pour la carte Avant / Après
   const leftHasMedia = !!selectedSegment.mediaUrl;
   const rightHasMedia = !!(oppositeSegment && oppositeSegment.mediaUrl);
