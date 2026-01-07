@@ -18,20 +18,24 @@ type FaceEditorPayload = {
   segments: {
     id: number;
     title: string;
-    description?: string; // ⬅️ maintenant optionnel, comme dans MagicDisplayFaceEditor
-    notes?: string;       // ⬅️ optionnel aussi
+    description?: string;
+    notes?: string;
     media?: {
       type: "photo" | "video" | "file";
       url: string;
       filename?: string;
-    }[];                  // ⬅️ le tableau lui-même est optionnel
+    }[];
   }[];
+  // on accepte aussi needles, même si on ne l'utilise pas ici
+  // pour rester compatible avec MagicDisplayFaceEditor
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  needles?: any;
 };
 
 function createInitialDisplay(): PreviewDisplay {
   const faces: PreviewFace[] = Array.from({ length: 6 }, (_, index) => ({
-    title: `Face ${index + 1}`,
-    description: "",
+    title: `Face ${index + 1}`, // titre système
+    description: "",            // sera rempli sur l'écran "Faces de ce cube"
     notes: "",
     segments: [],
   }));
@@ -44,50 +48,58 @@ export default function MagicDisplayEditorPage() {
     () => createInitialDisplay(),
   );
 
-  // face en cours d’édition (0 → 5)
+  // face en cours d’édition (index 0 → 5)
   const [editingFaceIndex, setEditingFaceIndex] = useState(0);
 
   // ancre pour scroller sur la preview 3D
   const previewRef = useRef<HTMLDivElement | null>(null);
 
-const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
-  setDisplayDraft((prev) => {
-    const faces = [...(prev.faces ?? [])];
+  const handleFaceChange = useCallback((payload: FaceEditorPayload) => {
+    setDisplayDraft((prev) => {
+      const faces = [...(prev.faces ?? [])];
 
-    const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
-    const previous = faces[index];
+      // faceId vient de 1 → 6, on le convertit en index 0 → 5
+      const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
+      const previous = faces[index];
 
-    const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
-      id: seg.id,
-      title: seg.title,
-      description: seg.description,
-      notes: seg.notes,
-      media: seg.media,
-    }));
+      const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
+        id: seg.id,
+        title: seg.title,
+        description: seg.description,
+        notes: seg.notes,
+        media: seg.media,
+      }));
 
-    // ❗️On NE TOUCHE PLUS à description ici
-    const nextFace: PreviewFace = {
-      title: previous?.title || `Face ${payload.faceId}`,     // titre système
-      description: previous?.description ?? "",               // texte que tu édites dans "Faces de ce cube"
-      notes: previous?.notes ?? "",
-      segments: mappedSegments,
-    };
+      // ❗️Très important : on NE TOUCHE PLUS à `description` ici.
+      // Elle est définie sur l'écran "Faces de ce cube Magic Clock"
+      // et on la respecte.
+      const nextFace: PreviewFace = {
+        // `title` reste un titre système (Face X)
+        title: previous?.title || `Face ${payload.faceId}`,
+        // `description` = texte saisi dans "Faces de ce cube"
+        description: previous?.description ?? "",
+        notes: previous?.notes ?? "",
+        segments: mappedSegments,
+      };
 
-    faces[index] = nextFace;
+      faces[index] = nextFace;
 
-    return {
-      ...prev,
-      faces,
-    };
-  });
-}, []);
- const currentFaceId = editingFaceIndex + 1;
-const currentFaceData = displayDraft.faces?.[editingFaceIndex];
+      return {
+        ...prev,
+        faces,
+      };
+    });
+  }, []);
 
-const currentFaceLabel =
-  currentFaceData?.description?.trim() ||
-  currentFaceData?.title?.trim() ||
-  `Face ${currentFaceId}`;
+  const currentFaceId = editingFaceIndex + 1;
+  const currentFaceData = displayDraft.faces?.[editingFaceIndex];
+
+  // Libellé humain utilisé dans FaceEditor : priorité à la description
+  const currentFaceLabel =
+    currentFaceData?.description?.trim() ||
+    currentFaceData?.title?.trim() ||
+    `Face ${currentFaceId}`;
+
   const handleScrollToPreview = () => {
     previewRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -219,11 +231,11 @@ const currentFaceLabel =
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-          <MagicDisplayFaceEditor
-  faceId={currentFaceId}
-  faceLabel={currentFaceLabel}
-  onFaceChange={handleFaceChange}
-/>
+            <MagicDisplayFaceEditor
+              faceId={currentFaceId}
+              faceLabel={currentFaceLabel}
+              onFaceChange={handleFaceChange}
+            />
           </div>
         </div>
 
