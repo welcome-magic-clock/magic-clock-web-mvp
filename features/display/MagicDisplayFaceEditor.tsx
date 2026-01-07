@@ -414,11 +414,6 @@ export default function MagicDisplayFaceEditor({
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
-    // 👉 FaceLabel par défaut = "Face X" → on ne l'affiche pas en sous-titre
-  const isDefaultFaceLabel =
-    !faceLabel ||
-    faceLabel.trim().toLowerCase() === `face ${faceId}`.toLowerCase();
-
     // 👉 si l’aiguille symétrique est active et que le nombre de segments est pair,
   // on calcule le segment opposé
   const oppositeId =
@@ -559,31 +554,34 @@ export default function MagicDisplayFaceEditor({
   return (
     <section className="h-full w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
             {/* Ligne 1 — Back + Face + titre + bouton réglages */}
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
-              aria-label="Revenir au cube"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-          )}
-
-         {/* Face + titre sur une seule ligne */}
-<div className="flex items-baseline gap-2">
-  <span className="text-sm font-semibold text-slate-900">
-    Face {faceId}
-  </span>
-  {!isDefaultFaceLabel && (
-    <span className="text-[11px] font-medium text-slate-500">
-      • {faceLabel}
-    </span>
-  )}
+       <div className="mb-4 flex items-center justify-between gap-3">
+  <div className="flex items-center gap-2">
+    {onBack && (
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+        aria-label="Revenir au cube"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+    )}
+    <div className="flex items-baseline gap-1">
+      <span className="text-sm font-semibold text-slate-900">
+        Face {faceId}
+      </span>
+      {faceLabel && (
+        <>
+          <span className="text-xs text-slate-400">•</span>
+          <span className="text-[11px] font-medium text-slate-500">
+            {faceLabel}
+          </span>
+        </>
+      )}
+    </div>
+  </div>
+  {/* ... bouton réglages ... */}
 </div>
-        </div>
 
         {/* Bouton options compact avec icône réglages */}
         <button
