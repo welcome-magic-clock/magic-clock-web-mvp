@@ -713,7 +713,6 @@ export default function MagicDisplayFaceEditor({
           </div>
 
                         {/* Détail du segment sélectionné */}
-      {needles.needle2Enabled && isEven && oppositeSegment ? (
        {needles.needle2Enabled && isEven && oppositeSegment ? (
   /* MODE DUO : segment sélectionné + segment opposé en parallèle (avec cartes + avatar) */
   <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
