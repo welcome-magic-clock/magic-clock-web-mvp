@@ -54,21 +54,25 @@ export default function MagicDisplayEditorPage() {
     setDisplayDraft((prev) => {
       const faces = [...(prev.faces ?? [])];
 
-      const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
+            const index = Math.max(0, Math.min(5, (payload.faceId ?? 1) - 1));
       const previous = faces[index];
 
-    const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
-  id: seg.id,
-  title: seg.title,
-  // PreviewSegment autorise déjà description/notes/media optionnels,
-  // donc on peut juste les relayer tels quels :
-  description: seg.description,
-  notes: seg.notes,
-  media: seg.media,
-}));
-      
+      const mappedSegments: PreviewSegment[] = payload.segments.map((seg) => ({
+        id: seg.id,
+        title: seg.title,
+        description: seg.description,
+        notes: seg.notes,
+        media: seg.media,
+      }));
+
+      // On infère le "titre" de la face à partir de son premier segment
+      const inferredTitle =
+        payload.segments?.[0]?.title?.trim() ||
+        previous?.title?.trim() ||
+        `Face ${payload.faceId}`;
+
       const nextFace: PreviewFace = {
-        title: payload.faceLabel || previous?.title || `Face ${payload.faceId}`,
+        title: inferredTitle,
         description: previous?.description ?? "",
         notes: previous?.notes ?? "",
         segments: mappedSegments,
@@ -83,23 +87,12 @@ export default function MagicDisplayEditorPage() {
     });
   }, []);
 
-  const currentFaceId = editingFaceIndex + 1;
+    const currentFaceId = editingFaceIndex + 1;
+  const currentFaceData = displayDraft.faces?.[editingFaceIndex];
 
-// On récupère la face en cours dans le draft
-const currentFaceData = displayDraft.faces?.[editingFaceIndex];
-
-// Si la description est remplie, on l'utilise.
-// Sinon, on prend le titre du 1er segment comme "titre" de la face.
-// Et en dernier recours, on retombe sur "Face X".
-const firstSegmentTitle =
-  currentFaceData?.segments && currentFaceData.segments.length > 0
-    ? currentFaceData.segments[0].title
-    : undefined;
-
-const currentFaceLabel =
-  (currentFaceData?.description && currentFaceData.description.trim().length > 0
-    ? currentFaceData.description
-    : firstSegmentTitle) || `Face ${currentFaceId}`;
+  // Libellé affiché dans l’en-tête : titre de la face si dispo, sinon "Face X"
+  const currentFaceLabel =
+    currentFaceData?.title?.trim() || `Face ${currentFaceId}`;
   const handleScrollToPreview = () => {
     previewRef.current?.scrollIntoView({
       behavior: "smooth",
