@@ -84,8 +84,22 @@ export default function MagicDisplayEditorPage() {
   }, []);
 
   const currentFaceId = editingFaceIndex + 1;
-  const currentFaceLabel = `Face ${currentFaceId}`;
 
+// On récupère la face en cours dans le draft
+const currentFaceData = displayDraft.faces?.[editingFaceIndex];
+
+// Si la description est remplie, on l'utilise.
+// Sinon, on prend le titre du 1er segment comme "titre" de la face.
+// Et en dernier recours, on retombe sur "Face X".
+const firstSegmentTitle =
+  currentFaceData?.segments && currentFaceData.segments.length > 0
+    ? currentFaceData.segments[0].title
+    : undefined;
+
+const currentFaceLabel =
+  (currentFaceData?.description && currentFaceData.description.trim().length > 0
+    ? currentFaceData.description
+    : firstSegmentTitle) || `Face ${currentFaceId}`;
   const handleScrollToPreview = () => {
     previewRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -218,10 +232,10 @@ export default function MagicDisplayEditorPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
             <MagicDisplayFaceEditor
-              faceId={currentFaceId}
-              faceLabel={currentFaceLabel}
-              onFaceChange={handleFaceChange}
-            />
+  faceId={currentFaceId}
+  faceLabel={currentFaceLabel}
+  onFaceChange={handleFaceChange}
+/>
           </div>
         </div>
 
