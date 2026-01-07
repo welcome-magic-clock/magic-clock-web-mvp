@@ -386,37 +386,39 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
-       const currentFace = faces[faceId] ?? fallbackFace;
+         const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
   // 🧠 Titre affiché dans le header
-  // 👉 Même logique que MagicDisplayPreviewShell
-  const faceNumberLabel = `Face ${faceId}`;
+  // 👉 Même logique que la preview 3D, mais avec les données dispo côté éditeur
+  const defaultSystemLabel = `Face ${faceId}`;
 
-  // 1️⃣ Titre de face venant du Display (ou de faceLabel en secours)
-  const rawTitle =
-    (currentFace.title as string | undefined)?.trim() ||
-    (faceLabel ?? "").trim();
+  // 1️⃣ Titre de face venant du Display (prop faceLabel)
+  const rawTitle = (faceLabel ?? "").trim();
 
-  // 2️⃣ Fallback : description du Segment 1 (comme dans la preview 3D)
-  const rawDescription =
-    (segments?.[0]?.description as string | undefined)?.trim() ?? "";
+  // 2️⃣ Fallback : label du Segment 1 (ex. "Diagnostic / observation")
+  const rawFromSegment =
+    ((segments?.[0]?.label as string | undefined) ?? "").trim();
 
-  let headerDescription: string | null = null;
+  let computedFaceLabel: string | null = null;
 
+  // On prend d’abord le titre de face s’il est différent de "Face X"
   if (
     rawTitle &&
-    rawTitle.toLowerCase() !== faceNumberLabel.toLowerCase()
+    rawTitle.toLowerCase() !== defaultSystemLabel.toLowerCase()
   ) {
-    headerDescription = rawTitle;
-  } else if (
-    rawDescription &&
-    rawDescription.toLowerCase() !== faceNumberLabel.toLowerCase()
+    computedFaceLabel = rawTitle;
+  }
+  // Sinon, on retombe sur le label du Segment 1, en évitant aussi "Face X"
+  else if (
+    rawFromSegment &&
+    rawFromSegment.toLowerCase() !== defaultSystemLabel.toLowerCase()
   ) {
-    headerDescription = rawDescription;
+    computedFaceLabel = rawFromSegment;
   }
 
-  const showHeaderDescription = !!headerDescription;
+  // Faut-il afficher "• Titre" dans le header ?
+  const showHeaderDescription = !!computedFaceLabel;
 
   const segmentCount = Math.min(
     MAX_SEGMENTS,
