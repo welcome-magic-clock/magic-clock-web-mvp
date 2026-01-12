@@ -691,21 +691,29 @@ export default function MagicDisplayClient() {
     );
   }
 
-  // 🧩 Mode “Face universelle” : uniquement l’éditeur détaillé
-  if (isFaceDetailOpen && selectedSegment) {
-    return (
-      <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-        <MagicDisplayFaceEditor
-          creatorName={currentCreator.name}
-          creatorAvatar={creatorAvatar}
-          creatorInitials={initials}
-          faceId={selectedSegment.id}
-          faceLabel={selectedSegment.label}
-          onBack={handleCloseFaceDetail}
-        />
-      </main>
-    );
-  }
+ // 🧩 Mode “Face universelle” : uniquement l’éditeur détaillé
+if (isFaceDetailOpen && selectedSegment) {
+  // On aligne FaceEditor sur la logique du cube 3D :
+  //   - priorité à la description de la face
+  //   - sinon on retombe sur le label ("Face 1", etc.)
+  const faceTitleForEditor =
+    (selectedSegment.description && selectedSegment.description.trim().length > 0)
+      ? selectedSegment.description.trim()
+      : selectedSegment.label;
+
+  return (
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+      <MagicDisplayFaceEditor
+        creatorName={currentCreator.name}
+        creatorAvatar={creatorAvatar}
+        creatorInitials={initials}
+        faceId={selectedSegment.id}
+        faceLabel={faceTitleForEditor}
+        onBack={handleCloseFaceDetail}
+      />
+    </main>
+  );
+}
 
   // Fallback images si rien venant du Studio
   const beforePreview =
