@@ -804,23 +804,24 @@ export default function MagicDisplayFaceEditor({
                       )}
                     </div>
 
-                    {/* Ligne centrale */}
-                   <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
-
-                    {/* Avatar centré */}
-                   <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-  {/* eslint-disable-next-line @next/next/no-img-element */}
-  <img
-    src={creatorAvatar}
-    alt={creatorName}
-    className="h-[72px] w-[72px] rounded-full object-cover"
-  />
-                   </div>
-                          <span className="text-xs font-semibold text-slate-800">
-                            {creatorInitials}
-                          </span>
-                        )}
-                      </div>
+                  {/* Trait central fin comme dans Studio */}
+<div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
+                    
+                   {/* Avatar centre – même style que Magic Studio */}
+<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+  {creatorAvatar ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={creatorAvatar}
+      alt={creatorName}
+      className="h-[72px] w-[72px] rounded-full object-cover"
+    />
+  ) : (
+    <span className="text-base font-semibold text-white">
+      {creatorInitials}
+    </span>
+  )}
+</div>
                     </div>
                   </div>
                 </div>
