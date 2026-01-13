@@ -264,8 +264,12 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
   }
 }
 
-function statusDotClass(hasMedia: boolean) {
-  return hasMedia ? "bg-emerald-500" : "bg-slate-300";
+type FaceStatus = "empty" | "partial" | "full";
+
+function statusDotClass(status: FaceStatus) {
+  if (status === "full") return "bg-emerald-500";   // ✅ face vraiment complétée
+  if (status === "partial") return "bg-amber-400";  // 🟡 contenu partiel
+  return "bg-slate-300";                            // ⚪️ vide
 }
 
 function mediaTypeLabel(type?: MediaType) {
@@ -1145,6 +1149,14 @@ if (isFaceDetailOpen && selectedSegment) {
                   const top = 50 + Math.sin(rad) * radiusPercent;
                   const left = 50 + Math.cos(rad) * radiusPercent;
                   const isSelected = seg.id === selectedId;
+                  const meta = faceUniversalProgress[String(seg.id)] ?? {};
+  const hasSomething =
+    seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
+  const status: FaceStatus = hasSomething
+    ? meta.universalContentCompleted
+      ? "full"
+      : "partial"
+    : "empty";
 
                   return (
                     <button
@@ -1160,11 +1172,11 @@ if (isFaceDetailOpen && selectedSegment) {
                       aria-label={`Face ${seg.label}`}
                     >
                       {renderSegmentIcon(seg)}
-                      <span
-                        className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-                          seg.hasMedia,
-                        )}`}
-                      />
+                     <span
+  className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
+    status,
+  )}`}
+/>
                     </button>
                   );
                 })}
@@ -1223,6 +1235,14 @@ if (isFaceDetailOpen && selectedSegment) {
                 {segments.map((seg) => {
                   const isSelected = seg.id === selectedId;
                   const label = mediaTypeLabel(seg.mediaType);
+        const meta = faceUniversalProgress[String(seg.id)] ?? {};
+  const hasSomething =
+    seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
+  const status: FaceStatus = hasSomething
+    ? meta.universalContentCompleted
+      ? "full"
+      : "partial"
+    : "empty";
 
                   return (
                     <button
@@ -1244,11 +1264,11 @@ if (isFaceDetailOpen && selectedSegment) {
                           {seg.description}
                         </p>
                       </div>
-                      <span
-                        className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-                          seg.hasMedia,
-                        )}`}
-                      />
+                     <span
+  className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
+    status,
+  )}`}
+/>
                     </button>
                   );
                 })}
