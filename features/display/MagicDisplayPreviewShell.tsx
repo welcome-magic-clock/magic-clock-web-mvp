@@ -360,6 +360,12 @@ export default function MagicDisplayPreviewShell({
         ) ?? null
       : null;
 
+    // Pour la carte Avant / Après côté preview
+  const leftHasMedia =
+    !!(editorSelectedSegment && editorSelectedSegment.mediaUrl);
+  const rightHasMedia =
+    !!(editorOppositeSegment && editorOppositeSegment.mediaUrl);
+
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
     if (!hasFaces) return;
@@ -815,67 +821,141 @@ export default function MagicDisplayPreviewShell({
                 </div>
 
                 {/* Duo symétrique (Avant / Après) ou vue simple */}
-              {detailNeedles.needle2Enabled &&
-  isEvenSegmentCountForDetail &&
-  editorSelectedSegment &&
-  editorOppositeSegment ? (
-  <div className="mt-2 rounded-[32px] border border-slate-100 bg-white/95 px-4 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.12)] sm:px-6 sm:py-6 space-y-4">
+    {detailNeedles.needle2Enabled &&
+isEvenSegmentCountForDetail &&
+editorSelectedSegment &&
+editorOppositeSegment ? (
+  <div className="mt-2 space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
+    {/* Titre du duo */}
     <div className="space-y-1">
       <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">
         Duo symétrique — comme un Avant / Après
       </p>
       <p className="text-[12px] text-slate-500">
-        Tu édites un segment et tu vois son opposé en miroir. Clique une autre
-        pastille du cercle pour changer le duo.
+        Tu vois ici les deux segments liés par l&apos;aiguille symétrique, comme
+        une carte Avant / Après en lecture seule.
       </p>
     </div>
 
-    <div className="grid gap-4 md:grid-cols-2">
-      {/* Colonne gauche : segment sélectionné */}
-      <article className="flex flex-col gap-2 rounded-[28px] border border-slate-100 bg-slate-50/80 px-3 pb-4 pt-3 shadow-sm">
-        <div className="space-y-0.5">
-          <p className="text-[11px] font-semibold text-slate-700">
-            Segment {editorSelectedSegment.id}
+    {/* 🌟 Carte unique Avant / Après, reprise de FaceEditor mais en mode lecture seule */}
+    <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+          <div className="grid h-full w-full grid-cols-2">
+            {/* Avant = segment sélectionné */}
+            {leftHasMedia ? (
+              editorSelectedSegment.mediaType === "video" ? (
+                // eslint-disable-next-line jsx-a11y/media-has-caption
+                <video
+                  src={editorSelectedSegment.mediaUrl as string}
+                  className="h-full w-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={editorSelectedSegment.mediaUrl as string}
+                  alt="Avant"
+                  className="h-full w-full object-cover"
+                />
+              )
+            ) : (
+              <div className="h-full w-full bg-slate-200" />
+            )}
+
+            {/* Après = segment opposé */}
+            {rightHasMedia && editorOppositeSegment ? (
+              editorOppositeSegment.mediaType === "video" ? (
+                // eslint-disable-next-line jsx-a11y/media-has-caption
+                <video
+                  src={editorOppositeSegment.mediaUrl as string}
+                  className="h-full w-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={editorOppositeSegment.mediaUrl as string}
+                  alt="Après"
+                  className="h-full w-full object-cover"
+                />
+              )
+            ) : (
+              <div className="h-full w-full bg-slate-200" />
+            )}
+          </div>
+
+          {/* Ligne centrale */}
+          <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+
+          {/* Avatar centré (comme dans le Studio) */}
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/90 bg-white shadow-md shadow-slate-900/30">
+              {creatorAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={creatorAvatar}
+                  alt={creatorName}
+                  className="h-[54px] w-[54px] rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-semibold text-slate-800">
+                  {creatorInitials}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Petit rappel des titres des deux segments */}
+      <div className="mt-3 grid gap-3 text-[11px] text-slate-600 md:grid-cols-2">
+        <div>
+          <p className="font-semibold text-slate-700">
+            Segment {editorSelectedSegment.id} — Avant
           </p>
-          <p className="text-[11px] text-slate-500">
-            {segmentTitle ||
-              editorSelectedSegment.label ||
-              "Diagnostic / observation"}
+          <p className="mt-0.5">
+            {editorSelectedSegment.label || "Diagnostic / observation"}
           </p>
         </div>
-
-        <div className="relative mb-1 mt-1 aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-          {renderEditorSegmentMedia(editorSelectedSegment)}
-        </div>
-
-        {editorSelectedSegment.notes && (
-          <p className="whitespace-pre-line text-[13px] text-slate-700">
-            {editorSelectedSegment.notes}
+        <div>
+          <p className="font-semibold text-slate-700">
+            Segment {editorOppositeSegment.id} — Après
           </p>
-        )}
-      </article>
-
-      {/* Colonne droite : segment opposé (miroir) */}
-      <article className="flex flex-col gap-2 rounded-[28px] border border-slate-100 bg-slate-50/80 px-3 pb-4 pt-3 shadow-sm">
-        <div className="space-y-0.5">
-          <p className="text-[11px] font-semibold text-slate-700">
-            Segment {editorOppositeSegment.id} (opposé)
-          </p>
-          <p className="text-[11px] text-slate-500">
+          <p className="mt-0.5">
             {editorOppositeSegment.label || "Préparation / sectionnement"}
           </p>
         </div>
+      </div>
+    </div>
 
-        <div className="relative mb-1 mt-1 aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-          {renderEditorSegmentMedia(editorOppositeSegment)}
+    {/* Notes textuelles (optionnel) */}
+    <div className="grid gap-3 md:grid-cols-2">
+      {editorSelectedSegment.notes && (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+          <p className="mb-1 text-[11px] font-semibold text-slate-700">
+            Notes — Avant
+          </p>
+          <p className="whitespace-pre-line text-[13px] text-slate-700">
+            {editorSelectedSegment.notes}
+          </p>
         </div>
+      )}
 
-        {editorOppositeSegment.notes && (
+      {editorOppositeSegment.notes && (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+          <p className="mb-1 text-[11px] font-semibold text-slate-700">
+            Notes — Après
+          </p>
           <p className="whitespace-pre-line text-[13px] text-slate-700">
             {editorOppositeSegment.notes}
           </p>
-        )}
-      </article>
+        </div>
+      )}
     </div>
   </div>
 ) : (
