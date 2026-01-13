@@ -1059,20 +1059,18 @@ if (isFaceDetailOpen && selectedSegment) {
                     />
                   </div>
 
-                  {/* Ligne centrale */}
-                  <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+                 {/* Ligne centrale ultra fine comme dans Studio */}
+<div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
 
-                  {/* Avatar centré */}
-                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={creatorAvatar}
-                        alt={currentCreator.name}
-                        className="h-[72px] w-[72px] rounded-full object-cover"
-                      />
-                    </div>
-                  </div>
+{/* Avatar centré, version “discrète” comme Magic Studio */}
+<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+  {/* eslint-disable-next-line @next/next/no-img-element */}
+  <img
+    src={creatorAvatar}
+    alt={currentCreator.name}
+    className="h-[72px] w-[72px] rounded-full object-cover"
+  />
+</div>
 
                   {/* Flèche en haut à droite */}
                   <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white shadow-md">
