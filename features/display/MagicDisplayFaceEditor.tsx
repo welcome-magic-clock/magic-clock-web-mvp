@@ -827,8 +827,7 @@ export default function MagicDisplayFaceEditor({
                 </div>
               </div>
 
-              {/* 📝 Formulaires sous la carte : gauche = segment sélectionné, droite = opposé en lecture seule */}
-              <div className="grid gap-3 md:grid-cols-2">
+                            <div className="grid gap-3 md:grid-cols-2">
                 {/* Colonne gauche : segment sélectionné (éditable) */}
                 <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
                   <p className="text-[11px] font-semibold text-slate-700">
