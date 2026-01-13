@@ -53,6 +53,26 @@ type Segment = {
 type TemplateId = "BALAYAGE_4" | "COULEUR_3" | "BLOND_6";
 type PublishMode = "FREE" | "SUB" | "PPV";
 
+type FaceDetailsPayload = {
+  faceId: number;
+  faceLabel?: string;
+  segmentCount: number;
+  segments: {
+    id: number;
+    title: string;
+    description?: string;
+    notes?: string;
+    media?: {
+      type: MediaType;
+      url: string;
+      filename?: string;
+    }[];
+  }[];
+  needles: {
+    needle2Enabled: boolean;
+  };
+};
+
 const INITIAL_SEGMENTS: Segment[] = [
   {
     id: 1,
@@ -384,6 +404,11 @@ export default function MagicDisplayClient() {
     >
   >({});
 
+  // 🔍 Détails complets remontés depuis MagicDisplayFaceEditor
+const [faceDetails, setFaceDetails] = useState<
+  Record<number, FaceDetailsPayload>
+>({});
+
     const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
@@ -530,6 +555,84 @@ export default function MagicDisplayClient() {
     }
   }, [segments]);
 
+  function handleFaceEditorChange(payload: FaceDetailsPayload) {
+  const { faceId, faceLabel, segmentCount, segments: faceSegments } = payload;
+
+  // 1️⃣ Mettre à jour la structure des faces (segments) pour le cube + liste
+  setSegments((prev) =>
+    prev.map((seg) => {
+      if (seg.id !== faceId) return seg;
+
+      // Premier segment (référence "universelle")
+      const primary = faceSegments[0];
+
+      // Premier segment qui a un média
+      const firstWithMedia = faceSegments.find(
+        (s) => (s.media?.length ?? 0) > 0,
+      );
+      const media = firstWithMedia?.media?.[0];
+
+      return {
+        ...seg,
+        // On garde "Face 1 / Face 2 ..." comme label,
+        // et on traite faceLabel comme texte descriptif de la face
+        description:
+          primary?.title ||
+          primary?.description ||
+          faceLabel ||
+          seg.description,
+        notes: primary?.notes ?? seg.notes,
+        hasMedia: !!media || seg.hasMedia,
+        mediaType: (media?.type as MediaType | undefined) ?? seg.mediaType,
+        mediaUrl: media?.url ?? seg.mediaUrl,
+      };
+    }),
+  );
+
+  // 2️⃣ Sauvegarder les détails complets de la face pour la preview 3D
+  setFaceDetails((prev) => ({
+    ...prev,
+    [faceId]: payload,
+  }));
+
+  // 3️⃣ Mettre à jour la progression universelle + persister
+  const coveredFromDetails = faceSegments.some(
+    (s) =>
+      (s.notes && s.notes.trim().length > 0) ||
+      (s.media && s.media.length > 0),
+  );
+
+  const universalContentCompleted =
+    coveredFromDetails &&
+    faceSegments
+      .slice(0, segmentCount)
+      .every(
+        (s) =>
+          (s.notes && s.notes.trim().length > 0) ||
+          (s.media && s.media.length > 0),
+      );
+
+  setFaceUniversalProgress((prev) => {
+    const next = {
+      ...prev,
+      [String(faceId)]: {
+        coveredFromDetails,
+        universalContentCompleted,
+      },
+    };
+
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(FACE_PROGRESS_KEY, JSON.stringify(next));
+      }
+    } catch (error) {
+      console.error("Failed to persist face universal progress", error);
+    }
+
+    return next;
+  });
+}
+
   // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
   function handleCubeFaceSelect(id: number | null) {
     if (id == null) {
@@ -643,34 +746,63 @@ export default function MagicDisplayClient() {
     setIsOptionsOpen(false);
   }
 
-  // 🌌 Reconstitution minimale du Display pour la preview (alignée avec MagicDisplayPreviewShell)
-  const displayState: PreviewDisplay = {
-    faces: segments.map((seg): PreviewFace => {
-      const mediaArray: PreviewMedia[] =
-        seg.mediaUrl && seg.mediaType
-          ? [
-              {
-                type: seg.mediaType as MediaKind,
-                url: seg.mediaUrl,
-              },
-            ]
-          : [];
+  // 🌌 Reconstitution du Display pour la preview 3D
+const displayState: PreviewDisplay = {
+  faces: segments.map((seg): PreviewFace => {
+    const details = faceDetails[seg.id];
+
+    // 🟣 Si on a des infos détaillées venant de FaceEditor, on les utilise
+    if (details) {
+      const allNotes = details.segments
+        .map((s) => (s.notes ?? "").trim())
+        .filter(Boolean)
+        .join("\n\n");
 
       return {
-        title: seg.label,
-        notes: seg.notes ?? "",
-        segments: [
-          {
-            id: seg.id,
-            title: seg.label,
-            description: seg.description,
-            notes: seg.notes ?? "",
-            media: mediaArray, // toujours un tableau, jamais undefined
-          },
-        ],
+        title:
+          details.faceLabel ||
+          seg.description ||
+          seg.label,
+        notes: allNotes,
+        segments: details.segments.map((s) => ({
+          id: s.id,
+          title: s.title,
+          description: s.description ?? "",
+          notes: s.notes ?? "",
+          media: (s.media ?? []).map((m) => ({
+            type: m.type as MediaKind,
+            url: m.url,
+          })),
+        })),
       };
-    }),
-  };
+    }
+
+    // 🟤 Fallback minimal (comme avant)
+    const mediaArray: PreviewMedia[] =
+      seg.mediaUrl && seg.mediaType
+        ? [
+            {
+              type: seg.mediaType as MediaKind,
+              url: seg.mediaUrl,
+            },
+          ]
+        : [];
+
+    return {
+      title: seg.label,
+      notes: seg.notes ?? "",
+      segments: [
+        {
+          id: seg.id,
+          title: seg.label,
+          description: seg.description,
+          notes: seg.notes ?? "",
+          media: mediaArray,
+        },
+      ],
+    };
+  }),
+};
 
   // 🌌 Mode "Visualiser mon Magic Clock" : plein écran (preview 3D + bouton ↗︎)
   if (showPreview) {
@@ -691,13 +823,14 @@ export default function MagicDisplayClient() {
     );
   }
 
- // 🧩 Mode “Face universelle” : uniquement l’éditeur détaillé
+// 🧩 Mode “Face universelle” : uniquement l’éditeur détaillé
 if (isFaceDetailOpen && selectedSegment) {
   // On aligne FaceEditor sur la logique du cube 3D :
   //   - priorité à la description de la face
   //   - sinon on retombe sur le label ("Face 1", etc.)
   const faceTitleForEditor =
-    (selectedSegment.description && selectedSegment.description.trim().length > 0)
+    (selectedSegment.description &&
+      selectedSegment.description.trim().length > 0)
       ? selectedSegment.description.trim()
       : selectedSegment.label;
 
@@ -708,8 +841,9 @@ if (isFaceDetailOpen && selectedSegment) {
         creatorAvatar={creatorAvatar}
         creatorInitials={initials}
         faceId={selectedSegment.id}
-        faceLabel={faceTitleForEditor}
+        faceLabel={faceTitleForEditor}       // ✅ on garde exactement ta logique
         onBack={handleCloseFaceDetail}
+        onFaceChange={handleFaceEditorChange} // ✅ on ajoute juste ça
       />
     </main>
   );
