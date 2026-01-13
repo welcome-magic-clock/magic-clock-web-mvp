@@ -555,47 +555,58 @@ const [faceDetails, setFaceDetails] = useState<
     }
   }, [segments]);
 
-  function handleFaceEditorChange(payload: FaceDetailsPayload) {
+function handleFaceEditorChange(payload: FaceDetailsPayload) {
   const { faceId, faceLabel, segmentCount, segments: faceSegments } = payload;
 
-  // 1️⃣ Mettre à jour la structure des faces (segments) pour le cube + liste
   setSegments((prev) =>
     prev.map((seg) => {
       if (seg.id !== faceId) return seg;
 
-      // Premier segment (référence "universelle")
       const primary = faceSegments[0];
 
-      // Premier segment qui a un média
+      // Premier segment qui a un média dans FaceEditor
       const firstWithMedia = faceSegments.find(
         (s) => (s.media?.length ?? 0) > 0,
       );
       const media = firstWithMedia?.media?.[0];
 
+      // 🛟 On PROTÈGE l’image déjà définie sur le cube :
+      //    - si le cercle avait déjà une image, on la garde
+      //    - sinon, on prend celle de FaceEditor
+      const hasExistingMedia = seg.hasMedia && !!seg.mediaUrl;
+
+      const nextHasMedia = hasExistingMedia || !!media;
+      const nextMediaType: MediaType | undefined =
+        hasExistingMedia
+          ? seg.mediaType
+          : (media?.type as MediaType | undefined) ?? seg.mediaType;
+
+      const nextMediaUrl =
+        hasExistingMedia ? seg.mediaUrl : media?.url ?? seg.mediaUrl;
+
       return {
         ...seg,
-        // On garde "Face 1 / Face 2 ..." comme label,
-        // et on traite faceLabel comme texte descriptif de la face
+        // Texte descriptif de la face (affiché sous "Face 1", etc.)
         description:
           primary?.title ||
           primary?.description ||
           faceLabel ||
           seg.description,
         notes: primary?.notes ?? seg.notes,
-        hasMedia: !!media || seg.hasMedia,
-        mediaType: (media?.type as MediaType | undefined) ?? seg.mediaType,
-        mediaUrl: media?.url ?? seg.mediaUrl,
+        hasMedia: nextHasMedia,
+        mediaType: nextMediaType,
+        mediaUrl: nextMediaUrl,
       };
     }),
   );
 
-  // 2️⃣ Sauvegarder les détails complets de la face pour la preview 3D
+  // 2️⃣ On garde la sauvegarde détaillée pour la preview 3D
   setFaceDetails((prev) => ({
     ...prev,
     [faceId]: payload,
   }));
 
-  // 3️⃣ Mettre à jour la progression universelle + persister
+  // 3️⃣ Progression + localStorage (inchangé)
   const coveredFromDetails = faceSegments.some(
     (s) =>
       (s.notes && s.notes.trim().length > 0) ||
