@@ -566,8 +566,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     prev.map((seg) => {
       if (seg.id !== faceId) return seg;
 
-      const primary = faceSegments[0];
-
       // Premier segment qui a un média dans FaceEditor
       const firstWithMedia = faceSegments.find(
         (s) => (s.media?.length ?? 0) > 0,
@@ -580,23 +578,26 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
       const hasExistingMedia = seg.hasMedia && !!seg.mediaUrl;
 
       const nextHasMedia = hasExistingMedia || !!media;
-      const nextMediaType: MediaType | undefined =
-        hasExistingMedia
-          ? seg.mediaType
-          : (media?.type as MediaType | undefined) ?? seg.mediaType;
+      const nextMediaType: MediaType | undefined = hasExistingMedia
+        ? seg.mediaType
+        : ((media?.type as MediaType | undefined) ?? seg.mediaType);
 
       const nextMediaUrl =
         hasExistingMedia ? seg.mediaUrl : media?.url ?? seg.mediaUrl;
 
+      // ✏️ NOUVELLE LOGIQUE :
+      // On NE touche PLUS à la description courte,
+      // sauf si le FaceEditor envoie explicitement un faceLabel.
+      const nextDescription =
+        faceLabel && faceLabel.trim().length > 0
+          ? faceLabel.trim()
+          : seg.description;
+
       return {
         ...seg,
-        // Texte descriptif de la face (affiché sous "Face 1", etc.)
-        description:
-          primary?.title ||
-          primary?.description ||
-          faceLabel ||
-          seg.description,
-        notes: primary?.notes ?? seg.notes,
+        description: nextDescription,
+        // On laisse seg.notes tranquille, les notes détaillées remontent via faceDetails
+        notes: seg.notes,
         hasMedia: nextHasMedia,
         mediaType: nextMediaType,
         mediaUrl: nextMediaUrl,
