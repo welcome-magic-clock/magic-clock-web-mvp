@@ -29,6 +29,9 @@ export type PreviewFace = {
   notes?: string;
   segments: PreviewSegment[];
 
+  // ✅ image de couverture de la face (vient du cube 3D)
+  coverMedia?: PreviewMedia | null;
+
   /**
    * Nombre de segments sur cette face.
    * Si non fourni → on utilise segments.length.
@@ -117,15 +120,28 @@ type MagicDisplayPreviewShellProps = {
 };
 
 /**
- * Récupère la première photo d'une face (pour texturer le cube).
+ * Récupère la première image de couverture d'une face (pour texturer le cube).
+ * Priorité :
+ *   1) coverMedia (image de la face du cube)
+ *   2) première photo trouvée dans les segments
+ *   3) à défaut, premier média tout court
  */
 function getFaceMainPhotoUrl(face: PreviewFace | undefined): string | null {
   if (!face) return null;
-  const firstSeg = face.segments?.[0];
-  if (!firstSeg?.media || firstSeg.media.length === 0) return null;
+
+  // 1) Priorité à la coverMedia
+  if (face.coverMedia?.url) {
+    return face.coverMedia.url;
+  }
+
+  // 2) Sinon, on cherche dans tous les segments
+  const allMedia: PreviewMedia[] =
+    face.segments?.flatMap((s) => s.media ?? []) ?? [];
+
+  if (!allMedia.length) return null;
 
   const photo =
-    firstSeg.media.find((m) => m.type === "photo") ?? firstSeg.media[0];
+    allMedia.find((m) => m.type === "photo") ?? allMedia[0];
 
   return photo?.url ?? null;
 }
