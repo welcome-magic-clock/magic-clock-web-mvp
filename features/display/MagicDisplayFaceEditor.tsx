@@ -815,7 +815,7 @@ export default function MagicDisplayFaceEditor({
     alt={creatorName}
     className="h-[72px] w-[72px] rounded-full object-cover"
   />
-                        ) : (
+                   </div>
                           <span className="text-xs font-semibold text-slate-800">
                             {creatorInitials}
                           </span>
