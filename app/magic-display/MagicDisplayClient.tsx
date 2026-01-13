@@ -751,12 +751,17 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     setIsOptionsOpen(false);
   }
 
- // 🌌 Reconstitution du Display pour la preview 3D
+// 🌌 Reconstitution du Display pour la preview 3D
 const displayState: PreviewDisplay = {
+  // 👇 NOUVEAU : infos créateur pour la preview
+  creatorName: currentCreator.name,
+  creatorInitials: initials,
+  creatorAvatarUrl: creatorAvatar ?? undefined,
+
+  // 👇 ce que tu avais déjà
   faces: segments.map((seg): PreviewFace => {
     const details = faceDetails[seg.id];
 
-    // 🟢 Cover préférée = image de la face du cube
     const coverFromCube =
       seg.mediaUrl && seg.mediaType
         ? ({
@@ -765,8 +770,6 @@ const displayState: PreviewDisplay = {
           } satisfies PreviewMedia)
         : undefined;
 
-    // 🏷️ Titre de face = description courte du cube,
-    // sinon on retombe sur "Face 1", "Face 2", etc.
     const faceTitle =
       seg.description && seg.description.trim().length > 0
         ? seg.description.trim()
@@ -778,7 +781,6 @@ const displayState: PreviewDisplay = {
         .filter(Boolean)
         .join("\n\n");
 
-      // Si pas d’image de face, on peut retomber sur un média de FaceEditor
       const firstFromDetails = (() => {
         const firstWithMedia = details.segments.find(
           (s) => (s.media?.length ?? 0) > 0,
@@ -795,7 +797,7 @@ const displayState: PreviewDisplay = {
       const coverMedia = coverFromCube ?? firstFromDetails;
 
       return {
-        title: faceTitle,       // ✅ on n’utilise plus details.faceLabel
+        title: faceTitle,
         notes: allNotes,
         coverMedia,
         segments: details.segments.map((s) => ({
@@ -811,7 +813,6 @@ const displayState: PreviewDisplay = {
       };
     }
 
-    // 🟤 Fallback minimal (comme avant)
     const mediaArray: PreviewMedia[] =
       seg.mediaUrl && seg.mediaType
         ? [
