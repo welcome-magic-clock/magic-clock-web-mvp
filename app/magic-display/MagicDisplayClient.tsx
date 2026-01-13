@@ -560,7 +560,7 @@ const [faceDetails, setFaceDetails] = useState<
   }, [segments]);
 
 function handleFaceEditorChange(payload: FaceDetailsPayload) {
-  const { faceId, faceLabel, segmentCount, segments: faceSegments } = payload;
+  const { faceId, segmentCount, segments: faceSegments } = payload;
 
   setSegments((prev) =>
     prev.map((seg) => {
@@ -573,8 +573,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
       const media = firstWithMedia?.media?.[0];
 
       // 🛟 On PROTÈGE l’image déjà définie sur le cube :
-      //    - si le cercle avait déjà une image, on la garde
-      //    - sinon, on prend celle de FaceEditor
       const hasExistingMedia = seg.hasMedia && !!seg.mediaUrl;
 
       const nextHasMedia = hasExistingMedia || !!media;
@@ -585,18 +583,10 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
       const nextMediaUrl =
         hasExistingMedia ? seg.mediaUrl : media?.url ?? seg.mediaUrl;
 
-      // ✏️ NOUVELLE LOGIQUE :
-      // On NE touche PLUS à la description courte,
-      // sauf si le FaceEditor envoie explicitement un faceLabel.
-      const nextDescription =
-        faceLabel && faceLabel.trim().length > 0
-          ? faceLabel.trim()
-          : seg.description;
-
       return {
         ...seg,
-        description: nextDescription,
-        // On laisse seg.notes tranquille, les notes détaillées remontent via faceDetails
+        // ❌ on ne touche plus à seg.description ici
+        // ❌ on ne touche pas non plus aux notes du cube
         notes: seg.notes,
         hasMedia: nextHasMedia,
         mediaType: nextMediaType,
@@ -648,7 +638,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     return next;
   });
 }
-
   // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
   function handleCubeFaceSelect(id: number | null) {
     if (id == null) {
@@ -770,11 +759,18 @@ const displayState: PreviewDisplay = {
     // 🟢 Cover préférée = image de la face du cube
     const coverFromCube =
       seg.mediaUrl && seg.mediaType
-        ? {
+        ? ({
             type: seg.mediaType as MediaKind,
             url: seg.mediaUrl,
-          }
+          } satisfies PreviewMedia)
         : undefined;
+
+    // 🏷️ Titre de face = description courte du cube,
+    // sinon on retombe sur "Face 1", "Face 2", etc.
+    const faceTitle =
+      seg.description && seg.description.trim().length > 0
+        ? seg.description.trim()
+        : seg.label;
 
     if (details) {
       const allNotes = details.segments
@@ -799,12 +795,9 @@ const displayState: PreviewDisplay = {
       const coverMedia = coverFromCube ?? firstFromDetails;
 
       return {
-        title:
-          details.faceLabel ||
-          seg.description ||
-          seg.label,
+        title: faceTitle,       // ✅ on n’utilise plus details.faceLabel
         notes: allNotes,
-        coverMedia, // 🔹 nouveau champ
+        coverMedia,
         segments: details.segments.map((s) => ({
           id: s.id,
           title: s.title,
@@ -830,9 +823,9 @@ const displayState: PreviewDisplay = {
         : [];
 
     return {
-      title: seg.label,
+      title: faceTitle,
       notes: seg.notes ?? "",
-      coverMedia: coverFromCube ?? mediaArray[0], // 🔹 on garde la logique
+      coverMedia: coverFromCube ?? mediaArray[0],
       segments: [
         {
           id: seg.id,
