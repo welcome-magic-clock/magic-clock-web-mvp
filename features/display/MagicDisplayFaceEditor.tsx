@@ -7,6 +7,26 @@ import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video" | "file";
 
+type FaceNeedles = {
+  needle2Enabled: boolean;
+};
+
+type Segment = {
+  id: number;
+  label: string;
+  status: SegmentStatus;
+  mediaType?: MediaType | null;
+  mediaUrl?: string | null;
+  notes: string;
+};
+
+type FaceState = {
+  faceId: number;
+  segmentCount: number; // 1 → 12
+  segments: Segment[];
+  needles: FaceNeedles;
+};
+
 type MagicDisplayFaceEditorProps = {
   creatorName?: string;
   creatorAvatar?: string | null;
@@ -14,11 +34,6 @@ type MagicDisplayFaceEditorProps = {
   faceId?: number;
   faceLabel?: string;
   onBack?: () => void;
-
-  /**
-   * 🔁 Callback pour remonter l'état de la face vers le parent
-   * afin d'alimenter display.faces[...] (MagicDisplay).
-   */
   onFaceChange?: (payload: {
     faceId: number;
     faceLabel?: string;
@@ -34,29 +49,8 @@ type MagicDisplayFaceEditorProps = {
         filename?: string;
       }[];
     }[];
-    /** ➕ Nouveauté : état des aiguilles pour cette face */
     needles: FaceNeedles;
   }) => void;
-};
-
-type Segment = {
-  id: number;
-  label: string;
-  status: SegmentStatus;
-  mediaType?: MediaType | null;
-  mediaUrl?: string | null;
-  notes: string;
-};
-
-type FaceNeedles = {
-  needle2Enabled: boolean;
-};
-
-type FaceState = {
-  faceId: number;
-  segmentCount: number; // 1 → 12
-  segments: Segment[];
-  needles: FaceNeedles;
 };
 
 const MAX_SEGMENTS = 12;
@@ -177,61 +171,6 @@ const defaultNeedles = (): FaceNeedles => ({
   needle2Enabled: false,
 });
 
-// angle = centre du segment sélectionné
-function segmentAngleForId(segmentId: number, count: number) {
-  const c = Math.max(1, count);
-  const step = 360 / c;
-  const start = -90;
-  const idx = Math.max(0, Math.min(c - 1, (segmentId ?? 1) - 1));
-  return start + step * idx;
-}
-
-function getOppositeSegmentId(segmentId: number, count: number): number | null {
-  // symétrie seulement si on a au moins 2 segments et un nombre pair
-  if (count < 2 || count % 2 !== 0) return null;
-
-  const offset = count / 2; // 4 segments → +2 ; 6 segments → +3, etc.
-  const idx0 = ((segmentId ?? 1) - 1 + offset) % count; // travail en 0..count-1
-  return idx0 + 1; // on revient à 1..count
-}
-
-/**
- * Aiguille 1 (simple)
- * – corps plus fin au centre, qui s’élargit vers la pointe
- */
-function WatchHandOneWayRefined({
-  angleDeg,
-  frontLenPx,
-}: {
-  angleDeg: number;
-  frontLenPx: number;
-  tailLenPx: number; // ignoré mais gardé pour compatibilité
-}) {
-  const width = Math.max(40, frontLenPx);
-
-  return (
-    <div
-      className="pointer-events-none absolute left-1/2 top-1/2"
-      style={{ transform: `translate(-50%, -50%) rotate(${angleDeg}deg)` }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: `${width}px`,
-          height: "3px",
-          background: "rgba(51,65,85,0.95)", // slate-700
-          borderRadius: 9999,
-          clipPath: "polygon(0 40%, 92% 0, 100% 50%, 92% 100%, 0 60%)",
-          boxShadow: "0 2px 4px rgba(15,23,42,0.30)",
-        }}
-      />
-    </div>
-  );
-}
-
 /* 🧠 Persistance locale par faceId (localStorage) */
 
 const STORAGE_PREFIX = "mc-face-editor-v1";
@@ -319,10 +258,6 @@ export default function MagicDisplayFaceEditor({
     needles: defaultNeedles(),
   };
 
-  /**
-   * 🔁 Transforme l'état interne de la face en payload simplifié
-   * utilisable pour display.faces[...] (MagicDisplayPreview).
-   */
   function emitFaceChangeFromState(state: FaceState) {
     if (!onFaceChange) return;
 
@@ -358,7 +293,7 @@ export default function MagicDisplayFaceEditor({
     });
   }
 
-  // 🧷 Initialisation / changement de faceId : on recharge depuis localStorage si dispo
+  // Init / changement de face
   useEffect(() => {
     setFaces((prev) => {
       const fromStorage = loadFaceState(faceId);
@@ -386,38 +321,29 @@ export default function MagicDisplayFaceEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceId]);
 
-         const currentFace = faces[faceId] ?? fallbackFace;
+  const currentFace = faces[faceId] ?? fallbackFace;
   const segments = currentFace.segments;
 
-  // 🧠 Titre affiché dans le header
-  // 👉 Même logique que la preview 3D, mais avec les données dispo côté éditeur
+  // Titre affiché dans le header
   const defaultSystemLabel = `Face ${faceId}`;
-
-  // 1️⃣ Titre de face venant du Display (prop faceLabel)
   const rawTitle = (faceLabel ?? "").trim();
-
-  // 2️⃣ Fallback : label du Segment 1 (ex. "Diagnostic / observation")
   const rawFromSegment =
     ((segments?.[0]?.label as string | undefined) ?? "").trim();
 
   let computedFaceLabel: string | null = null;
 
-  // On prend d’abord le titre de face s’il est différent de "Face X"
   if (
     rawTitle &&
     rawTitle.toLowerCase() !== defaultSystemLabel.toLowerCase()
   ) {
     computedFaceLabel = rawTitle;
-  }
-  // Sinon, on retombe sur le label du Segment 1, en évitant aussi "Face X"
-  else if (
+  } else if (
     rawFromSegment &&
     rawFromSegment.toLowerCase() !== defaultSystemLabel.toLowerCase()
   ) {
     computedFaceLabel = rawFromSegment;
   }
 
-  // Faut-il afficher "• Titre" dans le header ?
   const showHeaderDescription = !!computedFaceLabel;
 
   const segmentCount = Math.min(
@@ -431,6 +357,16 @@ export default function MagicDisplayFaceEditor({
   const needles = currentFace.needles ?? defaultNeedles();
   const isEven = segmentCount % 2 === 0;
 
+  function getOppositeSegmentId(
+    segmentId: number,
+    count: number,
+  ): number | null {
+    if (count < 2 || count % 2 !== 0) return null;
+    const offset = count / 2;
+    const idx0 = ((segmentId ?? 1) - 1 + offset) % count;
+    return idx0 + 1;
+  }
+
   const oppositeId =
     needles.needle2Enabled && isEven
       ? getOppositeSegmentId(selectedId, segmentCount)
@@ -440,11 +376,11 @@ export default function MagicDisplayFaceEditor({
     oppositeId != null
       ? segments.find((s) => s.id === oppositeId) ?? null
       : null;
-  // Pour la carte Avant / Après
+
   const leftHasMedia = !!selectedSegment.mediaUrl;
   const rightHasMedia = !!(oppositeSegment && oppositeSegment.mediaUrl);
 
-  // si impair -> aiguille symétrique forcée OFF
+  // si impair -> aiguille 2 forcée OFF
   useEffect(() => {
     if (!isEven && needles.needle2Enabled) {
       updateFace((existing) => ({
@@ -462,11 +398,8 @@ export default function MagicDisplayFaceEditor({
     setFaces((prev) => {
       const existing = prev[faceId] ?? fallbackFace;
       const updated = updater(existing);
-
-      // 🔔 À CHAQUE MISE À JOUR → remonter au parent + persister
       emitFaceChangeFromState(updated);
       persistFaceState(faceId, updated);
-
       return { ...prev, [faceId]: updated };
     });
   }
@@ -526,10 +459,9 @@ export default function MagicDisplayFaceEditor({
     }));
   }
 
-  // ✏️ Édition du texte court du segment (affiché sur le cube)
   function handleLabelChange(event: React.ChangeEvent<HTMLInputElement>) {
     const raw = event.target.value ?? "";
-    const value = raw.slice(0, 27); // limite dure, comme sur le cube
+    const value = raw.slice(0, 27);
 
     if (!selectedSegment) return;
 
@@ -543,22 +475,6 @@ export default function MagicDisplayFaceEditor({
     }));
   }
 
-  // (au cas où, si nécessaire ailleurs)
-  function getSegmentPositionStyle(index: number) {
-    const count = segmentCount || 1;
-    const radiusPercent = 42;
-    const angleStep = 360 / count;
-    const startAngleDeg = -90;
-    const angleDeg = startAngleDeg + angleStep * index;
-    const rad = (angleDeg * Math.PI) / 180;
-
-    const top = 50 + Math.sin(rad) * radiusPercent;
-    const left = 50 + Math.cos(rad) * radiusPercent;
-
-    return { top: `${top}%`, left: `${left}%` };
-  }
-
-  // 🎯 Clic sur une bulle autour du cercle → sélection + upload photo si vide
   function handleSegmentBubbleClick(seg: Segment) {
     setSelectedId(seg.id);
     if (!seg.mediaUrl && photoInputRef.current) {
@@ -582,7 +498,6 @@ export default function MagicDisplayFaceEditor({
             </button>
           )}
 
-          {/* ⬇️ Ligne unique : Face X • Titre */}
           <div className="flex items-baseline gap-1">
             <span className="text-sm font-semibold text-slate-900">
               Face {faceId}
@@ -604,7 +519,6 @@ export default function MagicDisplayFaceEditor({
           className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
           aria-label="Options de la face"
         >
-          {/* petit engrenage moderne */}
           <span className="inline-block h-4 w-4 rounded-full border border-slate-400" />
         </button>
       </div>
@@ -652,7 +566,7 @@ export default function MagicDisplayFaceEditor({
         </div>
       </div>
 
-      {/* Toggle symétrique (uniquement pair) */}
+      {/* Toggle symétrique */}
       <div className="mb-4 mt-2 flex items-center gap-2 text-[11px] text-slate-600">
         <label
           className={`inline-flex items-center gap-2 ${
@@ -741,7 +655,7 @@ export default function MagicDisplayFaceEditor({
 
           {/* Détail du segment sélectionné */}
           {needles.needle2Enabled && isEven && oppositeSegment ? (
-            /* MODE DUO : segment sélectionné + segment opposé avec une seule carte Avant / Après */
+            // MODE DUO : segment sélectionné + segment opposé
             <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -756,12 +670,12 @@ export default function MagicDisplayFaceEditor({
                 </p>
               </div>
 
-              {/* 🌟 Carte unique Avant / Après avec avatar au centre */}
+              {/* Carte Avant / Après */}
               <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
                 <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
                     <div className="grid h-full w-full grid-cols-2">
-                      {/* Avant = segment sélectionné */}
+                      {/* Avant */}
                       {leftHasMedia ? (
                         selectedSegment.mediaType === "video" ? (
                           <video
@@ -782,8 +696,8 @@ export default function MagicDisplayFaceEditor({
                         <div className="h-full w-full bg-slate-200" />
                       )}
 
-                      {/* Après = segment opposé */}
-                      {rightHasMedia && oppositeSegment ? (
+                      {/* Après */}
+                      {rightHasMedia ? (
                         oppositeSegment.mediaType === "video" ? (
                           <video
                             src={oppositeSegment.mediaUrl as string}
@@ -804,31 +718,31 @@ export default function MagicDisplayFaceEditor({
                       )}
                     </div>
 
-                  {/* Trait central fin comme dans Studio */}
-<div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
-                    
-                   {/* Avatar centre – même style que Magic Studio */}
-<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-  {creatorAvatar ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={creatorAvatar}
-      alt={creatorName}
-      className="h-[72px] w-[72px] rounded-full object-cover"
-    />
-  ) : (
-    <span className="text-base font-semibold text-white">
-      {creatorInitials}
-    </span>
-  )}
-</div>
+                    {/* Trait central fin */}
+                    <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
+
+                    {/* Avatar centre – style Magic Studio */}
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+                      {creatorAvatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={creatorAvatar}
+                          alt={creatorName}
+                          className="h-[72px] w-[72px] rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-base font-semibold text-white">
+                          {creatorInitials}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
 
-                            <div className="grid gap-3 md:grid-cols-2">
-                {/* Colonne gauche : segment sélectionné (éditable) */}
+              {/* Formulaires : gauche = segment sélectionné, droite = opposé */}
+              <div className="grid gap-3 md:grid-cols-2">
+                {/* Colonne gauche : éditable */}
                 <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
                   <p className="text-[11px] font-semibold text-slate-700">
                     Segment {selectedSegment.id}
@@ -891,7 +805,7 @@ export default function MagicDisplayFaceEditor({
                   </div>
                 </div>
 
-                {/* Colonne droite : segment opposé (lecture seule) */}
+                {/* Colonne droite : lecture seule */}
                 <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-3">
                   <p className="text-[11px] font-semibold text-slate-700">
                     Segment {oppositeSegment.id} (opposé)
@@ -921,7 +835,7 @@ export default function MagicDisplayFaceEditor({
               </div>
             </div>
           ) : (
-            /* MODE SIMPLE : panneau d’origine */
+            // MODE SIMPLE
             <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
