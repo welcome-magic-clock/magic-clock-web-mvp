@@ -1,4 +1,3 @@
-// features/display/MagicDisplayPreviewShell.tsx
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -262,7 +261,7 @@ export default function MagicDisplayPreviewShell({
       ).trim()) ||
     "";
 
-   // 🔁 État détaillé issu du FaceEditor (pour les duos symétriques)
+  // 🔁 État détaillé issu du FaceEditor (pour les duos symétriques)
   const [detailEditorState, setDetailEditorState] =
     useState<PersistedFaceState | null>(null);
 
@@ -360,7 +359,7 @@ export default function MagicDisplayPreviewShell({
         ) ?? null
       : null;
 
-    // Pour la carte Avant / Après côté preview
+  // Pour la carte Avant / Après côté preview
   const leftHasMedia =
     !!(editorSelectedSegment && editorSelectedSegment.mediaUrl);
   const rightHasMedia =
@@ -766,7 +765,7 @@ export default function MagicDisplayPreviewShell({
               </div>
             </section>
 
-               {/* 📝 Bloc "Contenu du segment sélectionné" (avec duo symétrique) */}
+            {/* 📝 Bloc "Contenu du segment sélectionné" (avec duo symétrique) */}
             {detailFace && detailSegments.length > 0 && activeDetailSegment && (
               <section className="mt-6 w-full max-w-3xl self-center rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -890,19 +889,19 @@ export default function MagicDisplayPreviewShell({
                           </div>
 
                           {/* Trait central fin comme dans Magic Studio / FaceEditor */}
-                          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
+                          <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
 
                           {/* Avatar centre – même style que Magic Studio / FaceEditor */}
-                          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+                          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-md shadow-slate-900/30">
                             {creatorAvatar ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={creatorAvatar}
                                 alt={creatorName}
-                                className="h-[72px] w-[72px] rounded-full object-cover"
+                                className="h-[54px] w-[54px] rounded-full object-cover"
                               />
                             ) : (
-                              <span className="text-base font-semibold text-white">
+                              <span className="text-xs font-semibold text-slate-800">
                                 {creatorInitials}
                               </span>
                             )}
@@ -979,8 +978,6 @@ export default function MagicDisplayPreviewShell({
                     </div>
                   </>
                 )}
-              </section>
-            )}
               </section>
             )}
           </>
@@ -1087,7 +1084,7 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
     return <video src={url} controls className="h-full w-full object-cover" />;
   }
 
- if (type === "photo") {
+  if (type === "photo") {
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
@@ -1115,6 +1112,7 @@ function renderSegmentMedia(segment: PreviewSegment | undefined) {
 
 /**
  * Affiche le média d'un segment issu directement du FaceEditor (localStorage).
+ * (Actuellement non utilisé mais prêt si on veut un rendu 100 % basé sur l'état éditeur.)
  */
 function renderEditorSegmentMedia(seg?: EditorSegmentState | null) {
   if (!seg || !seg.mediaUrl) {
@@ -1133,7 +1131,7 @@ function renderEditorSegmentMedia(seg?: EditorSegmentState | null) {
     return <video src={url} controls className="h-full w-full object-cover" />;
   }
 
-if (type === "photo") {
+  if (type === "photo") {
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
