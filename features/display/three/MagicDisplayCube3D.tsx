@@ -1,7 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import React, { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { PreviewFace } from "../MagicDisplayPreviewShell";
@@ -55,7 +54,7 @@ type CubeMeshProps = {
 };
 
 function CubeMesh({ textures, initialFaceIndex, onFaceChange }: CubeMeshProps) {
-  const meshRef = useRef<any>(null);
+  const meshRef = useRef<THREE.Mesh | null>(null);
 
   // Rotation "cible" (vers laquelle on lerp)
   const [targetRotation, setTargetRotation] = useState(() => ({
@@ -67,22 +66,24 @@ function CubeMesh({ textures, initialFaceIndex, onFaceChange }: CubeMeshProps) {
   const dragStart = useRef<{ x: number; y: number } | null>(null);
   const startRotation = useRef<{ x: number; y: number } | null>(null);
 
-  // Charge les 6 textures (ou undefined)
-  const loadedTextures = useTexture(
-    textures.map((url) => url || "")
-  ) as (THREE.Texture | null)[];
+  // URLs de textures avec un fallback 1x1 transparent pour les cases vides
+  const textureUrls = useMemo(
+    () =>
+      textures.map(
+        (url) =>
+          url ||
+          // petit PNG 1×1 transparent
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBg5QH8CAAAAAASUVORK5CYII="
+      ),
+    [textures],
+  );
 
-  // Petite sécurité : si url vide, on ne met pas de texture
-  loadedTextures.forEach((tex, i) => {
-    if (!textures[i] && tex) {
-      tex.dispose();
-    }
-  });
+  // Charge les textures
+  const loadedTextures = useLoader(THREE.TextureLoader, textureUrls) as THREE.Texture[];
 
   useFrame(() => {
     if (!meshRef.current) return;
 
-    // Lerp doux vers targetRotation
     const speed = 0.15;
     meshRef.current.rotation.x +=
       (targetRotation.x - meshRef.current.rotation.x) * speed;
@@ -138,19 +139,12 @@ function CubeMesh({ textures, initialFaceIndex, onFaceChange }: CubeMeshProps) {
   const size = 1.8;
 
   // Ordre matériaux boxGeometry :
-  // matériau-0: right
-  // matériau-1: left
-  // matériau-2: top
-  // matériau-3: bottom
-  // matériau-4: front
-  // matériau-5: back
+  // 0: right, 1: left, 2: top, 3: bottom, 4: front, 5: back
   const materials = useMemo(() => {
-    const [face1, face2, face3, face4, face5, face6] = textures;
-
     const tex = loadedTextures;
 
     const mat = [
-      tex[2] || null, // right  -> ex: face 3
+      tex[2] || null, // right  -> face 3
       tex[4] || null, // left   -> face 5
       tex[0] || null, // top    -> face 1
       tex[5] || null, // bottom -> face 6
@@ -165,7 +159,7 @@ function CubeMesh({ textures, initialFaceIndex, onFaceChange }: CubeMeshProps) {
           color: texture ? undefined : "#111827",
         }),
     );
-  }, [loadedTextures, textures]);
+  }, [loadedTextures]);
 
   return (
     <div
@@ -194,16 +188,6 @@ function CubeMesh({ textures, initialFaceIndex, onFaceChange }: CubeMeshProps) {
             <primitive key={i} attach={`material-${i}`} object={mat} />
           ))}
         </mesh>
-
-        {/* Controls orbit pour zoom / rotation douce au doigt
-            (on peut les limiter si besoin) */}
-        <OrbitControls
-          enablePan={false}
-          enableZoom={true}
-          enableRotate={false} // on garde notre drag à nous
-          minDistance={3}
-          maxDistance={6}
-        />
       </Canvas>
     </div>
   );
