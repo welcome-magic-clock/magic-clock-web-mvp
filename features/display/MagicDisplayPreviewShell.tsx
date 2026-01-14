@@ -212,17 +212,23 @@ export default function MagicDisplayPreviewShell({
   const creatorInitials = display.creatorInitials ?? "AT";
   const creatorAvatar = display.creatorAvatarUrl ?? null;
 
-  // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
+    // Index 0-based dans faces[] — on démarre sur Face 2 => index 1
   const [activeFaceIndex, setActiveFaceIndex] = useState(INITIAL_FACE_INDEX);
 
-  // Rotation actuelle du cube
+  // Rotation actuelle "officielle" du cube (utilisée pour le snap et les flèches)
   const [rotation, setRotation] = useState<{ x: number; y: number }>(
     () => INITIAL_ROTATION,
   );
 
+  // Référence directe au DOM du cube pour animer sans re-render
+  const cubeRef = useRef<HTMLDivElement | null>(null);
+
+  // Rotation "live" pendant le drag (pas dans le state React)
+  const liveRotationRef = useRef<{ x: number; y: number }>(INITIAL_ROTATION);
+
   // Face actuellement retournée (back visible) ou null
   const [flippedFaceIndex, setFlippedFaceIndex] = useState<number | null>(null);
-
+  
   // Drag manuel
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -392,7 +398,7 @@ export default function MagicDisplayPreviewShell({
     !!(editorOppositeSegment && editorOppositeSegment.mediaUrl);
 
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
-  function goToFace(nextIndex: number) {
+   function goToFace(nextIndex: number) {
     if (!hasFaces) return;
     const maxIndex = Math.max(0, faces.length - 1);
     const wrapped =
@@ -402,8 +408,15 @@ export default function MagicDisplayPreviewShell({
     setFlippedFaceIndex(null); // on referme toute face retournée
 
     const preset = FACE_PRESETS[wrapped] ?? FACE_PRESETS[INITIAL_FACE_INDEX];
+
+    // On synchronise les trois sources de vérité
     setRotation(preset);
     rotationStartRef.current = preset;
+    liveRotationRef.current = preset;
+
+    if (cubeRef.current) {
+      cubeRef.current.style.transform = `rotateX(${preset.x}deg) rotateY(${preset.y}deg)`;
+    }
   }
 
   function goPrevFace() {
@@ -414,13 +427,14 @@ export default function MagicDisplayPreviewShell({
     goToFace(activeFaceIndex + 1);
   }
 
-  // 🎮 Drag manuel sur le cube
+   // 🎮 Drag manuel sur le cube
   function handleCubePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (!hasFaces) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY };
-    rotationStartRef.current = { ...rotation };
+    // On part toujours de la rotation "live" actuelle
+    rotationStartRef.current = { ...liveRotationRef.current };
   }
 
   function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -439,7 +453,13 @@ export default function MagicDisplayPreviewShell({
     const clampedX = Math.max(-88, Math.min(88, nextX));
     const wrappedY = normalizeAngle(nextY);
 
-    setRotation({ x: clampedX, y: wrappedY });
+    const nextRotation = { x: clampedX, y: wrappedY };
+    liveRotationRef.current = nextRotation;
+
+    // ⚡️ On applique directement au DOM, sans re-render React
+    if (cubeRef.current) {
+      cubeRef.current.style.transform = `rotateX(${nextRotation.x}deg) rotateY(${nextRotation.y}deg)`;
+    }
   }
 
   function handleCubePointerUp(e: React.PointerEvent<HTMLDivElement>) {
@@ -454,36 +474,39 @@ export default function MagicDisplayPreviewShell({
     if (!hasFaces) return;
 
     // 🔒 Snap automatique sur le preset le plus proche (distance angulaire circulaire)
-    setRotation((prev) => {
-      const prevX = prev.x;
-      const prevY = normalizeAngle(prev.y);
+    const current = liveRotationRef.current;
+    const prevX = current.x;
+    const prevY = normalizeAngle(current.y);
 
-      let bestIndex = INITIAL_FACE_INDEX;
-      let bestScore = Number.POSITIVE_INFINITY;
+    let bestIndex = INITIAL_FACE_INDEX;
+    let bestScore = Number.POSITIVE_INFINITY;
 
-      FACE_PRESETS.forEach((preset, index) => {
-        const targetX = preset.x;
-        const targetY = normalizeAngle(preset.y);
+    FACE_PRESETS.forEach((preset, index) => {
+      const targetX = preset.x;
+      const targetY = normalizeAngle(preset.y);
 
-        const dx = prevX - targetX;
-        const dy = normalizeAngle(prevY - targetY); // distance circulaire sur Y
-        const score = dx * dx + dy * dy;
+      const dx = prevX - targetX;
+      const dy = normalizeAngle(prevY - targetY); // distance circulaire sur Y
+      const score = dx * dx + dy * dy;
 
-        if (score < bestScore) {
-          bestScore = score;
-          bestIndex = index;
-        }
-      });
-
-      const snapped = FACE_PRESETS[bestIndex] ?? prev;
-
-      setActiveFaceIndex(bestIndex);
-      rotationStartRef.current = snapped;
-
-      return snapped;
+      if (score < bestScore) {
+        bestScore = score;
+        bestIndex = index;
+      }
     });
-  }
 
+    const snapped = FACE_PRESETS[bestIndex] ?? current;
+
+    // On synchronise tout : state, refs et DOM
+    liveRotationRef.current = snapped;
+    setRotation(snapped);
+    rotationStartRef.current = snapped;
+    setActiveFaceIndex(bestIndex);
+
+    if (cubeRef.current) {
+      cubeRef.current.style.transform = `rotateX(${snapped.x}deg) rotateY(${snapped.y}deg)`;
+    }
+  }
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pt-6">
@@ -596,14 +619,17 @@ export default function MagicDisplayPreviewShell({
                     })()}
                   </div>
 
-                  {/* Cube 3D central (agrandi) */}
+                                    {/* Cube 3D central (agrandi) */}
                   <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
                     {/* 🌕 Halo derrière le cube, version plus pâle */}
                     <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
 
                     {/* 🧊 Cube au-dessus */}
                     <div
-                      className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+                      ref={cubeRef}
+                      className={`absolute inset-0 z-10 [transform-style:preserve-3d] ${
+                        isDragging ? "" : "transition-transform duration-200 ease-out"
+                      }`}
                       style={{
                         transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                       }}
@@ -653,9 +679,9 @@ export default function MagicDisplayPreviewShell({
                           const isFlipped = flippedFaceIndex === index;
 
                           return (
-                            <div
+                                                       <div
                               key={index}
-                              className="absolute left-1/2 top-1/2 [transform-style:preserve-3d] transition-transform duration-500"
+                              className="absolute left-1/2 top-1/2 [transform-style:preserve-3d] transition-transform duration-300"
                               style={{
                                 width: size,
                                 height: size,
