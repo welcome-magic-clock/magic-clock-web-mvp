@@ -428,14 +428,14 @@ export default function MagicDisplayPreviewShell({
   }
 
    // 🎮 Drag manuel sur le cube
-  function handleCubePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (!hasFaces) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-    // On part toujours de la rotation "live" actuelle
-    rotationStartRef.current = { ...liveRotationRef.current };
-  }
+ function handleCubePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+  if (!hasFaces) return;
+  e.preventDefault(); // ⬅️ AJOUTER ÇA
+  e.currentTarget.setPointerCapture(e.pointerId);
+  setIsDragging(true);
+  dragStartRef.current = { x: e.clientX, y: e.clientY };
+  rotationStartRef.current = { ...liveRotationRef.current };
+}
 
   function handleCubePointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!isDragging || !dragStartRef.current) return;
@@ -627,7 +627,7 @@ export default function MagicDisplayPreviewShell({
                     {/* 🧊 Cube au-dessus */}
                     <div
                       ref={cubeRef}
-                      className={`absolute inset-0 z-10 [transform-style:preserve-3d] touch-none select-none [will-change:transform] ${
+                     className={`absolute inset-0 z-10 [transform-style:preserve-3d] touch-none select-none [will-change:transform] ${
   isDragging ? "" : "transition-transform duration-150 ease-out"
 }`}
                       style={{
