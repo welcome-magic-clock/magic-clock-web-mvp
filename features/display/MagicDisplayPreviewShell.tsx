@@ -77,6 +77,12 @@ type PersistedFaceState = {
   needles?: FaceNeedlesState;
 };
 
+type FullScreenSegmentMedia = {
+  url: EditorSegmentState["mediaUrl"] extends string | null ? string : string;
+  type: EditorMediaType;
+  title: string;
+};
+
 const FACE_EDITOR_STORAGE_PREFIX = "mc-face-editor-v1";
 
 function getFaceEditorStorageKey(faceId: number) {
@@ -188,12 +194,12 @@ export default function MagicDisplayPreviewShell({
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
-    // Cache en mémoire des états FaceEditor pour chaque face (1 → 6)
+  // Cache en mémoire des états FaceEditor pour chaque face (1 → 6)
   const [faceEditorStates, setFaceEditorStates] = useState<
     Record<number, PersistedFaceState | null>
   >({});
 
-    useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const next: Record<number, PersistedFaceState | null> = {};
@@ -232,6 +238,10 @@ export default function MagicDisplayPreviewShell({
   const [fullScreenFaceIndex, setFullScreenFaceIndex] = useState<number | null>(
     null,
   );
+
+  // Segment actuellement en plein écran (carte simple ou duo)
+  const [fullScreenSegment, setFullScreenSegment] =
+    useState<FullScreenSegmentMedia | null>(null);
 
   // 👉 Face & segment dont on affiche le contenu sous le cube
   const [openedFaceForDetails, setOpenedFaceForDetails] =
@@ -383,6 +393,35 @@ export default function MagicDisplayPreviewShell({
     !!(editorSelectedSegment && editorSelectedSegment.mediaUrl);
   const rightHasMedia =
     !!(editorOppositeSegment && editorOppositeSegment.mediaUrl);
+
+  // Helpers pour ouvrir un segment en plein écran
+  function openFullScreenFromPreviewSegment(seg?: PreviewSegment) {
+    if (!seg || !seg.media || seg.media.length === 0) return;
+    const media = seg.media[0];
+    if (!media?.url) return;
+
+    const type: EditorMediaType =
+      (media.type as EditorMediaType | undefined) ?? "photo";
+
+    setFullScreenSegment({
+      url: media.url,
+      type,
+      title: seg.title || "Média",
+    });
+  }
+
+  function openFullScreenFromEditorSegment(
+    seg?: EditorSegmentState | null,
+    fallbackLabel?: string,
+  ) {
+    if (!seg || !seg.mediaUrl) return;
+
+    setFullScreenSegment({
+      url: seg.mediaUrl,
+      type: seg.mediaType ?? "photo",
+      title: seg.label || fallbackLabel || "Média",
+    });
+  }
 
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
@@ -628,22 +667,22 @@ export default function MagicDisplayPreviewShell({
                         ];
 
                         return facesForCube.map((face, index) => {
-  // 🔁 Fusionne avec l'état FaceEditor pour récupérer l'aiguille 2 (si définie)
-    const persisted = faceEditorStates[index + 1] ?? null;
-  const mergedFace: PreviewFace =
-    persisted?.needles
-      ? {
-          ...face,
-          needles: {
-            ...(face.needles ?? {}),
-            ...(persisted.needles ?? {}),
-          },
-        }
-      : face;
+                          // 🔁 Fusionne avec l'état FaceEditor pour récupérer l'aiguille 2 (si définie)
+                          const persisted = faceEditorStates[index + 1] ?? null;
+                          const mergedFace: PreviewFace =
+                            persisted?.needles
+                              ? {
+                                  ...face,
+                                  needles: {
+                                    ...(face.needles ?? {}),
+                                    ...(persisted.needles ?? {}),
+                                  },
+                                }
+                              : face;
 
-  const imgUrl = getFaceMainPhotoUrl(mergedFace);
-  const label = mergedFace.title || `Face ${index + 1}`;
-  const isFlipped = flippedFaceIndex === index;
+                          const imgUrl = getFaceMainPhotoUrl(mergedFace);
+                          const label = mergedFace.title || `Face ${index + 1}`;
+                          const isFlipped = flippedFaceIndex === index;
 
                           return (
                             <div
@@ -728,8 +767,8 @@ export default function MagicDisplayPreviewShell({
                               <div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
                                 <div className="relative flex h-full w-full items-center justify-center">
                                   <MagicDisplayFaceBackCircle
-  face={mergedFace}
-  openedSegmentId={openedSegmentId}
+                                    face={mergedFace}
+                                    openedSegmentId={openedSegmentId}
                                     onSegmentChange={(id) => {
                                       setOpenedFaceForDetails(index);
                                       setOpenedSegmentId(id);
@@ -874,70 +913,119 @@ export default function MagicDisplayPreviewShell({
                         <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
                           <div className="grid h-full w-full grid-cols-2">
                             {/* Avant = segment sélectionné */}
-                            {leftHasMedia ? (
-                              editorSelectedSegment.mediaType === "video" ? (
-                                // eslint-disable-next-line jsx-a11y/media-has-caption
-                                <video
-                                  src={editorSelectedSegment.mediaUrl as string}
-                                  className="h-full w-full object-cover"
-                                  autoPlay
-                                  loop
-                                  muted
-                                />
+                            <div className="relative">
+                              {leftHasMedia ? (
+                                editorSelectedSegment.mediaType === "video" ? (
+                                  // eslint-disable-next-line jsx-a11y/media-has-caption
+                                  <video
+                                    src={
+                                      editorSelectedSegment.mediaUrl as string
+                                    }
+                                    className="h-full w-full object-cover"
+                                    autoPlay
+                                    loop
+                                    muted
+                                  />
+                                ) : (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={
+                                      editorSelectedSegment.mediaUrl as string
+                                    }
+                                    alt="Avant"
+                                    className="h-full w-full object-cover"
+                                  />
+                                )
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={editorSelectedSegment.mediaUrl as string}
-                                  alt="Avant"
-                                  className="h-full w-full object-cover"
-                                />
-                              )
-                            ) : (
-                              <div className="h-full w-full bg-slate-200" />
-                            )}
+                                <div className="h-full w-full bg-slate-200" />
+                              )}
+
+                              {leftHasMedia && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openFullScreenFromEditorSegment(
+                                      editorSelectedSegment,
+                                      editorSelectedSegment.label ||
+                                        "Avant",
+                                    )
+                                  }
+                                  className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
+                                >
+                                  <span aria-hidden>⤢</span>
+                                  <span className="sr-only">
+                                    Afficher l&apos;image Avant en plein écran
+                                  </span>
+                                </button>
+                              )}
+                            </div>
 
                             {/* Après = segment opposé */}
-                            {rightHasMedia && editorOppositeSegment ? (
-                              editorOppositeSegment.mediaType === "video" ? (
-                                // eslint-disable-next-line jsx-a11y/media-has-caption
-                                <video
-                                  src={editorOppositeSegment.mediaUrl as string}
-                                  className="h-full w-full object-cover"
-                                  autoPlay
-                                  loop
-                                  muted
-                                />
+                            <div className="relative">
+                              {rightHasMedia && editorOppositeSegment ? (
+                                editorOppositeSegment.mediaType === "video" ? (
+                                  // eslint-disable-next-line jsx-a11y/media-has-caption
+                                  <video
+                                    src={
+                                      editorOppositeSegment.mediaUrl as string
+                                    }
+                                    className="h-full w-full object-cover"
+                                    autoPlay
+                                    loop
+                                    muted
+                                  />
+                                ) : (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={
+                                      editorOppositeSegment.mediaUrl as string
+                                    }
+                                    alt="Après"
+                                    className="h-full w-full object-cover"
+                                  />
+                                )
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={editorOppositeSegment.mediaUrl as string}
-                                  alt="Après"
-                                  className="h-full w-full object-cover"
-                                />
-                              )
-                            ) : (
-                              <div className="h-full w-full bg-slate-200" />
-                            )}
+                                <div className="h-full w-full bg-slate-200" />
+                              )}
+
+                              {rightHasMedia && editorOppositeSegment && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openFullScreenFromEditorSegment(
+                                      editorOppositeSegment,
+                                      editorOppositeSegment.label || "Après",
+                                    )
+                                  }
+                                  className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
+                                >
+                                  <span aria-hidden>⤢</span>
+                                  <span className="sr-only">
+                                    Afficher l&apos;image Après en plein écran
+                                  </span>
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                                           {/* Trait central fin comme dans Magic Studio / FaceEditor */}
-          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
+                          {/* Trait central fin comme dans Magic Studio / FaceEditor */}
+                          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
 
-          {/* Avatar centre – même style que Magic Studio / FaceEditor */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-            {creatorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
-                alt={creatorName}
-                className="h-[72px] w-[72px] rounded-full object-cover"
-              />
-            ) : (
-              <span className="text-base font-semibold text-white">
-                {creatorInitials}
-              </span>
-            )}
-          </div>
+                          {/* Avatar centre – même style que Magic Studio / FaceEditor */}
+                          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+                            {creatorAvatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={creatorAvatar}
+                                alt={creatorName}
+                                className="h-[72px] w-[72px] rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-base font-semibold text-white">
+                                {creatorInitials}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -991,9 +1079,33 @@ export default function MagicDisplayPreviewShell({
                   </div>
                 ) : (
                   <>
-                    {/* Média principal */}
-                    <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                      {renderSegmentMedia(activeDetailSegment)}
+                    {/* Média principal – carte simple alignée sur la même échelle que le duo */}
+                    <div className="mb-3 rounded-2xl border border-slate-200 bg-white/80 p-3">
+                      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                        <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
+                          {renderSegmentMedia(activeDetailSegment)}
+                        </div>
+
+                        {activeDetailSegment &&
+                          activeDetailSegment.media &&
+                          activeDetailSegment.media.length > 0 &&
+                          activeDetailSegment.media[0]?.url && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openFullScreenFromPreviewSegment(
+                                  activeDetailSegment,
+                                )
+                              }
+                              className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
+                            >
+                              <span aria-hidden>⤢</span>
+                              <span className="sr-only">
+                                Afficher ce segment en plein écran
+                              </span>
+                            </button>
+                          )}
+                      </div>
                     </div>
 
                     {/* Notes du segment */}
@@ -1015,6 +1127,58 @@ export default function MagicDisplayPreviewShell({
           </>
         )}
       </div>
+
+      {/* 🔍 Overlay plein écran pour le segment sélectionné */}
+      {fullScreenSegment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-[520px] overflow-hidden rounded-3xl bg-slate-950 shadow-2xl">
+            {/* Bouton fermer */}
+            <button
+              type="button"
+              onClick={() => setFullScreenSegment(null)}
+              className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-sm text-slate-100 shadow hover:bg-black/80"
+            >
+              ✕
+            </button>
+
+            {fullScreenSegment.type === "video" ? (
+              // eslint-disable-next-line jsx-a11y/media-has-caption
+              <video
+                src={fullScreenSegment.url}
+                className="h-[60vh] w-full bg-slate-950 object-contain"
+                controls
+                autoPlay
+              />
+            ) : fullScreenSegment.type === "photo" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={fullScreenSegment.url}
+                alt={fullScreenSegment.title}
+                className="h-[60vh] w-full bg-slate-950 object-contain"
+              />
+            ) : (
+              <div className="flex h-[60vh] w-full flex-col items-center justify-center gap-3 bg-slate-950 text-slate-100">
+                <div className="rounded-full border border-slate-400 px-3 py-1 text-xs">
+                  Fichier
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Ce type de fichier sera téléchargeable dans la version
+                  utilisateur finale.
+                </p>
+              </div>
+            )}
+
+            <div className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 text-xs text-slate-100">
+              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                Segment
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-50">
+                {fullScreenSegment.title}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🔍 Overlay plein écran pour la face sélectionnée */}
       {fullScreenFaceIndex !== null && faces[fullScreenFaceIndex] && (
