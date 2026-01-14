@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import MagicDisplayFaceBackCircle from "./MagicDisplayFaceBackCircle";
-import { MagicDisplayCube3D } from "./MagicDisplayCube3D";
+import { MagicDisplayCube3D } from "./three/MagicDisplayCube3D";
 
 export type MediaKind = "photo" | "video" | "file";
 
