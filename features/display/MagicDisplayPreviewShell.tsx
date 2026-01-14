@@ -4,7 +4,6 @@ import { useRef, useState, useEffect } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import MagicDisplayFaceBackCircle from "./MagicDisplayFaceBackCircle";
-import { MagicDisplayCube3D } from "./three/MagicDisplayCube3D";
 
 export type MediaKind = "photo" | "video" | "file";
 
@@ -597,16 +596,180 @@ export default function MagicDisplayPreviewShell({
                     })()}
                   </div>
 
-                  {/* Cube 3D central (React Three Fiber) */}
-<MagicDisplayCube3D
-  faces={faces}
-  initialFaceIndex={INITIAL_FACE_INDEX}
-  onFaceChange={(index) => {
-    setActiveFaceIndex(index);
-    setFlippedFaceIndex(null);
-  }}
-  getFaceMainPhotoUrl={getFaceMainPhotoUrl}
-/>
+                  {/* Cube 3D central (agrandi) */}
+                  <div className="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[440px] [perspective:1400px]">
+                    {/* 🌕 Halo derrière le cube, version plus pâle */}
+                    <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
+
+                    {/* 🧊 Cube au-dessus */}
+                    <div
+                      className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
+                      style={{
+                        transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+                      }}
+                      onPointerDown={handleCubePointerDown}
+                      onPointerMove={handleCubePointerMove}
+                      onPointerUp={handleCubePointerUp}
+                      onPointerLeave={handleCubePointerUp}
+                    >
+                      {(() => {
+                        // Toujours 6 faces pour le cube
+                        const facesForCube: PreviewFace[] =
+                          faces.length >= 6
+                            ? faces.slice(0, 6)
+                            : Array.from({ length: 6 }, (_, i) =>
+                                faces[i % faces.length],
+                              );
+
+                        const size = 280;
+                        const depth = size / 2;
+
+                        // Alignement 1–1 avec FACE_PRESETS
+                        const transforms = [
+                          `rotateX(90deg) translateZ(${depth}px)`, // top (Face 1)
+                          `rotateY(0deg) translateZ(${depth}px)`, // front (Face 2)
+                          `rotateY(90deg) translateZ(${depth}px)`, // right (Face 3)
+                          `rotateY(180deg) translateZ(${depth}px)`, // back (Face 4)
+                          `rotateY(-90deg) translateZ(${depth}px)`, // left (Face 5)
+                          `rotateX(-90deg) translateZ(${depth}px)`, // bottom (Face 6)
+                        ];
+
+                        return facesForCube.map((face, index) => {
+                          // 🔁 Fusionne avec l'état FaceEditor pour récupérer l'aiguille 2 (si définie)
+                          const persisted = faceEditorStates[index + 1] ?? null;
+                          const mergedFace: PreviewFace =
+                            persisted?.needles
+                              ? {
+                                  ...face,
+                                  needles: {
+                                    ...(face.needles ?? {}),
+                                    ...(persisted.needles ?? {}),
+                                  },
+                                }
+                              : face;
+
+                          const imgUrl = getFaceMainPhotoUrl(mergedFace);
+                          const label = mergedFace.title || `Face ${index + 1}`;
+                          const isFlipped = flippedFaceIndex === index;
+
+                          return (
+                            <div
+                              key={index}
+                              className="absolute left-1/2 top-1/2 [transform-style:preserve-3d] transition-transform duration-500"
+                              style={{
+                                width: size,
+                                height: size,
+                                transform: `translate(-50%, -50%) ${transforms[index]} rotateY(${isFlipped ? 180 : 0}deg)`,
+                              }}
+                            >
+                              {/* FACE AVANT : photo */}
+                              <div className="absolute inset-0 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]">
+                                {imgUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={imgUrl}
+                                    alt={label}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+                                    <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-300">
+                                      Face {index + 1}
+                                    </p>
+                                    <p className="mt-2 max-w-[70%] text-center text-sm font-semibold text-slate-50">
+                                      {label}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Légère ombre en bas de la face */}
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
+                                {/* Bouton plein écran en bas à gauche */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFullScreenFaceIndex(index);
+                                  }}
+                                  className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                >
+                                  <span aria-hidden>⤢</span>
+                                  <span className="sr-only">
+                                    Afficher cette face en plein écran
+                                  </span>
+                                </button>
+
+                                {/* Bouton flip → dos FacePreview */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFlippedFaceIndex((prev) =>
+                                      prev === index ? null : index,
+                                    );
+                                    setOpenedFaceForDetails(index);
+
+                                    const segs: PreviewSegment[] =
+                                      face?.segments ?? [];
+                                    const firstId =
+                                      (segs[0] as any)?.id ??
+                                      (segs.length > 0
+                                        ? (segs[0] as any).id ?? 0
+                                        : null);
+
+                                    setOpenedSegmentId(firstId ?? null);
+                                  }}
+                                  className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                >
+                                  <span className="text-xs" aria-hidden>
+                                    ↗︎
+                                  </span>
+                                  <span className="sr-only">
+                                    Voir le détail de cette face
+                                  </span>
+                                </button>
+                              </div>
+
+                              {/* FACE ARRIÈRE : cercle en lecture seule */}
+                              <div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                                <div className="relative flex h-full w-full items-center justify-center">
+                                  <MagicDisplayFaceBackCircle
+                                    face={mergedFace}
+                                    openedSegmentId={openedSegmentId}
+                                    onSegmentChange={(id) => {
+                                      setOpenedFaceForDetails(index);
+                                      setOpenedSegmentId(id);
+                                    }}
+                                    creatorName={creatorName}
+                                    creatorInitials={creatorInitials}
+                                    creatorAvatar={creatorAvatar}
+                                  />
+
+                                  {/* Bouton pour refermer et revenir à la face avant */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setFlippedFaceIndex(null);
+                                      setOpenedFaceForDetails(null);
+                                      setOpenedSegmentId(null);
+                                    }}
+                                    className="absolute right-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
+                                  >
+                                    <span aria-hidden>↺</span>
+                                    <span className="sr-only">
+                                      Revenir à la vue cube
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
 
                   {/* Note pédagogique de la face (globale) */}
                   <div className="mt-4 max-w-xl text-center text-[11px] text-slate-600">
