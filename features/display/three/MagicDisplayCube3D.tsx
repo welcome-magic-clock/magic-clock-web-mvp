@@ -3,6 +3,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import React, { useMemo, useRef, useState } from "react";
+import * as THREE from "three"; // ✅ ajout pour THREE.Mesh
 import type { PreviewFace } from "../MagicDisplayPreviewShell";
 
 type MagicDisplayCube3DProps = {
