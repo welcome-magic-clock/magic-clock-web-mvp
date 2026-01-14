@@ -77,12 +77,6 @@ type PersistedFaceState = {
   needles?: FaceNeedlesState;
 };
 
-type FullScreenSegmentMedia = {
-  url: EditorSegmentState["mediaUrl"] extends string | null ? string : string;
-  type: EditorMediaType;
-  title: string;
-};
-
 const FACE_EDITOR_STORAGE_PREFIX = "mc-face-editor-v1";
 
 function getFaceEditorStorageKey(faceId: number) {
@@ -239,9 +233,12 @@ export default function MagicDisplayPreviewShell({
     null,
   );
 
-  // Segment actuellement en plein écran (carte simple ou duo)
-  const [fullScreenSegment, setFullScreenSegment] =
-    useState<FullScreenSegmentMedia | null>(null);
+  // 🔍 Overlay plein écran pour un média de segment (simple ou duo)
+  const [fullScreenSegmentMedia, setFullScreenSegmentMedia] = useState<{
+    url: string;
+    type: MediaKind;
+    label?: string;
+  } | null>(null);
 
   // 👉 Face & segment dont on affiche le contenu sous le cube
   const [openedFaceForDetails, setOpenedFaceForDetails] =
@@ -393,35 +390,6 @@ export default function MagicDisplayPreviewShell({
     !!(editorSelectedSegment && editorSelectedSegment.mediaUrl);
   const rightHasMedia =
     !!(editorOppositeSegment && editorOppositeSegment.mediaUrl);
-
-  // Helpers pour ouvrir un segment en plein écran
-  function openFullScreenFromPreviewSegment(seg?: PreviewSegment) {
-    if (!seg || !seg.media || seg.media.length === 0) return;
-    const media = seg.media[0];
-    if (!media?.url) return;
-
-    const type: EditorMediaType =
-      (media.type as EditorMediaType | undefined) ?? "photo";
-
-    setFullScreenSegment({
-      url: media.url,
-      type,
-      title: seg.title || "Média",
-    });
-  }
-
-  function openFullScreenFromEditorSegment(
-    seg?: EditorSegmentState | null,
-    fallbackLabel?: string,
-  ) {
-    if (!seg || !seg.mediaUrl) return;
-
-    setFullScreenSegment({
-      url: seg.mediaUrl,
-      type: seg.mediaType ?? "photo",
-      title: seg.label || fallbackLabel || "Média",
-    });
-  }
 
   // Navigation flèches : 2 → 3 → 4 → 5 → 6 → 1 (cycle simple +1)
   function goToFace(nextIndex: number) {
@@ -913,7 +881,7 @@ export default function MagicDisplayPreviewShell({
                         <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
                           <div className="grid h-full w-full grid-cols-2">
                             {/* Avant = segment sélectionné */}
-                            <div className="relative">
+                            <div className="relative h-full w-full">
                               {leftHasMedia ? (
                                 editorSelectedSegment.mediaType === "video" ? (
                                   // eslint-disable-next-line jsx-a11y/media-has-caption
@@ -940,34 +908,44 @@ export default function MagicDisplayPreviewShell({
                                 <div className="h-full w-full bg-slate-200" />
                               )}
 
-                              {leftHasMedia && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    openFullScreenFromEditorSegment(
-                                      editorSelectedSegment,
-                                      editorSelectedSegment.label ||
-                                        "Avant",
-                                    )
-                                  }
-                                  className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
-                                >
-                                  <span aria-hidden>⤢</span>
-                                  <span className="sr-only">
-                                    Afficher l&apos;image Avant en plein écran
-                                  </span>
-                                </button>
-                              )}
+                              {/* Bouton plein écran pour Avant */}
+                              {leftHasMedia &&
+                                editorSelectedSegment.mediaUrl &&
+                                editorSelectedSegment.mediaType && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setFullScreenSegmentMedia({
+                                        url:
+                                          editorSelectedSegment
+                                            .mediaUrl as string,
+                                        type:
+                                          editorSelectedSegment
+                                            .mediaType as MediaKind,
+                                        label:
+                                          editorSelectedSegment.label ??
+                                          "Avant",
+                                      })
+                                    }
+                                    className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                  >
+                                    <span aria-hidden>⤢</span>
+                                    <span className="sr-only">
+                                      Afficher le média Avant en plein écran
+                                    </span>
+                                  </button>
+                                )}
                             </div>
 
                             {/* Après = segment opposé */}
-                            <div className="relative">
+                            <div className="relative h-full w-full">
                               {rightHasMedia && editorOppositeSegment ? (
                                 editorOppositeSegment.mediaType === "video" ? (
                                   // eslint-disable-next-line jsx-a11y/media-has-caption
                                   <video
                                     src={
-                                      editorOppositeSegment.mediaUrl as string
+                                      editorOppositeSegment
+                                        .mediaUrl as string
                                     }
                                     className="h-full w-full object-cover"
                                     autoPlay
@@ -978,7 +956,8 @@ export default function MagicDisplayPreviewShell({
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={
-                                      editorOppositeSegment.mediaUrl as string
+                                      editorOppositeSegment
+                                        .mediaUrl as string
                                     }
                                     alt="Après"
                                     className="h-full w-full object-cover"
@@ -988,23 +967,34 @@ export default function MagicDisplayPreviewShell({
                                 <div className="h-full w-full bg-slate-200" />
                               )}
 
-                              {rightHasMedia && editorOppositeSegment && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    openFullScreenFromEditorSegment(
-                                      editorOppositeSegment,
-                                      editorOppositeSegment.label || "Après",
-                                    )
-                                  }
-                                  className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
-                                >
-                                  <span aria-hidden>⤢</span>
-                                  <span className="sr-only">
-                                    Afficher l&apos;image Après en plein écran
-                                  </span>
-                                </button>
-                              )}
+                              {/* Bouton plein écran pour Après */}
+                              {rightHasMedia &&
+                                editorOppositeSegment &&
+                                editorOppositeSegment.mediaUrl &&
+                                editorOppositeSegment.mediaType && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setFullScreenSegmentMedia({
+                                        url:
+                                          editorOppositeSegment
+                                            .mediaUrl as string,
+                                        type:
+                                          editorOppositeSegment
+                                            .mediaType as MediaKind,
+                                        label:
+                                          editorOppositeSegment.label ??
+                                          "Après",
+                                      })
+                                    }
+                                    className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                                  >
+                                    <span aria-hidden>⤢</span>
+                                    <span className="sr-only">
+                                      Afficher le média Après en plein écran
+                                    </span>
+                                  </button>
+                                )}
                             </div>
                           </div>
 
@@ -1065,7 +1055,7 @@ export default function MagicDisplayPreviewShell({
                         </div>
                       )}
 
-                      {editorOppositeSegment.notes && (
+                      {editorOppositeSegment?.notes && (
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
                           <p className="mb-1 text-[11px] font-semibold text-slate-700">
                             Notes — Après
@@ -1079,37 +1069,112 @@ export default function MagicDisplayPreviewShell({
                   </div>
                 ) : (
                   <>
-                    {/* Média principal – carte simple alignée sur la même échelle que le duo */}
-                    <div className="mb-3 rounded-2xl border border-slate-200 bg-white/80 p-3">
+                    {/* Média principal – même gabarit que la carte duo + bouton zoom */}
+                    <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
                       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                         <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
-                          {renderSegmentMedia(activeDetailSegment)}
-                        </div>
+                          {(() => {
+                            const mediaList =
+                              (activeDetailSegment?.media as any[]) ?? [];
+                            if (!mediaList.length) {
+                              return (
+                                <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+                                  Aucun média pour ce segment.
+                                </div>
+                              );
+                            }
+                            const media = mediaList[0];
+                            const url =
+                              (media?.url as string | undefined) ?? "";
+                            const type =
+                              (media?.type as string | undefined) ??
+                              ("photo" as string);
 
-                        {activeDetailSegment &&
-                          activeDetailSegment.media &&
-                          activeDetailSegment.media.length > 0 &&
-                          activeDetailSegment.media[0]?.url && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openFullScreenFromPreviewSegment(
-                                  activeDetailSegment,
-                                )
-                              }
-                              className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xs text-slate-700 shadow-sm backdrop-blur hover:border-slate-400 hover:bg-white"
-                            >
-                              <span aria-hidden>⤢</span>
-                              <span className="sr-only">
-                                Afficher ce segment en plein écran
-                              </span>
-                            </button>
-                          )}
+                            if (!url) {
+                              return (
+                                <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+                                  Média non disponible.
+                                </div>
+                              );
+                            }
+
+                            if (type === "video") {
+                              // eslint-disable-next-line jsx-a11y/media-has-caption
+                              return (
+                                <video
+                                  src={url}
+                                  className="h-full w-full object-cover"
+                                  controls
+                                />
+                              );
+                            }
+
+                            if (type === "photo") {
+                              // eslint-disable-next-line @next/next/no-img-element
+                              return (
+                                <img
+                                  src={url}
+                                  alt={activeDetailSegment?.title ?? "Média"}
+                                  className="h-full w-full object-cover"
+                                />
+                              );
+                            }
+
+                            const filename =
+                              (media?.filename as string | undefined) ??
+                              "Fichier";
+
+                            return (
+                              <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-600">
+                                <div className="rounded-full border border-slate-300 bg-white/70 px-3 py-1">
+                                  {filename}
+                                </div>
+                                <p className="max-w-xs text-center text-[11px] text-slate-500">
+                                  Ce type de fichier sera téléchargeable dans la
+                                  version utilisateur finale.
+                                </p>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Bouton plein écran en bas à gauche */}
+                          {(() => {
+                            const mediaList =
+                              (activeDetailSegment?.media as any[]) ?? [];
+                            if (!mediaList.length) return null;
+                            const media = mediaList[0];
+                            const url =
+                              (media?.url as string | undefined) ?? "";
+                            const type =
+                              (media?.type as MediaKind | undefined) ?? "photo";
+
+                            if (!url || !type) return null;
+
+                            return (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFullScreenSegmentMedia({
+                                    url,
+                                    type,
+                                    label: activeDetailSegment?.title ?? "",
+                                  })
+                                }
+                                className="absolute left-3 bottom-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/90 text-xs text-slate-900 shadow-sm backdrop-blur hover:border-white hover:bg-white"
+                              >
+                                <span aria-hidden>⤢</span>
+                                <span className="sr-only">
+                                  Afficher ce média en plein écran
+                                </span>
+                              </button>
+                            );
+                          })()}
+                        </div>
                       </div>
                     </div>
 
                     {/* Notes du segment */}
-                    <div className="space-y-1">
+                    <div className="mt-3 space-y-1">
                       {segmentTitle && (
                         <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                           {segmentTitle}
@@ -1127,58 +1192,6 @@ export default function MagicDisplayPreviewShell({
           </>
         )}
       </div>
-
-      {/* 🔍 Overlay plein écran pour le segment sélectionné */}
-      {fullScreenSegment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
-          <div className="relative mx-4 w-full max-w-[520px] overflow-hidden rounded-3xl bg-slate-950 shadow-2xl">
-            {/* Bouton fermer */}
-            <button
-              type="button"
-              onClick={() => setFullScreenSegment(null)}
-              className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-sm text-slate-100 shadow hover:bg-black/80"
-            >
-              ✕
-            </button>
-
-            {fullScreenSegment.type === "video" ? (
-              // eslint-disable-next-line jsx-a11y/media-has-caption
-              <video
-                src={fullScreenSegment.url}
-                className="h-[60vh] w-full bg-slate-950 object-contain"
-                controls
-                autoPlay
-              />
-            ) : fullScreenSegment.type === "photo" ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fullScreenSegment.url}
-                alt={fullScreenSegment.title}
-                className="h-[60vh] w-full bg-slate-950 object-contain"
-              />
-            ) : (
-              <div className="flex h-[60vh] w-full flex-col items-center justify-center gap-3 bg-slate-950 text-slate-100">
-                <div className="rounded-full border border-slate-400 px-3 py-1 text-xs">
-                  Fichier
-                </div>
-                <p className="text-[11px] text-slate-300">
-                  Ce type de fichier sera téléchargeable dans la version
-                  utilisateur finale.
-                </p>
-              </div>
-            )}
-
-            <div className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 text-xs text-slate-100">
-              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
-                Segment
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-50">
-                {fullScreenSegment.title}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 🔍 Overlay plein écran pour la face sélectionnée */}
       {fullScreenFaceIndex !== null && faces[fullScreenFaceIndex] && (
@@ -1237,110 +1250,90 @@ export default function MagicDisplayPreviewShell({
           </div>
         </div>
       )}
+
+      {/* 🔍 Overlay plein écran pour un média de segment (simple ou duo) */}
+      {fullScreenSegmentMedia && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-[520px] overflow-hidden rounded-3xl bg-slate-950 shadow-2xl">
+            {/* Bouton fermer */}
+            <button
+              type="button"
+              onClick={() => setFullScreenSegmentMedia(null)}
+              className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-sm text-slate-100 shadow hover:bg-black/80"
+            >
+              ✕
+            </button>
+
+            {(() => {
+              const { url, type, label } = fullScreenSegmentMedia;
+
+              if (!url) {
+                return (
+                  <div className="flex h-[60vh] w-full items-center justify-center text-xs text-slate-100">
+                    Média non disponible.
+                  </div>
+                );
+              }
+
+              if (type === "video") {
+                // eslint-disable-next-line jsx-a11y/media-has-caption
+                return (
+                  <>
+                    <video
+                      src={url}
+                      controls
+                      autoPlay
+                      className="h-[60vh] w-full bg-slate-950 object-contain"
+                    />
+                    {label && (
+                      <div className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 text-xs text-slate-100">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                          Segment
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-50">
+                          {label}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                );
+              }
+
+              if (type === "photo") {
+                return (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt={label || "Média"}
+                      className="h-[60vh] w-full bg-slate-950 object-contain"
+                    />
+                    {label && (
+                      <div className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 text-xs text-slate-100">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-400">
+                          Segment
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-50">
+                          {label}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                );
+              }
+
+              return (
+                <div className="flex h-[60vh] w-full flex-col items-center justify-center gap-2 text-xs text-slate-100">
+                  <p>Ce média sera téléchargeable dans la version finale.</p>
+                  {label && (
+                    <p className="text-[11px] text-slate-300">{label}</p>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </main>
-  );
-}
-
-/**
- * Affiche le premier média du segment en grand (lecture seule).
- */
-function renderSegmentMedia(segment: PreviewSegment | undefined) {
-  if (!segment) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
-        Aucun segment sélectionné.
-      </div>
-    );
-  }
-
-  const mediaList = (segment.media as any[]) ?? [];
-
-  if (!mediaList.length) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
-        Aucun média pour ce segment.
-      </div>
-    );
-  }
-
-  const media = mediaList[0];
-  const url = (media?.url as string | undefined) ?? "";
-  const type = (media?.type as string | undefined) ?? "";
-
-  if (!url) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
-        Média non disponible.
-      </div>
-    );
-  }
-
-  if (type === "video") {
-    // eslint-disable-next-line jsx-a11y/media-has-caption
-    return <video src={url} controls className="h-full w-full object-cover" />;
-  }
-
-  if (type === "photo") {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src={url}
-        alt={segment.title ?? "Média"}
-        className="h-full w-full object-cover"
-      />
-    );
-  }
-
-  const filename = (media?.filename as string | undefined) ?? "Fichier";
-
-  return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-600">
-      <div className="rounded-full border border-slate-300 bg-white/70 px-3 py-1">
-        {filename}
-      </div>
-      <p className="max-w-xs text-center text-[11px] text-slate-500">
-        Ce type de fichier sera téléchargeable dans la version utilisateur
-        finale.
-      </p>
-    </div>
-  );
-}
-
-/**
- * Affiche le média d'un segment issu directement du FaceEditor (localStorage).
- * (Actuellement non utilisé mais prêt si on veut un rendu 100 % basé sur l'état éditeur.)
- */
-function renderEditorSegmentMedia(seg?: EditorSegmentState | null) {
-  if (!seg || !seg.mediaUrl) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-[11px] text-slate-500">
-        Aucun média pour ce segment.
-      </div>
-    );
-  }
-
-  const url = seg.mediaUrl;
-  const type = seg.mediaType ?? "photo";
-
-  if (type === "video") {
-    // eslint-disable-next-line jsx-a11y/media-has-caption
-    return <video src={url} controls className="h-full w-full object-cover" />;
-  }
-
-  if (type === "photo") {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src={url}
-        alt={seg.label ?? "Média"}
-        className="h-full w-full object-cover"
-      />
-    );
-  }
-
-  return (
-    <div className="flex h-full w-full items-center justify-center text-[11px] text-slate-500">
-      Média non disponible.
-    </div>
   );
 }
