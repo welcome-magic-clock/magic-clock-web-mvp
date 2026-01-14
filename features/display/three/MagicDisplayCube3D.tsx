@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import React, { useMemo, useRef, useState } from "react";
-import type { PreviewFace } from "./MagicDisplayPreviewShell";
+import type { PreviewFace } from "../MagicDisplayPreviewShell";
 
 type MagicDisplayCube3DProps = {
   faces: PreviewFace[];
