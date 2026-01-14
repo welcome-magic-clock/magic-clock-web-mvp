@@ -602,16 +602,18 @@ export default function MagicDisplayPreviewShell({
                     <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_transparent_75%)]" />
 
                     {/* 🧊 Cube au-dessus */}
-                    <div
-                      className="absolute inset-0 z-10 [transform-style:preserve-3d] transition-transform duration-200 ease-out"
-                      style={{
-                        transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                      }}
-                      onPointerDown={handleCubePointerDown}
-                      onPointerMove={handleCubePointerMove}
-                      onPointerUp={handleCubePointerUp}
-                      onPointerLeave={handleCubePointerUp}
-                    >
+                   <div
+  className={`absolute inset-0 z-10 [transform-style:preserve-3d] [will-change:transform] ${
+    isDragging ? "" : "transition-transform duration-200 ease-out"
+  }`}
+  style={{
+    transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+  }}
+  onPointerDown={handleCubePointerDown}
+  onPointerMove={handleCubePointerMove}
+  onPointerUp={handleCubePointerUp}
+  onPointerLeave={handleCubePointerUp}
+>
                       {(() => {
                         // Toujours 6 faces pour le cube
                         const facesForCube: PreviewFace[] =
@@ -654,14 +656,14 @@ export default function MagicDisplayPreviewShell({
 
                           return (
                             <div
-                              key={index}
-                              className="absolute left-1/2 top-1/2 [transform-style:preserve-3d] transition-transform duration-500"
-                              style={{
-                                width: size,
-                                height: size,
-                                transform: `translate(-50%, -50%) ${transforms[index]} rotateY(${isFlipped ? 180 : 0}deg)`,
-                              }}
-                            >
+  key={index}
+  className="absolute left-1/2 top-1/2 [transform-style:preserve-3d] transition-transform duration-300"
+  style={{
+    width: size,
+    height: size,
+    transform: `translate(-50%, -50%) ${transforms[index]} rotateY(${isFlipped ? 180 : 0}deg)`,
+  }}
+>
                               {/* FACE AVANT : photo */}
                               <div className="absolute inset-0 overflow-hidden rounded-none border border-slate-900/10 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/40 [backface-visibility:hidden]">
                                 {imgUrl ? (
