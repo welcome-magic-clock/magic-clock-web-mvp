@@ -188,6 +188,25 @@ export default function MagicDisplayPreviewShell({
   const faces = display.faces ?? [];
   const hasFaces = faces.length > 0;
 
+    // Cache en mémoire des états FaceEditor pour chaque face (1 → 6)
+  const [faceEditorStates, setFaceEditorStates] = useState<
+    Record<number, PersistedFaceState | null>
+  >({});
+
+    useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const next: Record<number, PersistedFaceState | null> = {};
+
+    // On limite à 6 faces (1 → 6)
+    for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
+      const faceId = faceIndex + 1;
+      next[faceId] = loadFaceEditorState(faceId);
+    }
+
+    setFaceEditorStates(next);
+  }, []);
+
   // Infos créateur pour le cercle (fallbacks si non fournies)
   const creatorName = display.creatorName ?? "Aiko Tanaka";
   const creatorInitials = display.creatorInitials ?? "AT";
@@ -610,7 +629,7 @@ export default function MagicDisplayPreviewShell({
 
                         return facesForCube.map((face, index) => {
   // 🔁 Fusionne avec l'état FaceEditor pour récupérer l'aiguille 2 (si définie)
-  const persisted = loadFaceEditorState(index + 1);
+    const persisted = faceEditorStates[index + 1] ?? null;
   const mergedFace: PreviewFace =
     persisted?.needles
       ? {
