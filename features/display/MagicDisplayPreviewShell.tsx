@@ -609,9 +609,22 @@ export default function MagicDisplayPreviewShell({
                         ];
 
                         return facesForCube.map((face, index) => {
-                          const imgUrl = getFaceMainPhotoUrl(face);
-                          const label = face.title || `Face ${index + 1}`;
-                          const isFlipped = flippedFaceIndex === index;
+  // 🔁 Fusionne avec l'état FaceEditor pour récupérer l'aiguille 2 (si définie)
+  const persisted = loadFaceEditorState(index + 1);
+  const mergedFace: PreviewFace =
+    persisted?.needles
+      ? {
+          ...face,
+          needles: {
+            ...(face.needles ?? {}),
+            ...(persisted.needles ?? {}),
+          },
+        }
+      : face;
+
+  const imgUrl = getFaceMainPhotoUrl(mergedFace);
+  const label = mergedFace.title || `Face ${index + 1}`;
+  const isFlipped = flippedFaceIndex === index;
 
                           return (
                             <div
@@ -696,8 +709,8 @@ export default function MagicDisplayPreviewShell({
                               <div className="absolute inset-0 rounded-none border border-slate-200 bg-slate-900/95 text-xs shadow-xl shadow-slate-900/30 [backface-visibility:hidden] [transform:rotateY(180deg)]">
                                 <div className="relative flex h-full w-full items-center justify-center">
                                   <MagicDisplayFaceBackCircle
-                                    face={face}
-                                    openedSegmentId={openedSegmentId}
+  face={mergedFace}
+  openedSegmentId={openedSegmentId}
                                     onSegmentChange={(id) => {
                                       setOpenedFaceForDetails(index);
                                       setOpenedSegmentId(id);
@@ -888,24 +901,24 @@ export default function MagicDisplayPreviewShell({
                             )}
                           </div>
 
-                          {/* Trait central fin comme dans Magic Studio / FaceEditor */}
-                          <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
+                                           {/* Trait central fin comme dans Magic Studio / FaceEditor */}
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
 
-                          {/* Avatar centre – même style que Magic Studio / FaceEditor */}
-                          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-md shadow-slate-900/30">
-                            {creatorAvatar ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={creatorAvatar}
-                                alt={creatorName}
-                                className="h-[54px] w-[54px] rounded-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-xs font-semibold text-slate-800">
-                                {creatorInitials}
-                              </span>
-                            )}
-                          </div>
+          {/* Avatar centre – même style que Magic Studio / FaceEditor */}
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
+            {creatorAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={creatorAvatar}
+                alt={creatorName}
+                className="h-[72px] w-[72px] rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-base font-semibold text-white">
+                {creatorInitials}
+              </span>
+            )}
+          </div>
                         </div>
                       </div>
 
