@@ -627,9 +627,9 @@ export default function MagicDisplayPreviewShell({
                     {/* 🧊 Cube au-dessus */}
                     <div
                       ref={cubeRef}
-                      className={`absolute inset-0 z-10 [transform-style:preserve-3d] ${
-                        isDragging ? "" : "transition-transform duration-200 ease-out"
-                      }`}
+                      className={`absolute inset-0 z-10 [transform-style:preserve-3d] touch-none select-none [will-change:transform] ${
+  isDragging ? "" : "transition-transform duration-150 ease-out"
+}`}
                       style={{
                         transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
                       }}
