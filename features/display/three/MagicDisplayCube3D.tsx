@@ -55,7 +55,7 @@ type CubeMeshProps = {
 };
 
 function CubeMesh({ textures, initialFaceIndex, onFaceChange }: CubeMeshProps) {
-  const meshRef = useRef<THREE.Mesh | null>(null);
+  const meshRef = useRef<any>(null);
 
   // Rotation "cible" (vers laquelle on lerp)
   const [targetRotation, setTargetRotation] = useState(() => ({
