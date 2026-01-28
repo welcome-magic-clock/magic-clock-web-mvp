@@ -199,21 +199,38 @@ export default function MagicDisplayFaceDialBase<
         )}
       </div>
 
-      {/* Avatar z-30 */}
-      <div className="absolute left-1/2 top-1/2 z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
-        {creatorAvatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={creatorAvatar}
-            alt={creatorName}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="text-xs font-semibold text-slate-50">
-            {creatorInitials}
-          </span>
-        )}
-      </div>
+      {/* Avatar centre – même style que Magic Studio / carte Studio */}
+<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white/90 bg-white shadow-sm">
+  {creatorAvatar ? (
+    // Photo réelle si un jour tu l'utilises
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={creatorAvatar}
+      alt={creatorName}
+      className="h-16 w-16 rounded-full object-cover"
+    />
+  ) : (
+    // Avatar neutre gris (comme sur les autres écrans)
+    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200">
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="h-9 w-9 text-slate-400"
+      >
+        {/* tête */}
+        <path
+          fill="currentColor"
+          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"
+        />
+        {/* épaules */}
+        <path
+          fill="currentColor"
+          d="M6 18c0-2.21 2.69-4 6-4s6 1.79 6 4v1H6v-1z"
+        />
+      </svg>
+    </div>
+  )}
+</div>
 
       {/* Bulles z-40 */}
       {visibleSegments.map((seg, index) => {
