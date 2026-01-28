@@ -1051,62 +1051,63 @@ export default function MagicDisplayClient() {
                 </div>
               </div>
 
-              {/* Bas de carte */}
-              <div className="mt-3 space-y-1 text-xs">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-                  <span className="font-medium">{currentCreator.name}</span>
-                  <span className="text-slate-400">{creatorHandle}</span>
+             {/* Bas de carte : créateur + vues + likes + accès + titre + hashtags */}
+<div className="mt-3 space-y-1 text-xs">
+  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
+    {/* 👉 Nom et handle neutres pour la capture IPI */}
+    <span className="font-medium">User</span>
+    <span className="text-slate-400">@user</span>
 
-                  <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
+    <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
-                  <span>
-                    <span className="font-medium">
-                      {mockViews.toLocaleString("fr-CH")}
-                    </span>{" "}
-                    vues
-                  </span>
+    <span>
+      <span className="font-medium">
+        {mockViews.toLocaleString("fr-CH")}
+      </span>{" "}
+      vues
+    </span>
 
-                  <span className="flex items-center gap-1">
-                    <Heart className="h-3 w-3" />
-                    <span>{mockLikes}</span>
-                  </span>
+    <span className="flex items-center gap-1">
+      <Heart className="h-3 w-3" />
+      <span>{mockLikes}</span>
+    </span>
 
-                  <span className="flex items-center gap-1">
-                    {isLockedPreview ? (
-                      <Lock className="h-3 w-3" />
-                    ) : (
-                      <Unlock className="h-3 w-3" />
-                    )}
-                    <span>{accessLabel}</span>
-                    {effectiveMode === "PPV" && effectivePpvPrice != null && (
-                      <span className="ml-1 text-[11px] text-slate-500">
-                        · {effectivePpvPrice.toFixed(2)} CHF
-                      </span>
-                    )}
-                  </span>
-                </div>
+    <span className="flex items-center gap-1">
+      {isLockedPreview ? (
+        <Lock className="h-3 w-3" />
+      ) : (
+        <Unlock className="h-3 w-3" />
+      )}
+      <span>{accessLabel}</span>
+      {effectiveMode === "PPV" && effectivePpvPrice != null && (
+        <span className="ml-1 text-[11px] text-slate-500">
+          · {effectivePpvPrice.toFixed(2)} CHF
+        </span>
+      )}
+    </span>
+  </div>
 
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                  {effectiveTitle && (
-                    <span className="font-medium text-slate-800">
-                      {effectiveTitle}
-                    </span>
-                  )}
+  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+    {effectiveTitle && (
+      <span className="font-medium text-slate-800">
+        {effectiveTitle}
+      </span>
+    )}
 
-                  {effectiveHashtags.length > 0 ? (
-                    effectiveHashtags.map((tag) => (
-                      <span key={tag} className="text-brand-600">
-                        {tag}
-                      </span>
-                    ))
-                  ) : (
-                    <>
-                      <span className="text-brand-600">#coiffure</span>
-                      <span className="text-brand-600">#color</span>
-                    </>
-                  )}
-                </div>
-              </div>
+    {effectiveHashtags.length > 0 ? (
+      effectiveHashtags.map((tag) => (
+        <span key={tag} className="text-brand-600">
+          {tag}
+        </span>
+      ))
+    ) : (
+      <>
+        <span className="text-brand-600">#coiffure</span>
+        <span className="text-brand-600">#color</span>
+      </>
+    )}
+  </div>
+</div>
             </button>
           </article>
         </section>
