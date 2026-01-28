@@ -199,38 +199,30 @@ export default function MagicDisplayFaceDialBase<
         )}
       </div>
 
-      {/* Avatar centre – même style que Magic Studio / carte Studio */}
-<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white/90 bg-white shadow-sm">
-  {creatorAvatar ? (
-    // Photo réelle si un jour tu l'utilises
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={creatorAvatar}
-      alt={creatorName}
-      className="h-16 w-16 rounded-full object-cover"
-    />
-  ) : (
-    // Avatar neutre gris (comme sur les autres écrans)
-    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-200">
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className="h-9 w-9 text-slate-400"
-      >
-        {/* tête */}
-        <path
-          fill="currentColor"
-          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"
-        />
-        {/* épaules */}
-        <path
-          fill="currentColor"
-          d="M6 18c0-2.21 2.69-4 6-4s6 1.79 6 4v1H6v-1z"
-        />
-      </svg>
-    </div>
-  )}
-</div>
+      {/* Avatar centre – halo fin, même style que Studio */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md border border-white/80">
+        {creatorAvatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={creatorAvatar}
+            alt={creatorName}
+            className="h-16 w-16 rounded-full object-cover border border-white"
+          />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 border border-white">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="h-8 w-8 text-slate-400"
+            >
+              {/* tête */}
+              <circle cx="12" cy="9" r="4" />
+              {/* épaules */}
+              <path d="M6 19c0-3.314 2.239-6 6-6s6 2.686 6 6" />
+            </svg>
+          </div>
+        )}
+      </div>
 
       {/* Bulles z-40 */}
       {visibleSegments.map((seg, index) => {
