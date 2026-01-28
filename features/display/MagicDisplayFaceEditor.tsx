@@ -182,6 +182,12 @@ type PersistedFaceState = {
   needles: FaceNeedles;
 };
 
+const DEFAULT_USER_NAME = "User";
+const DEFAULT_USER_INITIALS = "U";
+// Avatar générique (silhouette grise) en SVG inline
+const DEFAULT_USER_AVATAR =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><circle cx='40' cy='28' r='14' fill='%23cbd5e1'/><path d='M16 64c4-12 12-18 24-18s20 6 24 18' fill='%23cbd5e1'/></svg>";
+
 function getStorageKey(faceId: number) {
   return `${STORAGE_PREFIX}-${faceId}`;
 }
@@ -227,6 +233,7 @@ function loadFaceState(faceId: number): FaceState | null {
 }
 
 export default function MagicDisplayFaceEditor({
+  // on ignore volontairement les props créateur pour les captures
   creatorName: _creatorName,
   creatorAvatar: _creatorAvatar,
   creatorInitials: _creatorInitials,
@@ -235,10 +242,11 @@ export default function MagicDisplayFaceEditor({
   onBack,
   onFaceChange,
 }: MagicDisplayFaceEditorProps) {
-  // 🔒 Forcer des valeurs neutres pour les captures
-  const creatorName = "User";
-  const creatorInitials = "U";
-  const creatorAvatar = undefined;
+  // 🔒 valeurs neutres forcées
+  const creatorName = DEFAULT_USER_NAME;
+  const creatorInitials = DEFAULT_USER_INITIALS;
+  const creatorAvatar = DEFAULT_USER_AVATAR;
+
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
     [faceId]: {
       faceId,
@@ -555,16 +563,13 @@ export default function MagicDisplayFaceEditor({
 
         <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
           <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-            {creatorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
-                alt={creatorName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold">{creatorInitials}</span>
-            )}
+            {/* Avatar toujours affiché */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={creatorAvatar}
+              alt={creatorName}
+              className="h-full w-full object-cover"
+            />
           </span>
           <span className="font-medium">{creatorName}</span>
         </div>
@@ -727,18 +732,12 @@ export default function MagicDisplayFaceEditor({
 
                     {/* Avatar centre – style Magic Studio */}
                     <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-                      {creatorAvatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={creatorAvatar}
-                          alt={creatorName}
-                          className="h-[72px] w-[72px] rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-base font-semibold text-white">
-                          {creatorInitials}
-                        </span>
-                      )}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={creatorAvatar}
+                        alt={creatorName}
+                        className="h-[72px] w-[72px] rounded-full object-cover"
+                      />
                     </div>
                   </div>
                 </div>
