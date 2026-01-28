@@ -227,15 +227,18 @@ function loadFaceState(faceId: number): FaceState | null {
 }
 
 export default function MagicDisplayFaceEditor({
-  // 🔁 Valeurs par défaut neutres pour les captures
-  creatorName = "User",
-  creatorAvatar,
-  creatorInitials = "U",
+  creatorName: _creatorName,
+  creatorAvatar: _creatorAvatar,
+  creatorInitials: _creatorInitials,
   faceId = 1,
   faceLabel = "Face 1",
   onBack,
   onFaceChange,
 }: MagicDisplayFaceEditorProps) {
+  // 🔒 Forcer des valeurs neutres pour les captures
+  const creatorName = "User";
+  const creatorInitials = "U";
+  const creatorAvatar = undefined;
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
     [faceId]: {
       faceId,
