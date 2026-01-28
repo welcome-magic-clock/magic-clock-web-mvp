@@ -77,11 +77,8 @@ export default function MagicStudioPage() {
   const beforeVideoRef = useRef<HTMLVideoElement | null>(null);
   const afterVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Avatar créateur (Aiko)
-  const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
-  const avatar = currentCreator.avatar;
+   // Avatar studio pour la capture IPI : icône "2025"
+  const studioAvatarLabel = "2025";
 
   // 🧬 Charger le brouillon Magic Studio depuis localStorage
   useEffect(() => {
@@ -551,13 +548,38 @@ export default function MagicStudioPage() {
               </button>
             </div>
 
-            {/* Avatar centre */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-              <img
-                src={avatar}
-                alt={currentCreator.name}
-                className="h-[72px] w-[72px] rounded-full object-cover"
-              />
+                        {/* Avatar centre – icône vecteur "2025" pour le dépôt IPI */}
+            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
+              <svg
+                viewBox="0 0 100 100"
+                className="h-[72px] w-[72px]"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient id="studio-2025-gradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#0F172A" />
+                    <stop offset="50%" stopColor="#38BDF8" />
+                    <stop offset="100%" stopColor="#10B981" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="48"
+                  fill="url(#studio-2025-gradient)"
+                />
+                <text
+                  x="50"
+                  y="56"
+                  textAnchor="middle"
+                  fontSize="28"
+                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+                  fill="white"
+                  fontWeight="600"
+                >
+                  {studioAvatarLabel}
+                </text>
+              </svg>
             </div>
           </div>
         </div>
