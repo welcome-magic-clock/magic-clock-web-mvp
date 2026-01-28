@@ -96,7 +96,7 @@ export default function MagicDisplayFaceDialBase<
 >({
   creatorName,
   creatorAvatar,
-  creatorInitials,
+  creatorInitials, // laissé pour le futur si besoin
   segmentCount,
   segments,
   selectedId,
@@ -149,10 +149,16 @@ export default function MagicDisplayFaceDialBase<
 
   return (
     <div ref={circleRef} className="relative h-64 w-64 max-w-full">
-      {/* Décor z-10 */}
-      <div className="absolute inset-0 z-10 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(241,245,249,0.45),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.45),transparent_55%)]" />
-      <div className="absolute inset-4 z-10 rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_20%,#f9fafb,#e5e7eb)] shadow-inner" />
-      <div className="absolute inset-16 z-10 rounded-full border border-slate-300/70" />
+      {/* Décor du disque (même style que le grand cercle) */}
+      <div
+        className="absolute inset-0 z-10 rounded-full border border-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.04)]"
+        style={{
+          background:
+            "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
+        }}
+      />
+      {/* anneau intérieur léger */}
+      <div className="absolute inset-10 z-10 rounded-full border border-slate-200/70" />
 
       {/* Demi-segments depuis le centre, toujours entre 2 bulles */}
       <div
@@ -183,7 +189,7 @@ export default function MagicDisplayFaceDialBase<
         })}
       </div>
 
-      {/* Aiguilles z-20 */}
+      {/* Aiguilles */}
       <div className="pointer-events-none absolute inset-0 z-20">
         <WatchHandOneWayRefined
           angleDeg={angle1}
@@ -199,32 +205,32 @@ export default function MagicDisplayFaceDialBase<
         )}
       </div>
 
-      {/* Avatar centre – halo fin, même style que Studio */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md border border-white/80">
+      {/* Avatar centre — même halo fin que dans MagicDisplayClient */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white shadow-xl shadow-slate-900/20">
         {creatorAvatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={creatorAvatar}
             alt={creatorName}
-            className="h-16 w-16 rounded-full object-cover border border-white"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 border border-white">
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="h-8 w-8 text-slate-400"
-            >
-              {/* tête */}
-              <circle cx="12" cy="9" r="4" />
-              {/* épaules */}
-              <path d="M6 19c0-3.314 2.239-6 6-6s6 2.686 6 6" />
-            </svg>
-          </div>
+          <svg
+            viewBox="0 0 100 100"
+            className="h-full w-full"
+            aria-hidden="true"
+          >
+            <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
+            <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
+            <path
+              d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
+              fill="#9CA3AF"
+            />
+          </svg>
         )}
       </div>
 
-      {/* Bulles z-40 */}
+      {/* Bulles segments */}
       {visibleSegments.map((seg, index) => {
         const isSelected = seg.id === selectedId;
         const status = seg.status ?? "empty";
