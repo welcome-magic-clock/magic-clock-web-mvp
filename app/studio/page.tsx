@@ -4,7 +4,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Hash, ArrowUpRight } from "lucide-react";
-import { listCreators } from "@/core/domain/repository";
 import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
@@ -76,12 +75,6 @@ export default function MagicStudioPage() {
 
   const beforeVideoRef = useRef<HTMLVideoElement | null>(null);
   const afterVideoRef = useRef<HTMLVideoElement | null>(null);
-
-   // Avatar studio pour la capture IPI : icône "2025"
-  c// const creators = listCreators();
-// const currentCreator =
-//   creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
-// const avatar = currentCreator.avatar;
 
   // 🧬 Charger le brouillon Magic Studio depuis localStorage
   useEffect(() => {
@@ -550,26 +543,27 @@ export default function MagicStudioPage() {
                 )}
               </button>
             </div>
-{/* Avatar centre – pictogramme neutre pour le design */}
-<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
-  <svg
-    viewBox="0 0 100 100"
-    className="h-[72px] w-[72px]"
-    aria-hidden="true"
-  >
-    {/* Cercle de fond gris clair */}
-    <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
 
-    {/* Tête */}
-    <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
+            {/* Avatar centre – pictogramme neutre pour le design */}
+            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
+              <svg
+                viewBox="0 0 100 100"
+                className="h-[72px] w-[72px]"
+                aria-hidden="true"
+              >
+                {/* Cercle de fond gris clair */}
+                <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
 
-    {/* Épaules / buste */}
-    <path
-      d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
-      fill="#9CA3AF"
-    />
-  </svg>
-</div>
+                {/* Tête */}
+                <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
+
+                {/* Épaules / buste */}
+                <path
+                  d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
+                  fill="#9CA3AF"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
