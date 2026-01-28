@@ -211,7 +211,7 @@ export default function MagicDisplayFaceDialBase<
     />
   ) : (
     // Avatar neutre gris (comme sur les autres écrans)
-    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200">
+    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200">
       <svg
         viewBox="0 0 24 24"
         aria-hidden="true"
