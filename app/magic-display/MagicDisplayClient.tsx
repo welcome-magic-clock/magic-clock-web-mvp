@@ -267,9 +267,9 @@ function buildTemplateSegments(template: TemplateId): Segment[] {
 type FaceStatus = "empty" | "partial" | "full";
 
 function statusDotClass(status: FaceStatus) {
-  if (status === "full") return "bg-emerald-500";   // ✅ face vraiment complétée
-  if (status === "partial") return "bg-amber-400";  // 🟡 contenu partiel
-  return "bg-slate-300";                            // ⚪️ vide
+  if (status === "full") return "bg-emerald-500"; // ✅
+  if (status === "partial") return "bg-amber-400"; // 🟡
+  return "bg-slate-300"; // ⚪️
 }
 
 function mediaTypeLabel(type?: MediaType) {
@@ -316,7 +316,7 @@ function StudioMediaSlot({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-// 🔹 Mocks de “vrais” Magic Clock (sera branché sur My Magic Clock plus tard)
+// 🔹 Mocks de “vrais” Magic Clock
 const MOCK_CUBES: {
   id: TemplateId;
   title: string;
@@ -347,7 +347,7 @@ export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // 🔍 Infos texte venant de Magic Studio (query params)
+  // 🔍 Infos texte venant de Magic Studio
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudioParam =
     (searchParams.get("mode") as PublishMode | null) ?? null;
@@ -364,7 +364,7 @@ export default function MagicDisplayClient() {
     .filter((tag) => tag.length > 0)
     .map((tag) => `#${tag}`);
 
-  // 👩‍🎨 créateur (Aiko par défaut)
+  // 👩‍🎨 créateur (Aiko par défaut, mais avatar NEUTRE)
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
@@ -374,7 +374,7 @@ export default function MagicDisplayClient() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const creatorAvatar = currentCreator.avatar;
+  const creatorAvatar = currentCreator.avatar; // encore utilisé pour FaceEditor
   const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
   const creatorHandle = creatorHandleRaw.startsWith("@")
     ? creatorHandleRaw
@@ -397,7 +397,7 @@ export default function MagicDisplayClient() {
   const [bridgePpvPrice, setBridgePpvPrice] = useState<number | null>(null);
   const [bridgeHashtags, setBridgeHashtags] = useState<string[]>([]);
 
-  // 🔵 Progrès détaillé par face (pastilles internes vertes)
+  // 🔵 Progrès détaillé par face
   const [faceUniversalProgress, setFaceUniversalProgress] = useState<
     Record<
       string,
@@ -409,11 +409,11 @@ export default function MagicDisplayClient() {
   >({});
 
   // 🔍 Détails complets remontés depuis MagicDisplayFaceEditor
-const [faceDetails, setFaceDetails] = useState<
-  Record<number, FaceDetailsPayload>
->({});
+  const [faceDetails, setFaceDetails] = useState<
+    Record<number, FaceDetailsPayload>
+  >({});
 
-    const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     try {
@@ -455,7 +455,7 @@ const [faceDetails, setFaceDetails] = useState<
     }
   }, []);
 
-  // Charger les infos de progression des faces (pastilles internes)
+  // Charger les infos de progression des faces
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(FACE_PROGRESS_KEY);
@@ -469,7 +469,7 @@ const [faceDetails, setFaceDetails] = useState<
     }
   }, []);
 
-  // 🎯 Valeurs “effectives” (URL + localStorage)
+  // 🎯 Valeurs “effectives”
   const effectiveTitle = (titleFromStudio || bridgeTitle).trim();
 
   const effectiveMode: PublishMode = modeFromStudioParam ?? bridgeMode ?? "FREE";
@@ -502,7 +502,7 @@ const [faceDetails, setFaceDetails] = useState<
 
   const selectedSegment = segments.find((s) => s.id === selectedId) ?? null;
 
-  // 🔵 État de publication (bouton sous le cube)
+  // 🔵 État de publication
   const [isPublishing, setIsPublishing] = useState(false);
 
   // 📥 inputs cachés pour les médias
@@ -510,7 +510,7 @@ const [faceDetails, setFaceDetails] = useState<
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 🧬 Charger le draft du cube depuis localStorage (structure uniquement)
+  // 🧬 Charger le draft du cube
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -541,7 +541,7 @@ const [faceDetails, setFaceDetails] = useState<
     }
   }, []);
 
-  // 💾 Sauvegarder la structure du cube à chaque modification
+  // 💾 Sauvegarder la structure du cube
   useEffect(() => {
     try {
       const toPersist = segments.map((seg) => ({
@@ -559,86 +559,80 @@ const [faceDetails, setFaceDetails] = useState<
     }
   }, [segments]);
 
-function handleFaceEditorChange(payload: FaceDetailsPayload) {
-  const { faceId, segmentCount, segments: faceSegments } = payload;
+  function handleFaceEditorChange(payload: FaceDetailsPayload) {
+    const { faceId, segmentCount, segments: faceSegments } = payload;
 
-  setSegments((prev) =>
-    prev.map((seg) => {
-      if (seg.id !== faceId) return seg;
+    setSegments((prev) =>
+      prev.map((seg) => {
+        if (seg.id !== faceId) return seg;
 
-      // Premier segment qui a un média dans FaceEditor
-      const firstWithMedia = faceSegments.find(
-        (s) => (s.media?.length ?? 0) > 0,
-      );
-      const media = firstWithMedia?.media?.[0];
+        const firstWithMedia = faceSegments.find(
+          (s) => (s.media?.length ?? 0) > 0,
+        );
+        const media = firstWithMedia?.media?.[0];
 
-      // 🛟 On PROTÈGE l’image déjà définie sur le cube :
-      const hasExistingMedia = seg.hasMedia && !!seg.mediaUrl;
+        const hasExistingMedia = seg.hasMedia && !!seg.mediaUrl;
 
-      const nextHasMedia = hasExistingMedia || !!media;
-      const nextMediaType: MediaType | undefined = hasExistingMedia
-        ? seg.mediaType
-        : ((media?.type as MediaType | undefined) ?? seg.mediaType);
+        const nextHasMedia = hasExistingMedia || !!media;
+        const nextMediaType: MediaType | undefined = hasExistingMedia
+          ? seg.mediaType
+          : ((media?.type as MediaType | undefined) ?? seg.mediaType);
 
-      const nextMediaUrl =
-        hasExistingMedia ? seg.mediaUrl : media?.url ?? seg.mediaUrl;
+        const nextMediaUrl =
+          hasExistingMedia ? seg.mediaUrl : media?.url ?? seg.mediaUrl;
 
-      return {
-        ...seg,
-        // ❌ on ne touche plus à seg.description ici
-        // ❌ on ne touche pas non plus aux notes du cube
-        notes: seg.notes,
-        hasMedia: nextHasMedia,
-        mediaType: nextMediaType,
-        mediaUrl: nextMediaUrl,
-      };
-    }),
-  );
+        return {
+          ...seg,
+          notes: seg.notes,
+          hasMedia: nextHasMedia,
+          mediaType: nextMediaType,
+          mediaUrl: nextMediaUrl,
+        };
+      }),
+    );
 
-  // 2️⃣ On garde la sauvegarde détaillée pour la preview 3D
-  setFaceDetails((prev) => ({
-    ...prev,
-    [faceId]: payload,
-  }));
-
-  // 3️⃣ Progression + localStorage (inchangé)
-  const coveredFromDetails = faceSegments.some(
-    (s) =>
-      (s.notes && s.notes.trim().length > 0) ||
-      (s.media && s.media.length > 0),
-  );
-
-  const universalContentCompleted =
-    coveredFromDetails &&
-    faceSegments
-      .slice(0, segmentCount)
-      .every(
-        (s) =>
-          (s.notes && s.notes.trim().length > 0) ||
-          (s.media && s.media.length > 0),
-      );
-
-  setFaceUniversalProgress((prev) => {
-    const next = {
+    setFaceDetails((prev) => ({
       ...prev,
-      [String(faceId)]: {
-        coveredFromDetails,
-        universalContentCompleted,
-      },
-    };
+      [faceId]: payload,
+    }));
 
-    try {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(FACE_PROGRESS_KEY, JSON.stringify(next));
+    const coveredFromDetails = faceSegments.some(
+      (s) =>
+        (s.notes && s.notes.trim().length > 0) ||
+        (s.media && s.media.length > 0),
+    );
+
+    const universalContentCompleted =
+      coveredFromDetails &&
+      faceSegments
+        .slice(0, segmentCount)
+        .every(
+          (s) =>
+            (s.notes && s.notes.trim().length > 0) ||
+            (s.media && s.media.length > 0),
+        );
+
+    setFaceUniversalProgress((prev) => {
+      const next = {
+        ...prev,
+        [String(faceId)]: {
+          coveredFromDetails,
+          universalContentCompleted,
+        },
+      };
+
+      try {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(FACE_PROGRESS_KEY, JSON.stringify(next));
+        }
+      } catch (error) {
+        console.error("Failed to persist face universal progress", error);
       }
-    } catch (error) {
-      console.error("Failed to persist face universal progress", error);
-    }
 
-    return next;
-  });
-}
-  // 🎯 Sélection depuis le cube 3D → ouvre directement la Face universelle
+      return next;
+    });
+  }
+
   function handleCubeFaceSelect(id: number | null) {
     if (id == null) {
       setSelectedId(null);
@@ -649,17 +643,15 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     setIsFaceDetailOpen(true);
   }
 
-  // 🎯 Sélection depuis la liste → juste sélectionner
   function handleListFaceSelect(id: number | null) {
     setSelectedId((prev) => (prev === id ? null : id));
   }
 
-  // ✏️ Description courte – max 27 caractères (pour le cube)
   function handleSelectedDescriptionChange(
     event: ChangeEvent<HTMLTextAreaElement>,
   ) {
     const raw = event.target.value ?? "";
-    const value = raw.slice(0, 27); // limite dure
+    const value = raw.slice(0, 27);
 
     setSegments((prev) =>
       prev.map((seg) =>
@@ -668,7 +660,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     );
   }
 
-  // 📝 Notes pédagogiques – illimitées
   function handleSelectedNotesChange(
     event: ChangeEvent<HTMLTextAreaElement>,
   ) {
@@ -680,7 +671,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     );
   }
 
-  // 🎯 Clic sur le cercle → sélection + éventuel upload
   function handleCircleFaceClick(seg: Segment) {
     setSelectedId(seg.id);
     if (!seg.hasMedia && photoInputRef.current) {
@@ -734,7 +724,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     setIsFaceDetailOpen(false);
   }
 
-  // 🎛 Appliquer un modèle pré-conçu (ou un cube mock) depuis le menu Options
   function handleApplyTemplate(template: TemplateId) {
     const next = buildTemplateSegments(template);
     setSegments(next);
@@ -743,7 +732,6 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     setIsOptionsOpen(false);
   }
 
-  // ♻️ Réinitialiser entièrement le cube
   function handleResetCube() {
     setSegments(INITIAL_SEGMENTS);
     setSelectedId(null);
@@ -751,96 +739,94 @@ function handleFaceEditorChange(payload: FaceDetailsPayload) {
     setIsOptionsOpen(false);
   }
 
-// 🌌 Reconstitution du Display pour la preview 3D
-const displayState: PreviewDisplay = {
-  // 👇 NOUVEAU : infos créateur pour la preview
-  creatorName: currentCreator.name,
-  creatorInitials: initials,
-  creatorAvatarUrl: creatorAvatar ?? undefined,
+  // 🌌 Reconstitution du Display pour la preview 3D
+  const displayState: PreviewDisplay = {
+    creatorName: currentCreator.name,
+    creatorInitials: initials,
+    // on peut laisser l’avatar URL pour la preview, ou le mettre à undefined
+    creatorAvatarUrl: undefined,
 
-  // 👇 ce que tu avais déjà
-  faces: segments.map((seg): PreviewFace => {
-    const details = faceDetails[seg.id];
+    faces: segments.map((seg): PreviewFace => {
+      const details = faceDetails[seg.id];
 
-    const coverFromCube =
-      seg.mediaUrl && seg.mediaType
-        ? ({
-            type: seg.mediaType as MediaKind,
-            url: seg.mediaUrl,
-          } satisfies PreviewMedia)
-        : undefined;
-
-    const faceTitle =
-      seg.description && seg.description.trim().length > 0
-        ? seg.description.trim()
-        : seg.label;
-
-    if (details) {
-      const allNotes = details.segments
-        .map((s) => (s.notes ?? "").trim())
-        .filter(Boolean)
-        .join("\n\n");
-
-      const firstFromDetails = (() => {
-        const firstWithMedia = details.segments.find(
-          (s) => (s.media?.length ?? 0) > 0,
-        );
-        const m = firstWithMedia?.media?.[0];
-        return m
+      const coverFromCube =
+        seg.mediaUrl && seg.mediaType
           ? ({
-              type: m.type as MediaKind,
-              url: m.url,
+              type: seg.mediaType as MediaKind,
+              url: seg.mediaUrl,
             } satisfies PreviewMedia)
           : undefined;
-      })();
 
-      const coverMedia = coverFromCube ?? firstFromDetails;
+      const faceTitle =
+        seg.description && seg.description.trim().length > 0
+          ? seg.description.trim()
+          : seg.label;
+
+      if (details) {
+        const allNotes = details.segments
+          .map((s) => (s.notes ?? "").trim())
+          .filter(Boolean)
+          .join("\n\n");
+
+        const firstFromDetails = (() => {
+          const firstWithMedia = details.segments.find(
+            (s) => (s.media?.length ?? 0) > 0,
+          );
+          const m = firstWithMedia?.media?.[0];
+          return m
+            ? ({
+                type: m.type as MediaKind,
+                url: m.url,
+              } satisfies PreviewMedia)
+            : undefined;
+        })();
+
+        const coverMedia = coverFromCube ?? firstFromDetails;
+
+        return {
+          title: faceTitle,
+          notes: allNotes,
+          coverMedia,
+          segments: details.segments.map((s) => ({
+            id: s.id,
+            title: s.title,
+            description: s.description ?? "",
+            notes: s.notes ?? "",
+            media: (s.media ?? []).map((m) => ({
+              type: m.type as MediaKind,
+              url: m.url,
+            })),
+          })),
+        };
+      }
+
+      const mediaArray: PreviewMedia[] =
+        seg.mediaUrl && seg.mediaType
+          ? [
+              {
+                type: seg.mediaType as MediaKind,
+                url: seg.mediaUrl,
+              },
+            ]
+          : [];
 
       return {
         title: faceTitle,
-        notes: allNotes,
-        coverMedia,
-        segments: details.segments.map((s) => ({
-          id: s.id,
-          title: s.title,
-          description: s.description ?? "",
-          notes: s.notes ?? "",
-          media: (s.media ?? []).map((m) => ({
-            type: m.type as MediaKind,
-            url: m.url,
-          })),
-        })),
+        notes: seg.notes ?? "",
+        coverMedia: coverFromCube ?? mediaArray[0],
+        segments: [
+          {
+            id: seg.id,
+            title: seg.label,
+            description: seg.description,
+            notes: seg.notes ?? "",
+            media: mediaArray,
+          },
+        ],
       };
-    }
+    }),
+  };
 
-    const mediaArray: PreviewMedia[] =
-      seg.mediaUrl && seg.mediaType
-        ? [
-            {
-              type: seg.mediaType as MediaKind,
-              url: seg.mediaUrl,
-            },
-          ]
-        : [];
-
-    return {
-      title: faceTitle,
-      notes: seg.notes ?? "",
-      coverMedia: coverFromCube ?? mediaArray[0],
-      segments: [
-        {
-          id: seg.id,
-          title: seg.label,
-          description: seg.description,
-          notes: seg.notes ?? "",
-          media: mediaArray,
-        },
-      ],
-    };
-  }),
-};
-
-  // 🌌 Mode "Visualiser mon Magic Clock" : plein écran (preview 3D + bouton ↗︎)
   if (showPreview) {
     return (
       <MagicDisplayPreviewShell
@@ -850,7 +836,6 @@ const displayState: PreviewDisplay = {
           const seg = segments[faceIndex];
           if (!seg) return;
 
-          // On ferme la preview et on ouvre directement la Face universelle
           setSelectedId(seg.id);
           setShowPreview(false);
           setIsFaceDetailOpen(true);
@@ -859,33 +844,29 @@ const displayState: PreviewDisplay = {
     );
   }
 
-// 🧩 Mode “Face universelle” : uniquement l’éditeur détaillé
-if (isFaceDetailOpen && selectedSegment) {
-  // On aligne FaceEditor sur la logique du cube 3D :
-  //   - priorité à la description de la face
-  //   - sinon on retombe sur le label ("Face 1", etc.)
-  const faceTitleForEditor =
-    (selectedSegment.description &&
-      selectedSegment.description.trim().length > 0)
-      ? selectedSegment.description.trim()
-      : selectedSegment.label;
+  // Mode “Face universelle”
+  if (isFaceDetailOpen && selectedSegment) {
+    const faceTitleForEditor =
+      selectedSegment.description &&
+      selectedSegment.description.trim().length > 0
+        ? selectedSegment.description.trim()
+        : selectedSegment.label;
 
-  return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
-      <MagicDisplayFaceEditor
-        creatorName={currentCreator.name}
-        creatorAvatar={creatorAvatar}
-        creatorInitials={initials}
-        faceId={selectedSegment.id}
-        faceLabel={faceTitleForEditor}       // ✅ on garde exactement ta logique
-        onBack={handleCloseFaceDetail}
-        onFaceChange={handleFaceEditorChange} // ✅ on ajoute juste ça
-      />
-    </main>
-  );
-}
+    return (
+      <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
+        <MagicDisplayFaceEditor
+          creatorName={currentCreator.name}
+          creatorAvatar={creatorAvatar}
+          creatorInitials={initials}
+          faceId={selectedSegment.id}
+          faceLabel={faceTitleForEditor}
+          onBack={handleCloseFaceDetail}
+          onFaceChange={handleFaceEditorChange}
+        />
+      </main>
+    );
+  }
 
-  // Fallback images si rien venant du Studio
   const beforePreview =
     studioBeforeThumb ??
     studioAfterThumb ??
@@ -900,11 +881,9 @@ if (isFaceDetailOpen && selectedSegment) {
     studioBeforeUrl ??
     FALLBACK_AFTER;
 
-  // Stats mock pour l’aperçu public
   const mockViews = 0;
   const mockLikes = 0;
 
-  // 🧮 Progression de publication (Studio + Display)
   const faceProgressInput = segments.map((seg) => {
     const meta = faceUniversalProgress[String(seg.id)] ?? {};
 
@@ -922,39 +901,31 @@ if (isFaceDetailOpen && selectedSegment) {
     };
   });
 
-  // Studio complété = payload Magic Studio présent (MVP)
   const hasStudioPayload =
-    // Médias réels ou miniatures
     studioBeforeUrl ||
     studioAfterUrl ||
     studioBeforeThumb ||
     studioAfterThumb ||
-    // Données bridgées (localStorage)
     bridgeTitle ||
     bridgeMode ||
     (Array.isArray(bridgeHashtags) && bridgeHashtags.length > 0) ||
-    // Données arrivant directement par l'URL (query params)
     titleFromStudio ||
     modeFromStudioParam ||
     (hashtagsParam && hashtagsParam.trim().length > 0) ||
     hashtagTokensFromQuery.length > 0;
 
-  // 🔢 On calcule combien de faces Studio sont vraiment complétées (Avant / Après)
   const studioFacesCompleted = [
     studioBeforeUrl || studioBeforeThumb,
     studioAfterUrl || studioAfterThumb,
   ].filter(Boolean).length;
 
-  // 0% si aucune face, 20% par face complétée, max 40%
   const studioPartDisplay = Math.min(40, studioFacesCompleted * 20);
 
-  // Studio "complété" uniquement si Avant ET Après sont présents
   const studioCompleted = studioFacesCompleted === 2;
 
-  // 🧮 Pour le Display, on garde le helper centralisé
   const {
-    percent: _percent, // non utilisé dans ce calcul, on garde pour compatibilité
-    studioPart: _studioPart, // idem
+    percent: _percent,
+    studioPart: _studioPart,
     displayPart,
     completedFaces,
     partialFaces,
@@ -963,27 +934,22 @@ if (isFaceDetailOpen && selectedSegment) {
     faces: faceProgressInput,
   });
 
-  // Total = Studio (0 / 20 / 40) + Display (0 → 60)
   const totalPercentDisplay = studioPartDisplay + displayPart;
 
-  // 🔒 Barre = total clampé entre 0 et 100
   const clampedPublishPercent = Math.max(
     0,
     Math.min(100, totalPercentDisplay),
   );
   const canPublish = clampedPublishPercent >= 100;
 
-  // Libellé "Studio complété / incomplet"
   const studioStatusLabel =
     studioFacesCompleted === 2 ? "Studio complété" : "Studio incomplet";
 
   let publishHelperText: string;
   if (canPublish) {
-    // 100% atteint
     publishHelperText =
       "Studio complété · Display complété · Tu peux publier ton Magic Clock ✨";
   } else {
-    // Texte demandé
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
@@ -1002,7 +968,7 @@ if (isFaceDetailOpen && selectedSegment) {
       {/* ⭐️ Une seule grande carte Magic Display */}
       <section className="mb-6 flex min-h-[calc(100vh-7rem)] flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
         {/* Ligne 1 : Back + titre + Options */}
-               <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BackButton fallbackHref="/studio" label="Retour" />
             <div className="flex flex-col">
@@ -1059,18 +1025,24 @@ if (isFaceDetailOpen && selectedSegment) {
                     />
                   </div>
 
-                 {/* Ligne centrale ultra fine comme dans Studio */}
-<div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
+                  {/* Ligne centrale */}
+                  <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
 
-{/* Avatar centré, version “discrète” comme Magic Studio */}
-<div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 shadow-sm">
-  {/* eslint-disable-next-line @next/next/no-img-element */}
-  <img
-    src={creatorAvatar}
-    alt={currentCreator.name}
-    className="h-[72px] w-[72px] rounded-full object-cover"
-  />
-</div>
+                  {/* Avatar neutre centré */}
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="h-[72px] w-[72px]"
+                      aria-hidden="true"
+                    >
+                      <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
+                      <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
+                      <path
+                        d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
+                        fill="#9CA3AF"
+                      />
+                    </svg>
+                  </div>
 
                   {/* Flèche en haut à droite */}
                   <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white shadow-md">
@@ -1079,7 +1051,7 @@ if (isFaceDetailOpen && selectedSegment) {
                 </div>
               </div>
 
-              {/* Bas de carte : créateur + vues + likes + accès + titre + hashtags */}
+              {/* Bas de carte */}
               <div className="mt-3 space-y-1 text-xs">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
                   <span className="font-medium">{currentCreator.name}</span>
@@ -1151,14 +1123,20 @@ if (isFaceDetailOpen && selectedSegment) {
                     "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
                 }}
               >
-                {/* Avatar central */}
-                <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-slate-900 shadow-xl shadow-slate-900/50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={creatorAvatar}
-                    alt={currentCreator.name}
-                    className="h-full w-full object-cover"
-                  />
+                {/* Avatar central NEUTRE */}
+                <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white shadow-xl shadow-slate-900/20">
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="h-full w-full"
+                    aria-hidden="true"
+                  >
+                    <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
+                    <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
+                    <path
+                      d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
+                      fill="#9CA3AF"
+                    />
+                  </svg>
                 </div>
 
                 {/* Boutons-faces autour du cercle */}
@@ -1169,13 +1147,17 @@ if (isFaceDetailOpen && selectedSegment) {
                   const left = 50 + Math.cos(rad) * radiusPercent;
                   const isSelected = seg.id === selectedId;
                   const meta = faceUniversalProgress[String(seg.id)] ?? {};
-  const hasSomething =
-    seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
-  const status: FaceStatus = hasSomething
-    ? meta.universalContentCompleted
-      ? "full"
-      : "partial"
-    : "empty";
+                  const hasSomething =
+                    seg.hasMedia ||
+                    Boolean(
+                      meta.coveredFromDetails ||
+                        meta.universalContentCompleted,
+                    );
+                  const status: FaceStatus = hasSomething
+                    ? meta.universalContentCompleted
+                      ? "full"
+                      : "partial"
+                    : "empty";
 
                   return (
                     <button
@@ -1191,11 +1173,11 @@ if (isFaceDetailOpen && selectedSegment) {
                       aria-label={`Face ${seg.label}`}
                     >
                       {renderSegmentIcon(seg)}
-                     <span
-  className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
-    status,
-  )}`}
-/>
+                      <span
+                        className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(
+                          status,
+                        )}`}
+                      />
                     </button>
                   );
                 })}
@@ -1211,7 +1193,7 @@ if (isFaceDetailOpen && selectedSegment) {
               onSelect={handleCubeFaceSelect}
             />
 
-            {/* Bouton de publication global – ultra épuré & brand */}
+            {/* Bouton de publication */}
             <div className="mt-2">
               <button
                 type="button"
@@ -1223,7 +1205,6 @@ if (isFaceDetailOpen && selectedSegment) {
                   Publier sur Amazing + My Magic Clock
                 </span>
 
-                {/* Ligne de progression ultra fine */}
                 <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-slate-700/40">
                   <div
                     className="h-full rounded-full bg-emerald-400 transition-[width]"
@@ -1234,10 +1215,10 @@ if (isFaceDetailOpen && selectedSegment) {
 
               <div className="mt-2 text-[11px] text-slate-500">
                 <p>{publishHelperText}</p>
-               <p className="mt-0.5 text-[10px] text-slate-400">
-                  Studio : {studioPartDisplay}% · Display (Face + Segment) : {displayPart}% ·
-                   Total : {Math.round(totalPercentDisplay)}%
-                 </p>
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  Studio : {studioPartDisplay}% · Display (Face + Segment) :{" "}
+                  {displayPart}% · Total : {Math.round(totalPercentDisplay)}%
+                </p>
               </div>
             </div>
 
@@ -1254,14 +1235,18 @@ if (isFaceDetailOpen && selectedSegment) {
                 {segments.map((seg) => {
                   const isSelected = seg.id === selectedId;
                   const label = mediaTypeLabel(seg.mediaType);
-        const meta = faceUniversalProgress[String(seg.id)] ?? {};
-  const hasSomething =
-    seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
-  const status: FaceStatus = hasSomething
-    ? meta.universalContentCompleted
-      ? "full"
-      : "partial"
-    : "empty";
+                  const meta = faceUniversalProgress[String(seg.id)] ?? {};
+                  const hasSomething =
+                    seg.hasMedia ||
+                    Boolean(
+                      meta.coveredFromDetails ||
+                        meta.universalContentCompleted,
+                    );
+                  const status: FaceStatus = hasSomething
+                    ? meta.universalContentCompleted
+                      ? "full"
+                      : "partial"
+                    : "empty";
 
                   return (
                     <button
@@ -1283,11 +1268,11 @@ if (isFaceDetailOpen && selectedSegment) {
                           {seg.description}
                         </p>
                       </div>
-                     <span
-  className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
-    status,
-  )}`}
-/>
+                      <span
+                        className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(
+                          status,
+                        )}`}
+                      />
                     </button>
                   );
                 })}
@@ -1300,18 +1285,15 @@ if (isFaceDetailOpen && selectedSegment) {
         {selectedSegment && (
           <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 sm:px-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              {/* Colonne gauche : description courte + notes pédagogiques */}
               <div className="space-y-2 sm:w-1/2">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                   Face sélectionnée
                 </p>
 
-                {/* Label non modifiable : "Face 1", "Face 2", etc. */}
                 <p className="text-sm font-semibold text-slate-900">
                   {selectedSegment.label}
                 </p>
 
-                {/* Description courte (affichée sur le cube) */}
                 <textarea
                   className="mt-1 w-full rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 outline-none focus:border-brand-500 focus:ring-0"
                   rows={1}
@@ -1321,7 +1303,6 @@ if (isFaceDetailOpen && selectedSegment) {
                   onChange={handleSelectedDescriptionChange}
                 />
 
-                {/* Notes pédagogiques */}
                 <div className="space-y-1">
                   <p className="text-[11px] font-medium text-slate-500">
                     Notes pédagogiques
@@ -1336,7 +1317,6 @@ if (isFaceDetailOpen && selectedSegment) {
                 </div>
               </div>
 
-              {/* Colonne droite : boutons médias */}
               <div className="mt-2 flex flex-wrap gap-2 sm:mt-6 sm:w-1/2 sm:justify-end">
                 <button
                   type="button"
@@ -1374,10 +1354,9 @@ if (isFaceDetailOpen && selectedSegment) {
           </div>
         )}
 
-        {/* Menu Options (bottom sheet) */}
+        {/* Menu Options */}
         {isOptionsOpen && (
           <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center">
-            {/* Overlay */}
             <button
               type="button"
               aria-label="Fermer le menu Options"
@@ -1388,9 +1367,7 @@ if (isFaceDetailOpen && selectedSegment) {
               className="absolute inset-0 bg-slate-900/40"
             />
 
-            {/* Bottom sheet */}
             <div className="relative z-10 w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6">
-              {/* En-tête */}
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -1414,7 +1391,6 @@ if (isFaceDetailOpen && selectedSegment) {
               </div>
 
               <div className="space-y-5 text-xs text-slate-700">
-                {/* Bloc 1 – Modèles pré-conçus */}
                 <div className="space-y-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Modèles pré-conçus
@@ -1476,7 +1452,6 @@ if (isFaceDetailOpen && selectedSegment) {
                   </div>
                 </div>
 
-                {/* Bloc 2 – Gestion du cube */}
                 <div className="space-y-2 border-t border-slate-100 pt-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Gestion du cube
@@ -1544,13 +1519,11 @@ if (isFaceDetailOpen && selectedSegment) {
                   </div>
                 </div>
 
-                {/* Bloc 3 – Astuce */}
                 <div className="space-y-1 border-t border-slate-100 pt-3">
                   <p className="text-[11px] text-slate-500">
                     Astuce : commence par préparer un modèle, puis ajoute les
                     photos / vidéos face par face. Tu peux ensuite affiner
-                    chaque face en détail depuis le panneau “Face
-                    sélectionnée”.
+                    chaque face en détail depuis le panneau “Face sélectionnée”.
                   </p>
                 </div>
               </div>
