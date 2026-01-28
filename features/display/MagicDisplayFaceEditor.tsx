@@ -227,9 +227,10 @@ function loadFaceState(faceId: number): FaceState | null {
 }
 
 export default function MagicDisplayFaceEditor({
-  creatorName = "Aiko Tanaka",
+  // 🔁 Valeurs par défaut neutres pour les captures
+  creatorName = "User",
   creatorAvatar,
-  creatorInitials = "AT",
+  creatorInitials = "U",
   faceId = 1,
   faceLabel = "Face 1",
   onBack,
