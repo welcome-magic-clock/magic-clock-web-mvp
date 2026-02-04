@@ -289,6 +289,7 @@ function renderSegmentIcon(seg: Segment) {
   if (seg.mediaType === "file") {
     return <FileText className="h-3.5 w-3.5" />;
   }
+  // 👉 pictogramme par défaut (pour ta capture écran IPI)
   return <Plus className="h-3.5 w-3.5" />;
 }
 
@@ -364,7 +365,7 @@ export default function MagicDisplayClient() {
     .filter((tag) => tag.length > 0)
     .map((tag) => `#${tag}`);
 
-  // 👩‍🎨 créateur (Aiko par défaut, mais avatar NEUTRE)
+  // 👩‍🎨 créateur (Aiko par défaut, mais avatar NEUTRE pour la preview IPI)
   const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
@@ -509,6 +510,9 @@ export default function MagicDisplayClient() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 👉 mémorise sur QUELLE FACE on ouvre le picker (cercle ou panneau)
+  const uploadFaceIdRef = useRef<number | null>(null);
 
   // 🧬 Charger le draft du cube
   useEffect(() => {
@@ -672,7 +676,10 @@ export default function MagicDisplayClient() {
   }
 
   function handleCircleFaceClick(seg: Segment) {
+    // on sélectionne la face + on mémorise sur laquelle on va uploader
     setSelectedId(seg.id);
+    uploadFaceIdRef.current = seg.id;
+
     if (!seg.hasMedia && photoInputRef.current) {
       photoInputRef.current.click();
     }
@@ -680,6 +687,9 @@ export default function MagicDisplayClient() {
 
   function handleChooseMedia(type: MediaType) {
     if (!selectedSegment) return;
+
+    // idem : mémoriser la face cible avant d’ouvrir le picker
+    uploadFaceIdRef.current = selectedSegment.id;
 
     if (type === "photo") {
       photoInputRef.current?.click();
@@ -695,13 +705,22 @@ export default function MagicDisplayClient() {
     type: MediaType,
   ) {
     const file = event.target.files?.[0];
-    if (!file || !selectedSegment) return;
+    if (!file) return;
+
+    // On priorise la face mémorisée, sinon on retombe sur selectedSegment
+    const targetFaceId =
+      uploadFaceIdRef.current ?? selectedSegment?.id ?? null;
+
+    if (!targetFaceId) {
+      event.target.value = "";
+      return;
+    }
 
     const url = URL.createObjectURL(file);
 
     setSegments((prev) =>
       prev.map((seg) =>
-        seg.id === selectedSegment.id
+        seg.id === targetFaceId
           ? {
               ...seg,
               hasMedia: true,
@@ -712,6 +731,8 @@ export default function MagicDisplayClient() {
       ),
     );
 
+    // reset
+    uploadFaceIdRef.current = null;
     event.target.value = "";
   }
 
@@ -743,7 +764,7 @@ export default function MagicDisplayClient() {
   const displayState: PreviewDisplay = {
     creatorName: currentCreator.name,
     creatorInitials: initials,
-    // on peut laisser l’avatar URL pour la preview, ou le mettre à undefined
+    // avatar neutre pour la preview (IPI)
     creatorAvatarUrl: undefined,
 
     faces: segments.map((seg): PreviewFace => {
@@ -1051,63 +1072,63 @@ export default function MagicDisplayClient() {
                 </div>
               </div>
 
-             {/* Bas de carte : créateur + vues + likes + accès + titre + hashtags */}
-<div className="mt-3 space-y-1 text-xs">
-  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-    {/* 👉 Nom et handle neutres pour la capture IPI */}
-    <span className="font-medium">User</span>
-    <span className="text-slate-400">@user</span>
+              {/* Bas de carte : créateur + vues + likes + accès + titre + hashtags */}
+              <div className="mt-3 space-y-1 text-xs">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
+                  {/* 👉 Nom et handle neutres pour la capture IPI */}
+                  <span className="font-medium">User</span>
+                  <span className="text-slate-400">@user</span>
 
-    <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
-    <span>
-      <span className="font-medium">
-        {mockViews.toLocaleString("fr-CH")}
-      </span>{" "}
-      vues
-    </span>
+                  <span>
+                    <span className="font-medium">
+                      {mockViews.toLocaleString("fr-CH")}
+                    </span>{" "}
+                    vues
+                  </span>
 
-    <span className="flex items-center gap-1">
-      <Heart className="h-3 w-3" />
-      <span>{mockLikes}</span>
-    </span>
+                  <span className="flex items-center gap-1">
+                    <Heart className="h-3 w-3" />
+                    <span>{mockLikes}</span>
+                  </span>
 
-    <span className="flex items-center gap-1">
-      {isLockedPreview ? (
-        <Lock className="h-3 w-3" />
-      ) : (
-        <Unlock className="h-3 w-3" />
-      )}
-      <span>{accessLabel}</span>
-      {effectiveMode === "PPV" && effectivePpvPrice != null && (
-        <span className="ml-1 text-[11px] text-slate-500">
-          · {effectivePpvPrice.toFixed(2)} CHF
-        </span>
-      )}
-    </span>
-  </div>
+                  <span className="flex items-center gap-1">
+                    {isLockedPreview ? (
+                      <Lock className="h-3 w-3" />
+                    ) : (
+                      <Unlock className="h-3 w-3" />
+                    )}
+                    <span>{accessLabel}</span>
+                    {effectiveMode === "PPV" && effectivePpvPrice != null && (
+                      <span className="ml-1 text-[11px] text-slate-500">
+                        · {effectivePpvPrice.toFixed(2)} CHF
+                      </span>
+                    )}
+                  </span>
+                </div>
 
-  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-    {effectiveTitle && (
-      <span className="font-medium text-slate-800">
-        {effectiveTitle}
-      </span>
-    )}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                  {effectiveTitle && (
+                    <span className="font-medium text-slate-800">
+                      {effectiveTitle}
+                    </span>
+                  )}
 
-    {effectiveHashtags.length > 0 ? (
-      effectiveHashtags.map((tag) => (
-        <span key={tag} className="text-brand-600">
-          {tag}
-        </span>
-      ))
-    ) : (
-      <>
-        <span className="text-brand-600">#coiffure</span>
-        <span className="text-brand-600">#color</span>
-      </>
-    )}
-  </div>
-</div>
+                  {effectiveHashtags.length > 0 ? (
+                    effectiveHashtags.map((tag) => (
+                      <span key={tag} className="text-brand-600">
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      <span className="text-brand-600">#coiffure</span>
+                      <span className="text-brand-600">#color</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </button>
           </article>
         </section>
