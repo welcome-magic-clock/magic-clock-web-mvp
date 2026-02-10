@@ -1,5 +1,3 @@
-// app/legal/cookies/page.tsx
-
 export const metadata = {
   title: "Politique de cookies – Magic Clock",
 };
@@ -37,8 +35,9 @@ export default function CookiesPage() {
               className="font-medium text-indigo-600 hover:text-indigo-700"
             >
               Politique de confidentialité
-            </a>
-            .
+            </a>{" "}
+            qui décrit notamment comment nous traitons les données collectées au
+            moyen de ces technologies.
           </p>
         </section>
 
@@ -88,7 +87,7 @@ export default function CookiesPage() {
             <li>
               <strong>Cookies de fonctionnalité</strong> : peuvent être utilisés
               pour mémoriser certaines préférences (par ex. mode sombre,
-              langue, filtres, paramètres de lecture vidéo).
+              langue, filtres, paramètres de lecture vidéo ou d’affichage).
             </li>
             <li>
               <strong>Cookies de marketing / suivi</strong> (facultatifs) :
@@ -98,6 +97,13 @@ export default function CookiesPage() {
               consentement lorsqu’il est requis.
             </li>
           </ul>
+          <p className="mt-2 text-xs text-slate-500">
+            À ce stade du projet, Magic Clock peut fonctionner uniquement avec
+            des cookies strictement nécessaires et de mesure d&apos;audience
+            basique. L&apos;introduction de cookies marketing fera l&apos;objet,
+            le cas échéant, d&apos;une information et d&apos;un choix clair
+            dans le module de préférences.
+          </p>
         </section>
 
         {/* 4. Cookies de tiers */}
@@ -111,20 +117,22 @@ export default function CookiesPage() {
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>prestataire d’hébergement ou de diffusion vidéo ;</li>
-            <li>outils de mesure d’audience ;</li>
+            <li>outils de mesure d’audience et de performance ;</li>
             <li>
               prestataire de paiement (pour sécuriser la session ou lutter
               contre la fraude) ;
             </li>
             <li>
-              services de support ou de communication embarqués, le cas
-              échéant.
+              services de support, de sécurité ou de communication embarqués,
+              le cas échéant.
             </li>
           </ul>
           <p className="mt-2">
             L’utilisation de ces cookies est soumise aux politiques de
             confidentialité des tiers concernés, que nous vous recommandons de
-            consulter.
+            consulter. Lorsque cela est requis, ces cookies ne seront activés
+            qu&apos;après votre consentement via notre module de gestion des
+            cookies.
           </p>
         </section>
 
@@ -133,9 +141,7 @@ export default function CookiesPage() {
           <h2 className="text-base font-semibold text-slate-900">
             5. Durée de vie des cookies
           </h2>
-          <p className="mt-2">
-            Les cookies peuvent être :
-          </p>
+          <p className="mt-2">Les cookies peuvent être :</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
               <strong>cookies de session</strong> : supprimés automatiquement
@@ -150,7 +156,8 @@ export default function CookiesPage() {
           <p className="mt-2">
             Les durées de conservation exactes peuvent varier en fonction du
             cookie (généralement de quelques minutes à 12 mois pour les cookies
-            non essentiels).
+            non essentiels). Les preuves de votre consentement peuvent être
+            conservées plus longtemps lorsque la loi l’exige.
           </p>
         </section>
 
@@ -168,14 +175,14 @@ export default function CookiesPage() {
           <p className="mt-2">
             Vous pouvez à tout moment modifier vos choix en accédant au module{" "}
             <strong>« Préférences cookies »</strong> (lien disponible dans le
-            pied de page ou dans les paramètres de votre compte, dès qu’il sera
-            activé dans la version définitive de la Plateforme).
+            pied de page du site ou dans les paramètres de votre compte dès son
+            activation dans la Plateforme).
           </p>
           <p className="mt-2">
             Vous pouvez également configurer votre navigateur pour bloquer ou
             supprimer les cookies. Toutefois, le blocage des cookies
             strictement nécessaires peut affecter le fonctionnement de la
-            Plateforme.
+            Plateforme ou empêcher l’accès à certaines fonctionnalités.
           </p>
         </section>
 
@@ -215,6 +222,13 @@ export default function CookiesPage() {
             refléter les changements intervenus dans nos pratiques ou pour
             respecter de nouvelles exigences légales. La date de dernière mise à
             jour figure en haut de page.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            En cas de changement substantiel (par exemple introduction de
+            nouveaux partenaires publicitaires ou de nouvelles catégories de
+            cookies), nous pourrons vous demander de{" "}
+            <strong>renouveler vos choix</strong> via la bannière ou le module
+            de préférences.
           </p>
         </section>
 
