@@ -42,50 +42,54 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 2. Objet */}
-        <section>
-          <h2 className="text-base font-semibold text-slate-900">
-            2. Objet de la plateforme
-          </h2>
-          <p className="mt-2">
-            Magic Clock est une plateforme en ligne permettant notamment&nbsp;:
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>
-              de publier et partager des contenus visuels (photos, vidéos,
-              avant/après, Magic Clock Display, etc.) ;
-            </li>
-            <li>
-              de découvrir des créateurs, salons et professionnels de la
-              beauté, en particulier dans le domaine de la coiffure et de la
-              colorimétrie ;
-            </li>
-            <li>
-              de monétiser certains contenus via des options gratuites,
-              d&apos;abonnement ou de paiement à la séance (PPV) ;
-            </li>
-            <li>
-              d&apos;échanger avec d&apos;autres membres via des fonctionnalités
-              sociales (messages, commentaires, likes, etc.).
-            </li>
-          </ul>
-          <p className="mt-2">
-            Les fonctionnalités détaillées et les modalités de monétisation
-            sont précisées dans les CGV, dans l&apos;interface Monétisation et
-            sur la page dédiée{" "}
-            <a
-              href="/pricing"
-              className="font-medium text-violet-600 hover:text-violet-700"
-            >
-              « Prix &amp; monétisation »
-            </a>
-            . À titre indicatif, les prix des abonnements et des contenus PPV
-            peuvent être fixés par les créateurs dans une plage large (par
-            exemple de <strong>0,99 à 999,99</strong>) dans la{" "}
-            <strong>devise d&apos;achat de l&apos;Utilisateur</strong>, telle
-            qu&apos;affichée au moment du paiement.
-          </p>
-        </section>
+        {/* 2. Objet de la plateforme */}
+<section>
+  <h2 className="text-base font-semibold text-slate-900">
+    2. Objet de la plateforme
+  </h2>
+  <p className="mt-2">
+    Magic Clock est une plateforme en ligne permettant notamment&nbsp;:
+  </p>
+  <ul className="mt-2 list-disc space-y-1 pl-5">
+    <li>
+      de publier et partager des contenus visuels et pédagogiques
+      (photos, vidéos, avant/après, Magic Clock Display, etc.) ;
+    </li>
+    <li>
+      de présenter des méthodes, tutoriels, retours d&apos;expérience
+      et parcours de création dans <strong>différents domaines
+      d&apos;activité</strong> (par exemple beauté, coiffure, bien-être,
+      cuisine, organisation de la maison, bricolage, développement
+      personnel ou professionnel, etc.) ;
+    </li>
+    <li>
+      de monétiser certains contenus via des options gratuites,
+      d&apos;abonnement ou de paiement à la séance (PPV) ;
+    </li>
+    <li>
+      d&apos;échanger avec d&apos;autres membres via des fonctionnalités
+      sociales (messages, commentaires, likes, etc.).
+    </li>
+  </ul>
+  <p className="mt-2">
+    Les contenus pédagogiques (par exemple les explications étape par
+    étape d&apos;un créateur pour passer d&apos;un «&nbsp;Avant&nbsp;» à un
+    «&nbsp;Après&nbsp;») ont pour objectif de partager une{" "}
+    <strong>méthodologie, une expérience ou un parcours</strong>.
+    Ils ne constituent en aucun cas une <strong>promesse</strong> ni
+    une <strong>garantie de résultat</strong>, que ce soit sur
+    l&apos;aspect esthétique, pratique, organisationnel, professionnel,
+    financier ou autre.
+  </p>
+  <p className="mt-2">
+    Les résultats obtenus par un Utilisateur peuvent varier
+    significativement en fonction de nombreux facteurs (situation
+    personnelle ou professionnelle, compétences, matériel ou produits
+    utilisés, environnement, état de santé, contraintes légales, etc.).
+    Vous restez seul responsable de l&apos;application ou non des
+    conseils, méthodes et contenus présentés sur la plateforme.
+  </p>
+</section>
 
         {/* 3. Création de compte */}
         <section>
@@ -305,6 +309,27 @@ export default function CguPage() {
             financier, juridique, etc.). Les utilisateurs restent seuls
             responsables de leurs choix professionnels et commerciaux.
           </p>
+          <p className="mt-2">
+  En particulier, Magic Clock et les créateurs ne garantissent{" "}
+  <strong>aucun résultat spécifique</strong> lié à l&apos;application
+  des méthodes, conseils ou contenus publiés sur la plateforme
+  (qu&apos;ils concernent, par exemple, la beauté, la coiffure, la
+  cuisine, le bricolage, l&apos;organisation du foyer, le bien-être,
+  la communication, la gestion de carrière ou tout autre domaine).
+  Les contenus ont une vocation <strong>pédagogique et inspirante</strong>,
+  mais ils ne remplacent pas l&apos;avis ni l&apos;expertise d&apos;un
+  professionnel adapté à votre situation personnelle.
+</p>
+<p className="mt-2">
+  Vous demeurez pleinement responsable de l&apos;utilisation que vous
+  faites des contenus et des outils proposés, ainsi que des effets
+  éventuels sur votre activité, votre foyer, vos clients, vos proches,
+  votre santé ou celle de tiers. Dans les limites autorisées par la
+  loi applicable, Magic Clock décline toute responsabilité pour les{" "}
+  <strong>dommages physiques, matériels, économiques ou moraux</strong>{" "}
+  qui résulteraient directement ou indirectement de l&apos;application
+  des conseils, méthodes ou expériences partagés via la plateforme.
+</p>
         </section>
 
         {/* 10. Données perso / cookies / sécurité */}
