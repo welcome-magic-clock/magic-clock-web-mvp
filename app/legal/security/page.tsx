@@ -1,120 +1,127 @@
 // app/legal/security/page.tsx
+import type { Metadata } from "next";
+import Link from "next/link";
+import BackButton from "@/components/navigation/BackButton";
 
-export const metadata = {
-  title: "Sécurité & incidents – Magic Clock",
+export const metadata: Metadata = {
+  title: "Sécurité & gestion des incidents – Magic Clock",
 };
 
 export default function SecurityPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Sécurité &amp; gestion des incidents
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Ce document résume les mesures minimales que nous mettons en place
-          pour protéger vos données et la Plateforme Magic Clock, ainsi que
-          la façon dont nous gérons les incidents de sécurité.
-        </p>
+    <main className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+      <header className="mb-8 space-y-3">
+        <BackButton fallbackHref="/legal" label="Retour à la section Légal" />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Sécurité &amp; gestion des incidents
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Résumé des mesures de sécurité mises en œuvre pour protéger les
+            données et de la procédure en cas d&apos;incident.
+          </p>
+        </div>
       </header>
 
-      <section className="space-y-6 text-sm leading-relaxed text-slate-700">
+      <div className="space-y-8 text-sm leading-relaxed text-slate-700">
+        {/* 1. Principes */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            1. Objectif du plan
+            1. Principes généraux
           </h2>
           <p className="mt-2">
-            Le plan de sécurité de Magic Clock vise à réduire au minimum le
-            risque d&apos;accès non autorisé, de perte ou de divulgation de
-            données, et à garantir une réaction rapide et structurée en cas
-            d&apos;incident.
+            Nous mettons en œuvre des mesures techniques et organisationnelles
+            raisonnables pour protéger les données personnelles et les contenus
+            hébergés sur Magic Clock contre la perte, l’accès non autorisé ou la
+            divulgation.
           </p>
         </section>
 
+        {/* 2. Mesures techniques (résumé) */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            2. Protection des données
+            2. Mesures techniques (résumé)
           </h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>chiffrement des communications via HTTPS (TLS) ;</li>
             <li>
-              Hébergement chez des fournisseurs cloud reconnus, avec centres
-              de données situés en Europe ou en Suisse (selon l&apos;environnement).
+              utilisation de prestataires d’hébergement et de stockage
+              reconnus, avec contrôles d’accès et journaux d’activité ;
             </li>
             <li>
-              Accès aux systèmes limité aux membres autorisés de l&apos;équipe,
-              protégés par authentification forte (mot de passe robuste, 2FA
-              lorsque disponible).
+              séparation des environnements (développement / préproduction /
+              production) lorsqu’elle est mise en place ;
             </li>
             <li>
-              Séparation des environnements (développement / test / production)
-              autant que possible, pour limiter l&apos;impact d&apos;une erreur
-              ou d&apos;un incident.
+              mise à jour régulière des dépendances logicielles et correctifs de
+              sécurité ;
             </li>
             <li>
-              Journalisation des événements importants (connexions, actions
-              sensibles, erreurs critiques) pour faciliter l&apos;analyse en
-              cas de problème.
+              limitation des accès internes selon le principe du moindre
+              privilège.
             </li>
           </ul>
+          <p className="mt-2 text-xs text-slate-500">
+            Des détails supplémentaires sont documentés dans notre plan de
+            sécurité interne. Ce plan est amené à évoluer avec la plateforme.
+          </p>
         </section>
 
+        {/* 3. Gestion des incidents */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             3. Gestion des incidents de sécurité
           </h2>
           <p className="mt-2">
-            En cas d&apos;incident de sécurité suspecté ou confirmé
-            (compte compromis, fuite de données, comportement anormal du
-            système, etc.), nous appliquons au minimum les étapes suivantes :
+            En cas de suspicion d’incident de sécurité (par exemple fuite de
+            données, accès non autorisé, compromission de compte), nous appliquons
+            notamment les étapes suivantes&nbsp;:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Identification et confinement rapide de l&apos;incident.</li>
+            <li>détection et qualification de l’incident ;</li>
+            <li>mesures de confinement et de correction ;</li>
             <li>
-              Analyse technique pour comprendre l&apos;origine et l&apos;ampleur
-              du problème.
+              journalisation des faits essentiels (date, cause probable,
+              systèmes impactés) ;
             </li>
             <li>
-              Correction ou mise en place de mesures de mitigation
-              (ex. blocage de compte, rotation des clés, correctifs).
-            </li>
-            <li>
-              Documentation de l&apos;incident dans un rapport interne et
-              amélioration de nos contrôles si nécessaire.
+              évaluation des risques pour les utilisateurs et, le cas échéant,
+              notification des personnes concernées et/ou des autorités
+              compétentes conformément au droit applicable.
             </li>
           </ul>
         </section>
 
+        {/* 4. Que pouvez-vous faire ? */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            4. Notification des utilisateurs
+            4. Que faire si vous suspectez un incident ?
           </h2>
           <p className="mt-2">
-            Si un incident de sécurité a un impact significatif sur vos
-            données personnelles, nous vous en informerons dans un délai
-            raisonnable, conformément au droit applicable, avec les
-            informations disponibles au moment de la notification.
+            Si vous pensez que votre compte a été compromis ou que des données
+            liées à Magic Clock sont exposées, nous vous recommandons&nbsp;:
           </p>
-        </section>
-
-        <section>
-          <h2 className="text-base font-semibold text-slate-900">
-            5. Nous contacter en cas de suspicion
-          </h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>de changer immédiatement votre mot de passe ;</li>
+            <li>
+              d’activer, lorsque disponible, des mécanismes de connexion plus
+              sécurisés (par exemple connexion via un fournisseur reconnu) ;
+            </li>
+            <li>
+              de nous signaler l’incident sans délai à l’adresse suivante&nbsp;:
+            </li>
+          </ul>
           <p className="mt-2">
-            Si vous pensez avoir détecté un problème de sécurité ou un usage
-            anormal de votre compte, vous pouvez nous contacter à
-            l&apos;adresse suivante :
-          </p>
-          <p className="mt-1 font-medium text-slate-900">
-            security@magic-clock.com
-          </p>
-          <p className="mt-2 text-xs text-slate-500">
-            Cette page est un résumé. Le plan détaillé de sécurité et de gestion
-            des incidents est documenté en interne pour l&apos;équipe Magic
-            Clock et mis à jour régulièrement.
+            E-mail&nbsp;:{" "}
+            <a
+              href="mailto:[email-security-à-compléter]"
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              [email-security-à-compléter]
+            </a>
           </p>
         </section>
-      </section>
+      </div>
     </main>
   );
 }
