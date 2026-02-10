@@ -16,10 +16,8 @@ export default function CguPage() {
           complètent les Conditions générales de vente (CGV) et la Politique de
           confidentialité.
         </p>
-        <p className="text-xs text-slate-400">
-          Version de travail pour la phase bêta de Magic Clock. Le texte
-          définitif sera validé et, le cas échéant, adapté par un cabinet
-          d&apos;avocats spécialisé avant le lancement commercial.
+        <p className="text-xs text-slate-500">
+          Dernière mise à jour : 26 novembre 2025
         </p>
       </header>
 
@@ -114,6 +112,20 @@ export default function CguPage() {
             compte. En cas de suspicion d&apos;utilisation frauduleuse, vous
             devez nous en informer dans les meilleurs délais.
           </p>
+          <p className="mt-2">
+            Lorsque la loi l&apos;exige ou que cela est approprié, Magic Clock
+            peut mettre en place des mécanismes de{" "}
+            <strong>vérification d&apos;âge</strong> ou demander des
+            informations complémentaires afin de s&apos;assurer que
+            l&apos;utilisateur remplit les conditions d&apos;âge minimum.
+          </p>
+          <p className="mt-2">
+            Les contenus impliquant des <strong>mineurs</strong> (par exemple
+            avant/après, tutos coiffure, etc.) ne peuvent être publiés que dans
+            le respect strict du droit applicable, avec l&apos;autorisation
+            nécessaire des représentants légaux et sans jamais sexualiser ou
+            exploiter l&apos;image d&apos;un mineur.
+          </p>
         </section>
 
         {/* 4. Utilisation acceptable */}
@@ -156,6 +168,18 @@ export default function CguPage() {
             contreviendrait aux présentes règles ou qui serait signalé par la
             communauté, et de suspendre ou résilier les comptes concernés, dans
             le respect des lois applicables.
+          </p>
+          <p className="mt-2">
+            Les règles détaillées de comportement, d&apos;inclusivité et de
+            respect de la communauté sont précisées dans notre{" "}
+            <a
+              href="/legal/community-guidelines"
+              className="font-medium text-violet-600 hover:text-violet-700"
+            >
+              Charte de la communauté
+            </a>
+            . En cas de contradiction, les dispositions impératives de cette
+            Charte complètent les présentes CGU.
           </p>
         </section>
 
@@ -207,6 +231,18 @@ export default function CguPage() {
             reproduire, modifier, distribuer, louer, prêter, vendre ou créer
             des œuvres dérivées à partir de ces éléments, au-delà de votre
             usage strictement personnel de la plateforme.
+          </p>
+          <p className="mt-2">
+            Pour plus de détails sur la manière dont nous gérons les marques,
+            logos, contenus protégés et demandes de retrait pour atteinte aux
+            droits, vous pouvez consulter notre{" "}
+            <a
+              href="/legal/ip-policy"
+              className="font-medium text-violet-600 hover:text-violet-700"
+            >
+              Politique de propriété intellectuelle
+            </a>
+            .
           </p>
         </section>
 
@@ -271,10 +307,10 @@ export default function CguPage() {
           </p>
         </section>
 
-        {/* 10. Données perso */}
+        {/* 10. Données perso / cookies / sécurité */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            10. Données personnelles
+            10. Données personnelles, cookies et sécurité
           </h2>
           <p className="mt-2">
             Le traitement de vos données personnelles dans le cadre de
@@ -285,8 +321,31 @@ export default function CguPage() {
             >
               Politique de confidentialité
             </a>
-            . En utilisant la plateforme, vous reconnaissez en avoir pris
-            connaissance.
+            , qui décrit notamment les catégories de données collectées, les
+            finalités des traitements et vos droits.
+          </p>
+          <p className="mt-2">
+            L&apos;utilisation de cookies et technologies similaires est
+            détaillée dans notre{" "}
+            <a
+              href="/legal/cookies"
+              className="font-medium text-violet-600 hover:text-violet-700"
+            >
+              Politique de cookies
+            </a>
+            .
+          </p>
+          <p className="mt-2">
+            Un résumé de nos mesures techniques et organisationnelles pour
+            protéger vos données, ainsi que de notre procédure en cas
+            d&apos;incident, est disponible sur la page{" "}
+            <a
+              href="/legal/security"
+              className="font-medium text-violet-600 hover:text-violet-700"
+            >
+              Sécurité &amp; incidents
+            </a>
+            .
           </p>
         </section>
 
@@ -324,11 +383,44 @@ export default function CguPage() {
             par des dispositions légales impératives (notamment pour les
             consommateurs).
           </p>
-          <p className="mt-2 text-xs text-slate-400">
-            Cette clause de droit applicable et de juridiction est fournie à
-            titre indicatif et pourra être adaptée par le cabinet d&apos;avocats
-            mandaté en fonction de la structuration juridique finale du groupe
-            Magic Clock et des pays de commercialisation.
+        </section>
+
+        {/* 13. Contact & signalements */}
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            13. Contact et signalements
+          </h2>
+          <p className="mt-2">
+            Pour toute question sur les présentes CGU, ou pour signaler un
+            contenu ou un comportement que vous jugez contraire à la loi ou à
+            nos règles, vous pouvez&nbsp;:
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              utiliser les <strong>outils de signalement intégrés</strong> à la
+              plateforme (boutons de signalement, formulaires dédiés) ; et/ou
+            </li>
+            <li>
+              nous contacter à l&apos;adresse suivante&nbsp;:{" "}
+              <a
+                href="mailto:[email-legal-à-compléter]"
+                className="font-medium text-violet-600 hover:text-violet-700"
+              >
+                [email-legal-à-compléter]
+              </a>
+              .
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-slate-500">
+            Les informations relatives à l&apos;éditeur du site et aux
+            coordonnées de contact figurent également sur la page{" "}
+            <a
+              href="/legal/mentions"
+              className="font-medium text-violet-600 hover:text-violet-700"
+            >
+              Mentions légales
+            </a>
+            .
           </p>
         </section>
       </div>
