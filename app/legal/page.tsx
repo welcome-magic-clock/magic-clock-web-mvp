@@ -104,6 +104,79 @@ export default function LegalIndexPage() {
             </p>
           </Link>
 
+      {/* Autres documents : IP, communauté, sécurité, mentions */}
+      <section className="mt-10 space-y-4">
+        <h2 className="text-base font-semibold text-slate-900">
+          Propriété intellectuelle, communauté & sécurité
+        </h2>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Link
+            href="/legal/ip-policy"
+            className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+          >
+            <h3 className="text-sm font-semibold text-slate-900">
+              Propriété intellectuelle &amp; retrait
+            </h3>
+            <p className="mt-2 text-xs text-slate-600">
+              Règles relatives aux droits d’auteur, à l’utilisation des
+              contenus et à la procédure de retrait en cas d’atteinte présumée.
+            </p>
+            <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
+              Voir la politique IP →
+            </p>
+          </Link>
+
+          <Link
+            href="/legal/community-guidelines"
+            className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+          >
+            <h3 className="text-sm font-semibold text-slate-900">
+              Charte de la communauté
+            </h3>
+            <p className="mt-2 text-xs text-slate-600">
+              Lignes directrices pour publier des contenus pédagogiques,
+              respectueux et conformes aux règles de Magic Clock.
+            </p>
+            <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
+              Lire la charte →
+            </p>
+          </Link>
+
+          <Link
+            href="/legal/security"
+            className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+          >
+            <h3 className="text-sm font-semibold text-slate-900">
+              Sécurité &amp; incidents
+            </h3>
+            <p className="mt-2 text-xs text-slate-600">
+              Résumé des mesures de sécurité, gestion des incidents et conseils
+              pour protéger ton compte.
+            </p>
+            <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
+              Voir le résumé sécurité →
+            </p>
+          </Link>
+
+          <Link
+            href="/legal/mentions"
+            className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+          >
+            <h3 className="text-sm font-semibold text-slate-900">
+              Mentions légales / Impressum
+            </h3>
+            <p className="mt-2 text-xs text-slate-600">
+              Informations sur l’éditeur de Magic Clock, l’adresse de contact et
+              les principaux prestataires techniques.
+            </p>
+            <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
+              Voir les mentions légales →
+            </p>
+          </Link>
+        </div>
+      </section>
+
           {/* 🔐 Sécurité & incidents */}
           <Link
             href="/legal/security"
