@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import LeftNav from "@/components/LeftNav";
 import MobileTabs from "@/components/MobileTabs";
+import { CookieBanner } from "@/components/legal/CookieBanner";
 
 export const metadata: Metadata = {
   title: "Magic Clock",
@@ -32,6 +33,9 @@ export default function RootLayout({
 
         {/* Onglets mobile (en bas) */}
         <MobileTabs />
+
+        {/* ✅ Bannière cookies globale */}
+        <CookieBanner />
       </body>
     </html>
   );
