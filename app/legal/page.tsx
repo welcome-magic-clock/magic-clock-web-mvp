@@ -36,7 +36,7 @@ export default function LegalIndexPage() {
             className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
           >
             <h2 className="text-sm font-semibold text-slate-900">
-              CGV – Conditions générales de vente & monétisation
+              CGV – Conditions générales de vente &amp; monétisation
             </h2>
             <p className="mt-2 text-xs text-slate-600">
               Règles de vente et de monétisation sur Magic Clock&nbsp;:
@@ -67,7 +67,7 @@ export default function LegalIndexPage() {
           </Link>
         </div>
 
-        {/* Politique de confidentialité / cookies */}
+        {/* Politique de confidentialité / cookies / sécurité */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* Privacy */}
           <Link
@@ -103,13 +103,31 @@ export default function LegalIndexPage() {
               Gérer et comprendre les cookies →
             </p>
           </Link>
+
+          {/* 🔐 Sécurité & incidents */}
+          <Link
+            href="/legal/security"
+            className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md md:col-span-2"
+          >
+            <h2 className="text-sm font-semibold text-slate-900">
+              Sécurité &amp; incidents
+            </h2>
+            <p className="mt-2 text-xs text-slate-600">
+              Résumé de notre plan de sécurité, mesures de protection des
+              données et procédure interne en cas d&apos;incident (version
+              minimale pour la bêta).
+            </p>
+            <p className="mt-3 text-xs font-medium text-brand-600 group-hover:text-brand-700">
+              Voir le résumé sécurité →
+            </p>
+          </Link>
         </div>
       </section>
 
       {/* Bloc complémentaire : lien vers pricing + FAQ */}
       <section className="mt-10 space-y-2 text-sm text-slate-700">
         <h2 className="text-base font-semibold text-slate-900">
-          Prix, monétisation & FAQ
+          Prix, monétisation &amp; FAQ
         </h2>
         <p>
           Pour mieux comprendre comment fonctionnent les modèles{" "}
