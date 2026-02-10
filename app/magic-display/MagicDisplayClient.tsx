@@ -9,6 +9,8 @@ import {
   type ChangeEvent,
 } from "react";
 
+import { useSession } from "next-auth/react";
+
 import {
   Camera,
   Clapperboard,
@@ -118,8 +120,16 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
-const STORAGE_KEY = "mc-display-draft-v1";
-const FACE_PROGRESS_KEY = "mc-display-face-progress-v1";
+const STORAGE_KEY_BASE = "mc-display-draft-v1";
+const FACE_PROGRESS_KEY_BASE = "mc-display-face-progress-v1";
+const DRAFT_INDEX_KEY_BASE = "mc-display-drafts-index-v1";
+const MAX_ACTIVE_DRAFTS = 3;
+
+type DraftIndexEntry = {
+  id: string;       // clockId
+  createdAt: number;
+  updatedAt: number;
+};
 
 const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
 const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
@@ -348,6 +358,85 @@ export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+    const { data: session, status } = useSession();
+
+  // 1️⃣ Clé de compte (par user)
+  const userKey =
+    status === "authenticated"
+      ? ((session?.user as any)?.id ??
+        session?.user?.email ??
+        "guest")
+      : "guest";
+
+  // 2️⃣ Identifiant de Magic Clock (un par brouillon)
+  //    Si plus tard tu passes un vrai clockId dans l'URL, on le prendra.
+  const clockId = searchParams.get("clockId") ?? "default";
+
+  // 3️⃣ Clés de storage dérivées
+  const storageKey = `${STORAGE_KEY_BASE}:${userKey}:${clockId}`;
+  const faceProgressKey = `${FACE_PROGRESS_KEY_BASE}:${userKey}:${clockId}`;
+  const draftIndexKey = `${DRAFT_INDEX_KEY_BASE}:${userKey}`;
+
+  // 4️⃣ Helpers pour l’index des brouillons "En cours"
+  function loadDraftIndex(): DraftIndexEntry[] {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(draftIndexKey);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed as DraftIndexEntry[];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveDraftIndex(entries: DraftIndexEntry[]) {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        draftIndexKey,
+        JSON.stringify(entries),
+      );
+    } catch (err) {
+      console.error("Failed to save draft index", err);
+    }
+  }
+
+  function registerDraft(id: string): { ok: boolean; reason?: "LIMIT_REACHED" } {
+    if (typeof window === "undefined") return { ok: true };
+
+    const index = loadDraftIndex();
+
+    // Déjà existant → on met à jour updatedAt
+    const existing = index.find((d) => d.id === id);
+    if (existing) {
+      existing.updatedAt = Date.now();
+      saveDraftIndex(index);
+      return { ok: true };
+    }
+
+    // Nouveau brouillon → vérifier la limite
+    if (index.length >= MAX_ACTIVE_DRAFTS) {
+      return { ok: false, reason: "LIMIT_REACHED" };
+    }
+
+    index.push({
+      id,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    saveDraftIndex(index);
+    return { ok: true };
+  }
+
+  function unregisterDraft(id: string) {
+    if (typeof window === "undefined") return;
+    const index = loadDraftIndex();
+    const next = index.filter((d) => d.id !== id);
+    saveDraftIndex(next);
+  }
+
   // 🔍 Infos texte venant de Magic Studio
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudioParam =
@@ -376,10 +465,6 @@ export default function MagicDisplayClient() {
     .slice(0, 2)
     .toUpperCase();
   const creatorAvatar = currentCreator.avatar; // encore utilisé pour FaceEditor
-  const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
-  const creatorHandle = creatorHandleRaw.startsWith("@")
-    ? creatorHandleRaw
-    : `@${creatorHandleRaw}`;
 
   // 🔁 Payload complet Magic Studio (localStorage)
   const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
@@ -419,6 +504,20 @@ export default function MagicDisplayClient() {
     // ⚙️ Étape de prévisualisation "compressée"
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
   const [previewProgress, setPreviewProgress] = useState(0);
+
+    // 🧾 Enregistrer ce Magic Clock comme "En cours" pour cet utilisateur
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const result = registerDraft(clockId);
+    if (!result.ok && result.reason === "LIMIT_REACHED") {
+      // MVP : simple message + redirection
+      window.alert(
+        "Tu as déjà 3 Magic Clock en cours. Termine ou supprime-en un avant d'en créer un nouveau.",
+      );
+      router.push("/mymagic?tab=created");
+    }
+  }, [clockId, router]);
 
   useEffect(() => {
     try {
@@ -460,10 +559,11 @@ export default function MagicDisplayClient() {
     }
   }, []);
 
-  // Charger les infos de progression des faces
+    // Charger les infos de progression des faces (par user + Magic Clock)
   useEffect(() => {
+    if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(FACE_PROGRESS_KEY);
+      const raw = window.localStorage.getItem(faceProgressKey);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
@@ -472,7 +572,7 @@ export default function MagicDisplayClient() {
     } catch (error) {
       console.error("Failed to read face universal progress", error);
     }
-  }, []);
+  }, [faceProgressKey]);
 
   // 🎯 Valeurs “effectives”
   const effectiveTitle = (titleFromStudio || bridgeTitle).trim();
@@ -518,10 +618,11 @@ export default function MagicDisplayClient() {
   // 👉 mémorise sur QUELLE FACE on ouvre le picker (cercle ou panneau)
   const uploadFaceIdRef = useRef<number | null>(null);
 
-  // 🧬 Charger le draft du cube
+    // 🧬 Charger le draft du cube (par user + Magic Clock)
   useEffect(() => {
+    if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey);
       if (!raw) return;
 
       const parsed = JSON.parse(raw) as Partial<Segment>[];
@@ -547,10 +648,11 @@ export default function MagicDisplayClient() {
     } catch (error) {
       console.error("Failed to load Magic Display draft from storage", error);
     }
-  }, []);
+  }, [storageKey]);
 
-  // 💾 Sauvegarder la structure du cube
+    // 💾 Sauvegarder la structure du cube (par user + Magic Clock)
   useEffect(() => {
+    if (typeof window === "undefined") return;
     try {
       const toPersist = segments.map((seg) => ({
         id: seg.id,
@@ -561,11 +663,11 @@ export default function MagicDisplayClient() {
         mediaType: seg.mediaType ?? undefined,
         notes: seg.notes ?? undefined,
       }));
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
+      window.localStorage.setItem(storageKey, JSON.stringify(toPersist));
     } catch (error) {
       console.error("Failed to save Magic Display draft to storage", error);
     }
-  }, [segments]);
+  }, [segments, storageKey]);
 
     // 🎬 Simulation de "compression" avant d'ouvrir la prévisualisation
   useEffect(() => {
@@ -661,14 +763,16 @@ export default function MagicDisplayClient() {
         },
       };
 
-      try {
+            try {
         if (typeof window !== "undefined") {
-          window.localStorage.setItem(FACE_PROGRESS_KEY, JSON.stringify(next));
+          window.localStorage.setItem(
+            faceProgressKey,
+            JSON.stringify(next),
+          );
         }
       } catch (error) {
         console.error("Failed to persist face universal progress", error);
       }
-
       return next;
     });
   }
@@ -1010,10 +1114,12 @@ export default function MagicDisplayClient() {
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
-  const handleFinalPublish = () => {
+    const handleFinalPublish = () => {
     if (!canPublish || isPublishing) return;
     setIsPublishing(true);
     try {
+      // On libère ce Magic Clock de la liste "En cours"
+      unregisterDraft(clockId);
       router.push("/mymagic?tab=created&source=magic-display");
     } finally {
       setIsPublishing(false);
