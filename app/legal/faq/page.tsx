@@ -12,8 +12,18 @@ export default function LegalFAQPage() {
         <p className="mt-2 text-sm text-slate-500">
           Cette page répond aux questions fréquentes sur les{" "}
           <strong>versements créateurs</strong> et sur l’expérience des{" "}
-          <strong>utilisateurs (abonnements & contenus PPV)</strong> dans la
-          version bêta de Magic Clock.
+          <strong>utilisateurs (abonnements & contenus PPV)</strong> sur la
+          plateforme Magic Clock.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Elle est fournie à titre informatif. En cas de divergence, ce sont les{" "}
+          <a
+            href="/legal/cgv"
+            className="font-medium text-indigo-600 hover:text-indigo-700"
+          >
+            CGU/CGV
+          </a>{" "}
+          qui prévalent.
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Pour un aperçu global des modèles tarifaires et du fonctionnement de
@@ -306,7 +316,9 @@ export default function LegalFAQPage() {
               <strong>« S’abonner »</strong>. Le prix mensuel et les éventuels
               avantages inclus (contenus exclusifs, accès prioritaire, etc.)
               sont affichés clairement{" "}
-              <strong>dans ta devise d’achat (devise locale) et toutes taxes comprises</strong>{" "}
+              <strong>
+                dans ta devise d’achat (devise locale) et toutes taxes comprises
+              </strong>{" "}
               avant la validation.
             </p>
             <p className="mt-1">
@@ -424,8 +436,8 @@ export default function LegalFAQPage() {
             <p className="mt-2">
               Pour chaque paiement réussi, un{" "}
               <strong>reçu électronique</strong> est généré par notre
-              prestataire de paiement. Dans la version bêta, ces reçus peuvent
-              être envoyés :
+              prestataire de paiement. Actuellement, ces reçus peuvent être
+              envoyés :
             </p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
               <li>par e-mail à l’adresse associée à ton compte ;</li>
