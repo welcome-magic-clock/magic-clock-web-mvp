@@ -59,12 +59,14 @@ export default function PrivacyPage() {
           <h2 className="text-base font-semibold text-slate-900">
             2. Données personnelles que nous collectons
           </h2>
-          <p className="mt-2">Nous pouvons collecter les catégories de données suivantes :</p>
+          <p className="mt-2">
+            Nous pouvons collecter les catégories de données suivantes :
+          </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              <strong>Données d’identification</strong> : nom, prénom (si fourni),
-              nom d’utilisateur, photo de profil, identifiants de compte,
-              préférences de langue.
+              <strong>Données d’identification</strong> : nom, prénom (si
+              fourni), nom d’utilisateur, photo de profil, identifiants de
+              compte, préférences de langue.
             </li>
             <li>
               <strong>Coordonnées</strong> : adresse e-mail, pays, ville,
@@ -85,10 +87,11 @@ export default function PrivacyPage() {
               directement stockées par Magic Clock.
             </li>
             <li>
-              <strong>Données techniques & de navigation</strong> : adresse IP,
-              type et version du navigateur, identifiant de l’appareil, système
-              d’exploitation, pages consultées, durée de visite, source de
-              provenance, identifiants de cookies et technologies similaires.
+              <strong>Données techniques &amp; de navigation</strong> : adresse
+              IP, type et version du navigateur, identifiant de l’appareil,
+              système d’exploitation, pages consultées, durée de visite, source
+              de provenance, identifiants de cookies et technologies
+              similaires.
             </li>
             <li>
               <strong>Données de support</strong> : contenu des demandes
@@ -96,6 +99,14 @@ export default function PrivacyPage() {
               les canaux officiels.
             </li>
           </ul>
+          <p className="mt-2">
+            Sauf indication contraire, nous ne recherchons pas à collecter des{" "}
+            <strong>données dites « sensibles »</strong> (par ex. données de
+            santé, opinions politiques, convictions religieuses). Si vous
+            décidez d’inclure de telles informations dans vos contenus, vous le
+            faites sous votre seule responsabilité et dans le respect des lois
+            applicables.
+          </p>
         </section>
 
         {/* 3. Finalités */}
@@ -109,19 +120,20 @@ export default function PrivacyPage() {
           </p>
           <ul className="mt-2 list-disc space-y-2 pl-5">
             <li>
-              <strong>Fourniture de la Plateforme et des Services</strong> : création
-              et gestion du compte, accès au contenu, messagerie, interactions
-              sociales (likes, commentaires, follow), personnalisation basique
-              de l’interface.
+              <strong>Fourniture de la Plateforme et des Services</strong> :
+              création et gestion du compte, accès au contenu, messagerie,
+              interactions sociales (likes, commentaires, follow),
+              personnalisation basique de l’interface.
               <br />
               <span className="text-slate-500">
-                Base légale : exécution du contrat (ou mesures précontractuelles).
+                Base légale : exécution du contrat (ou mesures
+                précontractuelles).
               </span>
             </li>
             <li>
-              <strong>Monétisation et paiements</strong> : gestion des abonnements,
-              contenus PPV, reversement aux créateurs, facturation,
-              comptabilité, prévention de la fraude.
+              <strong>Monétisation et paiements</strong> : gestion des
+              abonnements, contenus PPV, reversement aux créateurs,
+              facturation, comptabilité, prévention de la fraude.
               <br />
               <span className="text-slate-500">
                 Base légale : exécution du contrat, respect d’obligations
@@ -129,13 +141,25 @@ export default function PrivacyPage() {
               </span>
             </li>
             <li>
-              <strong>Modération, sécurité et prévention des abus</strong> : détection
-              de contenus illicites ou contraires aux CGU/CGV, lutte contre le
-              spam, violations de droits, atteintes à la sécurité.
+              <strong>Modération, sécurité et prévention des abus</strong> :
+              détection de contenus illicites ou contraires aux CGU/CGV, lutte
+              contre le spam, violations de droits, atteintes à la sécurité.
               <br />
               <span className="text-slate-500">
                 Base légale : intérêt légitime à garantir la sécurité de la
                 Plateforme et le respect des lois.
+              </span>
+            </li>
+            <li>
+              <strong>Recommandations et personnalisation raisonnable</strong> :
+              proposer des contenus, créateurs ou rubriques susceptibles de vous
+              intéresser (par exemple en fonction des contenus consultés ou des
+              créateurs suivis), sans prise de décision produisant des effets
+              juridiques à votre égard.
+              <br />
+              <span className="text-slate-500">
+                Base légale : intérêt légitime ; lorsque requis, consentement
+                pour certains cookies/traceurs (voir Politique de cookies).
               </span>
             </li>
             <li>
@@ -150,9 +174,9 @@ export default function PrivacyPage() {
               </span>
             </li>
             <li>
-              <strong>Communication et support</strong> : réponses aux demandes,
-              notifications techniques, messages liés à la sécurité ou au
-              fonctionnement du compte.
+              <strong>Communication et support</strong> : réponses aux
+              demandes, notifications techniques, messages liés à la sécurité ou
+              au fonctionnement du compte.
               <br />
               <span className="text-slate-500">
                 Base légale : exécution du contrat, intérêt légitime.
@@ -178,6 +202,12 @@ export default function PrivacyPage() {
               </span>
             </li>
           </ul>
+          <p className="mt-2">
+            Nous ne prenons pas de <strong>décisions exclusivement
+            automatisées</strong> produisant des effets juridiques à votre
+            égard ou vous affectant de manière significative au sens du RGPD,
+            sans intervention humaine appropriée.
+          </p>
         </section>
 
         {/* 4. Durée de conservation */}
@@ -191,22 +221,23 @@ export default function PrivacyPage() {
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              Données de compte : pendant la durée d’utilisation de la
-              Plateforme, puis pendant une période limitée après la fermeture du
-              compte, pour des raisons de preuve ou conformément aux délais
-              légaux.
+              <strong>Données de compte</strong> : pendant la durée
+              d’utilisation de la Plateforme, puis pendant une période limitée
+              après la fermeture du compte, pour des raisons de preuve ou
+              conformément aux délais légaux.
             </li>
             <li>
-              Données de transaction : pendant la durée requise par la législation
-              comptable et fiscale applicable.
+              <strong>Données de transaction</strong> : pendant la durée requise
+              par la législation comptable et fiscale applicable.
             </li>
             <li>
-              Logs techniques et données de sécurité : pour une durée généralement
-              limitée à quelques mois, sauf incident nécessitant une conservation
-              plus longue.
+              <strong>Logs techniques et données de sécurité</strong> : pour une
+              durée généralement limitée à quelques mois, sauf incident
+              nécessitant une conservation plus longue (par exemple en cas
+              d’enquête de sécurité).
             </li>
             <li>
-              Cookies : selon la durée de vie indiquée dans la{" "}
+              <strong>Cookies</strong> : selon la durée de vie indiquée dans la{" "}
               <a
                 href="/legal/cookies"
                 className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -280,7 +311,9 @@ export default function PrivacyPage() {
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>droit d’accès à vos données ;</li>
-            <li>droit de rectification des données inexactes ou incomplètes ;</li>
+            <li>
+              droit de rectification des données inexactes ou incomplètes ;
+            </li>
             <li>droit à l’effacement (« droit à l’oubli ») dans certains cas ;</li>
             <li>droit à la limitation du traitement ;</li>
             <li>
@@ -311,6 +344,28 @@ export default function PrivacyPage() {
             . Nous pourrons être amenés à vérifier votre identité avant de
             répondre à votre demande.
           </p>
+          <p className="mt-2">
+            Conformément à cette Politique et au droit applicable, nous
+            mettrons progressivement à disposition dans votre espace compte ou
+            via nos formulaires dédiés des outils permettant notamment de :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>consulter et mettre à jour certaines informations de profil ;</li>
+            <li>
+              télécharger une copie de certaines données associées à votre
+              compte, lorsque cela est techniquement possible ;
+            </li>
+            <li>
+              demander la suppression de votre compte et de vos données, sous
+              réserve de nos obligations légales de conservation ;
+            </li>
+            <li>
+              gérer vos préférences en matière de cookies et de notifications
+              marketing, notamment via le module{" "}
+              <strong>« Préférences cookies »</strong> accessible depuis la
+              bannière ou le pied de page de la Plateforme.
+            </li>
+          </ul>
         </section>
 
         {/* 8. Sécurité */}
@@ -342,8 +397,8 @@ export default function PrivacyPage() {
           <p className="mt-2">
             La Plateforme n’est pas destinée aux enfants en dessous de l’âge
             minimum indiqué dans nos CGU/CGV. Lorsque la loi l’exige, certaines
-            fonctionnalités peuvent nécessiter le consentement ou l’autorisation
-            d’un représentant légal.
+            fonctionnalités peuvent nécessiter le consentement ou
+            l’autorisation d’un représentant légal.
           </p>
         </section>
 
@@ -363,6 +418,12 @@ export default function PrivacyPage() {
               Politique de cookies
             </a>
             .
+          </p>
+          <p className="mt-2">
+            Lorsque la loi l’exige, certains cookies (notamment de
+            personnalisation ou de mesure d’audience avancée) ne sont activés
+            qu’après votre consentement, recueilli via notre bannière ou notre
+            module de préférences.
           </p>
         </section>
 
@@ -385,8 +446,8 @@ export default function PrivacyPage() {
             12. Contact
           </h2>
           <p className="mt-2">
-            Pour toute question concernant la présente Politique ou le traitement
-            de vos données, vous pouvez nous contacter à :{" "}
+            Pour toute question concernant la présente Politique ou le
+            traitement de vos données, vous pouvez nous contacter à :{" "}
             <a
               href="mailto:[email-dpo-à-compléter]"
               className="font-medium text-indigo-600 hover:text-indigo-700"
