@@ -416,6 +416,10 @@ export default function MagicDisplayClient() {
 
   const [showPreview, setShowPreview] = useState(false);
 
+    // ⚙️ Étape de prévisualisation "compressée"
+  const [isPreparingPreview, setIsPreparingPreview] = useState(false);
+  const [previewProgress, setPreviewProgress] = useState(0);
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
@@ -562,6 +566,38 @@ export default function MagicDisplayClient() {
       console.error("Failed to save Magic Display draft to storage", error);
     }
   }, [segments]);
+
+    // 🎬 Simulation de "compression" avant d'ouvrir la prévisualisation
+  useEffect(() => {
+    if (!isPreparingPreview) return;
+
+    setPreviewProgress(0);
+
+    const totalDurationMs = 1600; // durée totale de la barre (1,6s environ)
+    const steps = 20;
+    const stepDuration = totalDurationMs / steps;
+
+    let currentStep = 0;
+    const id = window.setInterval(() => {
+      currentStep += 1;
+      const next = Math.min(
+        100,
+        Math.round((currentStep / steps) * 100),
+      );
+      setPreviewProgress(next);
+
+      if (next >= 100) {
+        window.clearInterval(id);
+        // 👉 la "compression" est terminée : on ouvre la preview finale
+        setIsPreparingPreview(false);
+        setShowPreview(true);
+      }
+    }, stepDuration);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [isPreparingPreview]);
 
   function handleFaceEditorChange(payload: FaceDetailsPayload) {
     const { faceId, segmentCount, segments: faceSegments } = payload;
@@ -1000,12 +1036,19 @@ export default function MagicDisplayClient() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+                        <button
               type="button"
-              onClick={() => setShowPreview(true)}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+              onClick={() => {
+                if (isPreparingPreview || showPreview) return;
+                // Ici, plus tard, on pourra aussi déclencher une requête d'encodage backend
+                setIsPreparingPreview(true);
+              }}
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60"
+              disabled={isPreparingPreview}
             >
-              Visualiser mon Magic Clock
+              {isPreparingPreview
+                ? "Préparation en cours…"
+                : "Visualiser mon Magic Clock"}
             </button>
 
             <button
@@ -1553,6 +1596,44 @@ export default function MagicDisplayClient() {
           </div>
         )}
       </section>
+
+            {/* Modale de "compression" / préparation de prévisualisation */}
+      {isPreparingPreview && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl">
+            <p className="text-sm font-semibold text-slate-900">
+              Préparation de ta prévisualisation
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Nous simulons la compression des médias de ton Magic Clock pour
+              te montrer le rendu côté utilisateur. Tu pourras encore revenir
+              en arrière avant de publier.
+            </p>
+
+            <div className="mt-3 h-2 w-full rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-emerald-400 transition-[width]"
+                style={{ width: `${previewProgress}%` }}
+              />
+            </div>
+
+            <p className="mt-1 text-[11px] text-slate-500">
+              {previewProgress}% · Cette étape sera très rapide dans la version
+              finale, une fois l&apos;encodage optimisé.
+            </p>
+
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsPreparingPreview(false)}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Annuler la prévisualisation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Inputs cachés upload */}
       <input
