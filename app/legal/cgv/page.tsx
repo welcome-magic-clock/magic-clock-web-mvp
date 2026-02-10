@@ -261,6 +261,43 @@ export default function LegalCGVPage() {
               contenu.
             </li>
           </ul>
+          <h3 className="mt-3 font-medium text-slate-900">
+  6.4. Nature des contenus pédagogiques et absence de garantie de résultat
+</h3>
+<p className="mt-1">
+  Les contenus proposés par les Créateurs (notamment les Magic Studio,
+  Magic Display, tutoriels, démonstrations «&nbsp;Avant / Après&nbsp;»,
+  workshops ou masterclass) ont pour finalité de{" "}
+  <strong>partager une méthode, un savoir-faire ou un retour
+  d&apos;expérience</strong> dans différents domaines (par exemple
+  beauté, coiffure, bien-être, cuisine, organisation de la maison,
+  bricolage, développement personnel ou professionnel, etc.).
+</p>
+<p className="mt-1">
+  L&apos;acquisition d&apos;un contenu (qu&apos;il soit gratuit, inclus
+  dans un abonnement ou acheté en PPV) donne accès à une{" "}
+  <strong>information</strong> et à une <strong>méthodologie</strong>,
+  mais ne comporte aucune promesse de performance, ni d&apos;efficacité
+  assurée, ni de gain financier, ni de résultat esthétique, pratique
+  ou organisationnel garanti.
+</p>
+<p className="mt-1">
+  Les Utilisateurs doivent tenir compte de leur propre situation
+  (niveau de compétence, santé, contraintes légales ou
+  réglementaires, environnement matériel, budget, contexte familial
+  ou professionnel, etc.) et, si nécessaire, solliciter l&apos;avis
+  d&apos;un professionnel qualifié avant de mettre en œuvre les
+  techniques présentées.
+</p>
+<p className="mt-1">
+  En cas d&apos;application des contenus, l&apos;Utilisateur agit{" "}
+  <strong>sous sa seule responsabilité</strong>. Dans les limites
+  autorisées par la loi, ni le Créateur ni l&apos;Éditeur ne peuvent
+  être tenus responsables des dommages physiques, matériels,
+  économiques ou moraux qui résulteraient de l&apos;utilisation ou de
+  la mauvaise utilisation des contenus, que ce soit dans le cadre
+  privé (par exemple à domicile) ou professionnel.
+</p>
         </section>
 
         {/* 7. Comportements interdits */}
@@ -605,6 +642,16 @@ export default function LegalCGVPage() {
             consommateurs, notamment dans l’UE/EEE, au Royaume-Uni, en Suisse ou
             dans les États où une telle limitation est interdite.
           </p>
+          <p className="mt-2">
+  Il est notamment rappelé qu&apos;aucun <strong>résultat garanti</strong>{" "}
+  n&apos;est attaché aux contenus pédagogiques ou inspirants publiés
+  sur la Plateforme, quels que soient le secteur d&apos;activité ou le
+  domaine concerné, et que les risques liés à l&apos;expérimentation
+  de techniques, de recettes, d&apos;organisations ou de méthodes
+  demeurent à la charge exclusive de l&apos;Utilisateur ou, le cas
+  échéant, du professionnel qui les applique pour le compte de ses
+  propres clients.
+</p>
         </section>
 
         {/* 14. Droit applicable */}
