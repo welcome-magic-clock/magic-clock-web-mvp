@@ -140,6 +140,30 @@ export default function LegalCGVPage() {
             <li>comportement illicite, trompeur, haineux ou abusif ;</li>
             <li>non-respect des lois applicables.</li>
           </ul>
+                    <h3 className="mt-3 font-medium text-slate-900">
+            4.4. Vérification de l&apos;âge et protection des mineurs
+          </h3>
+          <p className="mt-1">
+            Nous pouvons mettre en place, lorsque cela est requis ou approprié,
+            des mécanismes de <strong>vérification d&apos;âge</strong> ou
+            demander des informations complémentaires afin de nous assurer que
+            l&apos;Utilisateur remplit les conditions d&apos;âge minimum
+            indiquées ci-dessus.
+          </p>
+          <p className="mt-1">
+            Il est interdit de créer un compte pour le compte d&apos;un mineur
+            sans l&apos;autorisation requise d&apos;un représentant légal ou en
+            fournissant des informations fausses ou trompeuses sur l&apos;âge.
+            Tout compte créé en violation de cette règle pourra être suspendu ou
+            fermé, et les contenus concernés supprimés.
+          </p>
+          <p className="mt-1">
+            Les contenus impliquant des <strong>mineurs</strong> (par exemple
+            avant/après, tutos coiffure, etc.) ne peuvent être publiés que dans
+            le respect strict du droit applicable, avec l&apos;autorisation
+            nécessaire des représentants légaux et sans jamais sexualiser ou
+            exploiter l&apos;image d&apos;un mineur.
+          </p>
         </section>
 
         {/* 5. Rôle de la Plateforme */}
@@ -359,6 +383,80 @@ export default function LegalCGVPage() {
             applicables et des frais de paiement et de change.
           </p>
 
+                    <h3 className="mt-3 font-medium text-slate-900">
+            9.1. Statut et obligations des Créateurs rémunérés
+          </h3>
+          <p className="mt-1">
+            Tout Utilisateur qui active les fonctionnalités de monétisation
+            (abonnements, contenus PPV, pourboires, etc.) devient un{" "}
+            <strong>Créateur rémunéré</strong>. Il lui appartient de vérifier si
+            cette activité doit être déclarée comme activité indépendante,
+            activité salariée complémentaire ou autre statut auprès des
+            autorités fiscales et sociales compétentes de son pays de
+            résidence.
+          </p>
+          <p className="mt-1">
+            Le Créateur rémunéré reste seul responsable de{" "}
+            <strong>toutes les déclarations fiscales et sociales</strong>{" "}
+            liées aux revenus perçus via Magic Clock, ainsi que du paiement des
+            impôts, cotisations et contributions éventuellement dus.
+          </p>
+
+          <p className="mt-1">
+            Pour des raisons de conformité (par exemple lutte contre le
+            blanchiment d&apos;argent et financement du terrorisme), des
+            procédures de <strong>vérification d&apos;identité (KYC)</strong>{" "}
+            peuvent être exigées. Magic Clock ou son prestataire de paiement
+            peut suspendre ou bloquer des paiements tant que ces vérifications
+            n&apos;ont pas abouti.
+          </p>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            9.2. Utilisation autorisée de la Plateforme par les Créateurs
+          </h3>
+          <p className="mt-1">
+            Les Créateurs rémunérés s&apos;engagent à utiliser la Plateforme
+            uniquement pour proposer des contenus conformes aux présentes
+            CGU/CGV, à la{" "}
+            <a
+              href="/legal/community-guidelines"
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              Charte de la communauté
+            </a>{" "}
+            et au droit applicable. Il est notamment interdit d&apos;utiliser
+            Magic Clock pour organiser :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>la vente de services illégaux ou réglementés sans autorisation ;</li>
+            <li>
+              des prestations hors ligne qui violeraient la loi ou les droits de
+              tiers ;
+            </li>
+            <li>
+              des systèmes de fraude, de détournement de moyens de paiement ou
+              de manipulation artificielle des statistiques.
+            </li>
+          </ul>
+
+          <h3 className="mt-3 font-medium text-slate-900">
+            9.3. Blocage préventif et litiges
+          </h3>
+          <p className="mt-1">
+            En cas de suspicion raisonnable de fraude, de litige important ou de
+            non-respect grave des présentes CGU/CGV, nous pouvons{" "}
+            <strong>bloquer temporairement</strong> tout ou partie des sommes
+            dues à un Créateur, le temps de procéder aux vérifications
+            nécessaires ou de traiter les demandes des autorités compétentes.
+          </p>
+          <p className="mt-1">
+            Lorsque cela est possible, le Créateur est informé des raisons
+            principales de ce blocage et peut fournir des explications ou
+            pièces justificatives. Les sommes injustement perçues ou frauduleuses
+            peuvent être compensées avec les revenus futurs ou remboursées aux
+            Utilisateurs concernés.
+          </p>
+
           <p className="mt-2">
             La commission de la Plateforme est comprise entre{" "}
             <strong>20% et 30%</strong>, en fonction de la{" "}
@@ -427,7 +525,7 @@ export default function LegalCGVPage() {
           </ul>
         </section>
 
-        {/* 11. Données personnelles */}
+               {/* 11. Données personnelles */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             11. Données personnelles
@@ -443,6 +541,27 @@ export default function LegalCGVPage() {
             . Les présentes CGU/CGV renvoient à ce document pour tous les
             aspects liés à la protection des données.
           </p>
+
+          <p className="mt-2">
+            Conformément à cette Politique et au droit applicable, nous
+            mettrons progressivement à disposition dans votre espace compte ou
+            via nos formulaires dédiés des outils permettant notamment de :
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>consulter et mettre à jour certaines informations de profil ;</li>
+            <li>
+              télécharger une copie de certaines données associées à votre
+              compte, lorsque cela est techniquement possible ;
+            </li>
+            <li>
+              demander la suppression de votre compte et de vos données, sous
+              réserve de nos obligations légales de conservation ;
+            </li>
+            <li>
+              gérer vos préférences en matière de cookies et de notifications
+              marketing.
+            </li>
+          </ul>
         </section>
 
         {/* 12. Propriété intellectuelle */}
