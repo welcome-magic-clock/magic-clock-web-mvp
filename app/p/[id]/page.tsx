@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findContentById } from "@/core/domain/repository";
 import type { Access as FeedAccess } from "@/core/domain/types";
+import { ContentDisplayGate } from "@/features/display/ContentDisplayGate";
 
 type PageProps = {
   params: { id: string };
@@ -145,21 +146,8 @@ export default function ContentDetailPage({ params }: PageProps) {
             </p>
           </div>
 
-          {/* Placeholder pour le cube 3D (future intégration Magic Display) */}
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-500">
-            <p className="mb-1 font-medium text-slate-700">
-              Magic Display (à venir)
-            </p>
-            <p>
-              Ici s’affichera le cube 3D du Magic Clock sélectionné :
-              rotation, faces pédagogiques, aiguilles… exactement ce que nous
-              avons défini pour le Bear et les autres œuvres.
-            </p>
-            <p className="mt-2">
-              Pour l’instant, ce bloc est une maquette statique pour poser la
-              bonne arborescence UX.
-            </p>
-          </div>
+          {/* Gate de déblocage du Magic Display (FREE / ABO / PPV) */}
+<ContentDisplayGate mode={card.access as FeedAccess} />
         </aside>
       </section>
     </main>
