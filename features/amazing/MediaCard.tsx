@@ -187,7 +187,7 @@ export default function MediaCard({ item }: Props) {
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
 
-  // ---------- Monétisation & accès (affichage uniquement ici) ----------
+    // ---------- Monétisation & accès (affichage uniquement ici) ----------
   const isUnlocked = mode === "FREE" || isSystemUnlockedForAll;
 
   const accessLabelBase =
@@ -201,7 +201,7 @@ export default function MediaCard({ item }: Props) {
       : "PPV débloqué"
     : accessLabelBase;
 
-  const isLocked = !isUnlocked && mode !== "FREE";
+  const isLocked = !isUnlocked;
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
