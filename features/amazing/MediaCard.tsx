@@ -254,20 +254,20 @@ export default function MediaCard({ item }: Props) {
             </div>
           </Link>
 
-          {/* Flèche → page détail /p/[id] */}
+                    {/* Flèche → page détail /p/[id] */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-            <Link
-              href={`/p/${item.id}`}
+            <button
+              type="button"
               className="flex h-8 w-8 items-center justify-center drop-shadow-md"
               data-interactive="true"
               aria-label="Voir le détail du Magic Clock"
               onClick={(e) => {
-                // On évite juste une éventuelle propagation future
                 e.stopPropagation();
+                router.push(`/p/${item.id}`);
               }}
             >
               <ArrowUpRight className="h-5 w-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>
