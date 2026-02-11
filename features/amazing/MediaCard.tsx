@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ArrowUpRight, Lock, Unlock, BadgeCheck } from "lucide-react";
+import {
+  Heart,
+  ArrowUpRight,
+  Lock,
+  Unlock,
+  Loader2,
+  BadgeCheck,
+} from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
+import { useRouter } from "next/navigation";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -90,6 +98,8 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
 }
 
 export default function MediaCard({ item }: Props) {
+  const router = useRouter();
+
   // ---------- Créateur & avatar via Meet me ----------
   const cleanUserHandle = item.user.startsWith("@")
     ? item.user.slice(1)
@@ -187,21 +197,18 @@ export default function MediaCard({ item }: Props) {
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
 
-    // ---------- Monétisation & accès (affichage uniquement ici) ----------
-  const isUnlocked = mode === "FREE" || isSystemUnlockedForAll;
-
-  const accessLabelBase =
-    mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "Pay Per View";
-
-  const accessLabel = isUnlocked
-    ? mode === "FREE"
+  // ---------- Affichage accès (sans déblocage dans le feed) ----------
+  const accessLabel =
+    mode === "FREE"
       ? "FREE"
       : mode === "SUB"
-      ? "Abonnement actif"
-      : "PPV débloqué"
-    : accessLabelBase;
+      ? "Abonnement"
+      : "Pay Per View";
 
-  const isLocked = !isUnlocked;
+  const isLocked = mode !== "FREE";
+
+  // Loader uniquement pour la navigation vers /p/[id]
+  const [isNavigating, setIsNavigating] = useState(false);
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
@@ -261,18 +268,24 @@ export default function MediaCard({ item }: Props) {
 
           {/* Flèche → page détail /p/[id] */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-            <Link
-              href={`/p/${item.id}`}
+            <button
+              type="button"
               className="flex h-8 w-8 items-center justify-center drop-shadow-md"
               data-interactive="true"
               aria-label="Voir le détail du Magic Clock"
               onClick={(e) => {
-                // On évite de propager le clic au cas où on rende la carte cliquable plus tard
                 e.stopPropagation();
+                if (isNavigating) return;
+                setIsNavigating(true);
+                router.push(`/p/${item.id}`);
               }}
             >
-              <ArrowUpRight className="h-5 w-5" />
-            </Link>
+              {isNavigating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ArrowUpRight className="h-5 w-5" />
+              )}
+            </button>
           </div>
         </div>
       </div>
