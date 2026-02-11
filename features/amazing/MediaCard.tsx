@@ -1,19 +1,12 @@
+// features/amazing/MediaCard.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Heart,
-  ArrowUpRight,
-  Lock,
-  Unlock,
-  Loader2,
-  BadgeCheck,
-} from "lucide-react";
+import { Heart, ArrowUpRight, Lock, Unlock, BadgeCheck } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
-import { useRouter } from "next/navigation";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -98,8 +91,6 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
 }
 
 export default function MediaCard({ item }: Props) {
-  const router = useRouter();
-
   // ---------- Créateur & avatar via Meet me ----------
   const cleanUserHandle = item.user.startsWith("@")
     ? item.user.slice(1)
@@ -128,7 +119,7 @@ export default function MediaCard({ item }: Props) {
 
   const mode: PublishMode =
     modeFromItem ??
-    (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE");
+    (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE";
 
   const ppvPrice: number | null =
     typeof (item as any).ppvPrice === "number"
@@ -197,22 +188,15 @@ export default function MediaCard({ item }: Props) {
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
 
-  // ---------- Affichage accès (sans déblocage dans le feed) ----------
+  // ---------- Monétisation & affichage simple (pas de gating ici) ----------
   const accessLabel =
-    mode === "FREE"
-      ? "FREE"
-      : mode === "SUB"
-      ? "Abonnement"
-      : "Pay Per View";
+    mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "Pay Per View";
 
-  const isLocked = mode !== "FREE";
-
-  // Loader uniquement pour la navigation vers /p/[id]
-  const [isNavigating, setIsNavigating] = useState(false);
+  const isLocked = !isSystemUnlockedForAll && mode !== "FREE";
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
-      {/* Zone média (NON cliquable) */}
+      {/* Zone média */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
           {heroVideoSrc ? (
@@ -268,24 +252,18 @@ export default function MediaCard({ item }: Props) {
 
           {/* Flèche → page détail /p/[id] */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-            <button
-              type="button"
+            <Link
+              href={`/p/${item.id}`}
               className="flex h-8 w-8 items-center justify-center drop-shadow-md"
               data-interactive="true"
               aria-label="Voir le détail du Magic Clock"
               onClick={(e) => {
+                // On évite juste une éventuelle propagation future
                 e.stopPropagation();
-                if (isNavigating) return;
-                setIsNavigating(true);
-                router.push(`/p/${item.id}`);
               }}
             >
-              {isNavigating ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <ArrowUpRight className="h-5 w-5" />
-              )}
-            </button>
+              <ArrowUpRight className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </div>
