@@ -118,16 +118,8 @@ const INITIAL_SEGMENTS: Segment[] = [
   },
 ];
 
-const STORAGE_KEY_BASE = "mc-display-draft-v1";
-const FACE_PROGRESS_KEY_BASE = "mc-display-face-progress-v1";
-const DRAFT_INDEX_KEY_BASE = "mc-display-drafts-index-v1";
-const MAX_ACTIVE_DRAFTS = 3;
-
-type DraftIndexEntry = {
-  id: string;       // clockId
-  createdAt: number;
-  updatedAt: number;
-};
+const STORAGE_KEY = "mc-display-draft-v1";
+const FACE_PROGRESS_KEY = "mc-display-face-progress-v1";
 
 const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
 const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
@@ -356,115 +348,6 @@ export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // 🔐 Simu "login" via localStorage
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    // Lecture très simple d’un flag en localStorage
-    const raw = window.localStorage.getItem("mc-user");
-    // Pour l’instant : s’il y a quelque chose, on considère que la personne est “connectée”
-    setIsLoggedIn(Boolean(raw));
-  }, []);
-
-  if (isLoggedIn === null) {
-    // Écran de chargement léger
-    return (
-      <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
-        Chargement de Magic Clock…
-      </div>
-    );
-  }
-
-  // Ici on remplace l’ancien `if (!session) { … }`
-  if (!isLoggedIn) {
-    return (
-      <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 text-center text-sm text-slate-600">
-        <p className="max-w-xs">
-          Pour accéder au Magic Display détaillé, tu devras bientôt créer un
-          compte Magic Clock. La version actuelle utilise un mode invité
-          temporaire.
-        </p>
-        <p className="text-[11px] text-slate-400">
-          Le système d’authentification sera activé dans une prochaine version.
-        </p>
-      </div>
-    );
-  }
-
-  // 1️⃣ Clé de compte (par user) – ici on force un id local simple
-  const userKey = "local-user";
-
-  // 2️⃣ Identifiant de Magic Clock (un par brouillon)
-  //    Si plus tard tu passes un vrai clockId dans l'URL, on le prendra.
-  const clockId = searchParams.get("clockId") ?? "default";
-
-  // 3️⃣ Clés de storage dérivées
-  const storageKey = `${STORAGE_KEY_BASE}:${userKey}:${clockId}`;
-  const faceProgressKey = `${FACE_PROGRESS_KEY_BASE}:${userKey}:${clockId}`;
-  const draftIndexKey = `${DRAFT_INDEX_KEY_BASE}:${userKey}`;
-
-  // 4️⃣ Helpers pour l’index des brouillons "En cours"
-  function loadDraftIndex(): DraftIndexEntry[] {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = window.localStorage.getItem(draftIndexKey);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      return parsed as DraftIndexEntry[];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveDraftIndex(entries: DraftIndexEntry[]) {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        draftIndexKey,
-        JSON.stringify(entries),
-      );
-    } catch (err) {
-      console.error("Failed to save draft index", err);
-    }
-  }
-
-  function registerDraft(id: string): { ok: boolean; reason?: "LIMIT_REACHED" } {
-    if (typeof window === "undefined") return { ok: true };
-
-    const index = loadDraftIndex();
-
-    // Déjà existant → on met à jour updatedAt
-    const existing = index.find((d) => d.id === id);
-    if (existing) {
-      existing.updatedAt = Date.now();
-      saveDraftIndex(index);
-      return { ok: true };
-    }
-
-    // Nouveau brouillon → vérifier la limite
-    if (index.length >= MAX_ACTIVE_DRAFTS) {
-      return { ok: false, reason: "LIMIT_REACHED" };
-    }
-
-    index.push({
-      id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    saveDraftIndex(index);
-    return { ok: true };
-  }
-
-  function unregisterDraft(id: string) {
-    if (typeof window === "undefined") return;
-    const index = loadDraftIndex();
-    const next = index.filter((d) => d.id !== id);
-    saveDraftIndex(next);
-  }
-
   // 🔍 Infos texte venant de Magic Studio
   const titleFromStudio = searchParams.get("title") ?? "";
   const modeFromStudioParam =
@@ -493,6 +376,10 @@ export default function MagicDisplayClient() {
     .slice(0, 2)
     .toUpperCase();
   const creatorAvatar = currentCreator.avatar; // encore utilisé pour FaceEditor
+  const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
+  const creatorHandle = creatorHandleRaw.startsWith("@")
+    ? creatorHandleRaw
+    : `@${creatorHandleRaw}`;
 
   // 🔁 Payload complet Magic Studio (localStorage)
   const [studioBeforeUrl, setStudioBeforeUrl] = useState<string | null>(null);
@@ -528,24 +415,6 @@ export default function MagicDisplayClient() {
   >({});
 
   const [showPreview, setShowPreview] = useState(false);
-
-    // ⚙️ Étape de prévisualisation "compressée"
-  const [isPreparingPreview, setIsPreparingPreview] = useState(false);
-  const [previewProgress, setPreviewProgress] = useState(0);
-
-    // 🧾 Enregistrer ce Magic Clock comme "En cours" pour cet utilisateur
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const result = registerDraft(clockId);
-    if (!result.ok && result.reason === "LIMIT_REACHED") {
-      // MVP : simple message + redirection
-      window.alert(
-        "Tu as déjà 3 Magic Clock en cours. Termine ou supprime-en un avant d'en créer un nouveau.",
-      );
-      router.push("/mymagic?tab=created");
-    }
-  }, [clockId, router]);
 
   useEffect(() => {
     try {
@@ -587,11 +456,10 @@ export default function MagicDisplayClient() {
     }
   }, []);
 
-    // Charger les infos de progression des faces (par user + Magic Clock)
+  // Charger les infos de progression des faces
   useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(faceProgressKey);
+      const raw = window.localStorage.getItem(FACE_PROGRESS_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
@@ -600,7 +468,7 @@ export default function MagicDisplayClient() {
     } catch (error) {
       console.error("Failed to read face universal progress", error);
     }
-  }, [faceProgressKey]);
+  }, []);
 
   // 🎯 Valeurs “effectives”
   const effectiveTitle = (titleFromStudio || bridgeTitle).trim();
@@ -646,11 +514,10 @@ export default function MagicDisplayClient() {
   // 👉 mémorise sur QUELLE FACE on ouvre le picker (cercle ou panneau)
   const uploadFaceIdRef = useRef<number | null>(null);
 
-    // 🧬 Charger le draft du cube (par user + Magic Clock)
+  // 🧬 Charger le draft du cube
   useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(storageKey);
+      const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
 
       const parsed = JSON.parse(raw) as Partial<Segment>[];
@@ -676,11 +543,10 @@ export default function MagicDisplayClient() {
     } catch (error) {
       console.error("Failed to load Magic Display draft from storage", error);
     }
-  }, [storageKey]);
+  }, []);
 
-    // 💾 Sauvegarder la structure du cube (par user + Magic Clock)
+  // 💾 Sauvegarder la structure du cube
   useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
       const toPersist = segments.map((seg) => ({
         id: seg.id,
@@ -691,43 +557,11 @@ export default function MagicDisplayClient() {
         mediaType: seg.mediaType ?? undefined,
         notes: seg.notes ?? undefined,
       }));
-      window.localStorage.setItem(storageKey, JSON.stringify(toPersist));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
     } catch (error) {
       console.error("Failed to save Magic Display draft to storage", error);
     }
-  }, [segments, storageKey]);
-
-    // 🎬 Simulation de "compression" avant d'ouvrir la prévisualisation
-  useEffect(() => {
-    if (!isPreparingPreview) return;
-
-    setPreviewProgress(0);
-
-    const totalDurationMs = 1600; // durée totale de la barre (1,6s environ)
-    const steps = 20;
-    const stepDuration = totalDurationMs / steps;
-
-    let currentStep = 0;
-    const id = window.setInterval(() => {
-      currentStep += 1;
-      const next = Math.min(
-        100,
-        Math.round((currentStep / steps) * 100),
-      );
-      setPreviewProgress(next);
-
-      if (next >= 100) {
-        window.clearInterval(id);
-        // 👉 la "compression" est terminée : on ouvre la preview finale
-        setIsPreparingPreview(false);
-        setShowPreview(true);
-      }
-    }, stepDuration);
-
-    return () => {
-      window.clearInterval(id);
-    };
-  }, [isPreparingPreview]);
+  }, [segments]);
 
   function handleFaceEditorChange(payload: FaceDetailsPayload) {
     const { faceId, segmentCount, segments: faceSegments } = payload;
@@ -791,16 +625,14 @@ export default function MagicDisplayClient() {
         },
       };
 
-            try {
+      try {
         if (typeof window !== "undefined") {
-          window.localStorage.setItem(
-            faceProgressKey,
-            JSON.stringify(next),
-          );
+          window.localStorage.setItem(FACE_PROGRESS_KEY, JSON.stringify(next));
         }
       } catch (error) {
         console.error("Failed to persist face universal progress", error);
       }
+
       return next;
     });
   }
@@ -1142,12 +974,10 @@ export default function MagicDisplayClient() {
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
-    const handleFinalPublish = () => {
+  const handleFinalPublish = () => {
     if (!canPublish || isPublishing) return;
     setIsPublishing(true);
     try {
-      // On libère ce Magic Clock de la liste "En cours"
-      unregisterDraft(clockId);
       router.push("/mymagic?tab=created&source=magic-display");
     } finally {
       setIsPublishing(false);
@@ -1170,19 +1000,12 @@ export default function MagicDisplayClient() {
           </div>
 
           <div className="flex items-center gap-2">
-                        <button
+            <button
               type="button"
-              onClick={() => {
-                if (isPreparingPreview || showPreview) return;
-                // Ici, plus tard, on pourra aussi déclencher une requête d'encodage backend
-                setIsPreparingPreview(true);
-              }}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60"
-              disabled={isPreparingPreview}
+              onClick={() => setShowPreview(true)}
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50"
             >
-              {isPreparingPreview
-                ? "Préparation en cours…"
-                : "Visualiser mon Magic Clock"}
+              Visualiser mon Magic Clock
             </button>
 
             <button
@@ -1730,44 +1553,6 @@ export default function MagicDisplayClient() {
           </div>
         )}
       </section>
-
-            {/* Modale de "compression" / préparation de prévisualisation */}
-      {isPreparingPreview && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl">
-            <p className="text-sm font-semibold text-slate-900">
-              Préparation de ta prévisualisation
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Nous simulons la compression des médias de ton Magic Clock pour
-              te montrer le rendu côté utilisateur. Tu pourras encore revenir
-              en arrière avant de publier.
-            </p>
-
-            <div className="mt-3 h-2 w-full rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-emerald-400 transition-[width]"
-                style={{ width: `${previewProgress}%` }}
-              />
-            </div>
-
-            <p className="mt-1 text-[11px] text-slate-500">
-              {previewProgress}% · Cette étape sera très rapide dans la version
-              finale, une fois l&apos;encodage optimisé.
-            </p>
-
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsPreparingPreview(false)}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
-              >
-                Annuler la prévisualisation
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Inputs cachés upload */}
       <input
