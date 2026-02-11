@@ -9,8 +9,6 @@ import {
   type ChangeEvent,
 } from "react";
 
-import { useSession } from "next-auth/react";
-
 import {
   Camera,
   Clapperboard,
@@ -358,15 +356,45 @@ export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-    const { data: session, status } = useSession();
+  // 🔐 Simu "login" via localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  // 1️⃣ Clé de compte (par user)
-  const userKey =
-    status === "authenticated"
-      ? ((session?.user as any)?.id ??
-        session?.user?.email ??
-        "guest")
-      : "guest";
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Lecture très simple d’un flag en localStorage
+    const raw = window.localStorage.getItem("mc-user");
+    // Pour l’instant : s’il y a quelque chose, on considère que la personne est “connectée”
+    setIsLoggedIn(Boolean(raw));
+  }, []);
+
+  if (isLoggedIn === null) {
+    // Écran de chargement léger
+    return (
+      <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
+        Chargement de Magic Clock…
+      </div>
+    );
+  }
+
+  // Ici on remplace l’ancien `if (!session) { … }`
+  if (!isLoggedIn) {
+    return (
+      <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 text-center text-sm text-slate-600">
+        <p className="max-w-xs">
+          Pour accéder au Magic Display détaillé, tu devras bientôt créer un
+          compte Magic Clock. La version actuelle utilise un mode invité
+          temporaire.
+        </p>
+        <p className="text-[11px] text-slate-400">
+          Le système d’authentification sera activé dans une prochaine version.
+        </p>
+      </div>
+    );
+  }
+
+  // 1️⃣ Clé de compte (par user) – ici on force un id local simple
+  const userKey = "local-user";
 
   // 2️⃣ Identifiant de Magic Clock (un par brouillon)
   //    Si plus tard tu passes un vrai clockId dans l'URL, on le prendra.
