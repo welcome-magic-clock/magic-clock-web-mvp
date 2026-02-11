@@ -1,15 +1,22 @@
-// features/amazing/MediaCard.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ArrowUpRight, Lock, Unlock, BadgeCheck } from "lucide-react";
+import {
+  Heart,
+  ArrowUpRight,
+  Lock,
+  Unlock,
+  Loader2,
+  BadgeCheck,
+} from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
-import { useRouter } from "next/navigation"; // ✅ IMPORT AJOUTÉ
+import { useRouter } from "next/navigation";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
+type AccessKind = "FREE" | "ABO" | "PPV";
 
 type Props = {
   item: FeedCard;
@@ -92,7 +99,7 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
 }
 
 export default function MediaCard({ item }: Props) {
-  const router = useRouter(); // ✅ HOOK AJOUTÉ
+  const router = useRouter();
 
   // ---------- Créateur & avatar via Meet me ----------
   const cleanUserHandle = item.user.startsWith("@")
@@ -122,11 +129,7 @@ export default function MediaCard({ item }: Props) {
 
   const mode: PublishMode =
     modeFromItem ??
-    (item.access === "PPV"
-      ? "PPV"
-      : item.access === "ABO"
-      ? "SUB"
-      : "FREE");
+    (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE");
 
   const ppvPrice: number | null =
     typeof (item as any).ppvPrice === "number"
@@ -195,15 +198,77 @@ export default function MediaCard({ item }: Props) {
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
 
-  // ---------- Monétisation & affichage simple (pas de gating ici) ----------
-  const accessLabel =
+  // ---------- Monétisation & accès ----------
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
+  const [isUnlocked, setIsUnlocked] = useState(
+    mode === "FREE" || isSystemUnlockedForAll
+  );
+  const [lastDecision, setLastDecision] = useState<string | null>(null);
+
+  const accessLabelBase =
     mode === "FREE" ? "FREE" : mode === "SUB" ? "Abonnement" : "Pay Per View";
 
-  const isLocked = !isSystemUnlockedForAll && mode !== "FREE";
+  const accessLabel = isUnlocked
+    ? mode === "FREE"
+      ? "FREE"
+      : mode === "SUB"
+      ? "Abonnement actif"
+      : "PPV débloqué"
+    : accessLabelBase;
+
+  const isLocked = !isUnlocked && mode !== "FREE";
+
+  async function handleAccess(kind: AccessKind) {
+    setIsLoading(kind);
+    try {
+      let url: string;
+      let body: any;
+
+      if (kind === "FREE") {
+        url = "/api/access/free";
+        body = { contentId: item.id, creatorHandle: item.user };
+      } else if (kind === "ABO") {
+        url = "/api/access/subscription";
+        body = { creatorHandle: item.user, contentId: item.id };
+      } else {
+        url = "/api/access/ppv";
+        body = { contentId: item.id, creatorHandle: item.user };
+      }
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        console.error("Access API error", await res.text());
+        setLastDecision("ERROR");
+        return;
+      }
+
+      const data = await res.json();
+      setLastDecision(data.decision ?? null);
+
+      if (data.decision === "ALLOWED") {
+        setIsUnlocked(true);
+        router.push(
+          `/mymagic?tab=bibliotheque&open=${encodeURIComponent(String(item.id))}`
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      setLastDecision("ERROR");
+    } finally {
+      setIsLoading(null);
+      setMenuOpen(false);
+    }
+  }
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md">
-      {/* Zone média */}
+      {/* Zone média (NON cliquable) */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
           {heroVideoSrc ? (
@@ -257,20 +322,130 @@ export default function MediaCard({ item }: Props) {
             </div>
           </Link>
 
-          {/* Flèche → page détail /p/[id] */}
+          {/* Flèche + menu */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
             <button
               type="button"
               className="flex h-8 w-8 items-center justify-center drop-shadow-md"
               data-interactive="true"
-              aria-label="Voir le détail du Magic Clock"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
-                router.push(`/p/${item.id}`);
+                setMenuOpen((v) => !v);
               }}
+              aria-label="Options d’accès"
             >
-              <ArrowUpRight className="h-5 w-5" />
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ArrowUpRight className="h-5 w-5" />
+              )}
             </button>
+
+            {menuOpen && (
+              <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
+                {isSystemCard && isSystemUnlockedForAll ? (
+                  <>
+                    {/* 🟣 MENU BEAR / SYSTEM */}
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      data-interactive="true"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        router.push(meetHref);
+                      }}
+                    >
+                      Meet me (profil créateur)
+                    </button>
+
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      data-interactive="true"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        window.location.href =
+                          "/mymagic?tab=bibliotheque&open=mcw-onboarding-bear-001";
+                      }}
+                    >
+                      Voir dans My Magic Clock
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* 🟣 MENU STANDARD */}
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      data-interactive="true"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        router.push(meetHref);
+                      }}
+                    >
+                      Meet me (profil créateur)
+                    </button>
+
+                    {mode === "FREE" && (
+                      <button
+                        type="button"
+                        className="block w-full bg-transparent px-0 py-0 hover:underline"
+                        data-interactive="true"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAccess("FREE");
+                        }}
+                        disabled={isLoading === "FREE"}
+                      >
+                        {isLoading === "FREE"
+                          ? "Vérification FREE…"
+                          : "Débloquer (FREE)"}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      data-interactive="true"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAccess("ABO");
+                      }}
+                      disabled={isLoading === "ABO"}
+                    >
+                      {isLoading === "ABO"
+                        ? "Activation Abo…"
+                        : "Activer l’abonnement créateur"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="block w-full bg-transparent px-0 py-0 hover:underline"
+                      data-interactive="true"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAccess("PPV");
+                      }}
+                      disabled={isLoading === "PPV"}
+                    >
+                      {isLoading === "PPV"
+                        ? "Déblocage PPV…"
+                        : "Débloquer ce contenu en PPV"}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -346,6 +521,12 @@ export default function MediaCard({ item }: Props) {
             </span>
           ))}
         </div>
+
+        {lastDecision && (
+          <p className="mt-1 text-[10px] text-slate-400">
+            Décision accès : {lastDecision}
+          </p>
+        )}
       </div>
     </article>
   );
