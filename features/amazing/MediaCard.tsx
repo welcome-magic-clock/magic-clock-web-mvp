@@ -114,12 +114,16 @@ export default function MediaCard({ item }: Props) {
   const isSystemCard =
     (item as any).isSystemFeatured === true || isSystemUnlockedForAll;
 
-  // ---------- Mode, prix, hashtags, stats ----------
+   // ---------- Mode, prix, hashtags, stats ----------
   const modeFromItem = (item as any).mode as PublishMode | undefined;
 
   const mode: PublishMode =
     modeFromItem ??
-    (item.access === "PPV" ? "PPV" : item.access === "ABO" ? "SUB" : "FREE";
+    (item.access === "PPV"
+      ? "PPV"
+      : item.access === "ABO"
+      ? "SUB"
+      : "FREE");
 
   const ppvPrice: number | null =
     typeof (item as any).ppvPrice === "number"
