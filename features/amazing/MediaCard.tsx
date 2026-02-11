@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Heart, ArrowUpRight, Lock, Unlock, BadgeCheck } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
+import { useRouter } from "next/navigation"; // ✅ IMPORT AJOUTÉ
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 
@@ -91,6 +92,8 @@ function AutoPlayVideo({ src, poster, alt }: AutoPlayVideoProps) {
 }
 
 export default function MediaCard({ item }: Props) {
+  const router = useRouter(); // ✅ HOOK AJOUTÉ
+
   // ---------- Créateur & avatar via Meet me ----------
   const cleanUserHandle = item.user.startsWith("@")
     ? item.user.slice(1)
@@ -114,7 +117,7 @@ export default function MediaCard({ item }: Props) {
   const isSystemCard =
     (item as any).isSystemFeatured === true || isSystemUnlockedForAll;
 
-   // ---------- Mode, prix, hashtags, stats ----------
+  // ---------- Mode, prix, hashtags, stats ----------
   const modeFromItem = (item as any).mode as PublishMode | undefined;
 
   const mode: PublishMode =
@@ -254,7 +257,7 @@ export default function MediaCard({ item }: Props) {
             </div>
           </Link>
 
-                    {/* Flèche → page détail /p/[id] */}
+          {/* Flèche → page détail /p/[id] */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
             <button
               type="button"
