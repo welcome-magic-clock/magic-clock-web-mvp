@@ -324,23 +324,23 @@ export default function MediaCard({ item }: Props) {
 
           {/* Flèche + menu */}
           <div className="absolute right-3 top-3 z-10 text-right text-[11px] text-white">
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center drop-shadow-md"
-              data-interactive="true"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setMenuOpen((v) => !v);
-              }}
-              aria-label="Options d’accès"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <ArrowUpRight className="h-5 w-5" />
-              )}
-            </button>
+          <button
+  type="button"
+  className="flex h-8 w-8 items-center justify-center drop-shadow-md"
+  data-interactive="true"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/p/${item.id}`);
+  }}
+  aria-label="Voir le détail du Magic Clock"
+>
+  {isLoading ? (
+    <Loader2 className="h-5 w-5 animate-spin" />
+  ) : (
+    <ArrowUpRight className="h-5 w-5" />
+  )}
+</button>
 
             {menuOpen && (
               <div className="mt-1 space-y-1 [text-shadow:0_0_8px_rgba(0,0,0,0.85)]">
