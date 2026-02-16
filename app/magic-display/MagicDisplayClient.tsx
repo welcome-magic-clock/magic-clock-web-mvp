@@ -980,66 +980,45 @@ export default function MagicDisplayClient() {
 
  const handleFinalPublish = () => {
   if (!canPublish || isPublishing) return;
-
   setIsPublishing(true);
+
   try {
-    // 1️⃣ Générer un id local pour ce Magic Clock
-    const id = `mc-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+    // 1) On enregistre une "création" minimaliste dans My Magic (localStorage)
+    const workId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}`;
 
-    // 2️⃣ Choisir les meilleures sources pour Avant / Après
-    const studioBefore =
-      studioBeforeUrl ??
-      studioBeforeThumb ??
-      studioAfterUrl ??
-      studioAfterThumb ??
-      FALLBACK_BEFORE;
-
-    const studioAfter =
-      studioAfterUrl ??
-      studioAfterThumb ??
-      studioBeforeUrl ??
-      studioBeforeThumb ??
-      FALLBACK_AFTER;
-
-    // 3️⃣ Construire un objet "work" minimal
-    const work = {
-      id,
+    addCreatedWork({
+      id: workId,
       title: effectiveTitle || "Magic Clock",
-      creator: {
-        name: currentCreator.name,
-        handle: creatorHandle,
-        avatarUrl: creatorAvatar ?? null,
-      },
-      access: {
-        mode: effectiveMode, // "FREE" | "SUB" | "PPV"
-        ppvPrice:
-          effectiveMode === "PPV" && typeof effectivePpvPrice === "number"
-            ? effectivePpvPrice
-            : null,
-      },
       hashtags: effectiveHashtags,
-      studio: {
-        beforeUrl: studioBefore,
-        afterUrl: studioAfter,
-      },
-      display: displayState,
-      createdAt: Date.now(),
-    } as any; // ⬅️ Si TypeScript râle, on garde "as any" pour le MVP
+      mode: effectiveMode,
+    });
 
-    // 4️⃣ Sauvegarder dans le store local (localStorage)
-    addCreatedWork(work);
+    // 2) On nettoie les brouillons Studio + Display
+    if (typeof window !== "undefined") {
+      try {
+        // draft Studio → pont Magic Studio ↔ Display
+        window.localStorage.removeItem(STUDIO_FORWARD_KEY);
+        // draft Display → structure du cube
+        window.localStorage.removeItem(STORAGE_KEY);
+        // progression par face
+        window.localStorage.removeItem(FACE_PROGRESS_KEY);
+      } catch (error) {
+        console.error(
+          "Failed to clear Magic Clock drafts after publish",
+          error,
+        );
+      }
+    }
 
-    // 5️⃣ Rediriger vers My Magic, onglet "Créations"
-    router.push(
-      `/mymagic?tab=created&source=magic-display&open=${encodeURIComponent(
-        id,
-      )}`,
-    );
+    // 3) On renvoie dans My Magic, onglet "Créations"
+    router.push("/mymagic?tab=creations&source=magic-display");
   } finally {
     setIsPublishing(false);
   }
 };
-
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* ⭐️ Une seule grande carte Magic Display */}
