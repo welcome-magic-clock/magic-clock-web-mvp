@@ -431,57 +431,7 @@ export default function MyMagicClient() {
             )}
           </div>
 
-                    {/* Publiés → My Magic (localStorage) */}
-          <div className="space-y-2 border-t border-slate-100 pt-4">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Publiés (My Magic)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Magic Clock que tu as publiés depuis Magic Display.
-              (MVP : ils sont stockés uniquement sur ton appareil, via localStorage.)
-            </p>
-
-            {createdWorks.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-400">
-                Tu n&apos;as pas encore publié de Magic Clock depuis Magic Display.
-              </p>
-            ) : (
-              <ul className="mt-3 space-y-2">
-                {createdWorks.map((work) => (
-                  <li
-                    key={work.id}
-                    className="rounded-2xl border border-slate-200 bg-white/80 p-3 text-xs shadow-sm"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-slate-900">
-                          {work.title}
-                        </p>
-                        {work.hashtags && work.hashtags.length > 0 && (
-                          <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                            {work.hashtags.join(" ")}
-                          </p>
-                        )}
-                      </div>
-
-                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-slate-400">
-                        {work.mode === "FREE"
-                          ? "FREE"
-                          : work.mode === "SUB"
-                          ? "ABO"
-                          : "PPV"}
-                      </span>
-                    </div>
-
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      Publié le{" "}
-                      {new Date(work.createdAt).toLocaleDateString("fr-CH")}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                   
 
           {/* Publiés sur Amazing */}
           <div className="space-y-2 border-t border-slate-100 pt-4">
