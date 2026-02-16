@@ -2,6 +2,8 @@
 
 export const CREATED_WORKS_KEY = "mc-created-works-v1";
 
+export type PublishMode = "FREE" | "SUB" | "PPV";
+
 /**
  * Version stockée en localStorage d'un Magic Clock publié
  * (Studio + Display) — type volontairement simple pour le MVP.
@@ -15,9 +17,14 @@ export type StoredMagicClockWork = {
     avatarUrl: string | null;
   };
   access: {
-    mode: "FREE" | "SUB" | "PPV";
+    mode: PublishMode;
     ppvPrice: number | null;
   };
+  /**
+   * Raccourci (duplication) de access.mode pour simplifier l'UI.
+   * Peut être absent sur les anciens enregistrements.
+   */
+  mode?: PublishMode;
   hashtags: string[];
   studio: {
     beforeUrl: string;
@@ -72,12 +79,22 @@ export function addCreatedWork(work: any): void {
         avatarUrl: work.creator?.avatarUrl ?? null,
       },
       access: {
-        mode: work.access?.mode ?? "FREE",
+        mode:
+          (work.access?.mode as PublishMode | undefined) ??
+          (work.mode as PublishMode | undefined) ??
+          "FREE",
         ppvPrice:
           typeof work.access?.ppvPrice === "number"
             ? work.access.ppvPrice
+            : typeof work.ppvPrice === "number"
+            ? work.ppvPrice
             : null,
       },
+      // 👉 on duplique le mode en racine pour l'UI
+      mode:
+        (work.access?.mode as PublishMode | undefined) ??
+        (work.mode as PublishMode | undefined) ??
+        "FREE",
       hashtags: Array.isArray(work.hashtags) ? work.hashtags : [],
       studio: {
         beforeUrl: work.studio?.beforeUrl ?? "",
