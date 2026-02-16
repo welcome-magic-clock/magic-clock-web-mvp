@@ -36,6 +36,10 @@ import {
 } from "@/core/domain/magicStudioBridge";
 import { computeMagicClockPublishProgress } from "@/features/display/progress";
 
+import { addCreatedWork } from "@/core/domain/magicClockWorkStore";
+// Si ton store est typé très strict, on peut plus tard importer le type :
+// import type { MagicClockWork } from "@/core/domain/magicClockWork";
+
 type MediaType = "photo" | "video" | "file";
 
 type Segment = {
@@ -974,15 +978,67 @@ export default function MagicDisplayClient() {
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
-  const handleFinalPublish = () => {
-    if (!canPublish || isPublishing) return;
-    setIsPublishing(true);
-    try {
-      router.push("/mymagic?tab=created&source=magic-display");
-    } finally {
-      setIsPublishing(false);
-    }
-  };
+ const handleFinalPublish = () => {
+  if (!canPublish || isPublishing) return;
+
+  setIsPublishing(true);
+  try {
+    // 1️⃣ Générer un id local pour ce Magic Clock
+    const id = `mc-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+
+    // 2️⃣ Choisir les meilleures sources pour Avant / Après
+    const studioBefore =
+      studioBeforeUrl ??
+      studioBeforeThumb ??
+      studioAfterUrl ??
+      studioAfterThumb ??
+      FALLBACK_BEFORE;
+
+    const studioAfter =
+      studioAfterUrl ??
+      studioAfterThumb ??
+      studioBeforeUrl ??
+      studioBeforeThumb ??
+      FALLBACK_AFTER;
+
+    // 3️⃣ Construire un objet "work" minimal
+    const work = {
+      id,
+      title: effectiveTitle || "Magic Clock",
+      creator: {
+        name: currentCreator.name,
+        handle: creatorHandle,
+        avatarUrl: creatorAvatar ?? null,
+      },
+      access: {
+        mode: effectiveMode, // "FREE" | "SUB" | "PPV"
+        ppvPrice:
+          effectiveMode === "PPV" && typeof effectivePpvPrice === "number"
+            ? effectivePpvPrice
+            : null,
+      },
+      hashtags: effectiveHashtags,
+      studio: {
+        beforeUrl: studioBefore,
+        afterUrl: studioAfter,
+      },
+      display: displayState,
+      createdAt: Date.now(),
+    } as any; // ⬅️ Si TypeScript râle, on garde "as any" pour le MVP
+
+    // 4️⃣ Sauvegarder dans le store local (localStorage)
+    addCreatedWork(work);
+
+    // 5️⃣ Rediriger vers My Magic, onglet "Créations"
+    router.push(
+      `/mymagic?tab=created&source=magic-display&open=${encodeURIComponent(
+        id,
+      )}`,
+    );
+  } finally {
+    setIsPublishing(false);
+  }
+};
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
