@@ -37,15 +37,11 @@ export default function LegalMentionsPage() {
           <p className="mt-2">
             <strong>Magic Clock Maldonado-Verger</strong>
             <br />
-            [Adresse postale complète à compléter]
+            Rue des Saars 6
             <br />
-            [Code postal] [Ville] – Suisse
+            2000 Neuchâtel – Suisse
             <br />
-            IDE&nbsp;: <strong>[CHE-202.752.000]</strong>
-          </p>
-          <p className="mt-2 text-xs text-slate-500">
-            Ces informations seront mises à jour lors de la constitution de{" "}
-            <strong>Magic Clock SA</strong> (société anonyme de droit suisse).
+            IDE&nbsp;: <strong>CHE-202.752.000</strong>
           </p>
         </section>
 
@@ -61,10 +57,10 @@ export default function LegalMentionsPage() {
           <p className="mt-2">
             E-mail&nbsp;:{" "}
             <a
-              href="mailto:[email-support-à-compléter]"
+              href="mailto:welcome@magic-clock.com"
               className="font-medium text-indigo-600 hover:text-indigo-700"
             >
-              [email-support-à-compléter]
+              welcome@magic-clock.com
             </a>
           </p>
         </section>
