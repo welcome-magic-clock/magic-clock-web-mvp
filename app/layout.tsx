@@ -5,8 +5,19 @@ import MobileTabs from "@/components/MobileTabs";
 import { CookieBanner } from "@/components/legal/CookieBanner";
 
 export const metadata: Metadata = {
-  title: "Magic Clock",
-  description: "PWA MVP",
+  title: "Magic Clock – It’s time to smile!",
+  description:
+    "Magic Clock, la plateforme pour partager tes techniques et faire grandir tes projets.",
+  icons: {
+    icon: [
+      {
+        url: "/apple-touch-icon.png",
+        type: "image/png", // utilisé aussi comme favicon standard
+      },
+    ],
+    apple: "/apple-touch-icon.png",    // icône iOS / Safari
+    shortcut: "/apple-touch-icon.png", // raccourcis
+  },
 };
 
 export default function RootLayout({
