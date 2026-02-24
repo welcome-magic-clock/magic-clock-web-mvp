@@ -978,9 +978,23 @@ export default function MagicDisplayClient() {
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
- const handleFinalPublish = () => {
+ const handleFinalPublish = async () => {
   if (!canPublish || isPublishing) return;
   setIsPublishing(true);
+
+  // petite fonction pour générer un slug propre
+  const buildSlug = (rawTitle: string, workId: string) => {
+    const base =
+      (rawTitle || "magic-clock")
+        .toLowerCase()
+        // on vire les caractères bizarres
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "magic-clock";
+
+    // on ajoute un bout d'id pour éviter les collisions
+    const shortId = workId.slice(0, 8);
+    return `${base}-${shortId}`;
+  };
 
   try {
     // 1) On enregistre une "création" minimaliste dans My Magic (localStorage)
@@ -996,15 +1010,69 @@ export default function MagicDisplayClient() {
       mode: effectiveMode,
     });
 
-    // 2) On nettoie les brouillons Studio + Display
+    // 2) On envoie aussi la création vers Supabase via l’API
+    try {
+      const slug = buildSlug(effectiveTitle || "Magic Clock", workId);
+
+      // Payload "work" – JSON stocké dans la colonne work de magic_clocks
+      const workPayload = {
+        id: workId,
+        studio: {
+          title: effectiveTitle || "Magic Clock",
+          mode: effectiveMode,
+          ppvPrice:
+            effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
+          hashtags: effectiveHashtags,
+          beforeUrl: studioBeforeUrl,
+          afterUrl: studioAfterUrl,
+          beforeCoverTime: studioBeforeCover,
+          afterCoverTime: studioAfterCover,
+        },
+        display: {
+          segments,
+          progress: {
+            studioFacesCompleted,
+            displayPart,
+            completedFaces,
+            partialFaces,
+          },
+        },
+      };
+
+      await fetch("/api/magic-clocks/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: effectiveTitle || "Magic Clock",
+          slug,
+          gatingMode: effectiveMode,
+          work: workPayload,
+        }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          console.error(
+            "[Magic Clock] Failed to publish to Supabase",
+            res.status,
+            text,
+          );
+        }
+      });
+    } catch (error) {
+      console.error(
+        "[Magic Clock] Supabase publish failed on client",
+        error,
+      );
+    }
+
+    // 3) On nettoie les brouillons Studio + Display
     if (typeof window !== "undefined") {
       try {
-        // draft Studio → pont Magic Studio ↔ Display
-        window.localStorage.removeItem(STUDIO_FORWARD_KEY);
-        // draft Display → structure du cube
-        window.localStorage.removeItem(STORAGE_KEY);
-        // progression par face
-        window.localStorage.removeItem(FACE_PROGRESS_KEY);
+        window.localStorage.removeItem(STUDIO_FORWARD_KEY); // pont Studio ↔ Display
+        window.localStorage.removeItem(STORAGE_KEY);        // structure du cube
+        window.localStorage.removeItem(FACE_PROGRESS_KEY);  // progression par face
       } catch (error) {
         console.error(
           "Failed to clear Magic Clock drafts after publish",
@@ -1013,7 +1081,7 @@ export default function MagicDisplayClient() {
       }
     }
 
-    // 3) On renvoie dans My Magic, onglet "Créations"
+    // 4) On renvoie dans My Magic, onglet "Créations"
     router.push("/mymagic?tab=creations&source=magic-display");
   } finally {
     setIsPublishing(false);
