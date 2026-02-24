@@ -1,1 +1,0 @@
-export default ({params}:{params:{username:string}})=> <div className='container space-y-2'><h1 className='text-2xl font-semibold'>@{params.username}</h1></div>
