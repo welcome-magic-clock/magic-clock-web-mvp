@@ -16,3 +16,5 @@ export const supabaseAdmin = createClient(url, serviceRoleKey, {
     persistSession: false,
   },
 });
+
+export const getSupabaseServerClient = () => supabaseAdmin;
