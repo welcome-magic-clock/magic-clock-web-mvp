@@ -2,41 +2,50 @@ import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/core/server/supabaseClient";
 
 export async function GET() {
+  const debug = {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = getSupabaseServerClient();
 
-    const client = getSupabaseServerClient();
-
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from("magic_clocks")
-      .select("*")
+      .select("id, slug, creator_handle, gating_mode, ppv_price")
       .limit(5);
 
     if (error) {
-      return NextResponse.json({
-        ok: false,
-        step: "query",
-        error: error.message,
-      });
+      return NextResponse.json(
+        {
+          ok: false,
+          step: "query",
+          error: String(error),
+          debug,
+        },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      ok: true,
-      envDebug: {
-        urlStartsWith: url?.slice(0, 40),
-        anonLength: anon?.length ?? 0,
-        serviceLength: service?.length ?? 0,
+    return NextResponse.json(
+      {
+        ok: true,
+        count: data?.length ?? 0,
+        items: data ?? [],
+        debug,
       },
-      count: data?.length ?? 0,
-      items: data ?? [],
-    });
-  } catch (e: any) {
-    return NextResponse.json({
-      ok: false,
-      step: "catch",
-      error: String(e?.message ?? e),
-    });
+      { status: 200 }
+    );
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        step: "exception",
+        error: String(err),
+        debug,
+      },
+      { status: 500 }
+    );
   }
 }
