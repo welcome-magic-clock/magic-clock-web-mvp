@@ -7,8 +7,9 @@
 // 2) Sinon, on cherche dans Supabase (table `magic_clocks`) et on lit work.display
 //    (ou quelques variantes possibles).
 // 3) Si on ne trouve toujours rien, on retombe sur l’ancien comportement
-//    avec MagicDisplayViewer + findContentById, SANS 404.
-// 4) Si vraiment rien n’est trouvable, on affiche un petit message explicite.
+//    avec MagicDisplayViewer + findContentById.
+// 4) Si vraiment rien n’est trouvable, on affiche un message explicite
+//    + un bloc DEBUG pour t’aider à voir ce qui se passe.
 //
 
 import type { Metadata } from "next";
@@ -26,18 +27,22 @@ export const metadata: Metadata = {
   title: "Magic Display",
 };
 
-// ⚠️ Important : on supporte à la fois id ET displayId
-// (au cas où le dossier aurait été renommé).
+// On garde les deux pour être 100% safe (id ou displayId)
 type PageProps = {
   params: { id?: string; displayId?: string };
 };
 
-async function loadDisplayFromSupabase(
-  id: string,
-): Promise<PreviewDisplay | null> {
+type SupabaseDisplayResult = {
+  display: PreviewDisplay | null;
+  debug: string;
+};
+
+async function loadDisplayFromSupabase(id: string): Promise<SupabaseDisplayResult> {
   if (!id) {
-    console.warn("[Display] loadDisplayFromSupabase appelé sans id");
-    return null;
+    return {
+      display: null,
+      debug: "[Supabase] id vide → requête non envoyée",
+    };
   }
 
   try {
@@ -50,30 +55,23 @@ async function loadDisplayFromSupabase(
       .limit(1);
 
     if (error) {
-      console.error("[Display] Erreur Supabase pour id", id, error);
-      return null;
+      return {
+        display: null,
+        debug: `[Supabase] Erreur pour id ${id} : ${error.message}`,
+      };
     }
 
     const row = (data ?? [])[0] as { id: string; work: any } | undefined;
     if (!row) {
-      console.warn("[Display] Aucune ligne magic_clocks pour id", id);
-      return null;
+      return {
+        display: null,
+        debug: `[Supabase] Aucune ligne magic_clocks pour id ${id}`,
+      };
     }
 
     const work = row.work ?? {};
+    const workKeys = Object.keys(work || {});
 
-    // Petit log de debug (tu le verras dans la console browser ou Vercel)
-    try {
-      console.log(
-        "[Display] work pour id",
-        id,
-        JSON.stringify(work).slice(0, 300),
-      );
-    } catch {
-      // pas grave si JSON.stringify plante
-    }
-
-    // On teste plusieurs chemins possibles
     const display =
       (work as any).display ??
       (work as any).previewDisplay ??
@@ -81,53 +79,83 @@ async function loadDisplayFromSupabase(
       null;
 
     if (!display) {
-      console.warn(
-        "[Display] Aucun display exploitable trouvé dans work.* pour magic_clock",
-        id,
-      );
-      return null;
+      return {
+        display: null,
+        debug: `[Supabase] Ligne trouvée pour id ${id}, mais aucun display dans work.display / work.previewDisplay / work.magicDisplay (keys: ${workKeys.join(
+          ", ",
+        ) || "aucune"})`,
+      };
     }
 
-    // On fait confiance au typage PreviewDisplay côté front
-    return display as PreviewDisplay;
-  } catch (err) {
-    console.error(
-      "[Display] Exception pendant la lecture Supabase pour id",
-      id,
-      err,
-    );
-    return null;
+    return {
+      display: display as PreviewDisplay,
+      debug: `[Supabase] Display trouvé dans work.display (ou équivalent) pour id ${id}`,
+    };
+  } catch (err: any) {
+    return {
+      display: null,
+      debug: `[Supabase] Exception pour id ${id} : ${String(err?.message ?? err)}`,
+    };
   }
 }
 
-export default async function Page({ params }: PageProps) {
-  // On récupère le paramètre, quel que soit le nom du dossier ([id] ou [displayId])
+export default async function Page(props: PageProps) {
+  const params = props?.params ?? {};
   const paramValue = params.id ?? params.displayId ?? "";
   const rawId = paramValue ? decodeURIComponent(paramValue) : "";
 
-  console.log("[Display] Page ouverte avec rawId =", rawId);
+  // On prépare déjà les infos debug
+  const debugParams = JSON.stringify(params, null, 2);
 
-  // 1) Presets en mémoire (ours onboarding, etc.)
+  // 1) Presets (ours onboarding, etc.)
   const preset = rawId ? DISPLAY_PRESETS[rawId] : undefined;
   if (preset) {
     return (
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-24 pt-8 sm:px-6">
         <MagicDisplayPreviewShell display={preset} />
+
+        <section className="mt-8 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
+          <h2 className="mb-2 text-sm font-semibold text-slate-800">DEBUG</h2>
+          <p>Preset trouvé pour id : <code className="px-1">{rawId}</code></p>
+          <p className="mt-2">params :</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{debugParams}
+          </pre>
+        </section>
       </main>
     );
   }
 
   // 2) Essai via Supabase
-  const supaDisplay = rawId ? await loadDisplayFromSupabase(rawId) : null;
-  if (supaDisplay) {
+  const supaResult = rawId
+    ? await loadDisplayFromSupabase(rawId)
+    : { display: null, debug: "[Supabase] rawId vide → pas d’appel" };
+
+  if (supaResult.display) {
     return (
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-24 pt-8 sm:px-6">
-        <MagicDisplayPreviewShell display={supaDisplay} />
+        <MagicDisplayPreviewShell display={supaResult.display} />
+
+        <section className="mt-8 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
+          <h2 className="mb-2 text-sm font-semibold text-slate-800">DEBUG</h2>
+          <p>
+            Display chargé depuis Supabase pour id{" "}
+            <code className="px-1">{rawId}</code>
+          </p>
+          <p className="mt-2">params :</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{debugParams}
+          </pre>
+          <p className="mt-2">supabase :</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{supaResult.debug}
+          </pre>
+        </section>
       </main>
     );
   }
 
-  // 3) Fallback : ancien comportement (contenus "static" du repo)
+  // 3) Fallback legacy : contenus "static" (findContentById)
   const content = rawId ? findContentById(rawId) : null;
   if (content) {
     const title = content.title ?? `Magic Display #${rawId}`;
@@ -151,11 +179,27 @@ export default async function Page({ params }: PageProps) {
 
           <MagicDisplayViewer contentId={content.id} />
         </section>
+
+        <section className="mt-8 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
+          <h2 className="mb-2 text-sm font-semibold text-slate-800">DEBUG</h2>
+          <p>
+            Contenu trouvé via <code>findContentById</code> pour id{" "}
+            <code className="px-1">{rawId}</code>
+          </p>
+          <p className="mt-2">params :</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{debugParams}
+          </pre>
+          <p className="mt-2">supabase :</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{supaResult.debug}
+          </pre>
+        </section>
       </main>
     );
   }
 
-  // 4) Dernier secours : pas de preset, pas de Supabase, pas de legacy → message propre
+  // 4) Rien trouvé → message + DEBUG complet
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 pt-8 sm:px-6 sm:pt-10">
       <Link
@@ -181,6 +225,22 @@ export default async function Page({ params }: PageProps) {
           n&apos;ait pas encore été correctement enregistré dans Supabase. On
           corrigera ça ensemble dans la suite.
         </p>
+      </section>
+
+      <section className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
+        <h2 className="mb-2 text-sm font-semibold text-slate-800">
+          DEBUG (pour Amiral + Capitaine)
+        </h2>
+
+        <p className="font-medium">params :</p>
+        <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{debugParams}
+        </pre>
+
+        <p className="mt-3 font-medium">supabase :</p>
+        <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2">
+{supaResult.debug}
+        </pre>
       </section>
     </main>
   );
