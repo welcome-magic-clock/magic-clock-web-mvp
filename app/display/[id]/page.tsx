@@ -8,7 +8,7 @@
 //    (ou quelques variantes possibles).
 // 3) Si on ne trouve toujours rien, on retombe sur l’ancien comportement
 //    avec MagicDisplayViewer + findContentById, SANS 404.
-// 4) Si même ça ne marche pas, on affiche un petit message explicite.
+// 4) Si vraiment rien n’est trouvable, on affiche un petit message explicite.
 //
 
 import type { Metadata } from "next";
@@ -26,13 +26,20 @@ export const metadata: Metadata = {
   title: "Magic Display",
 };
 
+// ⚠️ Important : on supporte à la fois id ET displayId
+// (au cas où le dossier aurait été renommé).
 type PageProps = {
-  params: { id: string };
+  params: { id?: string; displayId?: string };
 };
 
 async function loadDisplayFromSupabase(
   id: string,
 ): Promise<PreviewDisplay | null> {
+  if (!id) {
+    console.warn("[Display] loadDisplayFromSupabase appelé sans id");
+    return null;
+  }
+
   try {
     const supabase = getSupabaseServerClient();
 
@@ -48,14 +55,25 @@ async function loadDisplayFromSupabase(
     }
 
     const row = (data ?? [])[0] as { id: string; work: any } | undefined;
-    if (!row || !row.work) {
-      console.warn("[Display] Pas de ligne ou pas de work pour id", id);
+    if (!row) {
+      console.warn("[Display] Aucune ligne magic_clocks pour id", id);
       return null;
     }
 
     const work = row.work ?? {};
 
-    // On essaye plusieurs chemins possibles selon la façon dont on a enregistré le JSON
+    // Petit log de debug (tu le verras dans la console browser ou Vercel)
+    try {
+      console.log(
+        "[Display] work pour id",
+        id,
+        JSON.stringify(work).slice(0, 300),
+      );
+    } catch {
+      // pas grave si JSON.stringify plante
+    }
+
+    // On teste plusieurs chemins possibles
     const display =
       (work as any).display ??
       (work as any).previewDisplay ??
@@ -70,6 +88,7 @@ async function loadDisplayFromSupabase(
       return null;
     }
 
+    // On fait confiance au typage PreviewDisplay côté front
     return display as PreviewDisplay;
   } catch (err) {
     console.error(
@@ -82,10 +101,14 @@ async function loadDisplayFromSupabase(
 }
 
 export default async function Page({ params }: PageProps) {
-  const rawId = decodeURIComponent(params.id);
+  // On récupère le paramètre, quel que soit le nom du dossier ([id] ou [displayId])
+  const paramValue = params.id ?? params.displayId ?? "";
+  const rawId = paramValue ? decodeURIComponent(paramValue) : "";
+
+  console.log("[Display] Page ouverte avec rawId =", rawId);
 
   // 1) Presets en mémoire (ours onboarding, etc.)
-  const preset = DISPLAY_PRESETS[rawId];
+  const preset = rawId ? DISPLAY_PRESETS[rawId] : undefined;
   if (preset) {
     return (
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-24 pt-8 sm:px-6">
@@ -95,7 +118,7 @@ export default async function Page({ params }: PageProps) {
   }
 
   // 2) Essai via Supabase
-  const supaDisplay = await loadDisplayFromSupabase(rawId);
+  const supaDisplay = rawId ? await loadDisplayFromSupabase(rawId) : null;
   if (supaDisplay) {
     return (
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-24 pt-8 sm:px-6">
@@ -105,7 +128,7 @@ export default async function Page({ params }: PageProps) {
   }
 
   // 3) Fallback : ancien comportement (contenus "static" du repo)
-  const content = findContentById(rawId);
+  const content = rawId ? findContentById(rawId) : null;
   if (content) {
     const title = content.title ?? `Magic Display #${rawId}`;
     const subtitle =
@@ -132,7 +155,7 @@ export default async function Page({ params }: PageProps) {
     );
   }
 
-  // 4) Vrai dernier secours : pas de preset, pas de Supabase, pas de legacy → message propre
+  // 4) Dernier secours : pas de preset, pas de Supabase, pas de legacy → message propre
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 pt-8 sm:px-6 sm:pt-10">
       <Link
@@ -150,7 +173,7 @@ export default async function Page({ params }: PageProps) {
           Impossible de trouver un Display pour cet identifiant :
           <br />
           <code className="mt-1 inline-block rounded bg-slate-100 px-2 py-1 text-xs text-slate-800">
-            {rawId}
+            {rawId || "(vide)"}
           </code>
         </p>
         <p className="text-xs text-slate-500">
