@@ -1,56 +1,61 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      persistSession: false,
-    },
-  }
-);
+// app/api/magic-clocks/create/route.ts
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/core/supabase/admin";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, slug, gatingMode, work } = body;
 
-    if (!title || !slug || !gatingMode) {
+    const {
+      title,
+      slug,
+      gatingMode, // "FREE" | "PPV" | "SUB"
+      work,       // payload complet (studio + display)
+    } = body ?? {};
+
+    if (!title || !slug || !gatingMode || !work) {
       return NextResponse.json(
-        { ok: false, error: 'Missing required fields' },
-        { status: 400 }
+        { ok: false, error: "Missing fields in body" },
+        { status: 400 },
       );
     }
 
+    // Pour l’instant : on fixe en dur Aiko Tanaka comme créatrice
     const { data, error } = await supabaseAdmin
-      .from('magic_clocks')
+      .from("magic_clocks")
       .insert({
         title,
         slug,
         gating_mode: gatingMode,
         work,
-        creator_handle: 'aiko_tanaka',
-        creator_name: 'Aiko Tanaka',
+        creator_handle: "aiko_tanaka",
+        creator_name: "Aiko Tanaka",
         is_published: true,
       })
-      .select()
+      .select("id, slug")
       .single();
 
     if (error) {
-      console.error('Supabase insert error', error);
+      console.error("[Magic Clock] Supabase insert error", error);
       return NextResponse.json(
-        { ok: false, error: error.message ?? 'Supabase error' },
-        { status: 500 }
+        { ok: false, error: error.message },
+        { status: 500 },
       );
     }
 
-    return NextResponse.json({ ok: true, magicClock: data });
-  } catch (err: any) {
-    console.error('Route /api/magic-clocks/create error', err);
+    return NextResponse.json({
+      ok: true,
+      id: data.id,
+      slug: data.slug,
+    });
+  } catch (error: any) {
+    console.error(
+      "[Magic Clock] POST /api/magic-clocks/create failed",
+      error,
+    );
     return NextResponse.json(
-      { ok: false, error: err?.message ?? 'Unknown error' },
-      { status: 500 }
+      { ok: false, error: error?.message ?? "Unknown error" },
+      { status: 500 },
     );
   }
 }
