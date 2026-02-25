@@ -46,7 +46,7 @@ export default function MagicClockDisplayClient() {
     let cancelled = false;
 
     async function run() {
-      setState({ status: "loading", id });
+      setState({ status: "loading", id: id ?? "" });
 
       // 1) Presets (Bear & futurs tutos officiels)
       const preset = DISPLAY_PRESETS[id];
