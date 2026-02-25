@@ -11,6 +11,7 @@ type SupabaseMagicClockRow = {
   gating_mode: string | null;
   ppv_price: number | null;
   created_at: string | null;
+  work: any | null;
 };
 
 function getSupabaseServerClient() {
@@ -29,8 +30,8 @@ async function getAikoPublishedMagicClocks(): Promise<SupabaseMagicClockRow[]> {
   const { data, error } = await client
     .from("magic_clocks")
     .select(
-      "id, slug, creator_handle, creator_name, title, gating_mode, ppv_price, created_at",
-    )
+  "id, slug, creator_handle, creator_name, title, gating_mode, ppv_price, created_at, work",
+)
     .eq("is_published", true)
     .order("created_at", { ascending: false });
 
