@@ -213,12 +213,12 @@ function PublishedMagicClockCard({ clock }: PublishedMagicClockCardProps) {
           {/* séparation centrale */}
           <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
 
-          {/* Avatar créateur au centre */}
+                    {/* Avatar créateur au centre */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/images/examples/aiko-avatar.jpg"
+                src="/creators/aiko-tanaka.jpeg"
                 alt={creatorName}
                 className="h-[72px] w-[72px] rounded-full object-cover"
               />
@@ -315,9 +315,17 @@ export function MyMagicClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabParam]);
 
-  const creators = listCreators();
+    const creators = listCreators();
   const currentCreator =
     creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+
+  // ✅ Avatar sécurisé : si vide → fallback sur Aiko
+  const rawAvatar = currentCreator.avatar ?? "";
+  const creatorAvatar =
+    rawAvatar.trim().length > 0
+      ? rawAvatar
+      : "/creators/aiko-tanaka.jpeg";
+
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
   const all: FeedCard[] = listFeed();
@@ -454,7 +462,6 @@ export function MyMagicClient({
   const mockViews = 0;
   const mockLikes = 0;
 
-  const creatorAvatar = currentCreator.avatar;
   const creatorHandleRaw =
     (currentCreator as any).handle ?? "@aiko_tanaka";
   const creatorHandle = creatorHandleRaw.startsWith("@")
@@ -468,11 +475,11 @@ export function MyMagicClient({
         <div className="flex items-center gap-4">
           <div className="h-16 w-16 overflow-hidden rounded-full bg-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={currentCreator.avatar}
-              alt={currentCreator.name}
-              className="h-full w-full object-cover"
-            />
+           <img
+  src={creatorAvatar}
+  alt={currentCreator.name}
+  className="h-full w-full object-cover"
+/>
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold">
