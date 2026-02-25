@@ -237,14 +237,16 @@ function PublishedMagicClockCard({
           </div>
 
           {/* Bouton Display ↗ */}
-          <Link
-            href={`/display/${encodeURIComponent(String(clock.id))}`}
-            prefetch={false}
-            className="pointer-events-auto absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
-          >
-            <ArrowUpRight className="h-5 w-5" />
-            <span className="sr-only">Ouvrir le Magic Display</span>
-          </Link>
+         <Link
+  href={`/display/magic-clock/${encodeURIComponent(String(clock.id))}`}
+  prefetch={false}
+  className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
+>
+  <ArrowUpRight className="h-5 w-5" />
+  <span className="sr-only">
+    Ouvrir le Magic Display
+  </span>
+</Link>
         </div>
       </div>
 
