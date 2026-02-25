@@ -8,21 +8,18 @@
 //
 
 import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-
 import MagicDisplayPreviewShell, {
   type PreviewDisplay,
 } from "@/features/display/MagicDisplayPreviewShell";
 import { DISPLAY_PRESETS } from "@/features/display/displayPresets";
 import { getSupabaseServerClient } from "@/core/server/supabaseClient";
 
-export const metadata: Metadata = {
-  title: "Magic Display",
-};
+// On force le mode dynamique car on va lire Supabase à chaque fois
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: {
-    id: string; // 🔹 le nom du param doit rester "id" car le dossier est [id]
+    id: string; // ⚠️ le dossier est [id], donc c'est bien "id" ici
   };
 };
 
@@ -56,13 +53,16 @@ async function getDisplayForId(rawId: string): Promise<PreviewDisplay | null> {
 
     const row = (data ?? [])[0] as { id: string; work: any } | undefined;
     if (!row || !row.work) {
+      console.warn("[Display] Aucun work trouvé pour magic_clock", rawId);
       return null;
     }
 
     const display = (row.work as any).display;
-    if (!display || !Array.isArray(display.segments)) {
+
+    // On tolère un display "simple", mais il faut au moins un objet cohérent
+    if (!display) {
       console.warn(
-        "[Display] Aucun display exploitable trouvé dans work.display pour magic_clock",
+        "[Display] Aucun display dans work.display pour magic_clock",
         rawId,
       );
       return null;
@@ -70,13 +70,17 @@ async function getDisplayForId(rawId: string): Promise<PreviewDisplay | null> {
 
     return display as PreviewDisplay;
   } catch (err) {
-    console.error("[Display] Exception pendant la lecture Supabase", err);
+    console.error(
+      "[Display] Exception pendant la lecture Supabase pour id",
+      rawId,
+      err,
+    );
     return null;
   }
 }
 
 export default async function DisplayPage({ params }: PageProps) {
-  // 🔹 on lit bien params.id (et pas displayId)
+  // ⚠️ On récupère bien params.id (et plus displayId)
   const rawId = decodeURIComponent(params.id);
 
   const display = await getDisplayForId(rawId);
