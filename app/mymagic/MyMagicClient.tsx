@@ -24,10 +24,10 @@ export type SupabaseMagicClockRow = {
   creator_handle: string | null;
   creator_name: string | null;
   title: string | null;
-  gating_mode: "FREE" | "SUB" | "PPV" | null;
+  gating_mode: PublishMode | null;
   ppv_price: number | null;
   created_at: string | null;
-  work: any | null; // JSON venant de Supabase
+  work: any | null; // JSON venant de Supabase (studio + display)
 };
 
 type MyMagicClientProps = {
@@ -122,8 +122,9 @@ function normalizeTab(raw: string | null): MyMagicTab {
     v === "bibliothèque" ||
     v === "library" ||
     v === "acquis"
-  )
+  ) {
     return "bibliotheque";
+  }
   return "creations";
 }
 
@@ -131,22 +132,29 @@ function normalizeTab(raw: string | null): MyMagicTab {
  * Carte pour un Magic Clock publié (données venant de Supabase)
  * → même visuel que la section "En cours" + bouton Display ↗
  */
+type PublishedMagicClockCardProps = {
+  clock: SupabaseMagicClockRow;
+  creatorAvatar: string;
+  creatorName: string;
+  creatorHandle: string;
+};
+
 function PublishedMagicClockCard({
   clock,
-}: {
-  clock: SupabaseMagicClockRow;
-}) {
+  creatorAvatar,
+  creatorName,
+  creatorHandle,
+}: PublishedMagicClockCardProps) {
   // On récupère la partie "studio" dans le JSON work
   const studio = (clock.work as any)?.studio ?? {};
 
-  const beforeUrl: string =
-    typeof studio.beforeUrl === "string" && studio.beforeUrl.length > 0
-      ? studio.beforeUrl
-      : FALLBACK_BEFORE;
-  const afterUrl: string =
-    typeof studio.afterUrl === "string" && studio.afterUrl.length > 0
-      ? studio.afterUrl
-      : FALLBACK_AFTER;
+  const title: string =
+    studio.title || clock.title || "Magic Clock sans titre";
+
+  const beforeSrc: string =
+    studio.beforeUrl || studio.afterUrl || FALLBACK_BEFORE;
+  const afterSrc: string =
+    studio.afterUrl || studio.beforeUrl || FALLBACK_AFTER;
 
   const beforeCoverTime: number | null =
     typeof studio.beforeCoverTime === "number"
@@ -157,9 +165,6 @@ function PublishedMagicClockCard({
       ? studio.afterCoverTime
       : null;
 
-  const title: string =
-    clock.title || studio.title || "Magic Clock";
-
   const rawHashtags: string[] = Array.isArray(studio.hashtags)
     ? studio.hashtags
     : [];
@@ -169,92 +174,98 @@ function PublishedMagicClockCard({
     .filter(Boolean)
     .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
-  const mode: PublishMode | null = clock.gating_mode;
-  const isLocked = mode !== "FREE";
+  const gating = clock.gating_mode ?? "FREE";
+  const isLocked = gating !== "FREE";
 
   const accessLabel =
-    mode === "FREE"
+    gating === "FREE"
       ? "FREE"
-      : mode === "SUB"
+      : gating === "SUB"
       ? "Abonnement"
-      : mode === "PPV"
+      : gating === "PPV"
       ? "PayPerView"
       : "Inconnu";
 
-  const ppvPrice = clock.ppv_price;
+  const ppvPrice: number | null =
+    gating === "PPV" && typeof studio.ppvPrice === "number"
+      ? studio.ppvPrice
+      : clock.ppv_price;
 
-  // (en dur pour l’instant, on branchera les vraies stats plus tard)
-  const mockViews = 0;
-  const mockLikes = 0;
+  // stats mockées pour l’instant
+  const views = 0;
+  const likes = 0;
 
-  // On affiche le handle du créateur connu dans Supabase
   const handle =
-    clock.creator_handle ?? "aiko_tanaka";
-  const displayHandle = handle.startsWith("@")
-    ? handle
-    : `@${handle}`;
+    clock.creator_handle && clock.creator_handle.length > 0
+      ? clock.creator_handle
+      : creatorHandle.replace(/^@/, "");
+  const displayHandle = handle.startsWith("@") ? handle : `@${handle}`;
 
-  const creatorName =
-    clock.creator_name ?? "Aiko Tanaka";
+  const displayName = clock.creator_name || creatorName;
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
+      {/* VISUEL AVANT / APRÈS */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         <div className="relative mx-auto aspect-[4/5] w-full">
           <div className="grid h-full w-full grid-cols-2">
             <StudioMediaSlot
-              src={beforeUrl}
+              src={beforeSrc}
               alt={`${title} - Avant`}
               coverTime={beforeCoverTime ?? undefined}
             />
             <StudioMediaSlot
-              src={afterUrl}
+              src={afterSrc}
               alt={`${title} - Après`}
               coverTime={afterCoverTime ?? undefined}
             />
           </div>
 
-          {/* séparation centrale */}
+          {/* Trait central */}
           <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 bg-white/90" />
 
-          {/* avatar (ici on ne le recharge pas, on laisse le focus sur le visuel) */}
+          {/* Avatar créateur au centre */}
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/90 bg-white/10 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={creatorAvatar}
+                alt={displayName}
+                className="h-[72px] w-[72px] rounded-full object-cover"
+              />
+            </div>
+          </div>
 
-          {/* bouton Display ↗ */}
+          {/* Bouton Display ↗ */}
           <Link
             href={`/display/${encodeURIComponent(String(clock.id))}`}
             prefetch={false}
-            className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
+            className="pointer-events-auto absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
           >
             <ArrowUpRight className="h-5 w-5" />
-            <span className="sr-only">
-              Ouvrir le Magic Display
-            </span>
+            <span className="sr-only">Ouvrir le Magic Display</span>
           </Link>
         </div>
       </div>
 
+      {/* MÉTA / TEXTE */}
       <div className="mt-3 space-y-1 text-xs">
-        {/* ligne auteur + stats */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-          <span className="font-medium">
-            {creatorName}
-          </span>
-          <span className="text-slate-400">
-            {displayHandle}
-          </span>
+          <span className="font-medium">{displayName}</span>
+          <span className="text-slate-400">{displayHandle}</span>
 
           <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
           <span>
             <span className="font-medium">
-              {mockViews.toLocaleString("fr-CH")}
+              {views.toLocaleString("fr-CH")}
             </span>{" "}
             vues
           </span>
 
           <span className="flex items-center gap-1">
             <Heart className="h-3 w-3" />
-            <span>{mockLikes}</span>
+            <span>{likes}</span>
           </span>
 
           <span className="flex items-center gap-1">
@@ -264,7 +275,7 @@ function PublishedMagicClockCard({
               <Unlock className="h-3 w-3" />
             )}
             <span>{accessLabel}</span>
-            {mode === "PPV" && ppvPrice != null && (
+            {gating === "PPV" && ppvPrice != null && (
               <span className="ml-1 text-[11px] text-slate-500">
                 · {ppvPrice.toFixed(2)} CHF
               </span>
@@ -272,18 +283,12 @@ function PublishedMagicClockCard({
           </span>
         </div>
 
-        {/* titre + hashtags */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
           {title && (
-            <span className="font-medium text-slate-800">
-              {title}
-            </span>
+            <span className="font-medium text-slate-800">{title}</span>
           )}
           {hashtags.map((tag) => (
-            <span
-              key={tag}
-              className="text-brand-600"
-            >
+            <span key={tag} className="text-brand-600">
               {tag}
             </span>
           ))}
@@ -374,8 +379,7 @@ export function MyMagicClient({
   const [draftAfterCover, setDraftAfterCover] =
     useState<number | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
-  const [draftMode, setDraftMode] =
-    useState<PublishMode>("FREE");
+  const [draftMode, setDraftMode] = useState<PublishMode>("FREE");
   const [draftPpvPrice, setDraftPpvPrice] =
     useState<number | null>(null);
   const [draftHashtags, setDraftHashtags] = useState<string[]>([]);
@@ -721,6 +725,9 @@ export function MyMagicClient({
                 <PublishedMagicClockCard
                   key={clock.id}
                   clock={clock}
+                  creatorAvatar={creatorAvatar}
+                  creatorName={currentCreator.name}
+                  creatorHandle={creatorHandle}
                 />
               ))}
             </div>
