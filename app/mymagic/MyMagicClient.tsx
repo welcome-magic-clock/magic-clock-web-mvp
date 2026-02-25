@@ -236,17 +236,15 @@ function PublishedMagicClockCard({
             </div>
           </div>
 
-          {/* Bouton Display ↗ */}
-        <Link
-  href={`/magic-clock-display/${encodeURIComponent(String(clock.id))}`}
+        {/* Bouton Display ↗ */}
+<Link
+  href={`/magic-clock-display?id=${encodeURIComponent(String(clock.id))}`}
   prefetch={false}
   className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
 >
   <ArrowUpRight className="h-5 w-5" />
   <span className="sr-only">Ouvrir le Magic Display</span>
 </Link>
-        </div>
-      </div>
 
       {/* MÉTA / TEXTE */}
       <div className="mt-3 space-y-1 text-xs">
@@ -738,7 +736,7 @@ export function MyMagicClient({
       {/* ========================= */}
       {/* TAB: BIBLIOTHÈQUE         */}
       {/* ========================= */}
-      {activeTab === "bibliotheque" && (
+           {activeTab === "bibliotheque" && (
         <section
           id="mymagic-unlocked"
           className="space-y-3"
@@ -756,6 +754,7 @@ export function MyMagicClient({
               const isOpen =
                 openParam &&
                 String(item.id) === String(openParam);
+
               return (
                 <div
                   key={String(item.id)}
@@ -772,7 +771,7 @@ export function MyMagicClient({
                     <MediaCard item={item} />
 
                     <Link
-                      href={`/display/${encodeURIComponent(
+                      href={`/magic-clock-display?id=${encodeURIComponent(
                         String(item.id),
                       )}`}
                       prefetch={false}
@@ -787,6 +786,7 @@ export function MyMagicClient({
           </div>
         </section>
       )}
+
     </main>
   );
 }
