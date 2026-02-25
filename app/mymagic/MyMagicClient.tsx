@@ -27,6 +27,8 @@ type SupabaseMagicClockRow = {
   gating_mode: string | null;
   ppv_price: number | null;
   created_at: string | null;
+  // nouveau : payload complet (Studio + Display) en JSON
+  work: any | null;
 };
 
 type MyMagicClientProps = {
