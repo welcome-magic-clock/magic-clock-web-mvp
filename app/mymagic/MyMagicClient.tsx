@@ -37,17 +37,27 @@ type MyMagicClientProps = {
 const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
 const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
 
+function safeTrim(value: unknown): string {
+  if (value == null) return "";
+  return String(value).trim();
+}
+
+function buildDisplayHref(id: unknown): string | null {
+  const clean = safeTrim(id);
+  if (!clean) return null;
+  // Protection supplémentaire: évite "/display/undefined" si jamais
+  if (clean.toLowerCase() === "undefined" || clean.toLowerCase() === "null")
+    return null;
+  return `/display/${encodeURIComponent(clean)}`;
+}
+
 function isVideo(url: string) {
   if (!url) return false;
   if (url.startsWith("data:video/")) return true;
   if (url.startsWith("blob:")) return true;
 
   const clean = url.split("?")[0].toLowerCase();
-  return (
-    clean.endsWith(".mp4") ||
-    clean.endsWith(".webm") ||
-    clean.endsWith(".ogg")
-  );
+  return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".ogg");
 }
 
 function StudioMediaSlot({
@@ -117,12 +127,7 @@ function StudioMediaSlot({
 
 function normalizeTab(raw: string | null): MyMagicTab {
   const v = (raw ?? "").trim().toLowerCase();
-  if (
-    v === "bibliotheque" ||
-    v === "bibliothèque" ||
-    v === "library" ||
-    v === "acquis"
-  ) {
+  if (v === "bibliotheque" || v === "bibliothèque" || v === "library" || v === "acquis") {
     return "bibliotheque";
   }
   return "creations";
@@ -130,7 +135,7 @@ function normalizeTab(raw: string | null): MyMagicTab {
 
 /**
  * Carte pour un Magic Clock publié (données venant de Supabase)
- * → même visuel que la section "En cours" + bouton Display ↗
+ * → même visuel que la section "En cours" + bouton Display ↗ sécurisé
  */
 type PublishedMagicClockCardProps = {
   clock: SupabaseMagicClockRow;
@@ -145,29 +150,20 @@ function PublishedMagicClockCard({
   creatorName,
   creatorHandle,
 }: PublishedMagicClockCardProps) {
-  // On récupère la partie "studio" dans le JSON work
+  // JSON work
   const studio = (clock.work as any)?.studio ?? {};
 
-  const title: string =
-    studio.title || clock.title || "Magic Clock sans titre";
+  const title: string = studio.title || clock.title || "Magic Clock sans titre";
 
-  const beforeSrc: string =
-    studio.beforeUrl || studio.afterUrl || FALLBACK_BEFORE;
-  const afterSrc: string =
-    studio.afterUrl || studio.beforeUrl || FALLBACK_AFTER;
+  const beforeSrc: string = studio.beforeUrl || studio.afterUrl || FALLBACK_BEFORE;
+  const afterSrc: string = studio.afterUrl || studio.beforeUrl || FALLBACK_AFTER;
 
   const beforeCoverTime: number | null =
-    typeof studio.beforeCoverTime === "number"
-      ? studio.beforeCoverTime
-      : null;
+    typeof studio.beforeCoverTime === "number" ? studio.beforeCoverTime : null;
   const afterCoverTime: number | null =
-    typeof studio.afterCoverTime === "number"
-      ? studio.afterCoverTime
-      : null;
+    typeof studio.afterCoverTime === "number" ? studio.afterCoverTime : null;
 
-  const rawHashtags: string[] = Array.isArray(studio.hashtags)
-    ? studio.hashtags
-    : [];
+  const rawHashtags: string[] = Array.isArray(studio.hashtags) ? studio.hashtags : [];
 
   const hashtags = rawHashtags
     .map((tag) => String(tag).trim())
@@ -178,20 +174,12 @@ function PublishedMagicClockCard({
   const isLocked = gating !== "FREE";
 
   const accessLabel =
-    gating === "FREE"
-      ? "FREE"
-      : gating === "SUB"
-      ? "Abonnement"
-      : gating === "PPV"
-      ? "PayPerView"
-      : "Inconnu";
+    gating === "FREE" ? "FREE" : gating === "SUB" ? "Abonnement" : gating === "PPV" ? "PayPerView" : "Inconnu";
 
   const ppvPrice: number | null =
-    gating === "PPV" && typeof studio.ppvPrice === "number"
-      ? studio.ppvPrice
-      : clock.ppv_price;
+    gating === "PPV" && typeof studio.ppvPrice === "number" ? studio.ppvPrice : clock.ppv_price;
 
-  // stats mockées pour l’instant
+  // stats mockées
   const views = 0;
   const likes = 0;
 
@@ -202,6 +190,9 @@ function PublishedMagicClockCard({
   const displayHandle = handle.startsWith("@") ? handle : `@${handle}`;
 
   const displayName = clock.creator_name || creatorName;
+
+  // ✅ lien display sécurisé
+  const displayHref = buildDisplayHref(clock?.id);
 
   return (
     <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
@@ -236,15 +227,26 @@ function PublishedMagicClockCard({
             </div>
           </div>
 
-          {/* Bouton Display ↗ */}
-          <Link
-            href={`/display/${encodeURIComponent(String(clock.id))}`}
-            prefetch={false}
-            className="pointer-events-auto absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
-          >
-            <ArrowUpRight className="h-5 w-5" />
-            <span className="sr-only">Ouvrir le Magic Display</span>
-          </Link>
+          {/* ✅ Bouton Display ↗ sécurisé */}
+          {displayHref ? (
+            <Link
+              href={displayHref}
+              prefetch={false}
+              className="pointer-events-auto absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-md"
+              title="Ouvrir le Magic Display"
+            >
+              <ArrowUpRight className="h-5 w-5" />
+              <span className="sr-only">Ouvrir le Magic Display</span>
+            </Link>
+          ) : (
+            <div
+              className="pointer-events-auto absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/25 text-white/60"
+              title="Display indisponible (ID manquant). Publie le contenu ou recharge la page."
+            >
+              <ArrowUpRight className="h-5 w-5" />
+              <span className="sr-only">Display indisponible</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -257,10 +259,7 @@ function PublishedMagicClockCard({
           <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
           <span>
-            <span className="font-medium">
-              {views.toLocaleString("fr-CH")}
-            </span>{" "}
-            vues
+            <span className="font-medium">{views.toLocaleString("fr-CH")}</span> vues
           </span>
 
           <span className="flex items-center gap-1">
@@ -269,24 +268,16 @@ function PublishedMagicClockCard({
           </span>
 
           <span className="flex items-center gap-1">
-            {isLocked ? (
-              <Lock className="h-3 w-3" />
-            ) : (
-              <Unlock className="h-3 w-3" />
-            )}
+            {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
             <span>{accessLabel}</span>
             {gating === "PPV" && ppvPrice != null && (
-              <span className="ml-1 text-[11px] text-slate-500">
-                · {ppvPrice.toFixed(2)} CHF
-              </span>
+              <span className="ml-1 text-[11px] text-slate-500">· {ppvPrice.toFixed(2)} CHF</span>
             )}
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-          {title && (
-            <span className="font-medium text-slate-800">{title}</span>
-          )}
+          {title && <span className="font-medium text-slate-800">{title}</span>}
           {hashtags.map((tag) => (
             <span key={tag} className="text-brand-600">
               {tag}
@@ -301,9 +292,7 @@ function PublishedMagicClockCard({
 // ==============================
 // Client principal MyMagic
 // ==============================
-export function MyMagicClient({
-  initialPublished = [],
-}: MyMagicClientProps) {
+export function MyMagicClient({ initialPublished = [] }: MyMagicClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -312,9 +301,7 @@ export function MyMagicClient({
   const openParam = searchParams.get("open");
 
   // Onglets
-  const [activeTab, setActiveTab] = useState<MyMagicTab>(() =>
-    normalizeTab(tabParam),
-  );
+  const [activeTab, setActiveTab] = useState<MyMagicTab>(() => normalizeTab(tabParam));
 
   useEffect(() => {
     setActiveTab(normalizeTab(tabParam));
@@ -322,23 +309,16 @@ export function MyMagicClient({
   }, [tabParam]);
 
   const creators = listCreators();
-  const currentCreator =
-    creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
+  const currentCreator = creators.find((c) => c.name === "Aiko Tanaka") ?? creators[0];
   const followerLabel = currentCreator.followers.toLocaleString("fr-CH");
 
   const all: FeedCard[] = listFeed();
 
-  const normalize = (value?: string | null) =>
-    (value ?? "").trim().replace(/^@/, "").toLowerCase();
-
+  const normalize = (value?: string | null) => (value ?? "").trim().replace(/^@/, "").toLowerCase();
   const targetHandle = normalize((currentCreator as any).handle);
 
   const isOwnedByCurrent = (item: any) => {
-    const candidates = [
-      (item as any).user,
-      (item as any).handle,
-      (item as any).creatorHandle,
-    ];
+    const candidates = [(item as any).user, (item as any).handle, (item as any).creatorHandle];
     return candidates.map((v) => normalize(v)).includes(targetHandle);
   };
 
@@ -355,9 +335,7 @@ export function MyMagicClient({
     const t = window.setTimeout(() => {
       const key = String(openParam);
       const el = purchasedRefs.current[key];
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 150);
 
     return () => window.clearTimeout(t);
@@ -374,14 +352,11 @@ export function MyMagicClient({
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [draftBefore, setDraftBefore] = useState<string | null>(null);
   const [draftAfter, setDraftAfter] = useState<string | null>(null);
-  const [draftBeforeCover, setDraftBeforeCover] =
-    useState<number | null>(null);
-  const [draftAfterCover, setDraftAfterCover] =
-    useState<number | null>(null);
+  const [draftBeforeCover, setDraftBeforeCover] = useState<number | null>(null);
+  const [draftAfterCover, setDraftAfterCover] = useState<number | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [draftMode, setDraftMode] = useState<PublishMode>("FREE");
-  const [draftPpvPrice, setDraftPpvPrice] =
-    useState<number | null>(null);
+  const [draftPpvPrice, setDraftPpvPrice] = useState<number | null>(null);
   const [draftHashtags, setDraftHashtags] = useState<string[]>([]);
 
   useEffect(() => {
@@ -396,16 +371,12 @@ export function MyMagicClient({
 
       if (payload.before?.url) setDraftBefore(payload.before.url);
       if (payload.after?.url) setDraftAfter(payload.after.url);
-      if (typeof payload.before?.coverTime === "number")
-        setDraftBeforeCover(payload.before.coverTime);
-      if (typeof payload.after?.coverTime === "number")
-        setDraftAfterCover(payload.after.coverTime);
+      if (typeof payload.before?.coverTime === "number") setDraftBeforeCover(payload.before.coverTime);
+      if (typeof payload.after?.coverTime === "number") setDraftAfterCover(payload.after.coverTime);
 
       if (payload.title) setDraftTitle(payload.title);
-      if (payload.mode)
-        setDraftMode((payload.mode as PublishMode) ?? "FREE");
-      if (typeof payload.ppvPrice === "number")
-        setDraftPpvPrice(payload.ppvPrice);
+      if (payload.mode) setDraftMode((payload.mode as PublishMode) ?? "FREE");
+      if (typeof payload.ppvPrice === "number") setDraftPpvPrice(payload.ppvPrice);
 
       if (Array.isArray(payload.hashtags)) {
         const tags = payload.hashtags
@@ -415,19 +386,14 @@ export function MyMagicClient({
         setDraftHashtags(tags);
       }
     } catch (error) {
-      console.error(
-        "Failed to read Magic Studio payload in My Magic",
-        error,
-      );
+      console.error("Failed to read Magic Studio payload in My Magic", error);
     } finally {
       setDraftLoaded(true);
     }
   }, []);
 
-  const beforePreview =
-    draftBefore ?? draftAfter ?? FALLBACK_BEFORE;
-  const afterPreview =
-    draftAfter ?? draftBefore ?? FALLBACK_AFTER;
+  const beforePreview = draftBefore ?? draftAfter ?? FALLBACK_BEFORE;
+  const afterPreview = draftAfter ?? draftBefore ?? FALLBACK_AFTER;
   const effectiveTitle = draftTitle.trim();
 
   const beforeCoverTime =
@@ -444,30 +410,19 @@ export function MyMagicClient({
       ? draftBeforeCover
       : null;
 
-  const accessLabelDraft =
-    draftMode === "FREE"
-      ? "FREE"
-      : draftMode === "SUB"
-      ? "Abonnement"
-      : "PayPerView";
+  const accessLabelDraft = draftMode === "FREE" ? "FREE" : draftMode === "SUB" ? "Abonnement" : "PayPerView";
   const isLockedPreviewDraft = draftMode !== "FREE";
-  const effectiveHashtagsDraft =
-    draftHashtags.length > 0
-      ? draftHashtags
-      : ["#coiffure", "#color"];
+  const effectiveHashtagsDraft = draftHashtags.length > 0 ? draftHashtags : ["#coiffure", "#color"];
 
   const mockViews = 0;
   const mockLikes = 0;
 
   const creatorAvatar = currentCreator.avatar;
-  const creatorHandleRaw =
-    (currentCreator as any).handle ?? "@aiko_tanaka";
-  const creatorHandle = creatorHandleRaw.startsWith("@")
-    ? creatorHandleRaw
-    : `@${creatorHandleRaw}`;
+  const creatorHandleRaw = (currentCreator as any).handle ?? "@aiko_tanaka";
+  const creatorHandle = creatorHandleRaw.startsWith("@") ? creatorHandleRaw : `@${creatorHandleRaw}`;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-36 pt-4 sm:px-6 sm:pt-8 sm:pb-40">
+    <main className="mx-auto max-w-5xl px-4 pb-36 pt-4 sm:px-6 sm:pb-40 sm:pt-8">
       {/* Avatar + infos créateur */}
       <header className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -480,22 +435,14 @@ export function MyMagicClient({
             />
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold">
-              {currentCreator.name}
-            </h1>
+            <h1 className="text-2xl font-semibold">{currentCreator.name}</h1>
             <p className="text-sm text-slate-600">
               {creatorHandle}
-              {currentCreator.city
-                ? ` · ${currentCreator.city} (CH)`
-                : ""}
-              {currentCreator.langs?.length
-                ? ` · Langues : ${currentCreator.langs.join(", ")}`
-                : ""}
+              {currentCreator.city ? ` · ${currentCreator.city} (CH)` : ""}
+              {currentCreator.langs?.length ? ` · Langues : ${currentCreator.langs.join(", ")}` : ""}
             </p>
             <p className="text-xs text-slate-500">
-              {followerLabel} followers · {created.length} Magic
-              Clock créés · {purchased.length} Magic Clock
-              débloqués
+              {followerLabel} followers · {created.length} Magic Clock créés · {purchased.length} Magic Clock débloqués
             </p>
           </div>
         </div>
@@ -531,37 +478,20 @@ export function MyMagicClient({
       </div>
 
       {/* PROFIL + COCKPIT */}
-      <section
-        id="mymagic-profile"
-        className="mb-8 grid gap-6 lg:grid-cols-3"
-      >
+      <section id="mymagic-profile" className="mb-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:col-span-2">
           <h2 className="text-lg font-semibold">Profil</h2>
           <p className="text-sm text-slate-600">
-            Coiffeuse-coloriste professionnelle spécialisée dans les
-            balayages blonds, les blonds lumineux et les
-            transformations en douceur. Aiko partage ses techniques
-            étape par étape à travers des Magic Clock pédagogiques,
-            pour t&apos;aider à reproduire des résultats salon sur
-            mesure et respectueux de la fibre.
+            Coiffeuse-coloriste professionnelle spécialisée dans les balayages blonds, les blonds lumineux et les
+            transformations en douceur. Aiko partage ses techniques étape par étape à travers des Magic Clock pédagogiques,
+            pour t&apos;aider à reproduire des résultats salon sur mesure et respectueux de la fibre.
           </p>
         </div>
 
-        <div
-          id="mymagic-cockpit"
-          className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4"
-        >
-          <h2 className="text-lg font-semibold">
-            Résumé Cockpit
-          </h2>
-          <Cockpit
-            mode="compact"
-            followers={currentCreator.followers}
-          />
-          <a
-            href="/monet"
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"
-          >
+        <div id="mymagic-cockpit" className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-4">
+          <h2 className="text-lg font-semibold">Résumé Cockpit</h2>
+          <Cockpit mode="compact" followers={currentCreator.followers} />
+          <a href="/monet" className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline">
             Ouvrir le cockpit complet <span aria-hidden>↗</span>
           </a>
         </div>
@@ -571,27 +501,18 @@ export function MyMagicClient({
       {/* TAB: CRÉATIONS            */}
       {/* ========================= */}
       {activeTab === "creations" && (
-        <section
-          id="mymagic-created"
-          className="mb-8 space-y-4"
-        >
-          <h2 className="text-lg font-semibold">
-            Mes Magic Clock créés
-          </h2>
+        <section id="mymagic-created" className="mb-8 space-y-4">
+          <h2 className="text-lg font-semibold">Mes Magic Clock créés</h2>
           <p className="text-sm text-slate-600">
-            Ici apparaissent tes propres Magic Clock (Studio +
-            Display) : ceux que tu es en train de préparer et ceux que
+            Ici apparaissent tes propres Magic Clock (Studio + Display) : ceux que tu es en train de préparer et ceux que
             tu as déjà publiés.
           </p>
 
           {/* En cours */}
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900">
-              En cours
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-900">En cours</h3>
             <p className="text-xs text-slate-600">
-              Magic Clock en construction, en cours de préparation
-              dans Magic Studio / Magic Display.
+              Magic Clock en construction, en cours de préparation dans Magic Studio / Magic Display.
             </p>
 
             {draftLoaded && (draftBefore || draftAfter) ? (
@@ -602,16 +523,12 @@ export function MyMagicClient({
                       <div className="grid h-full w-full grid-cols-2">
                         <StudioMediaSlot
                           src={beforePreview}
-                          alt={`${
-                            effectiveTitle || "Magic Studio"
-                          } - Avant`}
+                          alt={`${effectiveTitle || "Magic Studio"} - Avant`}
                           coverTime={beforeCoverTime ?? undefined}
                         />
                         <StudioMediaSlot
                           src={afterPreview}
-                          alt={`${
-                            effectiveTitle || "Magic Studio"
-                          } - Après`}
+                          alt={`${effectiveTitle || "Magic Studio"} - Après`}
                           coverTime={afterCoverTime ?? undefined}
                         />
                       </div>
@@ -637,20 +554,13 @@ export function MyMagicClient({
 
                   <div className="mt-3 space-y-1 text-xs">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-                      <span className="font-medium">
-                        {currentCreator.name}
-                      </span>
-                      <span className="text-slate-400">
-                        {creatorHandle}
-                      </span>
+                      <span className="font-medium">{currentCreator.name}</span>
+                      <span className="text-slate-400">{creatorHandle}</span>
 
                       <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
 
                       <span>
-                        <span className="font-medium">
-                          {mockViews.toLocaleString("fr-CH")}
-                        </span>{" "}
-                        vues
+                        <span className="font-medium">{mockViews.toLocaleString("fr-CH")}</span> vues
                       </span>
 
                       <span className="flex items-center gap-1">
@@ -659,32 +569,18 @@ export function MyMagicClient({
                       </span>
 
                       <span className="flex items-center gap-1">
-                        {isLockedPreviewDraft ? (
-                          <Lock className="h-3 w-3" />
-                        ) : (
-                          <Unlock className="h-3 w-3" />
-                        )}
+                        {isLockedPreviewDraft ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                         <span>{accessLabelDraft}</span>
-                        {draftMode === "PPV" &&
-                          draftPpvPrice != null && (
-                            <span className="ml-1 text-[11px] text-slate-500">
-                              · {draftPpvPrice.toFixed(2)} CHF
-                            </span>
-                          )}
+                        {draftMode === "PPV" && draftPpvPrice != null && (
+                          <span className="ml-1 text-[11px] text-slate-500">· {draftPpvPrice.toFixed(2)} CHF</span>
+                        )}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                      {effectiveTitle && (
-                        <span className="font-medium text-slate-800">
-                          {effectiveTitle}
-                        </span>
-                      )}
+                      {effectiveTitle && <span className="font-medium text-slate-800">{effectiveTitle}</span>}
                       {effectiveHashtagsDraft.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-brand-600"
-                        >
+                        <span key={tag} className="text-brand-600">
                           {tag}
                         </span>
                       ))}
@@ -693,31 +589,22 @@ export function MyMagicClient({
                 </article>
               </div>
             ) : (
-              <p className="mt-2 text-xs text-slate-400">
-                Aucun Magic Clock en cours pour l&apos;instant.
-              </p>
+              <p className="mt-2 text-xs text-slate-400">Aucun Magic Clock en cours pour l&apos;instant.</p>
             )}
           </div>
 
           {/* Publiés sur Amazing (Supabase) */}
           <div className="space-y-2 border-t border-slate-100 pt-4">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Publiés sur Amazing
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-900">Publiés sur Amazing</h3>
             <p className="text-xs text-slate-600">
-              Magic Clock déjà visibles dans le flux Amazing (contenus
-              publics publiés depuis ton profil).
+              Magic Clock déjà visibles dans le flux Amazing (contenus publics publiés depuis ton profil).
             </p>
 
             <div className="mt-4 space-y-4">
               {initialPublished.length === 0 && (
                 <p className="text-sm text-slate-400">
-                  Aucun Magic Clock publié pour le moment. Dès que tu
-                  publies un Magic Clock en mode{" "}
-                  <span className="font-semibold">
-                    public
-                  </span>
-                  , il apparaîtra ici.
+                  Aucun Magic Clock publié pour le moment. Dès que tu publies un Magic Clock en mode{" "}
+                  <span className="font-semibold">public</span>, il apparaîtra ici.
                 </p>
               )}
 
@@ -739,47 +626,45 @@ export function MyMagicClient({
       {/* TAB: BIBLIOTHÈQUE         */}
       {/* ========================= */}
       {activeTab === "bibliotheque" && (
-        <section
-          id="mymagic-unlocked"
-          className="space-y-3"
-        >
-          <h2 className="text-lg font-semibold">
-            Bibliothèque (Acquis)
-          </h2>
+        <section id="mymagic-unlocked" className="space-y-3">
+          <h2 className="text-lg font-semibold">Bibliothèque (Acquis)</h2>
           <p className="text-sm text-slate-600">
-            Tout ce qui a été débloqué (FREE / Abonnement / PPV) + les
-            contenus des autres créateurs.
+            Tout ce qui a été débloqué (FREE / Abonnement / PPV) + les contenus des autres créateurs.
           </p>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {purchased.map((item) => {
-              const isOpen =
-                openParam &&
-                String(item.id) === String(openParam);
+              const isOpen = openParam && String(item.id) === String(openParam);
+
+              const displayHref = buildDisplayHref((item as any)?.id);
+
               return (
                 <div
                   key={String(item.id)}
                   ref={(el) => {
                     purchasedRefs.current[String(item.id)] = el;
                   }}
-                  className={
-                    isOpen
-                      ? "rounded-2xl ring-2 ring-brand-500 ring-offset-2"
-                      : undefined
-                  }
+                  className={isOpen ? "rounded-2xl ring-2 ring-brand-500 ring-offset-2" : undefined}
                 >
                   <div className="space-y-2">
                     <MediaCard item={item} />
 
-                    <Link
-                      href={`/display/${encodeURIComponent(
-                        String(item.id),
-                      )}`}
-                      prefetch={false}
-                      className="block text-left text-[11px] font-medium text-brand-600 hover:underline"
-                    >
-                      Ouvrir le Magic Display
-                    </Link>
+                    {displayHref ? (
+                      <Link
+                        href={displayHref}
+                        prefetch={false}
+                        className="block text-left text-[11px] font-medium text-brand-600 hover:underline"
+                      >
+                        Ouvrir le Magic Display
+                      </Link>
+                    ) : (
+                      <span
+                        className="block text-left text-[11px] font-medium text-slate-400"
+                        title="Display indisponible (ID manquant)."
+                      >
+                        Ouvrir le Magic Display
+                      </span>
+                    )}
                   </div>
                 </div>
               );
