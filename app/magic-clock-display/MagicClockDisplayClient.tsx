@@ -49,15 +49,9 @@ export default function MagicClockDisplayClient() {
         return;
       }
 
-      // À partir d'ici, TypeScript sait que currentId est une string ✅
       const safeId = currentId;
 
-      // 1) Loading
-      if (!cancelled) {
-        setState({ status: "loading", id: safeId });
-      }
-
-      // 2) Presets (Bear & futurs tutos officiels)
+      // 1) Presets (ours & futurs tutos officiels)
       const preset = DISPLAY_PRESETS[safeId];
       if (preset) {
         if (!cancelled) {
@@ -70,7 +64,11 @@ export default function MagicClockDisplayClient() {
         return;
       }
 
-      // 3) Lecture Supabase (magic_clocks.work.display)
+      // 2) Lecture Supabase (magic_clocks.work.display)
+      if (!cancelled) {
+        setState({ status: "loading", id: safeId });
+      }
+
       try {
         const { data, error } = await supabase
           .from("magic_clocks")
@@ -94,7 +92,28 @@ export default function MagicClockDisplayClient() {
 
         const row = data as { id: string; work: any } | null;
 
-        if (!row || !row.work || !(row.work as any).display) {
+        if (!row || !row.work) {
+          if (!cancelled) {
+            setState({
+              status: "error",
+              id: safeId,
+              message:
+                "Aucune donnée de travail (work) trouvée pour ce Magic Clock.",
+            });
+          }
+          return;
+        }
+
+        const work = row.work as any;
+
+        // On est tolérant : on regarde plusieurs emplacements possibles
+        const rawDisplay =
+          work.display ??
+          work.displayState?.display ??
+          work.magicDisplay ??
+          null;
+
+        if (!rawDisplay) {
           if (!cancelled) {
             setState({
               status: "error",
@@ -106,19 +125,8 @@ export default function MagicClockDisplayClient() {
           return;
         }
 
-        const display = (row.work as any).display;
-
-        if (!display || !Array.isArray(display.segments)) {
-          if (!cancelled) {
-            setState({
-              status: "error",
-              id: safeId,
-              message:
-                "work.display ne contient pas un Display exploitable.",
-            });
-          }
-          return;
-        }
+        // On caste en PreviewDisplay – on fait confiance au backend
+        const display = rawDisplay as PreviewDisplay;
 
         if (!cancelled) {
           setState({
