@@ -26,42 +26,56 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 export default function MagicClockDisplayClient() {
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  const idFromUrl = searchParams.get("id"); // string | null
 
   const [state, setState] = useState<LoadState>({
     status: "idle",
-    id,
+    id: idFromUrl,
   });
 
   useEffect(() => {
-    if (!id) {
-      setState({
-        status: "error",
-        id: null,
-        message: "Aucun id reçu dans l'URL.",
-      });
-      return;
-    }
-
     let cancelled = false;
 
-    async function run() {
-      setState({ status: "loading", id: id ?? "" });
-
-      // 1) Presets (Bear & futurs tutos officiels)
-      const preset = DISPLAY_PRESETS[id];
-      if (preset) {
+    async function run(currentId: string | null) {
+      // 0) Pas d'id dans l'URL → erreur claire
+      if (!currentId) {
         if (!cancelled) {
-          setState({ status: "ready", id, display: preset });
+          setState({
+            status: "error",
+            id: null,
+            message: "Aucun id reçu dans l'URL.",
+          });
         }
         return;
       }
 
+      // À partir d'ici, TypeScript sait que currentId est une string ✅
+      const safeId = currentId;
+
+      // 1) Loading
+      if (!cancelled) {
+        setState({ status: "loading", id: safeId });
+      }
+
+      // 2) Presets (Bear & futurs tutos officiels)
+      const preset = DISPLAY_PRESETS[safeId];
+      if (preset) {
+        if (!cancelled) {
+          setState({
+            status: "ready",
+            id: safeId,
+            display: preset,
+          });
+        }
+        return;
+      }
+
+      // 3) Lecture Supabase (magic_clocks.work.display)
       try {
         const { data, error } = await supabase
           .from("magic_clocks")
           .select("id, work, is_published")
-          .eq("id", id)
+          .eq("id", safeId)
           .eq("is_published", true)
           .maybeSingle();
 
@@ -70,7 +84,7 @@ export default function MagicClockDisplayClient() {
           if (!cancelled) {
             setState({
               status: "error",
-              id,
+              id: safeId,
               message:
                 "Erreur Supabase pendant le chargement du Display.",
             });
@@ -84,7 +98,7 @@ export default function MagicClockDisplayClient() {
           if (!cancelled) {
             setState({
               status: "error",
-              id,
+              id: safeId,
               message:
                 "Aucun Display trouvé pour ce Magic Clock (work.display manquant).",
             });
@@ -98,7 +112,7 @@ export default function MagicClockDisplayClient() {
           if (!cancelled) {
             setState({
               status: "error",
-              id,
+              id: safeId,
               message:
                 "work.display ne contient pas un Display exploitable.",
             });
@@ -107,14 +121,18 @@ export default function MagicClockDisplayClient() {
         }
 
         if (!cancelled) {
-          setState({ status: "ready", id, display });
+          setState({
+            status: "ready",
+            id: safeId,
+            display,
+          });
         }
       } catch (err) {
         console.error("[MagicClockDisplay] Unexpected error", err);
         if (!cancelled) {
           setState({
             status: "error",
-            id,
+            id: safeId,
             message:
               "Erreur inconnue pendant le chargement du Magic Display.",
           });
@@ -122,12 +140,12 @@ export default function MagicClockDisplayClient() {
       }
     }
 
-    run();
+    run(idFromUrl);
 
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [idFromUrl]);
 
   const goBackHref = "/mymagic";
 
@@ -170,7 +188,7 @@ export default function MagicClockDisplayClient() {
               <div className="mt-1">
                 id paramètre :{" "}
                 <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">
-                  {id ?? "(aucun)"}
+                  {idFromUrl ?? "(aucun)"}
                 </code>
               </div>
             </div>
