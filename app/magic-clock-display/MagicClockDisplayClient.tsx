@@ -10,13 +10,39 @@ import MagicDisplayPreviewShell, {
   type PreviewDisplay,
 } from "@/features/display/MagicDisplayPreviewShell";
 import { DISPLAY_PRESETS } from "@/features/display/displayPresets";
+import {
+  getCreatedWorks,
+  type StoredMagicClockWork,
+} from "@/core/domain/magicClockWorkStore";
 
+// ----------------------
+// Types d'état de chargement
+// ----------------------
 type LoadState =
   | { status: "idle"; id: string | null }
   | { status: "loading"; id: string }
   | { status: "error"; id: string | null; message: string }
   | { status: "ready"; id: string; display: PreviewDisplay };
 
+// ----------------------
+// Lecture du Display en localStorage
+// ----------------------
+function findLocalDisplayById(id: string): PreviewDisplay | null {
+  try {
+    const works: StoredMagicClockWork[] = getCreatedWorks();
+    const match = works.find((w) => String(w.id) === String(id));
+    if (!match || !match.display) return null;
+
+    return match.display as PreviewDisplay;
+  } catch (error) {
+    console.error("[MagicClockDisplay] Failed to read local display", error);
+    return null;
+  }
+}
+
+// ----------------------
+// Supabase
+// ----------------------
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -24,6 +50,9 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false },
 });
 
+// ----------------------
+// Composant principal
+// ----------------------
 export default function MagicClockDisplayClient() {
   const searchParams = useSearchParams();
   const idFromUrl = searchParams.get("id"); // string | null
@@ -64,7 +93,20 @@ export default function MagicClockDisplayClient() {
         return;
       }
 
-      // 2) Lecture Supabase (magic_clocks.work.display)
+      // 2) Fallback localStorage (Magic Clock créés depuis "Créer")
+      const localDisplay = findLocalDisplayById(safeId);
+      if (localDisplay) {
+        if (!cancelled) {
+          setState({
+            status: "ready",
+            id: safeId,
+            display: localDisplay,
+          });
+        }
+        return;
+      }
+
+      // 3) Lecture Supabase (magic_clocks.work.display)
       if (!cancelled) {
         setState({ status: "loading", id: safeId });
       }
@@ -125,7 +167,6 @@ export default function MagicClockDisplayClient() {
           return;
         }
 
-        // On caste en PreviewDisplay – on fait confiance au backend
         const display = rawDisplay as PreviewDisplay;
 
         if (!cancelled) {
