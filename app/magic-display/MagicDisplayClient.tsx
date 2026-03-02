@@ -1096,17 +1096,16 @@ export default function MagicDisplayClient() {
       }
     }
 
-    // 6) Redirection
-    if (slug) {
-      router.push(`/display/${slug}`);
-    } else {
-      // fallback : au cas où Supabase a échoué
-      router.push("/mymagic?tab=creations&source=magic-display");
-    }
-  } finally {
-    setIsPublishing(false);
-  }
-};
+   // 6) Redirection : retour vers My Magic Clock (comme avant)
+const baseMyMagicUrl = "/mymagic?tab=creations&source=magic-display";
+
+if (slug) {
+  // on peut même ouvrir directement ce travail via un paramètre
+  router.push(`${baseMyMagicUrl}&open=${encodeURIComponent(slug)}`);
+} else {
+  // si jamais l’API a échoué, on revient quand même sur My Magic Clock
+  router.push(baseMyMagicUrl);
+}
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
