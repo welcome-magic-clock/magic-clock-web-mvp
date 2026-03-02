@@ -348,6 +348,15 @@ const MOCK_CUBES: {
   },
 ];
 
+const sanitizeMediaUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  // On ne stocke pas les gros blobs/data: dans la base
+  if (url.startsWith("data:") || url.startsWith("blob:")) {
+    return null;
+  }
+  return url;
+};
+
 export default function MagicDisplayClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -997,8 +1006,23 @@ export default function MagicDisplayClient() {
       mode: effectiveMode,
     });
 
-    // 3) Construction du payload complet pour Supabase
+    // 3) Construction du payload "light" pour Supabase
     const titleForWork = effectiveTitle || "Magic Clock";
+
+    // 👉 Résumé du display : texte + nombre de médias, pas les blobs
+    const lightDisplay = {
+      faces: displayState.faces.map((face) => ({
+        title: face.title,
+        notes: face.notes,
+        segments: face.segments.map((s) => ({
+          id: s.id,
+          title: s.title,
+          description: s.description,
+          notes: s.notes,
+          mediaCount: (s.media ?? []).length,
+        })),
+      })),
+    };
 
     const workPayload = {
       id: workId,
@@ -1011,12 +1035,13 @@ export default function MagicDisplayClient() {
         ppvPrice:
           effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
         hashtags: effectiveHashtags,
-        beforeUrl: studioBeforeUrl,
-        afterUrl: studioAfterUrl,
+        // 🔹 On nettoie les URL pour ne pas envoyer data:/blob:
+        beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
+        afterUrl: sanitizeMediaUrl(studioAfterUrl),
         beforeCoverTime: studioBeforeCover,
         afterCoverTime: studioAfterCover,
       },
-      display: displayState, // 🟢 tout le cube 3D + faces
+      display: lightDisplay,
       progress: {
         studioFacesCompleted,
         displayPart,
