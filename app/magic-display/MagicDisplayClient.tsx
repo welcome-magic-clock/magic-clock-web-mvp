@@ -982,27 +982,14 @@ export default function MagicDisplayClient() {
   if (!canPublish || isPublishing) return;
   setIsPublishing(true);
 
-  // petite fonction pour générer un slug propre
-  const buildSlug = (rawTitle: string, workId: string) => {
-    const base =
-      (rawTitle || "magic-clock")
-        .toLowerCase()
-        // on vire les caractères bizarres
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || "magic-clock";
-
-    // on ajoute un bout d'id pour éviter les collisions
-    const shortId = workId.slice(0, 8);
-    return `${base}-${shortId}`;
-  };
-
   try {
-    // 1) On enregistre une "création" minimaliste dans My Magic (localStorage)
+    // 1) ID de travail local (My Magic)
     const workId =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}`;
 
+    // 2) On continue à alimenter My Magic en localStorage
     addCreatedWork({
       id: workId,
       title: effectiveTitle || "Magic Clock",
@@ -1010,69 +997,72 @@ export default function MagicDisplayClient() {
       mode: effectiveMode,
     });
 
-    // 2) On envoie aussi la création vers Supabase via l’API
+    // 3) Construction du payload complet pour Supabase
+    const titleForWork = effectiveTitle || "Magic Clock";
+
+    const workPayload = {
+      id: workId,
+      title: titleForWork,
+      mode: effectiveMode,
+      hashtags: effectiveHashtags,
+      studio: {
+        title: titleForWork,
+        mode: effectiveMode,
+        ppvPrice:
+          effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
+        hashtags: effectiveHashtags,
+        beforeUrl: studioBeforeUrl,
+        afterUrl: studioAfterUrl,
+        beforeCoverTime: studioBeforeCover,
+        afterCoverTime: studioAfterCover,
+      },
+      display: displayState, // 🟢 tout le cube 3D + faces
+      progress: {
+        studioFacesCompleted,
+        displayPart,
+        completedFaces,
+        partialFaces,
+        totalPercent: clampedPublishPercent,
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    // 4) Appel API → table magic_display
+    let slug: string | null = null;
+
     try {
-      const slug = buildSlug(effectiveTitle || "Magic Clock", workId);
-
-      // Payload "work" – JSON stocké dans la colonne work de magic_clocks
-      const workPayload = {
-        id: workId,
-        studio: {
-          title: effectiveTitle || "Magic Clock",
-          mode: effectiveMode,
-          ppvPrice:
-            effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
-          hashtags: effectiveHashtags,
-          beforeUrl: studioBeforeUrl,
-          afterUrl: studioAfterUrl,
-          beforeCoverTime: studioBeforeCover,
-          afterCoverTime: studioAfterCover,
-        },
-        display: {
-          segments,
-          progress: {
-            studioFacesCompleted,
-            displayPart,
-            completedFaces,
-            partialFaces,
-          },
-        },
-      };
-
-      await fetch("/api/magic-clocks/create", {
+      const res = await fetch("/api/magic-display/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: effectiveTitle || "Magic Clock",
-          slug,
-          gatingMode: effectiveMode,
-          work: workPayload,
+          title: titleForWork,
+          payload: workPayload,
         }),
-      }).then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          console.error(
-            "[Magic Clock] Failed to publish to Supabase",
-            res.status,
-            text,
-          );
-        }
       });
+
+      if (res.ok) {
+        const json = (await res.json()) as { id?: string; slug?: string };
+        slug = json?.slug ?? null;
+      } else {
+        const text = await res.text();
+        console.error(
+          "[Magic Clock] Failed to save magic_display",
+          res.status,
+          text,
+        );
+      }
     } catch (error) {
-      console.error(
-        "[Magic Clock] Supabase publish failed on client",
-        error,
-      );
+      console.error("[Magic Clock] Client publish error", error);
     }
 
-    // 3) On nettoie les brouillons Studio + Display
+    // 5) Nettoyage des brouillons
     if (typeof window !== "undefined") {
       try {
-        window.localStorage.removeItem(STUDIO_FORWARD_KEY); // pont Studio ↔ Display
-        window.localStorage.removeItem(STORAGE_KEY);        // structure du cube
-        window.localStorage.removeItem(FACE_PROGRESS_KEY);  // progression par face
+        window.localStorage.removeItem(STUDIO_FORWARD_KEY);
+        window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(FACE_PROGRESS_KEY);
       } catch (error) {
         console.error(
           "Failed to clear Magic Clock drafts after publish",
@@ -1080,6 +1070,18 @@ export default function MagicDisplayClient() {
         );
       }
     }
+
+    // 6) Redirection
+    if (slug) {
+      router.push(`/display/${slug}`);
+    } else {
+      // fallback : au cas où Supabase a échoué
+      router.push("/mymagic?tab=creations&source=magic-display");
+    }
+  } finally {
+    setIsPublishing(false);
+  }
+};
 
     // 4) On renvoie dans My Magic, onglet "Créations"
     router.push("/mymagic?tab=creations&source=magic-display");
