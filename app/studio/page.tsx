@@ -80,10 +80,16 @@ export default function MagicStudioPage() {
  // 🧬 Charger le brouillon Magic Studio depuis localStorage
 useEffect(() => {
   try {
-    // 🧹 1) On nettoie l'ancien brouillon v1 s'il existe
-    window.localStorage.removeItem(OLD_STUDIO_DRAFT_KEY);
+    // 1) Si un vieux draft v1 existe et pas encore de v2, on migre puis on supprime v1
+    const legacyRaw = window.localStorage.getItem(OLD_STUDIO_DRAFT_KEY);
+    const v2Raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
 
-    // 🧬 2) On lit maintenant la version v2 uniquement
+    if (!v2Raw && legacyRaw) {
+      window.localStorage.setItem(STUDIO_DRAFT_KEY, legacyRaw);
+      window.localStorage.removeItem(OLD_STUDIO_DRAFT_KEY);
+    }
+
+    // 2) On charge le draft v2 normalement
     const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
     if (!raw) return;
 
