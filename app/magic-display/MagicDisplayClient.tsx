@@ -1052,45 +1052,26 @@ export default function MagicDisplayClient() {
         createdAt: new Date().toISOString(),
       };
 
-         // 4) Appel API → table magic_clocks (route déjà connectée à Supabase)
+    // 4) Appel API → table magic_clocks (route déjà connectée à Supabase)
 let slug: string | null = null;
 
 try {
-  // 🔹 Corps "plat" + objets détaillés, pour satisfaire l’API existante
+  // 🔹 On fabrique un slug à partir du titre + un suffixe court
+  const baseSlug = (titleForWork || "magic-clock")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // enlever accents
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const generatedSlug = `${baseSlug || "magic-clock"}-${workId.slice(0, 8)}`;
+
+  // 🔹 L’API attend : { title, slug, gatingMode, work }
   const apiBody = {
-    // champs simples au 1er niveau (ce que la route attend sûrement)
-    id: workId,
     title: titleForWork,
-    mode: effectiveMode,
-    hashtags: effectiveHashtags,
-    ppvPrice: effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
-    beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
-    afterUrl: sanitizeMediaUrl(studioAfterUrl),
-    beforeCoverTime: studioBeforeCover,
-    afterCoverTime: studioAfterCover,
-
-    // version structurée (studio + display) pour nous
-    studio: {
-      title: titleForWork,
-      mode: effectiveMode,
-      ppvPrice: effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
-      hashtags: effectiveHashtags,
-      beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
-      afterUrl: sanitizeMediaUrl(studioAfterUrl),
-      beforeCoverTime: studioBeforeCover,
-      afterCoverTime: studioAfterCover,
-    },
-    display: lightDisplay,
-    progress: {
-      studioFacesCompleted,
-      displayPart,
-      completedFaces,
-      partialFaces,
-      totalPercent: clampedPublishPercent,
-    },
-
-    // payload complet au cas où la route le log ou le stocke
-    payload: workPayload,
+    slug: generatedSlug,
+    gatingMode: effectiveMode, // "FREE" | "PPV" | "SUB"
+    work: workPayload,         // tout notre Studio + Display + progress
   };
 
   const res = await fetch("/api/magic-clocks/create", {
@@ -1103,7 +1084,8 @@ try {
 
   if (res.ok) {
     const json = (await res.json()) as { id?: string; slug?: string };
-    slug = json?.slug ?? json?.id ?? null;
+    // si Supabase renvoie un slug, on le prend, sinon on garde le nôtre
+    slug = json?.slug ?? generatedSlug;
   } else {
     const text = await res.text();
     console.error(
