@@ -15,34 +15,45 @@ import {
   type StoredMagicClockWork,
 } from "@/core/domain/magicClockWorkStore";
 
-// ----------------------
-// Types d'état de chargement
-// ----------------------
+// État de chargement pour la page Display
 type LoadState =
   | { status: "idle"; id: string | null }
   | { status: "loading"; id: string }
   | { status: "error"; id: string | null; message: string }
   | { status: "ready"; id: string; display: PreviewDisplay };
 
-// ----------------------
-// Lecture du Display en localStorage
-// ----------------------
-function findLocalDisplayById(id: string): PreviewDisplay | null {
+// 🔎 Cherche un Display dans le localStorage :
+//    1) d'abord par id
+//    2) sinon, le premier Magic Clock qui a un display défini
+function findLocalDisplay(currentId: string): PreviewDisplay | null {
   try {
     const works: StoredMagicClockWork[] = getCreatedWorks();
-    const match = works.find((w) => String(w.id) === String(id));
-    if (!match || !match.display) return null;
+    if (!works.length) return null;
 
-    return match.display as PreviewDisplay;
+    // 1) correspondance stricte sur l'id
+    const byId = works.find(
+      (w) => String(w.id) === String(currentId),
+    );
+    if (byId && byId.display) {
+      return byId.display as PreviewDisplay;
+    }
+
+    // 2) fallback : n'importe quel travail qui a un display
+    const anyWithDisplay = works.find((w) => !!w.display);
+    if (anyWithDisplay && anyWithDisplay.display) {
+      return anyWithDisplay.display as PreviewDisplay;
+    }
+
+    return null;
   } catch (error) {
-    console.error("[MagicClockDisplay] Failed to read local display", error);
+    console.error(
+      "[MagicClockDisplay] Failed to read local display",
+      error,
+    );
     return null;
   }
 }
 
-// ----------------------
-// Supabase
-// ----------------------
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -50,9 +61,6 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false },
 });
 
-// ----------------------
-// Composant principal
-// ----------------------
 export default function MagicClockDisplayClient() {
   const searchParams = useSearchParams();
   const idFromUrl = searchParams.get("id"); // string | null
@@ -66,7 +74,7 @@ export default function MagicClockDisplayClient() {
     let cancelled = false;
 
     async function run(currentId: string | null) {
-      // 0) Pas d'id dans l'URL → erreur claire
+      // 0) Pas d'id → erreur claire
       if (!currentId) {
         if (!cancelled) {
           setState({
@@ -80,7 +88,7 @@ export default function MagicClockDisplayClient() {
 
       const safeId = currentId;
 
-      // 1) Presets (ours & futurs tutos officiels)
+      // 1) Presets (ours & futurs tutos officiels) : si un preset porte cet id
       const preset = DISPLAY_PRESETS[safeId];
       if (preset) {
         if (!cancelled) {
@@ -94,7 +102,7 @@ export default function MagicClockDisplayClient() {
       }
 
       // 2) Fallback localStorage (Magic Clock créés depuis "Créer")
-      const localDisplay = findLocalDisplayById(safeId);
+      const localDisplay = findLocalDisplay(safeId);
       if (localDisplay) {
         if (!cancelled) {
           setState({
@@ -148,7 +156,7 @@ export default function MagicClockDisplayClient() {
 
         const work = row.work as any;
 
-        // On est tolérant : on regarde plusieurs emplacements possibles
+        // On accepte plusieurs emplacements possibles
         const rawDisplay =
           work.display ??
           work.displayState?.display ??
@@ -215,8 +223,8 @@ export default function MagicClockDisplayClient() {
             Magic Display
           </h1>
           <p className="text-sm text-slate-600">
-            Visualisation en lecture seule du Magic Display associé à ton
-            Magic Clock.
+            Visualisation en lecture seule du Magic Display associé à
+            ton Magic Clock.
           </p>
         </header>
 
