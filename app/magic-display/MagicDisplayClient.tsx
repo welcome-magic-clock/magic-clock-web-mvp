@@ -987,7 +987,7 @@ export default function MagicDisplayClient() {
     publishHelperText = `${studioStatusLabel} · Termine ton Display pour publier.`;
   }
 
-  const handleFinalPublish = async () => {
+    const handleFinalPublish = async () => {
     if (!canPublish || isPublishing) return;
     setIsPublishing(true);
 
@@ -1009,6 +1009,7 @@ export default function MagicDisplayClient() {
       // 3) Construction du payload "light" pour Supabase
       const titleForWork = effectiveTitle || "Magic Clock";
 
+      // 👉 Résumé du display : texte + nombre de médias, pas les blobs
       const lightDisplay = {
         faces: displayState.faces.map((face) => ({
           title: face.title,
@@ -1034,6 +1035,7 @@ export default function MagicDisplayClient() {
           ppvPrice:
             effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
           hashtags: effectiveHashtags,
+          // 🔹 On nettoie les URL pour ne pas envoyer data:/blob:
           beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
           afterUrl: sanitizeMediaUrl(studioAfterUrl),
           beforeCoverTime: studioBeforeCover,
@@ -1050,35 +1052,35 @@ export default function MagicDisplayClient() {
         createdAt: new Date().toISOString(),
       };
 
-     // 4) Appel API → réutilise la route qui marche déjà
-let slug: string | null = null;
+      // 4) Appel API → même route que Studio (déjà branchée à Supabase)
+      let slug: string | null = null;
 
-try {
-  const res = await fetch("/api/magic-clocks/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: titleForWork,
-      payload: workPayload, // le même workPayload qu’on vient de construire
-    }),
-  });
+      try {
+        const res = await fetch("/api/magic-clocks/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: titleForWork,
+            payload: workPayload,
+          }),
+        });
 
-  if (res.ok) {
-    const json = (await res.json()) as { id?: string; slug?: string };
-    slug = json?.slug ?? json?.id ?? null;
-  } else {
-    const text = await res.text();
-    console.error(
-      "[Magic Clock] Failed to create via magic-clocks/create",
-      res.status,
-      text,
-    );
-  }
-} catch (error) {
-  console.error("[Magic Clock] Client publish error", error);
-}
+        if (res.ok) {
+          const json = (await res.json()) as { id?: string; slug?: string };
+          slug = json?.slug ?? null;
+        } else {
+          const text = await res.text();
+          console.error(
+            "[Magic Clock] Failed to save magic_clock",
+            res.status,
+            text,
+          );
+        }
+      } catch (error) {
+        console.error("[Magic Clock] Client publish error", error);
+      }
 
       // 5) Nettoyage des brouillons
       if (typeof window !== "undefined") {
@@ -1095,16 +1097,11 @@ try {
       }
 
       // 6) Redirection : retour vers My Magic Clock (comme avant)
-      const baseMyMagicUrl =
-        "/mymagic?tab=creations&source=magic-display";
+      const baseMyMagicUrl = "/mymagic?tab=creations&source=magic-display";
 
       if (slug) {
-        // on peut même ouvrir directement ce travail via un paramètre
-        router.push(
-          `${baseMyMagicUrl}&open=${encodeURIComponent(slug)}`,
-        );
+        router.push(`${baseMyMagicUrl}&open=${encodeURIComponent(slug)}`);
       } else {
-        // si jamais l’API a échoué, on revient quand même sur My Magic Clock
         router.push(baseMyMagicUrl);
       }
     } finally {
