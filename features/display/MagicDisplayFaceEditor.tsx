@@ -9,6 +9,7 @@ import {
   User,
 } from "lucide-react";
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
+import SafeImage from "./SafeImage"; // ✅ nouveau import
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video" | "file";
@@ -690,8 +691,8 @@ export default function MagicDisplayFaceEditor({
                             muted
                           />
                         ) : (
-                          <img
-                            src={selectedSegment.mediaUrl as string}
+                          <SafeImage
+                            src={selectedSegment.mediaUrl || undefined}
                             alt="Avant"
                             className="h-full w-full object-cover"
                           />
@@ -711,8 +712,8 @@ export default function MagicDisplayFaceEditor({
                             muted
                           />
                         ) : (
-                          <img
-                            src={oppositeSegment.mediaUrl as string}
+                          <SafeImage
+                            src={oppositeSegment.mediaUrl || undefined}
                             alt="Après"
                             className="h-full w-full object-cover"
                           />
@@ -902,8 +903,8 @@ export default function MagicDisplayFaceEditor({
               {selectedSegment.mediaUrl && (
                 <div className="mt-2 w-full">
                   {selectedSegment.mediaType === "photo" ? (
-                    <img
-                      src={selectedSegment.mediaUrl}
+                    <SafeImage
+                      src={selectedSegment.mediaUrl || undefined}
                       alt="Prévisualisation"
                       className="h-40 w-full rounded-2xl object-cover"
                     />
