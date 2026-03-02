@@ -41,7 +41,8 @@ const EMPTY_MEDIA: MediaState = {
   thumbnailUrl: null,
 };
 
-const STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
+cconst STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
+const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 
 // 🔢 Limites de longueur pour garder des cartes compactes
 const MAX_TITLE_LENGTH = 30;
@@ -76,29 +77,32 @@ export default function MagicStudioPage() {
   const beforeVideoRef = useRef<HTMLVideoElement | null>(null);
   const afterVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // 🧬 Charger le brouillon Magic Studio depuis localStorage
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
-      if (!raw) return;
+ // 🧬 Charger le brouillon Magic Studio depuis localStorage
+useEffect(() => {
+  try {
+    // 🧹 1) On nettoie l'ancien brouillon v1 s'il existe
+    window.localStorage.removeItem(OLD_STUDIO_DRAFT_KEY);
 
-      const parsed = JSON.parse(raw) as StudioDraft;
-      if (!parsed) return;
+    // 🧬 2) On lit maintenant la version v2 uniquement
+    const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
+    if (!raw) return;
 
-      setCanvasFormat(parsed.canvasFormat ?? "portrait");
-      setBefore(parsed.before ?? EMPTY_MEDIA);
-      setAfter(parsed.after ?? EMPTY_MEDIA);
-      // On tronque au cas où d’anciens drafts avaient plus de 30 caractères
-      setTitle((parsed.title ?? "").slice(0, MAX_TITLE_LENGTH));
-      setHashtags((parsed.hashtags ?? "").slice(0, MAX_HASHTAGS_LENGTH));
-      setMode(parsed.mode ?? "FREE");
-      setPpvPrice(
-        typeof parsed.ppvPrice === "number" ? parsed.ppvPrice : 0.99
-      );
-    } catch (error) {
-      console.error("Failed to load Magic Studio draft", error);
-    }
-  }, []);
+    const parsed = JSON.parse(raw) as StudioDraft;
+    if (!parsed) return;
+
+    setCanvasFormat(parsed.canvasFormat ?? "portrait");
+    setBefore(parsed.before ?? EMPTY_MEDIA);
+    setAfter(parsed.after ?? EMPTY_MEDIA);
+    setTitle((parsed.title ?? "").slice(0, MAX_TITLE_LENGTH));
+    setHashtags((parsed.hashtags ?? "").slice(0, MAX_HASHTAGS_LENGTH));
+    setMode(parsed.mode ?? "FREE");
+    setPpvPrice(
+      typeof parsed.ppvPrice === "number" ? parsed.ppvPrice : 0.99
+    );
+  } catch (error) {
+    console.error("Failed to load Magic Studio draft", error);
+  }
+}, []);
 
   // 💾 Sauvegarder le brouillon Magic Studio à chaque modification
   useEffect(() => {
