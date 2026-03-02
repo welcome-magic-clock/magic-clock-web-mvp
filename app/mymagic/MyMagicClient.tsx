@@ -298,22 +298,25 @@ function PublishedMagicClockCard({ clock }: PublishedMagicClockCardProps) {
 export function MyMagicClient({
   initialPublished = [],
 }: MyMagicClientProps) {
-  const router = useRouter();
+    const router = useRouter();
   const searchParams = useSearchParams();
 
   // Query params
-  const tabParam = searchParams.get("tab");
   const openParam = searchParams.get("open");
 
   // Onglets
-  const [activeTab, setActiveTab] = useState<MyMagicTab>(() =>
-    normalizeTab(tabParam),
-  );
+  const [activeTab, setActiveTab] = useState<MyMagicTab>("creations");
 
   useEffect(() => {
-    setActiveTab(normalizeTab(tabParam));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabParam]);
+    const tabParam = searchParams.get("tab");
+
+    if (tabParam === "creations" || tabParam === "bibliotheque") {
+      setActiveTab(tabParam as MyMagicTab);
+    } else {
+      // valeur par défaut si rien / mauvais param
+      setActiveTab("creations");
+    }
+  }, [searchParams]);
 
     const creators = listCreators();
   const currentCreator =
