@@ -1,6 +1,7 @@
 "use client";
 
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
+import SafeImage from "./SafeImage";
 
 type MediaType = "photo" | "video" | "file";
 
@@ -110,14 +111,15 @@ export default function MagicDisplayFacePreview({
         <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
           <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
             {creatorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorAvatar}
+              <SafeImage
+                src={creatorAvatar || undefined}
                 alt={creatorName}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-xs font-semibold">{creatorInitials}</span>
+              <span className="text-xs font-semibold">
+                {creatorInitials}
+              </span>
             )}
           </span>
           <span className="font-medium">{creatorName}</span>
