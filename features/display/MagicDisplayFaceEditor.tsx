@@ -479,7 +479,7 @@ export default function MagicDisplayFaceEditor({
     setSelectedId((prevId) => (prevId > clamped ? 1 : prevId));
   }
 
-  function handleChooseMedia(type: MediaType) {
+    function handleChooseMedia(type: MediaType) {
     if (!selectedSegment) return;
     if (type === "photo") photoInputRef.current?.click();
     else if (type === "video") videoInputRef.current?.click();
@@ -487,30 +487,36 @@ export default function MagicDisplayFaceEditor({
   }
 
   async function handleMediaFileChange(
-  event: ChangeEvent<HTMLInputElement>,
-  type: MediaType,
-) {
-  const file = event.target.files?.[0];
-  if (!file || !selectedSegment) return;
+    event: ChangeEvent<HTMLInputElement>,
+    type: MediaType,
+  ) {
+    const file = event.target.files?.[0];
+    if (!file || !selectedSegment) return;
 
-  try {
-    const publicUrl = await uploadSegmentMedia(file, type);
+    try {
+      // 1) Upload sur Supabase Storage → URL HTTP stable
+      const publicUrl = await uploadSegmentMedia(file, type);
 
-    updateSegment(selectedSegment.id, (prev) => ({
-      ...prev,
-      mediaType: type,
-      mediaUrl: publicUrl,
-      status: "complete",
-    }));
-  } catch (error) {
-    console.error("[MagicClock] Failed to upload media", error);
-  } finally {
-    event.target.value = "";
+      // 2) On stocke l’URL publique dans le segment
+      updateSegment(selectedSegment.id, (prev) => ({
+        ...prev,
+        mediaType: type,
+        mediaUrl: publicUrl,
+        status: "complete",
+      }));
+    } catch (error) {
+      console.error("[MagicClock] Failed to upload media", error);
+      // (Plus tard : toast d’erreur pour l’utilisateur)
+    } finally {
+      // On réinitialise l’input pour pouvoir re-uploader derrière
+      event.target.value = "";
+    }
   }
-}
-  function handleNotesChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+
+  function handleNotesChange(event: ChangeEvent<HTMLTextAreaElement>) {
     const value = event.target.value;
     if (!selectedSegment) return;
+
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       notes: value,
@@ -519,7 +525,7 @@ export default function MagicDisplayFaceEditor({
     }));
   }
 
-  function handleLabelChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleLabelChange(event: ChangeEvent<HTMLInputElement>) {
     const raw = event.target.value ?? "";
     const value = raw.slice(0, 27);
 
