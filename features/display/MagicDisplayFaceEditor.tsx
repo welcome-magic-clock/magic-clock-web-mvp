@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { createClient } from "@supabase/supabase-js";
 import {
   Camera,
   Clapperboard,
@@ -10,6 +11,49 @@ import {
 } from "lucide-react";
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
 import SafeImage from "./SafeImage"; // ✅ nouveau import
+
+// 🗄️ Client Supabase + bucket Storage pour les médias du Display
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Nom du bucket à créer dans Supabase Storage
+// (ou à mettre dans NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET)
+const STORAGE_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET ?? "magic-media";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false },
+});
+
+/**
+ * Upload d'un média de segment (photo / vidéo / fichier) vers Supabase Storage
+ * → retourne une URL publique stable (HTTP) à stocker dans mediaUrl.
+ */
+async function uploadSegmentMedia(
+  file: File,
+  type: MediaType,
+): Promise<string> {
+  const ext = file.name.split(".").pop() ?? "bin";
+  const path = `segments/${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[MagicClock] uploadSegmentMedia error", error);
+    throw error;
+  }
+
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+
+  return data.publicUrl;
+}
 
 type SegmentStatus = "empty" | "in-progress" | "complete";
 type MediaType = "photo" | "video" | "file";
@@ -441,25 +485,32 @@ export default function MagicDisplayFaceEditor({
     else fileInputRef.current?.click();
   }
 
-  function handleMediaFileChange(
-    event: ChangeEvent<HTMLInputElement>,
-    type: MediaType,
-  ) {
-    const file = event.target.files?.[0];
-    if (!file || !selectedSegment) return;
+  async function handleMediaFileChange(
+  event: ChangeEvent<HTMLInputElement>,
+  type: MediaType,
+) {
+  const file = event.target.files?.[0];
+  if (!file || !selectedSegment) return;
 
-    const url = URL.createObjectURL(file);
+  try {
+    // 1) Upload sur Supabase Storage → URL HTTP stable
+    const publicUrl = await uploadSegmentMedia(file, type);
 
+    // 2) On stocke l’URL publique dans le segment
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       mediaType: type,
-      mediaUrl: url,
+      mediaUrl: publicUrl,
       status: "complete",
     }));
-
+  } catch (error) {
+    console.error("[MagicClock] Failed to upload media", error);
+    // (Plus tard : on pourra ajouter un toast d'erreur pour l'utilisateur)
+  } finally {
+    // On réinitialise l’input pour pouvoir re-uploader derrière
     event.target.value = "";
   }
-
+}
   function handleNotesChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = event.target.value;
     if (!selectedSegment) return;
