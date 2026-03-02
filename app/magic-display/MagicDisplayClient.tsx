@@ -1052,33 +1052,69 @@ export default function MagicDisplayClient() {
         createdAt: new Date().toISOString(),
       };
 
-          // 4) Appel API → table magic_clocks (route déjà connectée à Supabase)
-    let slug: string | null = null;
+         // 4) Appel API → table magic_clocks (route déjà connectée à Supabase)
+let slug: string | null = null;
 
-    try {
-      const res = await fetch("/api/magic-clocks/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // 👉 On envoie directement le Magic Clock complet
-        body: JSON.stringify(workPayload),
-      });
+try {
+  // 🔹 Corps "plat" + objets détaillés, pour satisfaire l’API existante
+  const apiBody = {
+    // champs simples au 1er niveau (ce que la route attend sûrement)
+    id: workId,
+    title: titleForWork,
+    mode: effectiveMode,
+    hashtags: effectiveHashtags,
+    ppvPrice: effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
+    beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
+    afterUrl: sanitizeMediaUrl(studioAfterUrl),
+    beforeCoverTime: studioBeforeCover,
+    afterCoverTime: studioAfterCover,
 
-      if (res.ok) {
-        const json = (await res.json()) as { id?: string; slug?: string };
-        slug = json?.slug ?? json?.id ?? null;
-      } else {
-        const text = await res.text();
-        console.error(
-          "[Magic Clock] Failed to save magic_clock",
-          res.status,
-          text,
-        );
-      }
-    } catch (error) {
-      console.error("[Magic Clock] Client publish error", error);
-    }
+    // version structurée (studio + display) pour nous
+    studio: {
+      title: titleForWork,
+      mode: effectiveMode,
+      ppvPrice: effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
+      hashtags: effectiveHashtags,
+      beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
+      afterUrl: sanitizeMediaUrl(studioAfterUrl),
+      beforeCoverTime: studioBeforeCover,
+      afterCoverTime: studioAfterCover,
+    },
+    display: lightDisplay,
+    progress: {
+      studioFacesCompleted,
+      displayPart,
+      completedFaces,
+      partialFaces,
+      totalPercent: clampedPublishPercent,
+    },
+
+    // payload complet au cas où la route le log ou le stocke
+    payload: workPayload,
+  };
+
+  const res = await fetch("/api/magic-clocks/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(apiBody),
+  });
+
+  if (res.ok) {
+    const json = (await res.json()) as { id?: string; slug?: string };
+    slug = json?.slug ?? json?.id ?? null;
+  } else {
+    const text = await res.text();
+    console.error(
+      "[Magic Clock] Failed to save magic_clock",
+      res.status,
+      text,
+    );
+  }
+} catch (error) {
+  console.error("[Magic Clock] Client publish error", error);
+}
 
       // 5) Nettoyage des brouillons
       if (typeof window !== "undefined") {
