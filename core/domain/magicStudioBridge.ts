@@ -1,6 +1,6 @@
 // core/domain/magicStudioBridge.ts
 
-export const STUDIO_FORWARD_KEY = "mc-studio-forward-v1";
+export const STUDIO_FORWARD_KEY = "mc-studio-forward-v2";
 
 export type StudioForwardMedia = {
   type: "photo" | "video";
