@@ -225,7 +225,7 @@ const defaultNeedles = (): FaceNeedles => ({
 
 /* 🧠 Persistance locale par faceId (localStorage) */
 
-const STORAGE_PREFIX = "mc-face-editor-v1";
+const STORAGE_PREFIX = "mc-face-editor-v2";
 
 type PersistedFaceState = {
   faceId: number;
