@@ -8,6 +8,7 @@ import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
+import { createClient } from "@supabase/supabase-js";
 
 type MediaKind = "image" | "video";
 
@@ -43,6 +44,49 @@ const EMPTY_MEDIA: MediaState = {
 
 const STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
 const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
+
+// 🗄️ Client Supabase + bucket Storage pour les médias du Studio
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Même bucket que le Display (ou celui que tu as mis dans Vercel)
+const STORAGE_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET ?? "magic-media";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false },
+});
+
+/**
+ * Upload d'un média Avant/Après vers Supabase Storage
+ * → retourne une URL publique HTTP (photo ou vidéo).
+ */
+async function uploadStudioMedia(
+  file: File,
+  kind: MediaKind
+): Promise<string> {
+  const ext = file.name.split(".").pop() ?? "bin";
+  const folder = kind === "video" ? "studio-video" : "studio-photo";
+  const path = `${folder}/${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[MagicClock] uploadStudioMedia error", error);
+    throw error;
+  }
+
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+
+  return data.publicUrl;
+}
 
 // 🔢 Limites de longueur pour garder des cartes compactes
 const MAX_TITLE_LENGTH = 30;
@@ -143,43 +187,53 @@ useEffect(() => {
     }
   }
 
-  function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-    side: Side
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+function handleFileChange(
+  event: React.ChangeEvent<HTMLInputElement>,
+  side: Side
+) {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
+  const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
 
-    const reader = new FileReader();
+  // 1) Preview locale immédiate (rapide pour l'utilisateur)
+  const localPreviewUrl = URL.createObjectURL(file);
 
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result !== "string") return;
+  const baseState: MediaState = {
+    kind,
+    url: localPreviewUrl, // on met l'URL locale pour la preview
+    duration: null,
+    coverTime: null,
+    thumbnailUrl: kind === "image" ? localPreviewUrl : null,
+  };
 
-      const state: MediaState = {
-        kind,
-        url: result, // dataURL compatible partout
-        duration: null,
-        coverTime: null,
-        // Pour une image, on peut utiliser directement l'image comme thumbnail
-        thumbnailUrl: kind === "image" ? result : null,
-      };
-
-      if (side === "before") {
-        setBefore(state);
-      } else {
-        setAfter(state);
-      }
-    };
-
-    // On lit toujours en dataURL, image ou vidéo
-    reader.readAsDataURL(file);
-
-    // permet de re-sélectionner le même fichier si besoin
-    event.target.value = "";
+  if (side === "before") {
+    setBefore(baseState);
+  } else {
+    setAfter(baseState);
   }
+
+  // 2) Upload vers Supabase en arrière-plan
+  (async () => {
+    try {
+      const publicUrl = await uploadStudioMedia(file, kind);
+
+      // Quand l'upload est fini, on remplace l'URL par l'URL publique
+      updateMedia(side, (prev) => ({
+        ...prev,
+        url: publicUrl,
+        thumbnailUrl:
+          kind === "image" ? publicUrl : prev.thumbnailUrl ?? null,
+      }));
+    } catch (error) {
+      console.error("[MagicClock] Failed to upload Studio media", error);
+      // En cas d'erreur on garde au moins la preview locale
+    }
+  })();
+
+  // permet de re-sélectionner le même fichier si besoin
+  event.target.value = "";
+}
 
   function handleLoadedMetadata(
     side: Side,
