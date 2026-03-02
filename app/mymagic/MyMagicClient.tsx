@@ -34,8 +34,8 @@ type MyMagicClientProps = {
   initialPublished?: SupabaseMagicClockRow[];
 };
 
-const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
-const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
+const FALLBACK_BEFORE = "/images/magic-clock-bear/before.jpg";
+const FALLBACK_AFTER = "/images/magic-clock-bear/after.jpg";
 
 function isVideo(url: string) {
   if (!url) return false;
