@@ -12,6 +12,30 @@ import {
 import MagicDisplayFaceDialBase from "./MagicDisplayFaceDialBase";
 import SafeImage from "./SafeImage"; // ✅ nouveau import
 
+// Types de base
+type MediaType = "photo" | "video" | "file";
+type SegmentStatus = "empty" | "in-progress" | "complete";
+
+type FaceNeedles = {
+  needle2Enabled: boolean;
+};
+
+type Segment = {
+  id: number;
+  label: string;
+  status: SegmentStatus;
+  mediaType?: MediaType | null;
+  mediaUrl?: string | null;
+  notes: string;
+};
+
+type FaceState = {
+  faceId: number;
+  segmentCount: number; // 1 → 12
+  segments: Segment[];
+  needles: FaceNeedles;
+};
+
 // 🗄️ Client Supabase + bucket Storage pour les médias du Display
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -54,29 +78,6 @@ async function uploadSegmentMedia(
 
   return data.publicUrl;
 }
-
-type SegmentStatus = "empty" | "in-progress" | "complete";
-type MediaType = "photo" | "video" | "file";
-
-type FaceNeedles = {
-  needle2Enabled: boolean;
-};
-
-type Segment = {
-  id: number;
-  label: string;
-  status: SegmentStatus;
-  mediaType?: MediaType | null;
-  mediaUrl?: string | null;
-  notes: string;
-};
-
-type FaceState = {
-  faceId: number;
-  segmentCount: number; // 1 → 12
-  segments: Segment[];
-  needles: FaceNeedles;
-};
 
 type MagicDisplayFaceEditorProps = {
   creatorName?: string;
@@ -493,10 +494,8 @@ export default function MagicDisplayFaceEditor({
   if (!file || !selectedSegment) return;
 
   try {
-    // 1) Upload sur Supabase Storage → URL HTTP stable
     const publicUrl = await uploadSegmentMedia(file, type);
 
-    // 2) On stocke l’URL publique dans le segment
     updateSegment(selectedSegment.id, (prev) => ({
       ...prev,
       mediaType: type,
@@ -505,9 +504,7 @@ export default function MagicDisplayFaceEditor({
     }));
   } catch (error) {
     console.error("[MagicClock] Failed to upload media", error);
-    // (Plus tard : on pourra ajouter un toast d'erreur pour l'utilisateur)
   } finally {
-    // On réinitialise l’input pour pouvoir re-uploader derrière
     event.target.value = "";
   }
 }
