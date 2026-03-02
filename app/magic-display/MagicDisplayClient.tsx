@@ -1083,12 +1083,6 @@ export default function MagicDisplayClient() {
   }
 };
 
-    // 4) On renvoie dans My Magic, onglet "Créations"
-    router.push("/mymagic?tab=creations&source=magic-display");
-  } finally {
-    setIsPublishing(false);
-  }
-};
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       {/* ⭐️ Une seule grande carte Magic Display */}
