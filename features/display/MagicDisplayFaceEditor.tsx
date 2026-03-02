@@ -486,33 +486,52 @@ export default function MagicDisplayFaceEditor({
     else fileInputRef.current?.click();
   }
 
-  async function handleMediaFileChange(
+    async function handleMediaFileChange(
     event: ChangeEvent<HTMLInputElement>,
     type: MediaType,
   ) {
-    const file = event.target.files?.[0];
+    const input = event.target;
+    const file = input.files?.[0];
     if (!file || !selectedSegment) return;
 
-    try {
-      // 1) Upload sur Supabase Storage → URL HTTP stable
-      const publicUrl = await uploadSegmentMedia(file, type);
+    // 1) Preview locale immédiate en dataURL (persiste dans localStorage)
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result !== "string") return;
 
-      // 2) On stocke l’URL publique dans le segment
+      // On passe le segment en "en cours" dès qu'on a une image locale
       updateSegment(selectedSegment.id, (prev) => ({
         ...prev,
         mediaType: type,
-        mediaUrl: publicUrl,
-        status: "complete",
+        mediaUrl: result,
+        status:
+          prev.status === "empty" ? "in-progress" : prev.status,
       }));
-    } catch (error) {
-      console.error("[MagicClock] Failed to upload media", error);
-      // (Plus tard : toast d’erreur pour l’utilisateur)
-    } finally {
-      // On réinitialise l’input pour pouvoir re-uploader derrière
-      event.target.value = "";
-    }
-  }
+    };
+    reader.readAsDataURL(file);
 
+    // 2) Upload vers Supabase en arrière-plan
+    (async () => {
+      try {
+        const publicUrl = await uploadSegmentMedia(file, type);
+
+        // Quand l'upload est fini : URL publique + statut terminé
+        updateSegment(selectedSegment.id, (prev) => ({
+          ...prev,
+          mediaType: type,
+          mediaUrl: publicUrl,
+          status: "complete",
+        }));
+      } catch (error) {
+        console.error("[MagicClock] Failed to upload media", error);
+        // En cas d'erreur on garde au moins la preview locale en "in-progress"
+      }
+    })();
+
+    // On réinitialise l’input pour pouvoir re-sélectionner le même fichier
+    input.value = "";
+  }
   function handleNotesChange(event: ChangeEvent<HTMLTextAreaElement>) {
     const value = event.target.value;
     if (!selectedSegment) return;
