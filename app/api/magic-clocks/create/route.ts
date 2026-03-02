@@ -2,30 +2,33 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/core/supabase/admin";
 
-function makeSlugFromTitle(title: string) {
-  const base = title
-    .toLowerCase()
+function slugify(str: string): string {
+  return str
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
+    .replace(/^-+|-+$/g, "");
+}
 
-  const suffix = Date.now().toString(36);
-  return `${base || "magic-clock"}-${suffix}`;
+function sanitizeUrl(url: unknown): string | null {
+  if (typeof url !== "string") return null;
+  if (!url) return null;
+  // on évite d’enregistrer les data: / blob:
+  if (url.startsWith("data:") || url.startsWith("blob:")) return null;
+  return url;
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json().catch(() => ({}))) ?? {};
 
-    // Pour debug dans les logs Vercel si besoin
-    console.log("[MagicClock] /api/magic-clocks/create body", body);
-
+    // On accepte l’ancien ET le nouveau format
     const {
-      // nouveau contrat côté client
+      // nouveau format MagicDisplayClient
       id,
       title,
+      slug,
       mode,
       hashtags,
       ppvPrice,
@@ -36,24 +39,22 @@ export async function POST(req: Request) {
       studio,
       display,
       progress,
+      payload,
 
-      // compat ancien contrat
+      // ancien format (si jamais encore utilisé quelque part)
       gatingMode,
       work,
-      slug,
-      payload,
-    } = body ?? {};
+    } = body as any;
 
-    // 1) Titre
-    const finalTitle = (
+    // 1) Titre obligatoire (mais on va le chercher partout)
+    const rawTitle =
       title ??
       studio?.title ??
       work?.title ??
-      ""
-    )
-      .toString()
-      .trim();
+      payload?.title ??
+      "Magic Clock";
 
+    const finalTitle = String(rawTitle).trim();
     if (!finalTitle) {
       return NextResponse.json(
         { ok: false, error: "Missing title" },
@@ -62,50 +63,96 @@ export async function POST(req: Request) {
     }
 
     // 2) Mode / gating
-    const finalMode = (mode ??
+    const finalMode: "FREE" | "SUB" | "PPV" =
       gatingMode ??
+      mode ??
       studio?.mode ??
       work?.mode ??
-      "FREE") as "FREE" | "PPV" | "SUB";
+      payload?.mode ??
+      "FREE";
 
-    // 3) Slug généré côté serveur
-    const finalSlug = slug ?? makeSlugFromTitle(finalTitle);
-
-    // 4) Hashtags
+    // 3) Hashtags
     const finalHashtags: string[] =
-      (hashtags as string[] | undefined) ??
-      (studio?.hashtags as string[] | undefined) ??
-      (work?.hashtags as string[] | undefined) ??
-      [];
+      Array.isArray(hashtags)
+        ? hashtags
+        : Array.isArray(studio?.hashtags)
+        ? studio.hashtags
+        : Array.isArray(work?.hashtags)
+        ? work.hashtags
+        : Array.isArray(payload?.hashtags)
+        ? payload.hashtags
+        : [];
 
-    // 5) Bloc studio
-    const studioBlock =
-      studio ??
-      work?.studio ?? {
-        title: finalTitle,
-        mode: finalMode,
-        ppvPrice: finalMode === "PPV" ? ppvPrice ?? null : null,
-        hashtags: finalHashtags,
-        beforeUrl,
-        afterUrl,
-        beforeCoverTime,
-        afterCoverTime,
-      };
+    // 4) Prix PPV
+    const finalPpvPrice =
+      finalMode === "PPV"
+        ? ppvPrice ??
+          studio?.ppvPrice ??
+          work?.ppvPrice ??
+          payload?.ppvPrice ??
+          null
+        : null;
 
-    // 6) Work complet à stocker en JSON
+    // 5) Studio “light” (pour reconstruction éventuelle)
+    const finalStudio = {
+      title: finalTitle,
+      mode: finalMode,
+      hashtags: finalHashtags,
+      ppvPrice: finalPpvPrice,
+      beforeUrl:
+        sanitizeUrl(beforeUrl) ??
+        sanitizeUrl(studio?.beforeUrl) ??
+        sanitizeUrl(work?.studio?.beforeUrl) ??
+        sanitizeUrl(payload?.studio?.beforeUrl),
+      afterUrl:
+        sanitizeUrl(afterUrl) ??
+        sanitizeUrl(studio?.afterUrl) ??
+        sanitizeUrl(work?.studio?.afterUrl) ??
+        sanitizeUrl(payload?.studio?.afterUrl),
+      beforeCoverTime:
+        beforeCoverTime ??
+        studio?.beforeCoverTime ??
+        work?.studio?.beforeCoverTime ??
+        payload?.studio?.beforeCoverTime ??
+        null,
+      afterCoverTime:
+        afterCoverTime ??
+        studio?.afterCoverTime ??
+        work?.studio?.afterCoverTime ??
+        payload?.studio?.afterCoverTime ??
+        null,
+    };
+
+    // 6) Display & progress (optionnels)
+    const finalDisplay = display ?? work?.display ?? payload?.display ?? null;
+    const finalProgress = progress ?? work?.progress ?? payload?.progress ?? null;
+
+    // 7) Slug
+    const existingSlug =
+      slug ?? work?.slug ?? payload?.slug ?? id ?? null;
+
+    const base = slugify(finalTitle) || "magic-clock";
+    const finalSlug =
+      typeof existingSlug === "string" && existingSlug.trim()
+        ? existingSlug.trim()
+        : `${base}-${Date.now().toString(36)}`;
+
+    // 8) Work complet stocké dans la colonne JSON
     const fullWork =
       work ??
       payload ?? {
         id: id ?? null,
+        slug: finalSlug,
         title: finalTitle,
         mode: finalMode,
         hashtags: finalHashtags,
-        studio: studioBlock,
-        display: display ?? null,
-        progress: progress ?? null,
+        studio: finalStudio,
+        display: finalDisplay,
+        progress: finalProgress,
+        createdAt: new Date().toISOString(),
       };
 
-    // 7) Insert Supabase
+    // 9) Insertion Supabase
     const { data, error } = await supabaseAdmin
       .from("magic_clocks")
       .insert({
@@ -113,6 +160,7 @@ export async function POST(req: Request) {
         slug: finalSlug,
         gating_mode: finalMode,
         work: fullWork,
+        // pour l’instant on fixe toujours Aiko
         creator_handle: "aiko_tanaka",
         creator_name: "Aiko Tanaka",
         is_published: true,
