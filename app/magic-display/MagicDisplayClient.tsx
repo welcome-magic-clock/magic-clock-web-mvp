@@ -125,8 +125,8 @@ const INITIAL_SEGMENTS: Segment[] = [
 const STORAGE_KEY = "mc-display-draft-v1";
 const FACE_PROGRESS_KEY = "mc-display-face-progress-v1";
 
-const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
-const FALLBACK_AFTER = "/images/examples/balayage-after.jpg";
+const FALLBACK_BEFORE = "/images/magic-clock-bear/before.jpg";
+const FALLBACK_AFTER = "/images/magic-clock-bear/after.jpg";
 
 function buildTemplateSegments(template: TemplateId): Segment[] {
   switch (template) {
