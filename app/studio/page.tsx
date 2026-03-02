@@ -41,7 +41,7 @@ const EMPTY_MEDIA: MediaState = {
   thumbnailUrl: null,
 };
 
-cconst STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
+const STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
 const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 
 // 🔢 Limites de longueur pour garder des cartes compactes
