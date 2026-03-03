@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { MyMagicClient, SupabaseMagicClockRow } from "./MyMagicClient";
 import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { getSession } from "@/core/supabase/server"; // ✅ import centralisé
+import { getSession } from "@/core/supabase/server";
 
 function getSupabaseServerClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -33,12 +33,12 @@ async function getPublishedMagicClocks(creatorHandle: string): Promise<SupabaseM
 }
 
 export default async function Page() {
-  const session = await getSession();
-  if (!session) {
+  const user = await getSession(); // ✅ retourne User | null
+  if (!user) {
     redirect("/?auth=required&next=/mymagic");
   }
 
-  const published = await getPublishedMagicClocks(session.user.email ?? "");
+  const published = await getPublishedMagicClocks(user.email ?? ""); // ✅ user.email directement
 
   return (
     <Suspense fallback={null}>
