@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { uploadMagicMedia } from "@/core/domain/magicMedia";
 import {
   Camera,
   Clapperboard,
@@ -36,47 +36,18 @@ type FaceState = {
   needles: FaceNeedles;
 };
 
-// 🗄️ Client Supabase + bucket Storage pour les médias du Display
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// Nom du bucket à créer dans Supabase Storage
-// (ou à mettre dans NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET)
-const STORAGE_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET ?? "magic-media";
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
-});
+type UploadFolder = "segment" | "studio";
 
 /**
- * Upload d'un média de segment (photo / vidéo / fichier) vers Supabase Storage
- * → retourne une URL publique stable (HTTP) à stocker dans mediaUrl.
+ * Upload d'un média pédagogique vers Supabase (Display)
+ * → on stocke directement l'URL publique dans le JSON.
  */
 async function uploadSegmentMedia(
   file: File,
-  type: MediaType,
+  folder: UploadFolder = "segment",
 ): Promise<string> {
-  const ext = file.name.split(".").pop() ?? "bin";
-  const path = `segments/${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
-    console.error("[MagicClock] uploadSegmentMedia error", error);
-    throw error;
-  }
-
-  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-
-  return data.publicUrl;
+  const publicUrl = await uploadMagicMedia(file, folder);
+  return publicUrl;
 }
 
 type MagicDisplayFaceEditorProps = {
@@ -514,8 +485,8 @@ export default function MagicDisplayFaceEditor({
     // 2) Upload vers Supabase en arrière-plan
     (async () => {
       try {
-        const publicUrl = await uploadSegmentMedia(file, type);
-
+       const publicUrl = await uploadSegmentMedia(file, "segment");
+        
         // Quand l'upload est fini : URL publique + statut terminé
         updateSegment(selectedSegment.id, (prev) => ({
           ...prev,
