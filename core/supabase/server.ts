@@ -10,7 +10,7 @@ export async function getSupabaseServer() {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
+        setAll: (cookiesToSet: { name: string; value: string; options?: any }[]) => { // ✅ type explicite
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
@@ -22,7 +22,6 @@ export async function getSupabaseServer() {
 
 export async function getSession() {
   const supabase = await getSupabaseServer();
-  // ✅ getUser() vérifie le token JWT côté serveur — plus sécurisé que getSession()
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return null;
   return user;
