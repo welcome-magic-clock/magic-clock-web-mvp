@@ -1,14 +1,16 @@
 // components/auth/AuthModal.tsx
 "use client";
+
 import { useState } from "react";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  redirectTo?: string; // ✅ AJOUT 1 — prop optionnel
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, redirectTo }: AuthModalProps) { // ✅ AJOUT 2 — destructure redirectTo
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,21 +25,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
     setLoading(true);
     setError(null);
-
     const sb = getSupabaseBrowser();
+
+    // ✅ AJOUT 3 — calcul dynamique de l'URL de callback
+    const callbackUrl = redirectTo
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+      : `${window.location.origin}/auth/callback`;
+
     const { error: sbError } = await sb.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl,
       },
     });
-
     if (sbError) {
       setError(sbError.message);
       setLoading(false);
       return;
     }
-
     setSent(true);
     setLoading(false);
   }
@@ -79,7 +84,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 Entre ton email — on t'envoie un lien magique, pas de mot de passe.
               </p>
             </div>
-
             <input
               type="email"
               placeholder="ton@email.com"
@@ -88,11 +92,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
-
             {error && (
               <p className="mt-2 text-xs text-red-500">{error}</p>
             )}
-
             <button
               onClick={handleSubmit}
               disabled={loading}
@@ -100,7 +102,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             >
               {loading ? "Envoi en cours..." : "Recevoir mon lien magique 🪄"}
             </button>
-
             <p className="mt-4 text-center text-xs text-slate-400">
               En continuant, tu acceptes nos{" "}
               <a href="/legal" className="underline">conditions d'utilisation</a>.
@@ -111,3 +112,5 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     </div>
   );
 }
+
+export default AuthModal; // ✅ AJOUT 4 — export default pour MobileTabs
