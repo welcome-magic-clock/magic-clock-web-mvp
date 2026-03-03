@@ -46,12 +46,11 @@ const STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
 const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 
 // 🗄️ Client Supabase + bucket Storage pour les médias du Studio
-/**
- * Upload d'un média Avant/Après via notre route server
- * → retourne une URL publique HTTP (photo ou vidéo).
- */
+// Upload d'un média Avant/Après via notre route server
+// → retourne une URL publique HTTP (photo ou vidéo).
 async function uploadStudioMedia(file: File, side: Side) {
-  const folder = side === "before" ? "studio/before" : "studio/after";
+  // Pour l’instant on met tous les médias du Studio dans le dossier "studio"
+  const folder = "studio"; // <— conforme à MagicMediaFolder
   const publicUrl = await uploadMagicMedia(file, folder);
   return publicUrl;
 }
