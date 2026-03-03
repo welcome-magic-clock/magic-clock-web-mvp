@@ -8,7 +8,7 @@ import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
-import { createClient } from "@supabase/supabase-js";
+import { uploadMagicMedia } from "@/core/domain/magicMedia";
 
 type MediaKind = "image" | "video";
 
@@ -46,46 +46,14 @@ const STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
 const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 
 // 🗄️ Client Supabase + bucket Storage pour les médias du Studio
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// Même bucket que le Display (ou celui que tu as mis dans Vercel)
-const STORAGE_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET ?? "magic-media";
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
-});
-
 /**
- * Upload d'un média Avant/Après vers Supabase Storage
+ * Upload d'un média Avant/Après via notre route server
  * → retourne une URL publique HTTP (photo ou vidéo).
  */
-async function uploadStudioMedia(
-  file: File,
-  kind: MediaKind
-): Promise<string> {
-  const ext = file.name.split(".").pop() ?? "bin";
-  const folder = kind === "video" ? "studio-video" : "studio-photo";
-  const path = `${folder}/${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
-    console.error("[MagicClock] uploadStudioMedia error", error);
-    throw error;
-  }
-
-  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-
-  return data.publicUrl;
+async function uploadStudioMedia(file: File, side: Side) {
+  const folder = side === "before" ? "studio/before" : "studio/after";
+  const publicUrl = await uploadMagicMedia(file, folder);
+  return publicUrl;
 }
 
 // 🔢 Limites de longueur pour garder des cartes compactes
@@ -216,7 +184,7 @@ function handleFileChange(
   // 2) Upload vers Supabase en arrière-plan
   (async () => {
     try {
-      const publicUrl = await uploadStudioMedia(file, kind);
+     const publicUrl = await uploadStudioMedia(file, side);
 
       // Quand l'upload est fini, on remplace l'URL par l'URL publique
       updateMedia(side, (prev) => ({
