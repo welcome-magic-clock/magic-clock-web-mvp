@@ -11,18 +11,26 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const supabase = getSupabaseBrowser();
 
-    // ✅ Supabase lit automatiquement le #access_token dans le hash
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        // Récupère le ?next= ou redirige vers /mymagic par défaut
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") ?? "/mymagic";
-        router.replace(next);
-      }
-    });
+    // ✅ Lit le hash directement et échange le token
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
 
-    // Forcer la détection de la session depuis le hash
-    supabase.auth.getSession();
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token })
+          .then(({ error }) => {
+            if (!error) {
+              const searchParams = new URLSearchParams(window.location.search);
+              const next = searchParams.get("next") ?? "/mymagic";
+              router.replace(next);
+            } else {
+              router.replace("/?error=auth_callback_failed");
+            }
+          });
+      }
+    }
   }, [router]);
 
   return (
