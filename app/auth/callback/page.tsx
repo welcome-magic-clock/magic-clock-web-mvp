@@ -10,27 +10,37 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
-
-    // ✅ Lit le hash directement et échange le token
+    const searchParams = new URLSearchParams(window.location.search);
     const hash = window.location.hash;
+    const next = searchParams.get("next") ?? "/mymagic";
+
+    // ✅ CAS 1 — Hash avec access_token (magic link mobile)
     if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
+      const hashParams = new URLSearchParams(hash.substring(1));
+      const access_token = hashParams.get("access_token");
+      const refresh_token = hashParams.get("refresh_token");
 
       if (access_token && refresh_token) {
         supabase.auth.setSession({ access_token, refresh_token })
           .then(({ error }) => {
-            if (!error) {
-              const searchParams = new URLSearchParams(window.location.search);
-              const next = searchParams.get("next") ?? "/mymagic";
-              router.replace(next);
-            } else {
-              router.replace("/?error=auth_callback_failed");
-            }
+            router.replace(error ? "/?error=auth_callback_failed" : next);
           });
+        return;
       }
     }
+
+    // ✅ CAS 2 — PKCE avec ?code= (magic link desktop)
+    const code = searchParams.get("code");
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code)
+        .then(({ error }) => {
+          router.replace(error ? "/?error=auth_callback_failed" : next);
+        });
+      return;
+    }
+
+    // ❌ Aucun token trouvé
+    router.replace("/?error=auth_callback_failed");
   }, [router]);
 
   return (
