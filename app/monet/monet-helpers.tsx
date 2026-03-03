@@ -20,17 +20,20 @@ export type CountryVat = {
   code: string;
   label: string;
   vatRate: number; // ex: 0.081 = 8.1 %
+  currency: string;
 };
 
 export const COUNTRY_VAT_TABLE: CountryVat[] = [
-  { code: "CH", label: "Suisse", vatRate: 0.081 },
-  { code: "FR", label: "France", vatRate: 0.2 },
-  { code: "DE", label: "Allemagne", vatRate: 0.19 },
-  { code: "ES", label: "Espagne", vatRate: 0.21 },
-  { code: "IT", label: "Italie", vatRate: 0.22 },
-  { code: "UK", label: "Royaume-Uni", vatRate: 0.2 }, // ~20% TVA UK
-  { code: "US", label: "États-Unis (indicatif)", vatRate: 0 }, // pas de TVA fédérale
-  { code: "EU", label: "Autres pays UE", vatRate: 0.2 },
+  { code: "CH", label: "Suisse", vatRate: 0.081, currency: "CHF" },
+  { code: "FR", label: "France", vatRate: 0.2, currency: "EUR" },
+  { code: "DE", label: "Allemagne", vatRate: 0.19, currency: "EUR" },
+  { code: "ES", label: "Espagne", vatRate: 0.21, currency: "EUR" },
+  { code: "IT", label: "Italie", vatRate: 0.22, currency: "EUR" },
+  { code: "NL", label: "Pays-Bas", vatRate: 0.21, currency: "EUR" },
+  { code: "BE", label: "Belgique", vatRate: 0.21, currency: "EUR" },
+  { code: "UK", label: "Royaume-Uni", vatRate: 0.2, currency: "GBP" },
+  { code: "US", label: "États-Unis (indicatif)", vatRate: 0, currency: "USD" },
+  { code: "EU", label: "Autres pays UE", vatRate: 0.2, currency: "EUR" },
 ];
 
 export const CURRENT_COUNTRY_CODE = "CH";
@@ -39,7 +42,88 @@ export const CURRENT_COUNTRY =
   COUNTRY_VAT_TABLE[0];
 
 // ─────────────────────────────────────────────────────────────
-// Paliers commission (Bronze / Argent / Or)
+// NOUVELLE STRUCTURE TARIFAIRE — Commission progressive par prix PPV
+// Décision stratégique Magic Clock / Adyen — Mars 2026
+//
+// Principe : "Tu paies si tu gagnes"
+// Commission dégressive selon le prix du contenu.
+// Plus le contenu est cher → plus la créatrice garde.
+// Frais Adyen absorbés dans la commission sur les micro-paiements.
+// ─────────────────────────────────────────────────────────────
+
+export type PriceTierId = "MICRO" | "STANDARD" | "PREMIUM" | "EXPERT";
+
+export type PriceTier = {
+  id: PriceTierId;
+  label: string;
+  emoji: string;
+  /** Commission plateforme Magic Clock (inclut frais Adyen + TVA absorbée) */
+  platformRate: number;
+  /** Part créatrice après commission */
+  creatorRate: number;
+  minPrice: number;
+  maxPrice: number;
+  description: string;
+  adyenNote: string;
+};
+
+export const PRICE_TIERS: PriceTier[] = [
+  {
+    id: "MICRO",
+    label: "Micro",
+    emoji: "🌱",
+    platformRate: 0.35,
+    creatorRate: 0.65,
+    minPrice: 0.99,
+    maxPrice: 1.99,
+    description: "0.99 → 1.99 CHF/€/$",
+    adyenNote: "Commission 35% absorbe le frais fixe Adyen (0.12 CHF)",
+  },
+  {
+    id: "STANDARD",
+    label: "Standard",
+    emoji: "⭐",
+    platformRate: 0.28,
+    creatorRate: 0.72,
+    minPrice: 2.0,
+    maxPrice: 9.98,
+    description: "2.00 → 9.99 CHF/€/$",
+    adyenNote: "Sweet spot volume · meilleur ratio frais/commission",
+  },
+  {
+    id: "PREMIUM",
+    label: "Premium",
+    emoji: "💎",
+    platformRate: 0.22,
+    creatorRate: 0.78,
+    minPrice: 9.99,
+    maxPrice: 29.98,
+    description: "9.99 → 29.99 CHF/€/$",
+    adyenNote: "Très attractif · idéal tutoriels & masterclass",
+  },
+  {
+    id: "EXPERT",
+    label: "Expert",
+    emoji: "🏆",
+    platformRate: 0.2,
+    creatorRate: 0.8,
+    minPrice: 29.99,
+    maxPrice: 999.99,
+    description: "29.99 → 999.99 CHF/€/$",
+    adyenNote: "Modèle OnlyFans · contenus haute valeur",
+  },
+];
+
+export function getPriceTierFromPrice(price: number): PriceTier {
+  if (price >= 29.99) return PRICE_TIERS[3]; // EXPERT
+  if (price >= 9.99) return PRICE_TIERS[2];  // PREMIUM
+  if (price >= 2.0) return PRICE_TIERS[1];   // STANDARD
+  return PRICE_TIERS[0];                      // MICRO
+}
+
+// ─────────────────────────────────────────────────────────────
+// Paliers audience (Bronze / Argent / Or) — pour le Simulateur
+// Basé sur les likes cumulés (engagement Magic Clock)
 // ─────────────────────────────────────────────────────────────
 
 export type TierId = "BRONZE" | "SILVER" | "GOLD";
@@ -47,38 +131,84 @@ export type TierId = "BRONZE" | "SILVER" | "GOLD";
 export type Tier = {
   id: TierId;
   label: string;
-  rate: number; // part plateforme, ex: 0.30 = 30 %
+  emoji: string;
+  /** Taux de conversion audience → acheteurs */
+  conversionBonus: number;
   minLikes: number;
   maxLikes?: number;
+  description: string;
 };
 
 export const TIERS: Tier[] = [
   {
     id: "BRONZE",
     label: "Bronze",
-    rate: 0.3,
+    emoji: "🥉",
+    conversionBonus: 1.0,
     minLikes: 0,
     maxLikes: 1000,
+    description: "0 → 1 000 likes cumulés",
   },
   {
     id: "SILVER",
     label: "Argent",
-    rate: 0.25,
+    emoji: "🥈",
+    conversionBonus: 1.15,
     minLikes: 1001,
     maxLikes: 10000,
+    description: "1 001 → 10 000 likes cumulés",
   },
   {
     id: "GOLD",
     label: "Or",
-    rate: 0.2,
+    emoji: "🥇",
+    conversionBonus: 1.3,
     minLikes: 10001,
+    description: "+ de 10 000 likes cumulés",
   },
 ];
 
 export function getTierFromLikes(likes: number): Tier {
   if (likes > 10000) return TIERS[2]; // Or
-  if (likes > 1000) return TIERS[1]; // Argent
-  return TIERS[0]; // Bronze
+  if (likes > 1000) return TIERS[1];  // Argent
+  return TIERS[0];                    // Bronze
+}
+
+// ─────────────────────────────────────────────────────────────
+// Calcul commission Adyen — structure réelle
+// ─────────────────────────────────────────────────────────────
+
+export type AdyenFeeBreakdown = {
+  /** Frais interchange estimé */
+  interchangeFee: number;
+  /** Frais fixe Adyen par transaction */
+  adyenFixedFee: number;
+  /** Total frais Adyen */
+  totalAdyenFee: number;
+  /** % effectif frais Adyen sur montant brut */
+  adyenFeeRate: number;
+};
+
+/**
+ * Calcule les frais Adyen réels pour un montant donné.
+ * Basé sur la structure Adyen for Platforms (interchange++).
+ */
+export function computeAdyenFees(
+  amount: number,
+  isInternational = false,
+): AdyenFeeBreakdown {
+  const interchangeRate = isInternational ? 0.015 : 0.009;
+  const adyenFixedFee = 0.12; // CHF/€ par transaction
+  const interchangeFee = amount * interchangeRate;
+  const totalAdyenFee = interchangeFee + adyenFixedFee;
+  const adyenFeeRate = amount > 0 ? totalAdyenFee / amount : 0;
+
+  return {
+    interchangeFee,
+    adyenFixedFee,
+    totalAdyenFee,
+    adyenFeeRate,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -90,7 +220,25 @@ export function formatMoney(amount: number, currency = "CHF") {
   return new Intl.NumberFormat("fr-CH", {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function formatMoneyCompact(amount: number, currency = "CHF") {
+  if (!Number.isFinite(amount)) return "-";
+  if (amount >= 1000) {
+    return new Intl.NumberFormat("fr-CH", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+  return new Intl.NumberFormat("fr-CH", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
   }).format(amount);
 }
 
@@ -99,12 +247,20 @@ export function clamp(value: number, min: number, max: number) {
 }
 
 /**
- * Interprétation : les prix saisis (Abo / Pay-Per-View) sont TTC.
- * On retire la TVA pour obtenir la base HT, puis on applique la commission.
+ * NOUVELLE LOGIQUE TARIFAIRE MAGIC CLOCK — Adyen for Platforms
+ *
+ * Principe :
+ * 1. Prix TTC → on retire TVA du pays de l'acheteur
+ * 2. Base HT → on applique la commission Magic Clock (progressive par prix PPV)
+ *    Cette commission inclut déjà les frais Adyen absorbés
+ * 3. La créatrice reçoit sa part HT nette
+ *
+ * La commission est unique TTC tout compris (frais PSP + marge MC).
+ * Jamais de ligne "frais Adyen" visible → propre légalement.
  */
 export function computeVatAndShares(
   grossTotal: number,
-  tier: Tier,
+  priceTier: PriceTier,
   vatRate: number,
 ) {
   if (grossTotal <= 0) {
@@ -113,20 +269,82 @@ export function computeVatAndShares(
       netBase: 0,
       platformShareNet: 0,
       creatorShareNet: 0,
+      effectiveCreatorRate: 0,
     };
   }
 
   const netBase = grossTotal / (1 + vatRate);
   const vatAmount = grossTotal - netBase;
 
-  const platformShareNet = netBase * tier.rate;
+  const platformShareNet = netBase * priceTier.platformRate;
   const creatorShareNet = netBase - platformShareNet;
+  const effectiveCreatorRate = creatorShareNet / grossTotal;
 
   return {
     vatAmount,
     netBase,
     platformShareNet,
     creatorShareNet,
+    effectiveCreatorRate,
+  };
+}
+
+/**
+ * Rétro-compatibilité avec l'ancien système basé sur Tier (likes).
+ * Utilisé dans le Simulateur pour ne pas casser SimMonetPanel.
+ * Calcule comme avant mais en utilisant tier.conversionBonus (pas rate).
+ * @deprecated Utiliser computeVatAndShares avec PriceTier à la place.
+ */
+export function computeVatAndSharesLegacy(
+  grossTotal: number,
+  tier: Tier,
+  vatRate: number,
+  ppvPrice = 2.99,
+) {
+  const priceTier = getPriceTierFromPrice(ppvPrice);
+  return computeVatAndShares(grossTotal, priceTier, vatRate);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Calcul détaillé pour un vrai versement créatrice
+// (Utilisé dans la section "Mes versements")
+// ─────────────────────────────────────────────────────────────
+
+export type PayoutCalculation = {
+  grossAmount: number;
+  vatAmount: number;
+  netBase: number;
+  platformFee: number;
+  creatorAmount: number;
+  currency: string;
+  priceTier: PriceTier;
+  vatRate: number;
+  countryCode: string;
+};
+
+export function computePayout(
+  grossAmount: number,
+  ppvPrice: number,
+  countryCode = "CH",
+): PayoutCalculation {
+  const country =
+    COUNTRY_VAT_TABLE.find((c) => c.code === countryCode) ??
+    COUNTRY_VAT_TABLE[0];
+  const priceTier = getPriceTierFromPrice(ppvPrice);
+
+  const { vatAmount, netBase, platformShareNet, creatorShareNet } =
+    computeVatAndShares(grossAmount, priceTier, country.vatRate);
+
+  return {
+    grossAmount,
+    vatAmount,
+    netBase,
+    platformFee: platformShareNet,
+    creatorAmount: creatorShareNet,
+    currency: country.currency,
+    priceTier,
+    vatRate: country.vatRate,
+    countryCode,
   };
 }
 

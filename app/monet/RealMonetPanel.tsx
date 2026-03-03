@@ -3,13 +3,14 @@
 
 import MonetToolbar from "@/components/monet/MonetToolbar";
 import { useMemo } from "react";
-import { Info } from "lucide-react";
+import { Info, Calendar, TrendingUp, Wallet, Shield, ChevronRight, Clock } from "lucide-react";
 import {
   CreatorLight,
   CURRENT_COUNTRY,
-  TIERS,
-  getTierFromLikes,
+  PRICE_TIERS,
+  getPriceTierFromPrice,
   formatMoney,
+  formatMoneyCompact,
   computeVatAndShares,
   DailyRevenuePoint,
   RevenueLinesChart,
@@ -101,6 +102,204 @@ function TrendBadge({ value }: { value: number }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Section Versements — Adyen for Platforms
+// ─────────────────────────────────────────────────────────────
+
+function PayoutsSection({
+  creatorShareNet,
+  currency = "CHF",
+}: {
+  creatorShareNet: number;
+  currency?: string;
+}) {
+  // Données maquette MVP — à connecter backend Adyen
+  const availableBalance = creatorShareNet * 0.72;
+  const pendingBalance = creatorShareNet * 0.28;
+  const nextPayoutDate = "15 avril 2026";
+  const lastPayoutAmount = creatorShareNet * 0.95;
+  const payoutThreshold = 50;
+  const kycStatus: "verified" | "pending" | "not_started" = "pending";
+  const ibanLast4 = "4521";
+
+  const payoutHistory = [
+    { date: "15 mars 2026", amount: creatorShareNet * 0.88, status: "paid" },
+    { date: "15 fév. 2026", amount: creatorShareNet * 0.76, status: "paid" },
+    { date: "15 jan. 2026", amount: creatorShareNet * 0.65, status: "paid" },
+  ];
+
+  const progressToThreshold = Math.min(
+    100,
+    (availableBalance / payoutThreshold) * 100,
+  );
+
+  return (
+    <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50">
+            <Wallet className="h-4 w-4 text-emerald-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800">
+              Mes versements
+            </h2>
+            <p className="text-[11px] text-slate-500">
+              Powered by Adyen for Platforms
+            </p>
+          </div>
+        </div>
+        {/* KYC Status Badge */}
+        <div
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+            kycStatus === "verified"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : kycStatus === "pending"
+                ? "border-amber-200 bg-amber-50 text-amber-700"
+                : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}
+        >
+          <Shield className="h-3 w-3" />
+          {kycStatus === "verified"
+            ? "KYC vérifié ✓"
+            : kycStatus === "pending"
+              ? "KYC en cours…"
+              : "KYC requis"}
+        </div>
+      </div>
+
+      {/* Soldes */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {/* Solde disponible */}
+        <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/50 p-4">
+          <p className="text-[11px] font-medium text-emerald-700">
+            Solde disponible
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-emerald-700">
+            {formatMoney(availableBalance, currency)}
+          </p>
+          <p className="mt-1 text-[11px] text-emerald-600/70">
+            Prochain versement : <strong>{nextPayoutDate}</strong>
+          </p>
+
+          {/* Barre progression vers seuil */}
+          {availableBalance < payoutThreshold && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-[10px] text-emerald-700/60">
+                <span>
+                  Seuil de versement : {payoutThreshold} {currency}
+                </span>
+                <span>{progressToThreshold.toFixed(0)}%</span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-emerald-200/60">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                  style={{ width: `${progressToThreshold}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-emerald-700/50">
+                Encore{" "}
+                {formatMoney(payoutThreshold - availableBalance, currency)}{" "}
+                avant le prochain virement automatique.
+              </p>
+            </div>
+          )}
+          {availableBalance >= payoutThreshold && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] text-white">
+              <span>✓</span>
+              <span>Virement planifié le {nextPayoutDate}</span>
+            </div>
+          )}
+        </div>
+
+        {/* En attente + détails */}
+        <div className="space-y-3">
+          {/* Pending */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] text-slate-500">En attente</p>
+                <p className="mt-0.5 text-lg font-semibold text-slate-700">
+                  {formatMoney(pendingBalance, currency)}
+                </p>
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  Ventes des 7 derniers jours (en traitement)
+                </p>
+              </div>
+              <Clock className="h-5 w-5 text-slate-300" />
+            </div>
+          </div>
+
+          {/* IBAN */}
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+            <div>
+              <p className="text-[11px] text-slate-500">Compte de versement</p>
+              <p className="mt-0.5 text-xs font-medium text-slate-700">
+                IBAN ···· ···· {ibanLast4}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-50"
+            >
+              Modifier <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+
+          {/* Prochain versement */}
+          <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
+            <Calendar className="h-4 w-4 flex-shrink-0 text-indigo-400" />
+            <div>
+              <p className="text-[11px] font-medium text-indigo-700">
+                Virement SEPA le 15 de chaque mois
+              </p>
+              <p className="text-[10px] text-indigo-500">
+                Dernier versement :{" "}
+                <strong>
+                  {formatMoney(lastPayoutAmount, currency)}
+                </strong>{" "}
+                le 15 mars 2026
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Historique versements */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-medium text-slate-700">
+            Historique des versements
+          </p>
+          <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
+        </div>
+        <div className="divide-y divide-slate-100">
+          {payoutHistory.map((payout, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between py-2 text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[9px] text-emerald-600">
+                  ✓
+                </span>
+                <span className="text-slate-600">{payout.date}</span>
+              </div>
+              <span className="font-semibold text-slate-800">
+                {formatMoney(payout.amount, currency)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-[10px] text-slate-400">
+          Données indicatives MVP — à connecter backend Adyen for Platforms.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Composant principal : RealMonetPanel
 // ─────────────────────────────────────────────────────────────
 
@@ -110,6 +309,7 @@ type RealMonetPanelProps = {
 
 export function RealMonetPanel({ creator }: RealMonetPanelProps) {
   const vatRateReal = CURRENT_COUNTRY.vatRate;
+  const currency = CURRENT_COUNTRY.currency;
 
   const realFollowers = creator?.followers ?? 12450;
   const realFollowersDelta = 12.4;
@@ -118,13 +318,14 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
   const realAboSubs = 480;
   const realAboDelta = 8.1;
 
-  const realPpvPrice = 19.9;
-  const realPpvBuyers = 120;
+  // PPV — prix moyen 2.99 CHF (sweet spot stratégique Magic Clock)
+  const realPpvPrice = 2.99;
+  const realPpvBuyers = 520;
   const realPpvPerBuyer = 1.4;
   const realPpvDelta = 5.2;
 
-  const realLikes = creator?.likes ?? 3200;
-  const realTier = getTierFromLikes(realLikes);
+  // Palier tarifaire basé sur le prix PPV (nouvelle logique Adyen)
+  const realPriceTier = getPriceTierFromPrice(realPpvPrice);
 
   const realGrossAbos = realAboPrice * realAboSubs;
   const realGrossPpv = realPpvPrice * realPpvBuyers * realPpvPerBuyer;
@@ -135,13 +336,10 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
     netBase: realNetBase,
     platformShareNet: realPlatformShareNet,
     creatorShareNet: realCreatorShareNet,
-  } = computeVatAndShares(realGrossTotal, realTier, vatRateReal);
+  } = computeVatAndShares(realGrossTotal, realPriceTier, vatRateReal);
 
   const indicativeFollowersTotal = useMemo(
-    () =>
-      SOCIAL_NETWORKS.reduce((sum, n) => {
-        return sum + n.followers;
-      }, 0),
+    () => SOCIAL_NETWORKS.reduce((sum, n) => sum + n.followers, 0),
     [],
   );
 
@@ -152,23 +350,14 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
 
     return Array.from({ length: days }, (_, index) => {
       const t = index / (days - 1 || 1);
-
-      const waveAbo =
-        0.15 * Math.sin(index / 2) + 0.1 * Math.cos(index / 3);
+      const waveAbo = 0.15 * Math.sin(index / 2) + 0.1 * Math.cos(index / 3);
       const wavePpv =
         0.2 * Math.sin(index / 1.7) + 0.05 * Math.cos(index / 4);
-
       const factorAbo = 0.8 + 0.6 * t + waveAbo;
       const factorPpv = 0.9 + 0.7 * t + wavePpv;
-
       const abo = Math.max(0, Math.round(baseAbo * factorAbo));
       const ppv = Math.max(0, Math.round(basePpv * factorPpv));
-
-      return {
-        day: index + 1,
-        abo,
-        ppv,
-      };
+      return { day: index + 1, abo, ppv };
     });
   }, [realGrossAbos, realGrossPpv]);
 
@@ -177,7 +366,7 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
       {/* Toolbar bulles Monétisation */}
       <MonetToolbar />
 
-      {/* Carte principale Réalité */}
+      {/* ── SECTION 1 : Revenus du mois ── */}
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -222,7 +411,6 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
               abonnements du cockpit.
             </p>
           </div>
-
           <div className="mt-1">
             <RevenueLinesChart data={realDailyRevenue} variant="large" />
           </div>
@@ -269,7 +457,6 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
                   </span>
                 </span>
               </div>
-
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {SOCIAL_NETWORKS.map((net) => (
                   <div
@@ -288,16 +475,11 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
                   </div>
                 ))}
               </div>
-
               <p className="mt-3 text-[10px] leading-snug text-slate-500">
-                Les chiffres affichés par réseau social (Facebook, Instagram,
-                YouTube, TikTok, Snapchat, LinkedIn, X) sont fournis à titre{" "}
-                <strong>purement indicatif</strong> dans ce cockpit MVP. Ils ne
-                sont ni en temps réel ni validés par les plateformes concernées
-                et ne constituent pas une information contractuelle. En
-                production, les données pourront être synchronisées via les APIs
-                officielles, sous réserve du respect des conditions
-                d&apos;utilisation de chaque service.
+                Les chiffres affichés par réseau social sont fournis à titre{" "}
+                <strong>purement indicatif</strong> dans ce cockpit MVP. En
+                production, les données seront synchronisées via les APIs
+                officielles.
               </p>
             </div>
           </div>
@@ -312,10 +494,11 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
               {realAboSubs.toLocaleString("fr-CH")} abonnés
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Prix moyen : {formatMoney(realAboPrice)} / mois (TTC).
+              Prix moyen : {formatMoney(realAboPrice, currency)} / mois (TTC).
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Revenu brut Abo : {formatMoney(realGrossAbos)} / mois (TTC).
+              Revenu brut Abo : {formatMoneyCompact(realGrossAbos, currency)} /
+              mois (TTC).
             </p>
             <div className="mt-2">
               <TrendBadge value={realAboDelta} />
@@ -327,27 +510,33 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
             id="monet-ppv"
             className="rounded-xl border border-slate-200 bg-slate-50/80 p-3"
           >
-            <p className="text-xs text-slate-500">
-              Contenus Pay-Per-View (PPV)
-            </p>
+            <p className="text-xs text-slate-500">Contenus Pay-Per-View (PPV)</p>
             <p className="mt-1 text-lg font-semibold">
               {realPpvBuyers.toLocaleString("fr-CH")} acheteurs / mois
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Prix moyen : {formatMoney(realPpvPrice)} (TTC) ·{" "}
-              {realPpvPerBuyer.toFixed(1)} Pay-Per-View / acheteur / mois.
+              Prix moyen : {formatMoney(realPpvPrice, currency)} (TTC) ·{" "}
+              {realPpvPerBuyer.toFixed(1)} PPV / acheteur / mois.
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Revenu brut Pay-Per-View : {formatMoney(realGrossPpv)} / mois
-              (TTC).
+              Revenu brut PPV : {formatMoneyCompact(realGrossPpv, currency)} /
+              mois (TTC).
             </p>
-            <div className="mt-2">
+            {/* Badge palier tarifaire */}
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-700">
+              <span>{realPriceTier.emoji}</span>
+              <span>
+                Palier {realPriceTier.label} · Commission{" "}
+                {Math.round(realPriceTier.platformRate * 100)}%
+              </span>
+            </div>
+            <div className="mt-1.5">
               <TrendBadge value={realPpvDelta} />
             </div>
           </div>
         </div>
 
-        {/* Résumé revenus + TVA + commission */}
+        {/* ── Résumé revenus + commission progressive ── */}
         <div
           id="monet-revenue"
           className="mt-2 grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
@@ -358,19 +547,17 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
                 <div>
                   <p className="text-xs text-slate-500">Revenu brut total</p>
                   <p className="mt-1 text-lg font-semibold">
-                    {formatMoney(realGrossTotal)}
+                    {formatMoneyCompact(realGrossTotal, currency)}
                   </p>
                 </div>
                 <div className="text-right text-[11px] text-slate-500">
-                  <p>
-                    TVA estimée ({Math.round(vatRateReal * 1000) / 10}%)
-                  </p>
+                  <p>TVA estimée ({Math.round(vatRateReal * 1000) / 10}%)</p>
                   <p className="mt-1 font-medium">
-                    {formatMoney(realVatAmount)}
+                    {formatMoneyCompact(realVatAmount, currency)}
                   </p>
                   <p className="mt-2">Base HT estimée</p>
                   <p className="mt-1 font-semibold">
-                    {formatMoney(realNetBase)}
+                    {formatMoneyCompact(realNetBase, currency)}
                   </p>
                 </div>
               </div>
@@ -378,87 +565,88 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
               <div className="mt-3 grid gap-3 text-xs md:grid-cols-2">
                 <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
                   <p className="text-[11px] text-slate-500">
-                    Part plateforme (HT)
+                    Commission Magic Clock (HT)
                   </p>
                   <p className="mt-1 text-base font-semibold text-slate-700">
-                    {formatMoney(realPlatformShareNet)}
+                    {formatMoneyCompact(realPlatformShareNet, currency)}
                   </p>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Palier {realTier.label} ·{" "}
-                    {Math.round(realTier.rate * 100)}% de la base HT.
+                    {realPriceTier.emoji} Palier {realPriceTier.label} ·{" "}
+                    {Math.round(realPriceTier.platformRate * 100)}% · inclut
+                    frais Adyen.
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white/80 p-3">
-                  <p className="text-[11px] text-slate-500">
-                    Part créateur estimée
+                <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-3">
+                  <p className="text-[11px] text-emerald-700">
+                    Tu gardes (HT estimé)
                   </p>
-                  <p className="mt-1 text-2xl font-semibold text-emerald-600">
-                    {formatMoney(realCreatorShareNet)}
+                  <p className="mt-1 text-2xl font-bold text-emerald-600">
+                    {formatMoneyCompact(realCreatorShareNet, currency)}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Montant estimé versé par Magic Clock.
+                  <p className="mt-1 text-[11px] text-emerald-600/80">
+                    {Math.round(realPriceTier.creatorRate * 100)}% de la base
+                    HT — versé le 15 du mois.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Paliers commission */}
+          {/* ── Grille paliers commission progressifs ── */}
           <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center justify-between text-xs">
               <p className="font-medium text-slate-700">
-                Paliers de commission Magic Clock
+                Commission progressive · Prix PPV
               </p>
               <p className="text-slate-500">
-                Likes cumulés :{" "}
+                Prix actuel :{" "}
                 <span className="font-semibold">
-                  {realLikes.toLocaleString("fr-CH")}
+                  {formatMoney(realPpvPrice, currency)}
                 </span>
               </p>
             </div>
 
             <div className="flex flex-col gap-2 text-xs">
-              {TIERS.map((tier) => {
-                const isActive = tier.id === realTier.id;
-                const locked =
-                  (tier.id === "SILVER" && realLikes <= 1000) ||
-                  (tier.id === "GOLD" && realLikes <= 10000);
-
+              {PRICE_TIERS.map((tier) => {
+                const isActive = tier.id === realPriceTier.id;
                 return (
                   <div
                     key={tier.id}
                     className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
                       isActive
-                        ? "border-emerald-500 bg-emerald-50/60"
+                        ? "border-emerald-400 bg-emerald-50/80"
                         : "border-slate-200 bg-white/80"
                     }`}
                   >
                     <div className="flex flex-col">
-                      <span className="font-semibold">
-                        {tier.label} · {Math.round(tier.rate * 100)}
-                        %&nbsp;plateforme
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        {tier.id === "BRONZE" && "0 → 1 000 likes cumulés"}
-                        {tier.id === "SILVER" &&
-                          "1 001 → 10 000 likes cumulés (débloqué Argent)"}
-                        {tier.id === "GOLD" &&
-                          "+ de 10 000 likes cumulés (débloqué Or)"}
+                      <div className="flex items-center gap-1.5">
+                        <span>{tier.emoji}</span>
+                        <span className="font-semibold">{tier.label}</span>
+                        <span className="text-slate-400">·</span>
+                        <span
+                          className={
+                            isActive
+                              ? "font-bold text-emerald-700"
+                              : "text-slate-600"
+                          }
+                        >
+                          tu gardes {Math.round(tier.creatorRate * 100)}%
+                        </span>
+                      </div>
+                      <span className="mt-0.5 text-[10px] text-slate-400">
+                        {tier.description}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-500">
-                      {locked ? (
-                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
-                          🔒 Bloqué
-                        </span>
-                      ) : isActive ? (
-                        <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-white">
+                    <div className="text-right">
+                      <span
+                        className={`text-[10px] ${isActive ? "font-medium text-emerald-600" : "text-slate-400"}`}
+                      >
+                        {Math.round(tier.platformRate * 100)}% MC
+                      </span>
+                      {isActive && (
+                        <div className="mt-0.5 inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] text-white">
                           Actif
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5">
-                          Inactif
-                        </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -466,24 +654,31 @@ export function RealMonetPanel({ creator }: RealMonetPanelProps) {
               })}
             </div>
 
-            <div className="mt-1">
-              <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
-                <span>0</span>
-                <span>1 000</span>
-                <span>10 000+</span>
+            {/* Barre progression visuelle */}
+            <div className="mt-1 rounded-lg border border-slate-100 bg-white/60 p-2">
+              <div className="mb-1 flex items-center justify-between text-[10px] text-slate-400">
+                <span>0.99</span>
+                <span>2.00</span>
+                <span>9.99</span>
+                <span>29.99+</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-400 via-sky-500 to-emerald-500"
-                  style={{
-                    width: `${Math.min(100, (realLikes / 10000) * 100)}%`,
-                  }}
-                />
+                <div className="h-full bg-gradient-to-r from-amber-400 via-sky-400 via-indigo-500 to-emerald-500" />
               </div>
+              <p className="mt-1.5 text-[10px] text-slate-400">
+                Plus ton contenu est cher → plus tu gardes. Modèle tout
+                compris, sans frais cachés.
+              </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── SECTION 2 : Mes Versements (Adyen) ── */}
+      <PayoutsSection
+        creatorShareNet={realCreatorShareNet}
+        currency={currency}
+      />
     </div>
   );
 }
