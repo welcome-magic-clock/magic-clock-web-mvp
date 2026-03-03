@@ -1,16 +1,17 @@
 // core/supabase/browser.ts
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 let instance: SupabaseClient | null = null;
 
 /**
- * Client Supabase côté navigateur — clé publique anon uniquement.
+ * Client Supabase côté navigateur — utilise @supabase/ssr
+ * pour synchroniser la session dans les cookies (lisibles côté serveur).
  * Singleton : un seul client par session browser.
- * ✅ Sûr à importer dans les composants React ("use client")
  */
 export function getSupabaseBrowser(): SupabaseClient {
   if (!instance) {
-    instance = createClient(
+    instance = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
