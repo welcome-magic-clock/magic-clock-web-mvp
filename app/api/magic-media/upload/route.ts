@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       ? originalName.split(".").pop()
       : "bin";
 
-    // 🐉 ICI : avec backticks, sinon Turbopack hurle
+    // ✅ chemin objet avec template literal
     const objectPath = `${folder}/${randomUUID()}.${ext}`;
 
     // Upload vers le bucket magic-media
@@ -50,7 +50,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       path: objectPath,
-      publicUrl, // ✅ même clé que dans magicMedia.ts
+      url: publicUrl,      // ✅ pour compatibilité
+      publicUrl,           // ✅ clé explicite pour magicMedia.ts
     });
   } catch (error: any) {
     console.error("[MagicClock] /api/magic-media/upload failed", error);
