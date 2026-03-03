@@ -2,9 +2,8 @@
 import { Suspense } from "react";
 import { MyMagicClient, SupabaseMagicClockRow } from "./MyMagicClient";
 import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getSession } from "@/core/supabase/server"; // ✅ import centralisé
 
 function getSupabaseServerClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -15,23 +14,6 @@ function getSupabaseServerClient() {
   });
 }
 
-// ✅ AJOUT — vérifie la session côté serveur
-async function getSession() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {},
-      },
-    }
-  );
-  const { data: { session } } = await supabase.auth.getSession();
-  return session;
-}
-
 async function getPublishedMagicClocks(creatorHandle: string): Promise<SupabaseMagicClockRow[]> {
   const client = getSupabaseServerClient();
   const { data, error } = await client
@@ -40,7 +22,7 @@ async function getPublishedMagicClocks(creatorHandle: string): Promise<SupabaseM
       "id, slug, creator_handle, creator_name, title, gating_mode, ppv_price, created_at, work",
     )
     .eq("is_published", true)
-    .eq("creator_handle", creatorHandle) // ✅ filtre en DB plutôt qu'en JS
+    .eq("creator_handle", creatorHandle)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -51,7 +33,6 @@ async function getPublishedMagicClocks(creatorHandle: string): Promise<SupabaseM
 }
 
 export default async function Page() {
-  // ✅ AJOUT — protection de route : redirige si non connecté
   const session = await getSession();
   if (!session) {
     redirect("/?auth=required&next=/mymagic");
