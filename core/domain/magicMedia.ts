@@ -1,5 +1,4 @@
 // core/domain/magicMedia.ts
-
 export type MagicMediaFolder = "studio" | "display" | "segment";
 
 export async function uploadMagicMedia(
@@ -22,15 +21,17 @@ export async function uploadMagicMedia(
 
   const json = (await res.json()) as {
     ok: boolean;
+    publicUrl?: string;
     url?: string;
     path?: string;
     error?: string;
   };
 
-  if (!json.ok || !json.url) {
+  const finalUrl = json.publicUrl ?? json.url;
+
+  if (!json.ok || !finalUrl) {
     throw new Error(json.error || "Upload failed");
   }
 
-  // On renvoie directement l’URL publique à stocker dans le Display/Studio
-  return json.url;
+  return finalUrl;
 }
