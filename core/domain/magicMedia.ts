@@ -22,15 +22,15 @@ export async function uploadMagicMedia(
 
   const json = (await res.json()) as {
     ok: boolean;
-    publicUrl?: string;
+    url?: string;
     path?: string;
     error?: string;
   };
 
-  if (!json.ok || !json.publicUrl) {
+  if (!json.ok || !json.url) {
     throw new Error(json.error || "Upload failed");
   }
 
   // On renvoie directement l’URL publique à stocker dans le Display/Studio
-  return json.publicUrl;
+  return json.url;
 }
