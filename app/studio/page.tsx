@@ -8,7 +8,7 @@ import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
 } from "@/core/domain/magicStudioBridge";
-import { uploadMagicMedia } from "@/core/domain/magicMedia";
+import { processAndUpload } from "@/lib/mediaCompressor";
 
 type MediaKind = "image" | "video";
 
@@ -45,16 +45,6 @@ const EMPTY_MEDIA: MediaState = {
 const STUDIO_DRAFT_KEY = "mc-studio-draft-v2";
 const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 
-// 🗄️ Client Supabase + bucket Storage pour les médias du Studio
-// Upload d'un média Avant/Après via notre route server
-// → retourne une URL publique HTTP (photo ou vidéo).
-async function uploadStudioMedia(file: File, side: Side) {
-  // Pour l’instant on met tous les médias du Studio dans le dossier "studio"
-  const folder = "studio"; // <— conforme à MagicMediaFolder
-  const publicUrl = await uploadMagicMedia(file, folder);
-  return publicUrl;
-}
-
 // 🔢 Limites de longueur pour garder des cartes compactes
 const MAX_TITLE_LENGTH = 30;
 const MAX_HASHTAGS_LENGTH = 30;
@@ -88,38 +78,38 @@ export default function MagicStudioPage() {
   const beforeVideoRef = useRef<HTMLVideoElement | null>(null);
   const afterVideoRef = useRef<HTMLVideoElement | null>(null);
 
- // 🧬 Charger le brouillon Magic Studio depuis localStorage
-useEffect(() => {
-  try {
-    // 1) Si un vieux draft v1 existe et pas encore de v2, on migre puis on supprime v1
-    const legacyRaw = window.localStorage.getItem(OLD_STUDIO_DRAFT_KEY);
-    const v2Raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
+  // 🧬 Charger le brouillon Magic Studio depuis localStorage
+  useEffect(() => {
+    try {
+      // 1) Si un vieux draft v1 existe et pas encore de v2, on migre puis on supprime v1
+      const legacyRaw = window.localStorage.getItem(OLD_STUDIO_DRAFT_KEY);
+      const v2Raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
 
-    if (!v2Raw && legacyRaw) {
-      window.localStorage.setItem(STUDIO_DRAFT_KEY, legacyRaw);
-      window.localStorage.removeItem(OLD_STUDIO_DRAFT_KEY);
+      if (!v2Raw && legacyRaw) {
+        window.localStorage.setItem(STUDIO_DRAFT_KEY, legacyRaw);
+        window.localStorage.removeItem(OLD_STUDIO_DRAFT_KEY);
+      }
+
+      // 2) On charge le draft v2 normalement
+      const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as StudioDraft;
+      if (!parsed) return;
+
+      setCanvasFormat(parsed.canvasFormat ?? "portrait");
+      setBefore(parsed.before ?? EMPTY_MEDIA);
+      setAfter(parsed.after ?? EMPTY_MEDIA);
+      setTitle((parsed.title ?? "").slice(0, MAX_TITLE_LENGTH));
+      setHashtags((parsed.hashtags ?? "").slice(0, MAX_HASHTAGS_LENGTH));
+      setMode(parsed.mode ?? "FREE");
+      setPpvPrice(
+        typeof parsed.ppvPrice === "number" ? parsed.ppvPrice : 0.99
+      );
+    } catch (error) {
+      console.error("Failed to load Magic Studio draft", error);
     }
-
-    // 2) On charge le draft v2 normalement
-    const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
-    if (!raw) return;
-
-    const parsed = JSON.parse(raw) as StudioDraft;
-    if (!parsed) return;
-
-    setCanvasFormat(parsed.canvasFormat ?? "portrait");
-    setBefore(parsed.before ?? EMPTY_MEDIA);
-    setAfter(parsed.after ?? EMPTY_MEDIA);
-    setTitle((parsed.title ?? "").slice(0, MAX_TITLE_LENGTH));
-    setHashtags((parsed.hashtags ?? "").slice(0, MAX_HASHTAGS_LENGTH));
-    setMode(parsed.mode ?? "FREE");
-    setPpvPrice(
-      typeof parsed.ppvPrice === "number" ? parsed.ppvPrice : 0.99
-    );
-  } catch (error) {
-    console.error("Failed to load Magic Studio draft", error);
-  }
-}, []);
+  }, []);
 
   // 💾 Sauvegarder le brouillon Magic Studio à chaque modification
   useEffect(() => {
@@ -154,53 +144,55 @@ useEffect(() => {
     }
   }
 
-function handleFileChange(
-  event: React.ChangeEvent<HTMLInputElement>,
-  side: Side
-) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  // ✅ MODIFIÉ — compression WebP/thumbnail + upload R2 via processAndUpload
+  async function handleFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+    side: Side
+  ) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  const kind: MediaKind = file.type.startsWith("video") ? "video" : "image";
+    // 1) Preview locale immédiate — zéro latence pour l'UX
+    const localUrl = URL.createObjectURL(file);
+    updateMedia(side, (prev) => ({
+      ...prev,
+      url: localUrl,
+      kind: file.type.startsWith("video") ? "video" : "image",
+    }));
 
-  // 1) Preview locale immédiate (rapide pour l'utilisateur)
-  const localPreviewUrl = URL.createObjectURL(file);
-
-  const baseState: MediaState = {
-    kind,
-    url: localPreviewUrl, // on met l'URL locale pour la preview
-    duration: null,
-    coverTime: null,
-    thumbnailUrl: kind === "image" ? localPreviewUrl : null,
-  };
-
-  if (side === "before") {
-    setBefore(baseState);
-  } else {
-    setAfter(baseState);
-  }
-
-  // 2) Upload vers Supabase en arrière-plan
-  (async () => {
+    // 2) Compression + upload R2 en arrière-plan
     try {
-     const publicUrl = await uploadStudioMedia(file, side);
+      const result = await processAndUpload(
+        file,
+        "studio",
+        undefined,
+        (phase) => {
+          console.log("[Studio] Upload phase:", phase);
+        }
+      );
 
-      // Quand l'upload est fini, on remplace l'URL par l'URL publique
-      updateMedia(side, (prev) => ({
-        ...prev,
-        url: publicUrl,
-        thumbnailUrl:
-          kind === "image" ? publicUrl : prev.thumbnailUrl ?? null,
-      }));
-    } catch (error) {
-      console.error("[MagicClock] Failed to upload Studio media", error);
-      // En cas d'erreur on garde au moins la preview locale
+      if (result.kind === "image") {
+        updateMedia(side, (prev) => ({
+          ...prev,
+          url: result.cdnUrl,
+          thumbnailUrl: result.cdnUrl,
+        }));
+      } else {
+        updateMedia(side, (prev) => ({
+          ...prev,
+          url: result.cdnUrl,
+          thumbnailUrl: result.thumbnailCdnUrl,
+          duration: result.durationSeconds,
+        }));
+      }
+    } catch (err) {
+      console.error("[Studio] Upload R2 failed:", err);
+      // Garde la preview locale en fallback
     }
-  })();
 
-  // permet de re-sélectionner le même fichier si besoin
-  event.target.value = "";
-}
+    // permet de re-sélectionner le même fichier si besoin
+    event.target.value = "";
+  }
 
   function handleLoadedMetadata(
     side: Side,
@@ -293,7 +285,7 @@ function handleFileChange(
       ? "Accessible à tous les utilisateurs."
       : mode === "SUB"
       ? "Réservé à tes abonnés payants."
-      : "Débloqué à l’achat pour chaque spectateur (PayPerView).";
+      : "Débloqué à l'achat pour chaque spectateur (PayPerView).";
 
   // === Couverture vidéo façon TikTok (MVP) ==========================
 
@@ -391,7 +383,7 @@ function handleFileChange(
     Math.min(maxPpvIndex, Math.round((ppvPrice - 0.99) / 0.5))
   );
 
-  // Valide + “snap” la saisie texte vers la grille 0.99 + 0.50 * n
+  // Valide + "snap" la saisie texte vers la grille 0.99 + 0.50 * n
   function commitPpvPriceFromInput(rawInput: string) {
     const normalized = rawInput.replace(",", ".");
     let value = Number(normalized);
