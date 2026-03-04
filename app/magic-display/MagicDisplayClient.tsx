@@ -1009,7 +1009,6 @@ export default function MagicDisplayClient() {
       // 3) Construction du payload "light" pour Supabase
       const titleForWork = effectiveTitle || "Magic Clock";
 
-      // 👉 Résumé du display : texte + nombre de médias, pas les blobs
       const lightDisplay = {
         faces: displayState.faces.map((face) => ({
           title: face.title,
@@ -1032,10 +1031,8 @@ export default function MagicDisplayClient() {
         studio: {
           title: titleForWork,
           mode: effectiveMode,
-          ppvPrice:
-            effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
+          ppvPrice: effectiveMode === "PPV" ? effectivePpvPrice ?? null : null,
           hashtags: effectiveHashtags,
-          // 🔹 On nettoie les URL pour ne pas envoyer data:/blob:
           beforeUrl: sanitizeMediaUrl(studioBeforeUrl),
           afterUrl: sanitizeMediaUrl(studioAfterUrl),
           beforeCoverTime: studioBeforeCover,
@@ -1052,51 +1049,41 @@ export default function MagicDisplayClient() {
         createdAt: new Date().toISOString(),
       };
 
-    // 4) Appel API → table magic_clocks (route déjà connectée à Supabase)
-let slug: string | null = null;
+      // 4) Appel API → table magic_clocks (Supabase)
+      let slug: string | null = null;
 
-try {
-  // 🔹 On fabrique un slug à partir du titre + un suffixe court
-  const baseSlug = (titleForWork || "magic-clock")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // enlever accents
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+      try {
+        const baseSlug = titleForWork
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
 
-  const generatedSlug = `${baseSlug || "magic-clock"}-${workId.slice(0, 8)}`;
+        const generatedSlug = `${baseSlug || "magic-clock"}-${workId.slice(0, 8)}`;
 
-  // 🔹 L’API attend : { title, slug, gatingMode, work }
-  const apiBody = {
-    title: titleForWork,
-    slug: generatedSlug,
-    gatingMode: effectiveMode, // "FREE" | "PPV" | "SUB"
-    work: workPayload,         // tout notre Studio + Display + progress
-  };
+        const res = await fetch("/api/magic-clocks/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: titleForWork,
+            slug: generatedSlug,
+            gatingMode: effectiveMode,
+            work: workPayload,
+          }),
+        });
 
-  const res = await fetch("/api/magic-clocks/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(apiBody),
-  });
-
-  if (res.ok) {
-    const json = (await res.json()) as { id?: string; slug?: string };
-    // si Supabase renvoie un slug, on le prend, sinon on garde le nôtre
-    slug = json?.slug ?? generatedSlug;
-  } else {
-    const text = await res.text();
-    console.error(
-      "[Magic Clock] Failed to save magic_clock",
-      res.status,
-      text,
-    );
-  }
-} catch (error) {
-  console.error("[Magic Clock] Client publish error", error);
-}
+        if (res.ok) {
+          const json = (await res.json()) as { id?: string; slug?: string };
+          slug = json?.slug ?? generatedSlug;
+          console.log("[MagicClock] Publié en Supabase :", json?.id);
+        } else {
+          console.warn("[MagicClock] Supabase warning:", res.status, await res.text());
+        }
+      } catch (publishErr) {
+        // Non bloquant — My Magic Clock fonctionne sans Supabase en MVP
+        console.warn("[MagicClock] Supabase error (non bloquant):", publishErr);
+      }
 
       // 5) Nettoyage des brouillons
       if (typeof window !== "undefined") {
@@ -1105,21 +1092,14 @@ try {
           window.localStorage.removeItem(STORAGE_KEY);
           window.localStorage.removeItem(FACE_PROGRESS_KEY);
         } catch (error) {
-          console.error(
-            "Failed to clear Magic Clock drafts after publish",
-            error,
-          );
+          console.error("Failed to clear Magic Clock drafts after publish", error);
         }
       }
 
-      // 6) Redirection : retour vers My Magic Clock (comme avant)
+      // 6) Redirection → My Magic Clock
       const baseMyMagicUrl = "/mymagic?tab=creations&source=magic-display";
+      router.push(slug ? `${baseMyMagicUrl}&open=${encodeURIComponent(slug)}` : baseMyMagicUrl);
 
-      if (slug) {
-        router.push(`${baseMyMagicUrl}&open=${encodeURIComponent(slug)}`);
-      } else {
-        router.push(baseMyMagicUrl);
-      }
     } finally {
       setIsPublishing(false);
     }
