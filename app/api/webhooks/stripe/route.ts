@@ -1,29 +1,18 @@
 // app/api/webhooks/stripe/route.ts
-//
-// ─────────────────────────────────────────────────────────────
-// Magic Clock — Stripe Webhook
-// Confirmation des paiements → Supabase
-//
-// Flow :
-// 1. Stripe envoie un event signé (STRIPE_WEBHOOK_SECRET)
-// 2. On vérifie la signature HMAC
-// 3. On traite : payment_intent.succeeded → débloquer le contenu
-// 4. On met à jour Supabase : table purchases + creator_balance
-// ─────────────────────────────────────────────────────────────
+// ✅ Après paiement SUB ou PPV → upsert magic_clock_accesses (user_id UUID)
+// ✅ Fonctionne sans STRIPE_SECRET_KEY (mode mock — Stripe branché plus tard)
+// ✅ Séparation créateur/client : le créateur ne peut pas acheter son propre contenu
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/core/supabase/admin";
 
 // ─────────────────────────────────────────────────────────────
-// Types Stripe (minimal — évite d'installer stripe npm)
+// Types Stripe minimaux
 // ─────────────────────────────────────────────────────────────
-
 interface StripeEvent {
   id: string;
   type: string;
-  data: {
-    object: StripePaymentIntent;
-  };
+  data: { object: StripePaymentIntent };
 }
 
 interface StripePaymentIntent {
@@ -34,10 +23,10 @@ interface StripePaymentIntent {
   application_fee_amount: number;
   transfer_data?: { destination: string };
   metadata: {
-    contentId?: string;
-    contentType?: string;
-    buyerId?: string;
-    creatorId?: string;
+    contentId?: string;       // UUID du magic_clock
+    contentType?: string;     // "ppv" | "subscription"
+    buyerId?: string;         // ✅ UUID auth.users (plus "guest-buyer")
+    creatorId?: string;       // handle du créateur (pour logs)
     priceTier?: string;
     vatRate?: string;
     buyerCountryCode?: string;
@@ -49,73 +38,53 @@ interface StripePaymentIntent {
 // ─────────────────────────────────────────────────────────────
 // Vérification signature Stripe (HMAC-SHA256)
 // ─────────────────────────────────────────────────────────────
-
 async function verifyStripeSignature(
   payload: string,
   sigHeader: string,
   secret: string,
 ): Promise<boolean> {
   try {
-    // Stripe signature format: t=timestamp,v1=hash
     const parts = sigHeader.split(",");
     const timestamp = parts.find((p) => p.startsWith("t="))?.slice(2);
     const signature = parts.find((p) => p.startsWith("v1="))?.slice(3);
-
     if (!timestamp || !signature) return false;
 
-    // Replay attack prevention — max 5 minutes
+    // Anti-replay : max 5 minutes
     const now = Math.floor(Date.now() / 1000);
     if (Math.abs(now - parseInt(timestamp)) > 300) {
       console.warn("[Stripe Webhook] Timestamp trop ancien — possible replay attack");
       return false;
     }
 
-    const signedPayload = `${timestamp}.${payload}`;
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
+      "raw", encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
     );
-    const signatureBuffer = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      encoder.encode(signedPayload),
-    );
-    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    return expectedSignature === signature;
-  } catch {
-    return false;
-  }
+    const buf = await crypto.subtle.sign("HMAC", key, encoder.encode(`${timestamp}.${payload}`));
+    const expected = Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+    return expected === signature;
+  } catch { return false; }
 }
 
 // ─────────────────────────────────────────────────────────────
 // Handler principal
 // ─────────────────────────────────────────────────────────────
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const payload = await request.text();
   const sigHeader = request.headers.get("stripe-signature") ?? "";
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  // ── Vérification signature (si secret configuré) ──
+  // Vérification signature (ignorée en dev sans secret)
   if (webhookSecret) {
     const isValid = await verifyStripeSignature(payload, sigHeader, webhookSecret);
     if (!isValid) {
       console.error("[Stripe Webhook] Signature invalide");
-      return NextResponse.json(
-        { error: "Signature invalide" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Signature invalide" }, { status: 400 });
     }
   } else {
-    // Mode développement sans secret configuré
-    console.warn("[Stripe Webhook] STRIPE_WEBHOOK_SECRET non défini — vérification ignorée (dev uniquement)");
+    console.warn("[Stripe Webhook] STRIPE_WEBHOOK_SECRET absent — dev mode");
   }
 
   let event: StripeEvent;
@@ -125,151 +94,174 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Payload JSON invalide" }, { status: 400 });
   }
 
-  console.log(`[Stripe Webhook] Event reçu : ${event.type} (${event.id})`);
+  console.log(`[Stripe Webhook] ${event.type} (${event.id})`);
 
-  // ── Traitement des events ──
   try {
     switch (event.type) {
-
-      // ✅ Paiement confirmé → débloquer le contenu
       case "payment_intent.succeeded":
         await handlePaymentSucceeded(event.data.object);
         break;
-
-      // ❌ Paiement échoué → log
       case "payment_intent.payment_failed":
         await handlePaymentFailed(event.data.object);
         break;
-
-      // 💸 Remboursement → retirer l'accès
       case "charge.refunded":
-        console.log(`[Stripe Webhook] Remboursement — à implémenter`);
+        await handleRefund(event.data.object);
         break;
-
-      // 🏦 Paiement créatrice reçu
-      case "transfer.created":
-        console.log(`[Stripe Webhook] Transfert créatrice créé`);
-        break;
-
       default:
         console.log(`[Stripe Webhook] Event ignoré : ${event.type}`);
     }
   } catch (err) {
     console.error(`[Stripe Webhook] Erreur traitement ${event.type}:`, err);
-    // On retourne 200 quand même pour éviter que Stripe renvoie indéfiniment
-    return NextResponse.json({ received: true, warning: "Erreur traitement interne" });
+    // Retourne 200 pour éviter que Stripe re-envoie en boucle
+    return NextResponse.json({ received: true, warning: "Erreur interne" });
   }
 
   return NextResponse.json({ received: true });
 }
 
 // ─────────────────────────────────────────────────────────────
-// Handlers métier
+// Paiement réussi → débloquer le contenu dans Bibliothèque
 // ─────────────────────────────────────────────────────────────
-
 async function handlePaymentSucceeded(pi: StripePaymentIntent): Promise<void> {
   const {
-    contentId,
-    contentType,
-    buyerId,
-    creatorId,
-    priceTier,
+    contentId,       // UUID du magic_clock
+    contentType,     // "ppv" | "subscription"
+    buyerId,         // UUID auth.users — envoyé par checkout/route.ts
+    creatorId,       // handle créateur (pour logs)
     creatorAmountValue,
     platformFeeValue,
+    priceTier,
+    vatRate,
+    buyerCountryCode,
   } = pi.metadata;
 
-  console.log(`[Stripe] Paiement réussi — content:${contentId} buyer:${buyerId}`);
+  console.log(`[Stripe] Paiement réussi — clock:${contentId} buyer:${buyerId} type:${contentType}`);
 
-  // ── Supabase (si configuré) ──
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn("[Stripe Webhook] Supabase non configuré — paiement logué uniquement");
+  if (!contentId || !buyerId) {
+    console.error("[Stripe] metadata incomplète — contentId ou buyerId manquant");
     return;
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  // ✅ 1) Vérifier que le Magic Clock existe et est publié
+  const { data: clock, error: clockError } = await supabaseAdmin
+    .from("magic_clocks")
+    .select("id, user_id, gating_mode, is_published")
+    .eq("id", contentId)
+    .maybeSingle();
 
-  // 1. Enregistrer l'achat dans la table purchases
-  const { error: purchaseError } = await supabase
-    .from("purchases")
-    .upsert({
+  if (clockError || !clock) {
+    console.error("[Stripe] Magic Clock introuvable:", contentId);
+    return;
+  }
+
+  if (!clock.is_published) {
+    console.warn("[Stripe] Magic Clock non publié — accès refusé:", contentId);
+    return;
+  }
+
+  // ✅ 2) Protection créateur/client
+  if (clock.user_id && clock.user_id === buyerId) {
+    console.warn("[Stripe] Créateur essaie d'acheter son propre contenu — ignoré");
+    return;
+  }
+
+  // ✅ 3) Déterminer le type d'accès
+  const accessType = contentType === "subscription" ? "SUB" : "PPV";
+
+  // ✅ 4) Upsert dans magic_clock_accesses — par UUID, jamais email
+  const { error: accessError } = await supabaseAdmin
+    .from("magic_clock_accesses")
+    .upsert(
+      {
+        user_id: buyerId,          // UUID auth.users
+        magic_clock_id: contentId, // UUID magic_clock
+        access_type: accessType,   // "SUB" | "PPV"
+      },
+      {
+        onConflict: "user_id,magic_clock_id,access_type",
+        ignoreDuplicates: true,
+      },
+    );
+
+  if (accessError) {
+    console.error("[Stripe] Erreur upsert magic_clock_accesses:", accessError);
+    throw accessError;
+  }
+
+  // ✅ 5) Log financier (best-effort — non bloquant)
+  await supabaseAdmin
+    .from("payment_logs")
+    .insert({
       stripe_payment_intent_id: pi.id,
-      content_id: contentId,
-      content_type: contentType ?? "ppv",
+      magic_clock_id: contentId,
       buyer_id: buyerId,
-      creator_id: creatorId,
+      creator_handle: creatorId ?? null,
+      access_type: accessType,
       amount_total: pi.amount,
       amount_creator: Number(creatorAmountValue ?? 0),
       amount_platform: Number(platformFeeValue ?? 0),
       currency: pi.currency,
       price_tier: priceTier ?? "STANDARD",
+      vat_rate: vatRate ? Number(vatRate) : null,
+      buyer_country_code: buyerCountryCode ?? null,
       status: "succeeded",
       paid_at: new Date().toISOString(),
+    })
+    .then(({ error }) => {
+      if (error) {
+        // Non bloquant — payment_logs peut ne pas encore exister
+        console.warn("[Stripe] Log financier ignoré:", error.message);
+      }
     });
 
-  if (purchaseError) {
-    console.error("[Stripe Webhook] Erreur upsert purchase:", purchaseError);
-    throw purchaseError;
-  }
-
-  // 2. Mettre à jour le solde créatrice (table creator_balances)
-  const { error: balanceError } = await supabase.rpc(
-    "increment_creator_balance",
-    {
-      p_creator_id: creatorId,
-      p_amount: Number(creatorAmountValue ?? 0),
-      p_currency: pi.currency,
-    },
-  );
-
-  if (balanceError) {
-    // Non bloquant — le solde peut être recalculé depuis purchases
-    console.warn("[Stripe Webhook] Erreur balance créatrice:", balanceError);
-  }
-
-  console.log(
-    `[Stripe] Achat enregistré — contentId:${contentId} ` +
-    `creator:+${creatorAmountValue} platform:+${platformFeeValue}`,
-  );
+  console.log(`[Stripe] ✅ Accès ${accessType} enregistré — clock:${contentId} buyer:${buyerId}`);
 }
 
+// ─────────────────────────────────────────────────────────────
+// Paiement échoué → log uniquement
+// ─────────────────────────────────────────────────────────────
 async function handlePaymentFailed(pi: StripePaymentIntent): Promise<void> {
   const { contentId, buyerId } = pi.metadata;
-  console.log(
-    `[Stripe] Paiement échoué — content:${contentId} buyer:${buyerId} status:${pi.status}`,
-  );
-
-  // Optionnel : enregistrer l'échec pour analytics
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) return;
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  await supabase.from("payment_failures").insert({
+  console.log(`[Stripe] Paiement échoué — clock:${contentId} buyer:${buyerId}`);
+  // Log non bloquant
+  await supabaseAdmin.from("payment_logs").insert({
     stripe_payment_intent_id: pi.id,
-    content_id: contentId,
-    buyer_id: buyerId,
-    status: pi.status,
-    failed_at: new Date().toISOString(),
-  });
+    magic_clock_id: contentId ?? null,
+    buyer_id: buyerId ?? null,
+    status: "failed",
+    paid_at: new Date().toISOString(),
+  }).then(() => {});
 }
 
 // ─────────────────────────────────────────────────────────────
-// Variables d'environnement Vercel
+// Remboursement → retirer l'accès
 // ─────────────────────────────────────────────────────────────
+async function handleRefund(pi: any): Promise<void> {
+  const { contentId, buyerId } = pi.metadata ?? {};
+  if (!contentId || !buyerId) return;
+
+  console.log(`[Stripe] Remboursement — suppression accès clock:${contentId} buyer:${buyerId}`);
+
+  await supabaseAdmin
+    .from("magic_clock_accesses")
+    .delete()
+    .eq("user_id", buyerId)
+    .eq("magic_clock_id", contentId);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Variables d'environnement à configurer sur Vercel :
 //
-// STRIPE_WEBHOOK_SECRET          → whsec_xxx (Stripe Dashboard → Webhooks)
-// NEXT_PUBLIC_SUPABASE_URL       → déjà configuré
-// SUPABASE_SERVICE_ROLE_KEY      → clé service Supabase (pas la anon key !)
+// STRIPE_WEBHOOK_SECRET   → whsec_xxx  (Stripe Dashboard → Webhooks)
+// STRIPE_SECRET_KEY       → sk_live_xxx (pas encore — mode mock actif)
+// NEXT_PUBLIC_SUPABASE_URL → déjà configuré
+// SUPABASE_SERVICE_ROLE_KEY → déjà configuré
 //
-// Events Stripe à activer dans le Dashboard :
-//   → payment_intent.succeeded
-//   → payment_intent.payment_failed
-//   → charge.refunded
-//   → transfer.created
+// URL webhook à enregistrer dans Stripe (quand compte créé) :
+// → https://www.magic-clock.com/api/webhooks/stripe
 //
-// URL webhook à enregistrer dans Stripe :
-//   → https://www.magic-clock.com/api/webhooks/stripe
+// Events à activer :
+// → payment_intent.succeeded
+// → payment_intent.payment_failed
+// → charge.refunded
+// ─────────────────────────────────────────────────────────────
