@@ -224,7 +224,7 @@ export default function MagicStudioPage() {
         type: media.kind === "video" ? "video" : "photo",
         // ⚡️ url = CDN permanent (sera sauvegardé en base via STUDIO_FORWARD_KEY)
         url: permanentUrl ?? previewUrl ?? "",
-        cdnUrl: permanentUrl,                          // champ explicite pour handleFinalPublish
+        // cdnUrl est déjà dans url (permanentUrl) — pas dans le type StudioForwardMedia
         coverTime: media.coverTime ?? null,
         thumbnailUrl: media.thumbnailCdnUrl ?? media.thumbnailUrl ?? null,
       };
