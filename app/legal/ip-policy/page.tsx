@@ -1,10 +1,10 @@
 // app/legal/ip-policy/page.tsx
-// ✅ v2.1 — 6 mars 2026 · support@magic-clock.com · BackButton géré par layout
+// ✅ v2.2 — 6 mars 2026 · support@magic-clock.com · BackButton géré par layout
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Propriété intellectuelle & procédure de retrait – Magic Clock",
+  title: "Propriété intellectuelle & procédure de retrait – Magic Clock®",
 };
 
 export default function IpPolicyPage() {
@@ -16,8 +16,8 @@ export default function IpPolicyPage() {
             Propriété intellectuelle &amp; procédure de retrait
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Règles relatives aux contenus publiés sur Magic Clock, aux droits de
-            propriété intellectuelle et à la procédure applicable en cas
+            Règles relatives aux contenus publiés sur Magic Clock®, aux droits
+            de propriété intellectuelle et à la procédure applicable en cas
             d’atteinte présumée.
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -32,7 +32,7 @@ export default function IpPolicyPage() {
             1. Titularité des droits sur les contenus utilisateurs
           </h2>
           <p className="mt-2">
-            Les contenus que vous créez et publiez sur Magic Clock restent, en
+            Les contenus que vous créez et publiez sur Magic Clock® restent, en
             principe, votre propriété ou celle du titulaire de droits que vous
             représentez, sous réserve des droits concédés à Magic Clock dans les{" "}
             <Link
@@ -76,9 +76,15 @@ export default function IpPolicyPage() {
               applicables.
             </li>
           </ul>
+          <p className="mt-2">
+            <strong>Magic Clock®</strong>, le <strong>logo Magic Clock</strong>{" "}
+            et le <strong>personnage figuratif Bear “Magic”</strong> constituent
+            des signes distinctifs protégés et enregistrés.
+          </p>
           <p className="mt-2 text-xs text-slate-500">
             Cette licence n’emporte pas transfert de propriété de vos droits de
-            propriété intellectuelle.
+            propriété intellectuelle ni des droits attachés aux signes
+            distinctifs de Magic Clock.
           </p>
         </section>
 
