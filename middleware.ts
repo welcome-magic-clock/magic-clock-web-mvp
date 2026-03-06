@@ -1,9 +1,8 @@
 // middleware.ts — Protection des routes authentifiées
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+// ✅ Compatible @supabase/ssr + Next.js 16
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-// Routes qui nécessitent une session active
 const PROTECTED_ROUTES = [
   "/mymagic",
   "/studio",
@@ -13,8 +12,30 @@ const PROTECTED_ROUTES = [
 ];
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+  let res = NextResponse.next({
+    request: { headers: req.headers },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            req.cookies.set(name, value)
+          );
+          res = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -23,7 +44,6 @@ export async function middleware(req: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
-  // Visiteur sans session → redirect vers Amazing avec paramètre login
   if (isProtected && !session) {
     const loginUrl = new URL("/", req.url);
     loginUrl.searchParams.set("login", "1");
