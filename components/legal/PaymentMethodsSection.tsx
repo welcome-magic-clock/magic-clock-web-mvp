@@ -3,34 +3,35 @@ export function PaymentMethodsSection() {
   return (
     <section>
       <h2 className="text-base font-semibold text-slate-900">
-        8 bis. Moyens de paiement actuellement disponibles (version bêta)
+        8 bis. Moyens de paiement disponibles
       </h2>
 
       <p className="mt-2">
-        Les paiements Magic Clock sont traités via{" "}
-        <strong>PostFinance Checkout</strong> (offre groupée eCom). Les moyens
-        de paiement suivants peuvent être proposés, selon votre pays et votre
-        banque&nbsp;:
+        Les paiements Magic Clock sont traités via <strong>Stripe</strong>.
+        Les moyens de paiement proposés peuvent varier selon le pays de
+        l&apos;Utilisateur, la devise, l&apos;appareil utilisé et la
+        configuration active de la plateforme.
       </p>
 
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>
-          <strong>Cartes bancaires</strong> : Visa, Mastercard
+          <strong>Cartes bancaires</strong> : Visa, Mastercard et autres cartes
+          compatibles selon disponibilité
         </li>
         <li>
-          <strong>Paiements suisses</strong> : PostFinance Pay, TWINT
+          <strong>Moyens de paiement locaux</strong> : par exemple TWINT, SEPA
+          ou autres solutions compatibles selon le pays
         </li>
         <li>
-          <strong>Wallets</strong> : Apple Pay, Click to Pay{" "}
-          <span className="text-slate-500 text-xs">
-            (si disponibles sur votre appareil)
-          </span>
+          <strong>Wallets</strong> : par exemple Apple Pay ou autres moyens
+          compatibles, lorsqu&apos;ils sont disponibles sur l&apos;appareil et
+          activés sur la plateforme
         </li>
       </ul>
 
       <p className="mt-2 text-xs text-slate-500">
-        Cette liste pourra être complétée progressivement au fur et à mesure du
-        déploiement international de Magic Clock.
+        La liste exacte des moyens de paiement disponibles est affichée au
+        moment du paiement.
       </p>
     </section>
   );
