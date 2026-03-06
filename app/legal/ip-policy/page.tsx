@@ -1,7 +1,7 @@
 // app/legal/ip-policy/page.tsx
+// ✅ v2.0 — Date 6 mars 2026 · support@magic-clock.com · BackButton retiré (géré par layout)
 import type { Metadata } from "next";
 import Link from "next/link";
-import BackButton from "@/components/navigation/BackButton";
 
 export const metadata: Metadata = {
   title: "Propriété intellectuelle & procédure de retrait – Magic Clock",
@@ -11,30 +11,29 @@ export default function IpPolicyPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <header className="mb-8 space-y-3">
-        <BackButton fallbackHref="/legal" label="Retour à la section Légal" />
-
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
             Propriété intellectuelle &amp; procédure de retrait
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Règles relatives aux contenus créés sur Magic Clock, aux droits
-            d’auteur et à la procédure en cas d’atteinte présumée.
+            d'auteur et à la procédure en cas d'atteinte présumée.
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Dernière mise à jour : 6 mars 2026
           </p>
         </div>
       </header>
 
       <div className="space-y-8 text-sm leading-relaxed text-slate-700">
-        {/* 1. Titularité des droits */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             1. Titularité des droits sur les contenus utilisateurs
           </h2>
           <p className="mt-2">
-            Les contenus que vous créez et publiez sur Magic Clock (photos,
-            vidéos, Magic Studio, Magic Display, descriptions, etc.) restent
-            en principe la propriété de leurs auteurs, sous réserve des droits
-            concédés à Magic Clock dans les{" "}
+            Les contenus que vous créez et publiez sur Magic Clock restent en
+            principe votre propriété, sous réserve des droits concédés à Magic
+            Clock dans les{" "}
             <Link
               href="/legal/cgu"
               className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -43,142 +42,100 @@ export default function IpPolicyPage() {
             </Link>
             .
           </p>
-          <p className="mt-2">
-            En publiant un contenu sur la Plateforme, vous déclarez disposer de
-            tous les droits nécessaires (droits d’auteur, droits de la
-            personnalité, droits sur les marques, etc.) et vous garantissez que
-            ce contenu ne viole pas les droits de tiers.
-          </p>
         </section>
 
-        {/* 2. Licence accordée à Magic Clock */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             2. Licence accordée à Magic Clock
           </h2>
           <p className="mt-2">
-            En téléversant ou en publiant un contenu sur Magic Clock, vous
-            accordez à Magic Clock une licence mondiale, non exclusive,
-            transférable, sous-licenciable, gratuite, pour la durée légale de
-            protection des droits, afin de&nbsp;:
+            En publiant un contenu, vous accordez à Magic Clock une licence
+            mondiale, non exclusive, transférable et gratuite pour&nbsp;:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>héberger, reproduire et représenter vos contenus ;</li>
             <li>
-              les diffuser sur la Plateforme et dans l’app, y compris via les
-              flux publics (Amazing) et vos pages créateur ;
+              les diffuser sur la Plateforme, y compris via les flux publics ;
             </li>
             <li>
-              les adapter techniquement (compression, encodage, recadrage,
-              vignettes, extraits) pour des raisons de compatibilité et de
-              performance ;
+              les adapter techniquement (compression, encodage, vignettes) pour
+              des raisons de compatibilité ;
             </li>
             <li>
-              les utiliser pour la promotion raisonnable de la Plateforme
-              (exemples visuels, extraits anonymisés), sauf retrait ou
-              paramétrage spécifique lorsqu’il sera proposé.
+              les utiliser pour la promotion raisonnable de la Plateforme, sauf
+              retrait spécifique.
             </li>
           </ul>
           <p className="mt-2 text-xs text-slate-500">
-            Cette licence n’affecte pas vos droits en tant que créateur&nbsp;:
-            vous restez libre d’exploiter vos contenus sur d’autres plateformes
-            ou supports.
+            Cette licence n'affecte pas vos droits en tant que créateur.
           </p>
         </section>
 
-        {/* 3. Contenus interdits */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             3. Contenus interdits au regard de la propriété intellectuelle
           </h2>
-          <p className="mt-2">
-            Il est interdit de publier sur Magic Clock des contenus qui&nbsp;:
-          </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              reproduisent ou utilisent sans autorisation des œuvres protégées
-              (photos, vidéos, musiques, tutoriels, textes, logiciels, etc.) ;
+              reproduire ou utiliser sans autorisation des œuvres protégées
+              (photos, vidéos, musiques, textes, logiciels, etc.) ;
             </li>
             <li>
-              reprennent des marques, logos, chartes graphiques ou designs
-              protégés sans autorisation suffisante ;
+              reprendre des marques, logos ou designs protégés sans
+              autorisation ;
             </li>
             <li>
-              intègrent l’image de personnes qui n’ont pas consenti à cette
-              utilisation, lorsque le consentement est requis ;
+              intégrer l'image de personnes sans leur consentement lorsqu'il
+              est requis ;
             </li>
-            <li>
-              usurpent l’identité d’un tiers ou donnent une fausse impression de
-              partenariat officiel.
-            </li>
+            <li>usurper l'identité d'un tiers.</li>
           </ul>
         </section>
 
-        {/* 4. Procédure de notification & retrait */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             4. Procédure de notification &amp; de retrait (takedown)
           </h2>
           <p className="mt-2">
-            Si vous estimez qu’un contenu disponible sur Magic Clock porte
-            atteinte à vos droits de propriété intellectuelle ou à vos droits de
-            personnalité, vous pouvez nous adresser une notification écrite
-            contenant au minimum&nbsp;:
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>vos nom, prénom (ou raison sociale) et coordonnées ;</li>
-            <li>
-              l’URL ou tout identifiant permettant de localiser précisément le
-              contenu litigieux ;
-            </li>
-            <li>
-              une description des droits que vous invoquez (par exemple droits
-              d’auteur, marque, image) et, si possible, la preuve de votre
-              qualité de titulaire ou d’ayant droit ;
-            </li>
-            <li>
-              une déclaration sur l’honneur indiquant que les informations
-              fournies sont exactes et que vous êtes autorisé à agir ;
-            </li>
-            <li>votre signature (manuscrite ou électronique).</li>
-          </ul>
-          <p className="mt-2">
-            La notification peut être envoyée à l’adresse suivante&nbsp;:
+            Si vous estimez qu'un contenu porte atteinte à vos droits, envoyez
+            une notification à&nbsp;:
           </p>
           <p className="mt-2">
             E-mail&nbsp;:{" "}
             <a
-              href="mailto:[email-ip-à-compléter]"
+              href="mailto:support@magic-clock.com"
               className="font-medium text-indigo-600 hover:text-indigo-700"
             >
-              [email-ip-à-compléter]
+              support@magic-clock.com
             </a>
           </p>
-          <p className="mt-2">
-            Après réception, nous pourrons{" "}
-            <strong>retirer temporairement le contenu</strong>, demander des
-            informations complémentaires au créateur concerné et, le cas
-            échéant, supprimer définitivement le contenu ou prendre des mesures
-            supplémentaires prévues par les{" "}
-            <Link
-              href="/legal/cgu"
-              className="font-medium text-indigo-600 hover:text-indigo-700"
-            >
-              CGU
-            </Link>
-            .
-          </p>
+          <p className="mt-2">Votre notification doit contenir :</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>vos nom, prénom (ou raison sociale) et coordonnées ;</li>
+            <li>
+              l'URL ou tout identifiant permettant de localiser le contenu
+              litigieux ;
+            </li>
+            <li>
+              une description des droits invoqués et la preuve de votre qualité
+              de titulaire ou d'ayant droit ;
+            </li>
+            <li>
+              une déclaration sur l'honneur attestant l'exactitude des
+              informations ;
+            </li>
+            <li>votre signature (manuscrite ou électronique).</li>
+          </ul>
         </section>
 
-        {/* 5. Sanctions */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             5. Sanctions en cas de violation répétée
           </h2>
           <p className="mt-2">
-            Les utilisateurs qui publient de manière répétée des contenus
-            violant les droits de propriété intellectuelle de tiers pourront
-            voir leur compte restreint, suspendu ou fermé, conformément aux{" "}
+            Les utilisateurs publiant de manière répétée des contenus violant
+            des droits de propriété intellectuelle pourront voir leur compte
+            restreint, suspendu ou fermé, conformément aux{" "}
             <Link
               href="/legal/cgu"
               className="font-medium text-indigo-600 hover:text-indigo-700"
