@@ -1,6 +1,6 @@
 // app/legal/security/page.tsx
-// ✅ v2.0 — Date 6 mars 2026 · support@magic-clock.com
-// BackButton retiré → géré par app/legal/layout.tsx
+// ✅ v2.1 — 6 mars 2026 · support@magic-clock.com
+// BackButton géré par app/legal/layout.tsx
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,7 +17,8 @@ export default function SecurityPage() {
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Résumé des mesures de sécurité mises en œuvre pour protéger les
-            données et de la procédure en cas d&apos;incident.
+            données et des principes appliqués en cas d&apos;incident de
+            sécurité.
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Dernière mise à jour : 6 mars 2026
@@ -26,94 +27,109 @@ export default function SecurityPage() {
       </header>
 
       <div className="space-y-8 text-sm leading-relaxed text-slate-700">
-        {/* 1. Principes */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             1. Principes généraux
           </h2>
           <p className="mt-2">
-            Nous mettons en œuvre des mesures techniques et organisationnelles
-            raisonnables pour protéger les données personnelles et les contenus
-            hébergés sur Magic Clock contre la perte, l'accès non autorisé ou
-            la divulgation.
+            Magic Clock met en œuvre des mesures techniques et
+            organisationnelles raisonnables afin de protéger les données
+            personnelles, les comptes utilisateurs et les contenus hébergés sur
+            la plateforme contre la perte, l&apos;altération, l&apos;accès non
+            autorisé, la divulgation ou l&apos;usage abusif.
+          </p>
+          <p className="mt-2">
+            Ces mesures sont définies en tenant compte de la nature des
+            données traitées, des risques identifiés, de l&apos;état de la
+            technique et des contraintes opérationnelles applicables à la
+            plateforme.
           </p>
         </section>
 
-        {/* 2. Mesures techniques */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            2. Mesures techniques (résumé)
+            2. Mesures techniques et organisationnelles (résumé)
           </h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>chiffrement des communications via HTTPS (TLS) ;</li>
+            <li>chiffrement des communications via HTTPS/TLS ;</li>
             <li>
-              utilisation de prestataires d'hébergement reconnus (Vercel,
-              Supabase, Cloudflare) avec contrôles d'accès et journaux
-              d'activité ;
+              recours à des prestataires d&apos;hébergement, d&apos;infrastructure
+              et de sécurité reconnus, notamment pour l&apos;hébergement,
+              l&apos;authentification, la diffusion de contenu et la protection
+              réseau ;
             </li>
             <li>
-              séparation des environnements (développement / préproduction /
-              production) ;
+              gestion des accès internes selon le principe du moindre privilège ;
             </li>
             <li>
-              mise à jour régulière des dépendances logicielles et correctifs
-              de sécurité ;
+              séparation logique ou organisationnelle des environnements selon
+              les besoins de développement, de test et de production ;
             </li>
             <li>
-              limitation des accès internes selon le principe du moindre
-              privilège.
+              surveillance technique, journalisation et mesures de détection ou
+              d&apos;investigation adaptées ;
+            </li>
+            <li>
+              mise à jour régulière des composants logiciels, correctifs de
+              sécurité et actions de maintenance raisonnables ;
+            </li>
+            <li>
+              mesures destinées à limiter les usages abusifs, les accès non
+              autorisés et certaines formes de fraude ou de compromission.
             </li>
           </ul>
-          <p className="mt-2 text-xs text-slate-500">
-            Des détails supplémentaires sont documentés dans notre plan de
-            sécurité interne, amené à évoluer avec la plateforme.
-          </p>
         </section>
 
-        {/* 3. Gestion des incidents */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             3. Gestion des incidents de sécurité
           </h2>
           <p className="mt-2">
-            En cas de suspicion d'incident de sécurité (fuite de données,
-            accès non autorisé, compromission de compte), nous appliquons
-            notamment&nbsp;:
+            En cas de suspicion ou de constat d&apos;incident de sécurité
+            (par exemple accès non autorisé, compromission de compte, fuite de
+            données, vulnérabilité exploitée ou indisponibilité anormale), Magic
+            Clock peut notamment mettre en œuvre les actions suivantes :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>détection et qualification de l'incident ;</li>
-            <li>mesures de confinement et de correction ;</li>
+            <li>détection, qualification et analyse initiale de l&apos;incident ;</li>
+            <li>mesures de confinement, de limitation et de remédiation ;</li>
             <li>
-              journalisation des faits essentiels (date, cause probable,
-              systèmes impactés) ;
+              conservation des éléments techniques utiles à l&apos;analyse dans
+              la mesure nécessaire ;
             </li>
             <li>
-              évaluation des risques et, le cas échéant, notification des
-              personnes concernées et/ou des autorités compétentes conformément
-              au droit applicable.
+              évaluation des risques pour les utilisateurs, la plateforme et les
+              tiers concernés ;
+            </li>
+            <li>
+              notification des personnes concernées et/ou des autorités
+              compétentes lorsque cela est requis par le droit applicable.
             </li>
           </ul>
         </section>
 
-        {/* 4. Que faire ? */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             4. Que faire si vous suspectez un incident ?
           </h2>
           <p className="mt-2">
-            Si vous pensez que votre compte a été compromis ou que des données
-            liées à Magic Clock sont exposées&nbsp;:
+            Si vous pensez que votre compte a été compromis, qu&apos;un accès
+            non autorisé a eu lieu ou que des données liées à Magic Clock
+            pourraient être exposées, nous vous recommandons notamment de :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>changez immédiatement votre mot de passe ;</li>
+            <li>changer immédiatement votre mot de passe ;</li>
             <li>
-              utilisez si possible un mode de connexion plus sécurisé (lien
-              magique) ;
+              sécuriser l&apos;accès à votre adresse e-mail et à vos appareils ;
             </li>
-            <li>signalez-nous l'incident sans délai.</li>
+            <li>
+              utiliser, lorsqu&apos;il est disponible, un mode de connexion ou
+              de récupération plus sécurisé ;
+            </li>
+            <li>nous signaler l&apos;incident sans délai.</li>
           </ul>
           <p className="mt-2">
-            E-mail&nbsp;:{" "}
+            Contact sécurité :{" "}
             <a
               href="mailto:support@magic-clock.com"
               className="font-medium text-indigo-600 hover:text-indigo-700"
