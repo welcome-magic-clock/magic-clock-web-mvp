@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+body { @apply bg-slate-50 text-slate-900; }
+.container { @apply max-w-6xl mx-auto px-4; }
+.card { @apply rounded-2xl bg-white shadow-soft border; }
+.badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border; }
+.link { @apply text-brand-600 hover:underline; }
+
+/* ============================================================
+   MAGIC CLOCK — Design System v2
+   À AJOUTER dans app/globals.css, dans le bloc :root existant
+   ============================================================ */
+
+:root {
+  /* ── Gradient Magic Clock (couleurs du logo déposé) ── */
+  --mc-1: #4B7BF5;   /* bleu */
+  --mc-2: #7B4BF5;   /* violet */
+  --mc-3: #C44BDA;   /* magenta */
+  --mc-4: #F54B8F;   /* rose */
+  --mc-5: #F5834B;   /* orange */
+
+  /* Gradient linéaire principal */
+  --mc-gradient: linear-gradient(135deg,
+    #4B7BF5 0%,
+    #7B4BF5 30%,
+    #C44BDA 55%,
+    #F54B8F 80%,
+    #F5834B 100%
+  );
+
+  /* Pour Tailwind (used via style={{ background: 'var(--mc-gradient)' }}) */
+  --mc-gradient-btn: linear-gradient(135deg, #4B7BF5 0%, #7B4BF5 40%, #F54B8F 100%);
+
+  /* Shadow colorée pour les boutons gradient */
+  --mc-shadow: 0 4px 16px rgba(123, 75, 245, 0.35);
+  --mc-shadow-lg: 0 6px 24px rgba(123, 75, 245, 0.4);
+
+  /* Cover background très subtil */
+  --mc-cover-bg: linear-gradient(160deg,
+    rgba(75, 123, 245, 0.07) 0%,
+    rgba(196, 75, 218, 0.05) 50%,
+    rgba(245, 131, 75, 0.04) 100%
+  );
+}
+
+/* ── Classe utilitaire gradient texte ── */
+.mc-text-gradient {
+  background: var(--mc-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Classe utilitaire gradient fond ── */
+.mc-bg-gradient {
+  background: var(--mc-gradient);
+}
+
+/* ── Anneau avatar animé ── */
+.mc-avatar-ring {
+  position: relative;
+}
+.mc-avatar-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 180deg,
+    #4B7BF5 0%,
+    #7B4BF5 25%,
+    #C44BDA 50%,
+    #F54B8F 75%,
+    #F5834B 88%,
+    #4B7BF5 100%
+  );
+  animation: mc-ring-spin 8s linear infinite;
+  z-index: 0;
+}
+.mc-avatar-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0px;
+  border-radius: 9999px;
+  background: white;
+  z-index: 1;
+}
+.mc-avatar-ring > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes mc-ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Bouton gradient principal ── */
+.mc-btn-primary {
+  background: var(--mc-gradient-btn);
+  box-shadow: var(--mc-shadow);
+  color: white;
+  font-weight: 700;
+  border: none;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.mc-btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: var(--mc-shadow-lg);
+}
+.mc-btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* ── Progress bar gradient ── */
+.mc-progress-bar {
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.mc-progress-fill {
+  height: 100%;
+  background: var(--mc-gradient-btn);
+  border-radius: 2px;
+}
+
+/* ── Dot gradient (titres de section) ── */
+.mc-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--mc-gradient);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ── Tab active indicator ── */
+.mc-tab-active-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--mc-gradient-btn);
+  border-radius: 2px 2px 0 0;
+}
