@@ -1,15 +1,18 @@
 // middleware.ts — Protection des routes authentifiées
-// ✅ Compatible @supabase/ssr + Next.js 16
+// ✅ v2.0 — Redirect → /auth?next= · Studio + Monet libres pour visiteurs
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Routes qui nécessitent une session active
 const PROTECTED_ROUTES = [
   "/mymagic",
-  "/studio",
-  "/monet",
   "/notifications",
   "/messages",
 ];
+
+// Routes intentionnellement libres pour les visiteurs (pas dans PROTECTED_ROUTES)
+// /studio → modale "connecte-toi pour publier"
+// /monet  → simulateur accessible en visiteur
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({
@@ -24,7 +27,9 @@ export async function middleware(req: NextRequest) {
         getAll() {
           return req.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
+        setAll(
+          cookiesToSet: { name: string; value: string; options?: CookieOptions }[]
+        ) {
           cookiesToSet.forEach(({ name, value }) =>
             req.cookies.set(name, value)
           );
@@ -37,17 +42,20 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   const pathname = req.nextUrl.pathname;
+
   const isProtected = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
   if (isProtected && !session) {
-    const loginUrl = new URL("/", req.url);
-    loginUrl.searchParams.set("login", "1");
-    loginUrl.searchParams.set("from", pathname);
+    // ✅ Redirect sécurisé : /auth?next=<pathname>
+    const loginUrl = new URL("/auth", req.url);
+    loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -57,9 +65,10 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/mymagic/:path*",
-    "/studio/:path*",
-    "/monet/:path*",
+    "/mymagic",
     "/notifications/:path*",
+    "/notifications",
     "/messages/:path*",
+    "/messages",
   ],
 };
