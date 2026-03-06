@@ -1,3 +1,5 @@
+// app/legal/faq/page.tsx
+// ✅ v2.0 — Date 6 mars 2026 · PostFinance/Adyen → Stripe · support@magic-clock.com
 export const metadata = {
   title: "FAQ – Magic Clock",
 };
@@ -11,23 +13,21 @@ export default function LegalFAQPage() {
         </h1>
         <p className="mt-2 text-sm text-slate-500">
           Cette page répond aux questions fréquentes sur les{" "}
-          <strong>versements créateurs</strong> et sur l’expérience des{" "}
-          <strong>utilisateurs (abonnements & contenus PPV)</strong> sur la
-          plateforme Magic Clock.
+          <strong>versements créateurs</strong> et sur l'expérience des{" "}
+          <strong>utilisateurs (abonnements &amp; contenus PPV)</strong>.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Elle est fournie à titre informatif. En cas de divergence, ce sont les{" "}
+          Dernière mise à jour : 6 mars 2026 · En cas de divergence, les{" "}
           <a
             href="/legal/cgv"
             className="font-medium text-indigo-600 hover:text-indigo-700"
           >
             CGU/CGV
           </a>{" "}
-          qui prévalent.
+          prévalent.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Pour un aperçu global des modèles tarifaires et du fonctionnement de
-          la monétisation, tu peux aussi consulter la page{" "}
+          Pour un aperçu global, consulte la page{" "}
           <a
             href="/pricing"
             className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -48,7 +48,6 @@ export default function LegalFAQPage() {
             A. FAQ pour les créateurs
           </h2>
 
-          {/* 1. Fréquence */}
           <section className="mt-4">
             <h3 className="text-base font-semibold text-slate-900">
               1. À quelle fréquence suis-je payé&nbsp;?
@@ -58,13 +57,12 @@ export default function LegalFAQPage() {
               en règle générale autour du <strong>15 du mois</strong>.
             </p>
             <p className="mt-1">
-              Le versement porte sur les revenus (abonnements + PPV) du{" "}
+              Le versement porte sur les revenus du{" "}
               <strong>mois civil précédent</strong>, après déduction de la TVA,
               des frais de paiement et de la commission Magic Clock.
             </p>
           </section>
 
-          {/* 2. Seuil */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               2. Y a-t-il un seuil minimum de versement&nbsp;?
@@ -72,116 +70,71 @@ export default function LegalFAQPage() {
             <p className="mt-2">
               Oui. Le versement est déclenché lorsque ton{" "}
               <strong>montant net à payer</strong> atteint au moins{" "}
-              <strong>50&nbsp;CHF (ou équivalent)</strong>.
-            </p>
-            <p className="mt-1">
-              Si ton solde net du mois est inférieur à ce seuil, il est
-              simplement <strong>reporté sur le mois suivant</strong> jusqu’à
-              atteindre ou dépasser 50&nbsp;CHF.
+              <strong>50&nbsp;CHF (ou équivalent)</strong>. En dessous, le
+              solde est reporté au mois suivant.
             </p>
           </section>
 
-          {/* 3. Devise */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               3. Dans quelle devise suis-je payé&nbsp;?
             </h3>
             <p className="mt-2">
-              La devise de versement principale est le{" "}
-              <strong>franc suisse (CHF)</strong>.
-            </p>
-            <p className="mt-1">
-              Si tu es situé dans l’UE / EEE, au Royaume-Uni ou dans un autre
-              pays, des versements en <strong>EUR</strong> (ou dans une autre
-              devise adaptée) pourront être proposés via{" "}
-              <strong>virement bancaire SEPA</strong>, en fonction de ton pays
-              de résidence et des solutions bancaires disponibles.
+              La devise principale est le{" "}
+              <strong>franc suisse (CHF)</strong>. Des versements en{" "}
+              <strong>EUR</strong> via virement SEPA pourront être proposés
+              selon ton pays de résidence.
             </p>
           </section>
 
-          {/* 4. Délais */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               4. Quels sont les délais après la fin du mois&nbsp;?
             </h3>
             <p className="mt-2">
-              Une fois le mois terminé, nous avons besoin de quelques jours
-              pour :
-            </p>
-            <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li>consolider les ventes (abonnements, PPV) ;</li>
-              <li>traiter les remboursements éventuels ;</li>
-              <li>
-                appliquer la <strong>TVA</strong>, les{" "}
-                <strong>frais de paiement</strong> et la{" "}
-                <strong>commission Magic Clock</strong>.
-              </li>
-            </ul>
-            <p className="mt-2">
-              Le virement est ensuite déclenché autour du{" "}
-              <strong>15 du mois</strong>. Si le 15 tombe un{" "}
-              <strong>week-end ou un jour férié</strong>, le paiement est
-              effectué le <strong>jour ouvrable précédent</strong>.
+              Quelques jours sont nécessaires pour consolider les ventes,
+              traiter les remboursements éventuels et appliquer la TVA, les
+              frais de paiement et la commission. Le virement est ensuite
+              déclenché autour du <strong>15 du mois</strong>. Si le 15 tombe
+              un week-end ou un jour férié, le paiement est effectué le{" "}
+              <strong>jour ouvrable précédent</strong>.
             </p>
           </section>
 
-          {/* 5. TVA & frais */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
-              5. Comment sont gérés la TVA, les devises et les frais de paiement&nbsp;?
+              5. Comment sont gérés la TVA, les devises et les frais de
+              paiement&nbsp;?
             </h3>
             <p className="mt-2">
-              Le montant que tu vois dans ton espace créateur correspond
-              généralement au <strong>montant TTC payé par les abonnés</strong>{" "}
-              dans leur <strong>devise d&apos;achat</strong> (par exemple EUR,
-              CHF, USD).
-            </p>
-            <p className="mt-1">
               Avant de calculer ton versement net, nous déduisons :
             </p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
               <li>
-                la <strong>TVA</strong> applicable (en fonction du pays de
-                l’utilisateur, des règles fiscales et de ton statut) ;
+                la <strong>TVA</strong> applicable selon le pays de
+                l'utilisateur ;
               </li>
               <li>
-                les <strong>frais de paiement</strong> (cartes bancaires, TWINT,
-                PostFinance, etc.) ;
+                les <strong>frais de paiement</strong> (Stripe) ;
               </li>
               <li>
-                la <strong>commission Magic Clock</strong>.
+                la <strong>commission Magic Clock</strong> (20–30 %).
               </li>
             </ul>
-            <p className="mt-2">
-              Lorsque les utilisateurs paient dans une devise différente de ta{" "}
-              <strong>devise de versement</strong> (par exemple achat en EUR,
-              versement en CHF), une <strong>conversion</strong> est effectuée
-              par notre prestataire de paiement ou par ta banque, selon les
-              cas. Les détails seront précisés dans ton Cockpit Monétisation.
-            </p>
           </section>
 
-          {/* 6. Remboursements / litiges */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               6. Que se passe-t-il si un paiement est remboursé ou contesté
               (chargeback)&nbsp;?
             </h3>
             <p className="mt-2">
-              Si un abonnement ou un contenu PPV est{" "}
-              <strong>remboursé</strong> ou fait l’objet d’un{" "}
-              <strong>chargeback</strong> (contestation bancaire), le montant
-              correspondant est retiré du calcul de ton versement.
-            </p>
-            <p className="mt-1">
-              Si le litige intervient après le versement, la somme pourra être{" "}
-              <strong>compensée sur tes versements suivants</strong>. Les
-              détails pratiques seront précisés dans l’interface Monétisation et
-              dans les CGV définitives.
+              Le montant est retiré du calcul de ton versement. Si le litige
+              intervient après le versement, la somme pourra être{" "}
+              <strong>compensée sur tes versements suivants</strong>.
             </p>
           </section>
 
-          {/* 7. Résumé rapide */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               7. Résumé rapide
@@ -191,8 +144,7 @@ export default function LegalFAQPage() {
                 Versement <strong>une fois par mois</strong>, autour du 15.
               </li>
               <li>
-                <strong>Seuil minimum de versement :</strong> 50&nbsp;CHF (ou
-                équivalent).
+                <strong>Seuil minimum :</strong> 50&nbsp;CHF (ou équivalent).
               </li>
               <li>
                 Versement par <strong>virement bancaire</strong> (IBAN CH ou
@@ -201,276 +153,169 @@ export default function LegalFAQPage() {
               <li>
                 <strong>Commission plateforme :</strong> entre{" "}
                 <strong>20&nbsp;% et 30&nbsp;%</strong> selon ton profil
-                créateur (classification basée sur l’engagement global, par
-                exemple le nombre total de likes sur l’ensemble de tes
-                contenus).
+                créateur.
               </li>
               <li>
-                TVA, frais de paiement et conversions de devises déduits avant
-                calcul de ton <strong>montant net</strong>.
-              </li>
-              <li>
-                <strong>Plage de prix techniques :</strong> tu peux fixer tes
-                abonnements et contenus PPV dans une large plage (par exemple de{" "}
-                <strong>0,99 à 999,99</strong>) dans la{" "}
-                <strong>devise d&apos;achat de l&apos;Utilisateur</strong>, telle
-                qu&apos;affichée au moment du paiement.
+                <strong>Plage de prix :</strong> de 0,99 à 999,99 dans la
+                devise d&apos;achat.
               </li>
             </ul>
           </section>
 
-          {/* 8. Exemple concret */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               8. Exemple concret de calcul
             </h3>
             <p className="mt-2">
-              Voici un exemple <strong>purement indicatif</strong> pour t’aider
-              à visualiser comment ton gain net peut être calculé. Les chiffres
-              exacts dépendront de la commission, de la TVA applicable, des
-              frais de paiement réels et, le cas échéant, des conversions de
-              devise.
-            </p>
-
-            <p className="mt-3 font-medium text-slate-900">
-              Scénario&nbsp;: un mois avec 100 abonnés actifs
+              Exemple <strong>purement indicatif</strong> avec 100 abonnés à
+              10&nbsp;CHF/mois :
             </p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
               <li>
-                Prix de ton abonnement :{" "}
-                <strong>10&nbsp;unités dans la devise d&apos;achat</strong>{" "}
-                (par ex. 10&nbsp;CHF).
+                Montant total TTC : <strong>1'000&nbsp;CHF</strong>
               </li>
               <li>
-                Nombre d’abonnés payants : <strong>100</strong>.
+                TVA 8&nbsp;% : <strong>80&nbsp;CHF</strong> réservés
               </li>
               <li>
-                Montant total payé par les abonnés (TTC) :{" "}
-                <strong>1’000&nbsp;CHF</strong> (ou équivalent).
+                Base HT : <strong>920&nbsp;CHF</strong>
+              </li>
+              <li>
+                Commission 25&nbsp;% : <strong>230&nbsp;CHF</strong>
+              </li>
+              <li>
+                Frais Stripe ~3&nbsp;% : <strong>28&nbsp;CHF</strong>
               </li>
             </ul>
-
-            <p className="mt-3 font-medium text-slate-900">
-              Étapes (exemple simplifié)
+            <p className="mt-2 font-semibold text-slate-900">
+              Montant net estimé :{" "}
+              <strong>≈ 662&nbsp;CHF</strong>
             </p>
-            <ol className="mt-1 list-decimal space-y-1 pl-5">
-              <li>
-                <strong>TVA</strong> (exemple 8&nbsp;% sur 1’000&nbsp;CHF) :{" "}
-                <strong>80&nbsp;CHF</strong> sont réservés pour la TVA à
-                reverser.
-              </li>
-              <li>
-                <strong>Base hors taxes</strong> : 1’000&nbsp;CHF – 80&nbsp;CHF
-                = <strong>920&nbsp;CHF</strong>.
-              </li>
-              <li>
-                <strong>Commission Magic Clock</strong> (exemple 25&nbsp;%) : 25
-                % de 920&nbsp;CHF ≈ <strong>230&nbsp;CHF</strong>.
-              </li>
-              <li>
-                <strong>Frais de paiement</strong> (exemple 3&nbsp;% sur
-                920&nbsp;CHF) : ≈ <strong>28&nbsp;CHF</strong>.
-              </li>
-            </ol>
-
-            <p className="mt-3">
-              Montant qui reste pour toi dans cet exemple :
-            </p>
-            <p className="mt-1 font-semibold text-slate-900">
-              920&nbsp;CHF – 230&nbsp;CHF – 28&nbsp;CHF ={" "}
-              <strong>≈ 662&nbsp;CHF nets</strong>{" "}
-              <span className="font-normal">
-                (montant estimé versé par Magic Clock dans ce scénario
-                simplifié).
-              </span>
-            </p>
-
-            <p className="mt-2 text-xs text-slate-500">
-              Cet exemple est volontairement simplifié pour la compréhension.
-              Les pourcentages (TVA, commission, frais) et les devises peuvent
-              varier selon ton pays, ton statut, le moyen de paiement utilisé et
-              les conditions définitives de Magic Clock.
+            <p className="mt-1 text-xs text-slate-500">
+              Cet exemple est simplifié. Les pourcentages peuvent varier selon
+              ton pays, ton statut et les conditions définitives.
             </p>
           </section>
         </section>
 
-        {/* SEPARATEUR */}
         <hr className="my-8 border-slate-200" />
 
-        {/* SECTION B – UTILISATEURS (ABONNÉS & PPV) */}
+        {/* SECTION B – UTILISATEURS */}
         <section aria-labelledby="faq-users-heading">
           <h2
             id="faq-users-heading"
             className="text-lg font-semibold text-slate-900"
           >
-            B. FAQ pour les utilisateurs (abonnements & contenus PPV)
+            B. FAQ pour les utilisateurs (abonnements &amp; contenus PPV)
           </h2>
 
-          {/* U1 – Abonnements */}
           <section className="mt-4">
             <h3 className="text-base font-semibold text-slate-900">
-              1. Comment m’abonner à un créateur&nbsp;?
+              1. Comment m'abonner à un créateur&nbsp;?
             </h3>
             <p className="mt-2">
-              Sur la page d’un créateur, tu peux cliquer sur le bouton{" "}
-              <strong>« S’abonner »</strong>. Le prix mensuel et les éventuels
-              avantages inclus (contenus exclusifs, accès prioritaire, etc.)
-              sont affichés clairement{" "}
-              <strong>
-                dans ta devise d’achat (devise locale) et toutes taxes comprises
-              </strong>{" "}
-              avant la validation.
-            </p>
-            <p className="mt-1">
-              L’abonnement est généralement <strong>mensuel</strong> et se
-              renouvelle automatiquement jusqu’à ce que tu le résilies.
+              Sur la page d'un créateur, clique sur{" "}
+              <strong>« S'abonner »</strong>. Le prix mensuel TTC dans ta
+              devise d&apos;achat est affiché clairement avant la validation.
+              L'abonnement est <strong>mensuel</strong> et se renouvelle
+              automatiquement jusqu'à résiliation.
             </p>
           </section>
 
-          {/* U2 – Résiliation */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               2. Que se passe-t-il si je résilie mon abonnement&nbsp;?
             </h3>
             <p className="mt-2">
-              Tu peux annuler ton abonnement à tout moment depuis ton
-              espace&nbsp;:{" "}
-              <strong>il n’y a pas d’engagement de durée minimale</strong>.
-            </p>
-            <p className="mt-1">
-              Lorsque tu résilies, tu gardes en principe l’accès aux contenus
-              de ce créateur jusqu’à la{" "}
-              <strong>fin de la période déjà payée</strong>. L’abonnement ne
-              sera simplement pas renouvelé pour le mois suivant.
-            </p>
-            <p className="mt-1">
-              Sauf exception prévue par la loi locale, il n’y a pas de
-              remboursement au prorata pour la période déjà entamée.
+              Tu peux annuler à tout moment.{" "}
+              <strong>Pas d'engagement de durée minimale.</strong> Tu gardes
+              l'accès jusqu'à la fin de la période déjà payée. Sauf exception
+              légale, pas de remboursement au prorata.
             </p>
           </section>
 
-          {/* U3 – PPV */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
-              3. Qu’est-ce qu’un contenu PPV («&nbsp;Pay-Per-View&nbsp;»)&nbsp;?
+              3. Qu'est-ce qu'un contenu PPV («&nbsp;Pay-Per-View&nbsp;»)&nbsp;?
             </h3>
             <p className="mt-2">
-              Un contenu <strong>PPV</strong> est un contenu payant acheté{" "}
-              <strong>à l’unité</strong> (par exemple une masterclass, une
-              transformation détaillée, un tutoriel avancé, etc.).
-            </p>
-            <p className="mt-1">
-              Avant de payer, le <strong>prix TTC</strong> est toujours affiché
-              clairement dans ta <strong>devise d&apos;achat</strong>. Une fois
-              l’achat effectué et le paiement confirmé, tu obtiens un{" "}
-              <strong>droit d’accès</strong> à ce contenu depuis ton compte
-              Magic Clock, selon les conditions définies par le créateur et par
-              nos CGV.
+              Un contenu <strong>PPV</strong> est acheté{" "}
+              <strong>à l'unité</strong>. Le prix TTC dans ta devise
+              d&apos;achat est affiché avant paiement. Une fois confirmé, tu
+              obtiens un droit d'accès permanent à ce contenu.
             </p>
           </section>
 
-          {/* U4 – Moyens de paiement */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               4. Quels moyens de paiement sont acceptés&nbsp;?
             </h3>
             <p className="mt-2">
-              Les paiements sont traités via{" "}
-              <strong>PostFinance Checkout</strong> (offre groupée eCom). Selon
-              ton pays et ta banque, tu peux notamment payer par :
+              Les paiements sont traités via <strong>Stripe</strong>. Selon ton
+              pays et ta banque, tu peux notamment payer par :
             </p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
               <li>
                 <strong>Cartes bancaires</strong> : Visa, Mastercard.
               </li>
               <li>
-                <strong>Paiements suisses</strong> : PostFinance Pay, TWINT.
-              </li>
-              <li>
-                <strong>Wallets</strong> : Apple Pay, Click to Pay{" "}
+                <strong>Wallets</strong> : Apple Pay, Google Pay{" "}
                 <span className="text-xs text-slate-500">
                   (si disponibles sur ton appareil).
+                </span>
+              </li>
+              <li>
+                <strong>TWINT</strong> (Suisse){" "}
+                <span className="text-xs text-slate-500">
+                  selon disponibilité via Stripe.
                 </span>
               </li>
             </ul>
             <p className="mt-2 text-xs text-slate-500">
               Les moyens de paiement disponibles peuvent varier selon ton pays
-              de résidence et seront complétés progressivement au fur et à
-              mesure du déploiement international de Magic Clock.
+              et seront complétés progressivement.
             </p>
           </section>
 
-          {/* U5 – Paiement refusé */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               5. Que se passe-t-il si mon paiement est refusé&nbsp;?
             </h3>
             <p className="mt-2">
-              Si le paiement est refusé (carte expirée, fonds insuffisants,
-              problème de 3-D Secure, etc.) :
-            </p>
-            <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li>
-                l’abonnement ou l’achat PPV <strong>n’est pas activé</strong> ;
-              </li>
-              <li>
-                tu peux <strong>réessayer</strong> avec la même carte ou une
-                autre méthode de paiement ;
-              </li>
-              <li>
-                si le problème persiste, nous te recommandons de{" "}
-                <strong>contacter ta banque</strong> ou ton émetteur de carte.
-              </li>
-            </ul>
-            <p className="mt-2">
-              Aucun montant ne t’est facturé tant que le paiement n’a pas été
-              validé.
+              L'abonnement ou l'achat PPV{" "}
+              <strong>n'est pas activé</strong>. Tu peux réessayer avec une
+              autre méthode. Aucun montant n'est facturé tant que le paiement
+              n'est pas validé.
             </p>
           </section>
 
-          {/* U6 – Reçus & factures */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               6. Où trouver mes reçus ou factures&nbsp;?
             </h3>
             <p className="mt-2">
-              Pour chaque paiement réussi, un{" "}
-              <strong>reçu électronique</strong> est généré par notre
-              prestataire de paiement. Actuellement, ces reçus peuvent être
-              envoyés :
-            </p>
-            <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li>par e-mail à l’adresse associée à ton compte ;</li>
-              <li>
-                et, progressivement, dans une rubrique{" "}
-                <strong>« Historique des paiements »</strong> de ton compte
-                Magic Clock.
-              </li>
-            </ul>
-            <p className="mt-2 text-xs text-slate-500">
-              La présentation des reçus et des factures pourra être ajustée
-              selon les exigences légales des différents pays (TVA, mentions
-              obligatoires, etc.).
+              Un <strong>reçu électronique</strong> est généré par Stripe pour
+              chaque paiement réussi. Il est envoyé à l'adresse e-mail de ton
+              compte et sera progressivement accessible dans{" "}
+              <strong>« Historique des paiements »</strong>.
             </p>
           </section>
 
-          {/* U7 – Remboursements */}
           <section className="mt-6">
             <h3 className="text-base font-semibold text-slate-900">
               7. Puis-je demander un remboursement&nbsp;?
             </h3>
             <p className="mt-2">
-              Les abonnements et contenus PPV concernent des{" "}
-              <strong>contenus numériques</strong>. Conformément au droit
-              applicable, le droit de rétractation peut être{" "}
-              <strong>limité ou exclu</strong> lorsque le contenu est fourni
-              immédiatement après l’achat, avec ton accord explicite.
-            </p>
-            <p className="mt-1">
-              En cas de problème technique majeur ou d’erreur manifeste, tu peux
-              toutefois contacter notre support. Chaque demande sera étudiée{" "}
-              <strong>au cas par cas</strong>, dans le respect des lois locales
-              et de nos CGV.
+              Les contenus numériques peuvent être exclus du droit de
+              rétractation lorsque fournis immédiatement avec ton accord. En
+              cas de problème technique majeur, contacte-nous à{" "}
+              <a
+                href="mailto:support@magic-clock.com"
+                className="font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                support@magic-clock.com
+              </a>
+              . Chaque demande est étudiée au cas par cas.
             </p>
           </section>
         </section>
