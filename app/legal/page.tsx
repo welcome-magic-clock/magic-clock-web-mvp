@@ -1,5 +1,5 @@
 // app/legal/page.tsx
-// ✅ v3.0 — Next.js 16 compatible : cookies() est async (await requis)
+// ✅ v3.1 — Next.js 16 compatible : cookies() est async (await requis)
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 async function getIsLoggedIn(): Promise<boolean> {
   try {
-    // Next.js 16 : cookies() est async → await requis
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,10 +27,12 @@ async function getIsLoggedIn(): Promise<boolean> {
         },
       }
     );
+
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return !!session;
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    return !!user;
   } catch {
     return false;
   }
@@ -52,14 +53,14 @@ export default async function LegalIndexPage() {
           </h1>
           <p className="text-sm text-slate-700">
             Retrouve ici les principaux documents juridiques qui encadrent
-            l'utilisation de la plateforme Magic Clock. Les versions définitives
-            seront validées avec notre cabinet d'avocats spécialisé.
+            l’utilisation de la plateforme Magic Clock, ses services, ses
+            contenus, ses paiements et les règles applicables aux utilisateurs
+            comme aux créateurs.
           </p>
         </div>
       </header>
 
       <section className="space-y-8">
-        {/* CGV / CGU */}
         <div className="grid gap-6 md:grid-cols-2">
           <Link
             href="/legal/cgv"
@@ -71,7 +72,7 @@ export default async function LegalIndexPage() {
             <p className="mt-2 text-xs text-slate-600">
               Règles de vente et de monétisation sur Magic Clock&nbsp;:
               abonnements, contenus PPV, commission plateforme, versements
-              créateurs, TVA, remboursements, etc.
+              créateurs, TVA, remboursements et paiements.
             </p>
             <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
               Voir les CGV →
@@ -83,11 +84,11 @@ export default async function LegalIndexPage() {
             className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
           >
             <h2 className="text-sm font-semibold text-slate-900">
-              CGU – Conditions générales d'utilisation
+              CGU – Conditions générales d&apos;utilisation
             </h2>
             <p className="mt-2 text-xs text-slate-600">
               Création de compte, règles de communauté, contenus UGC,
-              modération, comportements interdits, responsabilité de la
+              modération, comportements interdits, responsabilités de la
               plateforme et des utilisateurs.
             </p>
             <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
@@ -96,7 +97,6 @@ export default async function LegalIndexPage() {
           </Link>
         </div>
 
-        {/* Confidentialité / Cookies */}
         <div className="grid gap-6 md:grid-cols-2">
           <Link
             href="/legal/privacy"
@@ -106,8 +106,8 @@ export default async function LegalIndexPage() {
               Politique de confidentialité
             </h2>
             <p className="mt-2 text-xs text-slate-600">
-              Comment nous collectons, utilisons et protégeons les données
-              personnelles sur Magic Clock (version bêta).
+              Comment nous collectons, utilisons, partageons et protégeons les
+              données personnelles sur Magic Clock.
             </p>
             <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
               Lire la politique →
@@ -123,7 +123,8 @@ export default async function LegalIndexPage() {
             </h2>
             <p className="mt-2 text-xs text-slate-600">
               Informations sur les cookies et technologies similaires utilisés
-              pour le fonctionnement, les statistiques et le marketing.
+              pour le fonctionnement, la mesure d’audience et certaines
+              fonctionnalités de la plateforme.
             </p>
             <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
               Gérer et comprendre les cookies →
@@ -131,7 +132,6 @@ export default async function LegalIndexPage() {
           </Link>
         </div>
 
-        {/* PI / Communauté / Sécurité / Mentions */}
         <section className="mt-10 space-y-4">
           <h2 className="text-base font-semibold text-slate-900">
             Propriété intellectuelle, communauté &amp; sécurité
@@ -145,8 +145,8 @@ export default async function LegalIndexPage() {
                 Propriété intellectuelle &amp; retrait
               </h3>
               <p className="mt-2 text-xs text-slate-600">
-                Règles relatives aux droits d'auteur, à l'utilisation des
-                contenus et à la procédure de retrait en cas d'atteinte
+                Règles relatives aux droits d’auteur, à l’utilisation des
+                contenus et à la procédure de retrait en cas d’atteinte
                 présumée.
               </p>
               <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
@@ -194,8 +194,8 @@ export default async function LegalIndexPage() {
                 Mentions légales / Impressum
               </h3>
               <p className="mt-2 text-xs text-slate-600">
-                Informations sur l'éditeur de Magic Clock, l'adresse de contact
-                et les principaux prestataires techniques.
+                Informations sur l’éditeur de Magic Clock, les coordonnées de
+                contact et les principaux prestataires techniques.
               </p>
               <p className="mt-3 text-xs font-medium text-indigo-600 group-hover:text-indigo-700">
                 Voir les mentions légales →
@@ -205,15 +205,14 @@ export default async function LegalIndexPage() {
         </section>
       </section>
 
-      {/* FAQ / Pricing */}
       <section className="mt-10 space-y-2 text-sm text-slate-700">
         <h2 className="text-base font-semibold text-slate-900">
           Prix, monétisation &amp; FAQ
         </h2>
         <p>
           Pour mieux comprendre les modèles{" "}
-          <strong>FREE / SUB / PPV</strong>, les commissions et les versements
-          créateurs :
+          <strong>FREE / SUB / PPV</strong>, les commissions, les paiements et
+          les versements créateurs :
         </p>
         <ul className="list-disc space-y-1 pl-5 text-sm">
           <li>
@@ -223,7 +222,7 @@ export default async function LegalIndexPage() {
             >
               Prix &amp; monétisation
             </Link>{" "}
-            — vue d'ensemble des modèles ;
+            — vue d’ensemble des modèles ;
           </li>
           <li>
             <Link
@@ -232,14 +231,9 @@ export default async function LegalIndexPage() {
             >
               FAQ créateurs &amp; utilisateurs
             </Link>{" "}
-            — détails pratiques sur les versements, paiements et PPV.
+            — détails pratiques sur les paiements, versements et contenus PPV.
           </li>
         </ul>
-        <p className="text-xs text-slate-500">
-          Ces documents sont fournis à titre de base de travail pour la version
-          bêta. Ils seront validés avec notre cabinet d'avocats avant le
-          lancement commercial.
-        </p>
       </section>
     </main>
   );
