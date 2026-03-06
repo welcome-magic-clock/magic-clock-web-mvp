@@ -1,6 +1,6 @@
 // middleware.ts — Protection des routes authentifiées
 // ✅ Compatible @supabase/ssr + Next.js 16
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_ROUTES = [
@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
         getAll() {
           return req.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             req.cookies.set(name, value)
           );
