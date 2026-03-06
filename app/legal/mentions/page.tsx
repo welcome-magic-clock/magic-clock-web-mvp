@@ -1,6 +1,6 @@
 // app/legal/mentions/page.tsx
-// ✅ v2.0 — Date 6 mars 2026 · Magic Clock Maldonado-Verger RI · support@magic-clock.com
-// BackButton retiré → géré par app/legal/layout.tsx
+// ✅ v2.1 — 6 mars 2026 · Magic Clock Maldonado-Verger RI · support@magic-clock.com
+// BackButton géré par app/legal/layout.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -17,8 +17,8 @@ export default function LegalMentionsPage() {
             Mentions légales / Impressum
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Informations sur l'éditeur de la Plateforme Magic Clock et les
-            principaux moyens de contact.
+            Informations relatives à l’éditeur de la plateforme Magic Clock et
+            aux principaux moyens de contact.
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Dernière mise à jour : 6 mars 2026
@@ -27,14 +27,13 @@ export default function LegalMentionsPage() {
       </header>
 
       <div className="space-y-6 text-sm leading-relaxed text-slate-700">
-        {/* 1. Éditeur */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            1. Éditeur de la Plateforme
+            1. Éditeur de la plateforme
           </h2>
           <p className="mt-2">
             La plateforme <strong>Magic Clock</strong> est exploitée par
-            l'entreprise individuelle&nbsp;:
+            l’entreprise individuelle :
           </p>
           <p className="mt-2">
             <strong>Magic Clock Maldonado-Verger RI</strong>
@@ -43,21 +42,20 @@ export default function LegalMentionsPage() {
             <br />
             2000 Neuchâtel – Suisse
             <br />
-            IDE&nbsp;: <strong>CHE-202.752.000</strong>
+            IDE : <strong>CHE-202.752.000</strong>
           </p>
         </section>
 
-        {/* 2. Contact */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             2. Contact
           </h2>
           <p className="mt-2">
-            Pour toute question concernant la Plateforme ou les documents
-            juridiques&nbsp;:
+            Pour toute question relative à la plateforme, à son fonctionnement
+            ou aux documents juridiques :
           </p>
           <p className="mt-2">
-            E-mail&nbsp;:{" "}
+            E-mail :{" "}
             <a
               href="mailto:support@magic-clock.com"
               className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -67,63 +65,69 @@ export default function LegalMentionsPage() {
           </p>
         </section>
 
-        {/* 3. Hébergement et prestataires */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             3. Hébergement et prestataires techniques
           </h2>
           <p className="mt-2">
-            La Plateforme est hébergée et exploitée grâce aux prestataires
-            d'infrastructure suivants&nbsp;:
+            La plateforme s’appuie notamment sur les prestataires techniques
+            suivants :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
               <strong>Vercel Inc.</strong> — hébergement et déploiement de
-              l'application web
+              l’application web
             </li>
             <li>
-              <strong>Supabase Inc.</strong> — base de données, authentification
-              et stockage
+              <strong>Supabase Inc.</strong> — base de données,
+              authentification et stockage
             </li>
             <li>
-              <strong>Cloudflare Inc.</strong> — réseau de diffusion de contenu
-              (CDN) et stockage de médias (R2)
+              <strong>Cloudflare Inc.</strong> — diffusion de contenu,
+              optimisation réseau et stockage média
             </li>
             <li>
-              <strong>Stripe Inc.</strong> — traitement sécurisé des paiements
+              <strong>Stripe, Inc. et/ou ses affiliés</strong> — traitement
+              sécurisé des paiements
             </li>
             <li>
-              <strong>GitHub Inc.</strong> — hébergement du code source
-              (infrastructure de développement)
+              <strong>GitHub, Inc.</strong> — infrastructure de développement et
+              hébergement du code source
             </li>
           </ul>
           <p className="mt-2 text-xs text-slate-500">
-            Ces prestataires peuvent disposer de centres de données situés en
-            Suisse, dans l'UE ou à l'international. Des garanties contractuelles
-            appropriées encadrent les transferts de données vers des pays tiers.
+            Selon les services utilisés, certaines données peuvent être traitées
+            en Suisse, dans l’Union européenne ou dans d’autres pays, dans le
+            respect des mécanismes juridiques applicables en matière de
+            protection des données.
           </p>
         </section>
 
-        {/* 4. Propriété intellectuelle */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             4. Propriété intellectuelle
           </h2>
           <p className="mt-2">
-            La structure générale de la Plateforme, son identité visuelle, les
-            marques, logos et éléments graphiques Magic Clock sont protégés par
-            le droit de la propriété intellectuelle. Toute reproduction ou
-            utilisation non autorisée peut constituer une violation de ces droits.
+            La structure générale de la plateforme, son identité visuelle, ses
+            textes, marques, logos, éléments graphiques, interfaces et contenus
+            propres à Magic Clock sont protégés par le droit applicable de la
+            propriété intellectuelle.
           </p>
           <p className="mt-2">
-            Les contenus créés par les utilisateurs (UGC) sont régis par les{" "}
+            Toute reproduction, représentation, extraction, réutilisation ou
+            exploitation non autorisée de tout ou partie de ces éléments peut
+            constituer une atteinte aux droits de Magic Clock ou de tiers.
+          </p>
+          <p className="mt-2">
+            Les contenus publiés par les utilisateurs et créateurs sont régis
+            par les{" "}
             <Link
               href="/legal/cgu"
               className="font-medium text-indigo-600 hover:text-indigo-700"
             >
               CGU
             </Link>{" "}
-            et la{" "}
+            ainsi que par la{" "}
             <Link
               href="/legal/ip-policy"
               className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -134,15 +138,18 @@ export default function LegalMentionsPage() {
           </p>
         </section>
 
-        {/* 5. Réclamations et litiges */}
         <section>
           <h2 className="text-base font-semibold text-slate-900">
             5. Réclamations et litiges
           </h2>
           <p className="mt-2">
-            En cas de litige, nous encourageons d'abord une prise de contact
-            amiable via l'adresse e-mail ci-dessus. Les conditions contractuelles
-            applicables sont précisées dans les{" "}
+            En cas de question, réclamation ou différend, nous invitons d’abord
+            les utilisateurs à prendre contact avec Magic Clock par e-mail afin
+            de rechercher une solution amiable.
+          </p>
+          <p className="mt-2">
+            Les conditions applicables à l’utilisation de la plateforme, aux
+            ventes, aux paiements et à la monétisation sont précisées dans les{" "}
             <Link
               href="/legal/cgu"
               className="font-medium text-indigo-600 hover:text-indigo-700"
