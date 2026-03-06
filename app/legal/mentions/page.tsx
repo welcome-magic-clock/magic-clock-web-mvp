@@ -1,11 +1,11 @@
 // app/legal/mentions/page.tsx
-// ✅ v2.1 — 6 mars 2026 · Magic Clock Maldonado-Verger RI · support@magic-clock.com
+// ✅ v2.2 — 6 mars 2026 · Magic Clock Maldonado-Verger RI · support@magic-clock.com
 // BackButton géré par app/legal/layout.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Mentions légales – Magic Clock",
+  title: "Mentions légales – Magic Clock®",
 };
 
 export default function LegalMentionsPage() {
@@ -17,7 +17,7 @@ export default function LegalMentionsPage() {
             Mentions légales / Impressum
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Informations relatives à l’éditeur de la plateforme Magic Clock et
+            Informations relatives à l’éditeur de la plateforme Magic Clock® et
             aux principaux moyens de contact.
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -32,7 +32,7 @@ export default function LegalMentionsPage() {
             1. Éditeur de la plateforme
           </h2>
           <p className="mt-2">
-            La plateforme <strong>Magic Clock</strong> est exploitée par
+            La plateforme <strong>Magic Clock®</strong> est exploitée par
             l’entreprise individuelle :
           </p>
           <p className="mt-2">
@@ -109,10 +109,15 @@ export default function LegalMentionsPage() {
           </h2>
           <p className="mt-2">
             La structure générale de la plateforme, son identité visuelle, ses
-            textes, marques, logos, éléments graphiques, interfaces et contenus
-            propres à Magic Clock sont protégés par le droit applicable de la
-            propriété intellectuelle.
+            textes, interfaces, contenus propres, ainsi que les signes
+            distinctifs de Magic Clock sont protégés par le droit applicable de
+            la propriété intellectuelle.
           </p>
+          <p className="mt-2">
+  <strong>Magic Clock®</strong>, le <strong>logo Magic Clock</strong>{" "}
+  et le <strong>personnage figuratif Bear “Magic”</strong> constituent
+  des signes distinctifs protégés et enregistrés.
+</p>
           <p className="mt-2">
             Toute reproduction, représentation, extraction, réutilisation ou
             exploitation non autorisée de tout ou partie de ces éléments peut
