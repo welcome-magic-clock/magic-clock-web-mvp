@@ -1,5 +1,5 @@
 // app/legal/community-guidelines/page.tsx
-// ✅ v2.0 — Date 6 mars 2026 · support@magic-clock.com · BackButton retiré (géré par layout)
+// ✅ v2.1 — 6 mars 2026 · support@magic-clock.com · BackButton géré par layout
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -17,7 +17,7 @@ export default function CommunityGuidelinesPage() {
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Les règles essentielles pour que Magic Clock reste un espace
-            pédagogique, bienveillant et inspirant pour tous.
+            pédagogique, respectueux, sûr et inspirant pour tous.
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Dernière mise à jour : 6 mars 2026
@@ -32,10 +32,15 @@ export default function CommunityGuidelinesPage() {
           </h2>
           <p className="mt-2">
             Magic Clock est une plateforme dédiée à la{" "}
-            <strong>création</strong> et au{" "}
-            <strong>partage de contenus pédagogiques</strong>. Nous voulons
-            favoriser une culture de <strong>respect</strong>, de{" "}
-            <strong>sécurité</strong> et de <strong>transparence</strong>.
+            <strong>création</strong>, au <strong>partage</strong> et à la
+            <strong> transmission de contenus pédagogiques</strong>. Nous
+            souhaitons favoriser une culture de <strong>respect</strong>, de{" "}
+            <strong>sécurité</strong>, de <strong>bonne foi</strong> et de{" "}
+            <strong>transparence</strong>.
+          </p>
+          <p className="mt-2">
+            Chaque utilisateur contribue à la qualité de la plateforme par la
+            manière dont il publie, échange, commente et signale les contenus.
           </p>
         </section>
 
@@ -44,11 +49,16 @@ export default function CommunityGuidelinesPage() {
             2. Contenus encouragés
           </h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>tutoriels et explications pédagogiques (Magic Display) ;</li>
-            <li>avant / après (Magic Studio) honnêtes et non trompeurs ;</li>
+            <li>tutoriels, démonstrations et explications pédagogiques ;</li>
+            <li>avant / après honnêtes, clairs et non trompeurs ;</li>
             <li>conseils professionnels, astuces, bonnes pratiques ;</li>
             <li>
-              contenus respectueux des personnes filmées ou photographiées.
+              contenus respectueux des personnes filmées, photographiées ou
+              mentionnées ;
+            </li>
+            <li>
+              publications utiles, inspirantes ou informatives pour la
+              communauté.
             </li>
           </ul>
         </section>
@@ -63,31 +73,41 @@ export default function CommunityGuidelinesPage() {
               humiliation ciblée ;
             </li>
             <li>
-              discrimination fondée sur la race, la religion, le genre,
-              l'orientation sexuelle, le handicap ou tout autre critère protégé ;
+              discrimination fondée sur l’origine, la nationalité, la religion,
+              le sexe, le genre, l’orientation sexuelle, le handicap ou tout
+              autre critère protégé ;
             </li>
             <li>
-              nudité explicite ou contenus à caractère sexuel enfreignant les
-              lois applicables ;
+              contenus violents, choquants, sexuellement explicites ou
+              contraires aux lois applicables ;
             </li>
             <li>
-              contenus glorifiant l'automutilation ou des comportements
-              dangereux sans message de prévention ;
+              contenus faisant la promotion de comportements dangereux,
+              d’automutilation, d’activités illicites ou de pratiques
+              manifestement risquées sans cadre approprié ;
             </li>
             <li>
-              diffusion de données personnelles sensibles d'autrui (doxxing) ;
+              diffusion de données personnelles d’autrui sans autorisation
+              (doxxing, divulgation abusive, atteinte à la vie privée) ;
             </li>
-            <li>fraudes, arnaques, systèmes pyramidaux, publicité trompeuse ;</li>
             <li>
-              contenus violant les droits de propriété intellectuelle de tiers,
-              tels que définis dans la{" "}
+              fraudes, arnaques, systèmes pyramidaux, manipulations de
+              paiement, faux témoignages ou publicité trompeuse ;
+            </li>
+            <li>
+              contenus portant atteinte aux droits de propriété intellectuelle
+              de tiers, tels que définis dans la{" "}
               <Link
                 href="/legal/ip-policy"
                 className="font-medium text-indigo-600 hover:text-indigo-700"
               >
-                politique IP
+                politique relative à la propriété intellectuelle
               </Link>
-              .
+              ;
+            </li>
+            <li>
+              usurpation d’identité, faux comptes ou comportements destinés à
+              tromper la communauté.
             </li>
           </ul>
         </section>
@@ -97,15 +117,16 @@ export default function CommunityGuidelinesPage() {
             4. Utilisation par des mineurs
           </h2>
           <p className="mt-2">
-            La Plateforme n'est pas destinée aux personnes en dessous de l'âge
-            minimum indiqué dans nos{" "}
+            La plateforme n’est pas destinée aux personnes n’ayant pas atteint
+            l’âge minimum indiqué dans nos{" "}
             <Link
               href="/legal/cgu"
               className="font-medium text-indigo-600 hover:text-indigo-700"
             >
               CGU
             </Link>
-            .
+            . Les contenus impliquant des mineurs doivent respecter strictement
+            les lois applicables et les autorisations nécessaires.
           </p>
         </section>
 
@@ -114,8 +135,17 @@ export default function CommunityGuidelinesPage() {
             5. Signaler un contenu ou un comportement
           </h2>
           <p className="mt-2">
-            Utilisez la fonction <strong>« Signaler »</strong> dans l'app ou
-            écrivez-nous à{" "}
+            Si vous estimez qu’un contenu, un profil ou un comportement enfreint
+            la présente Charte, les{" "}
+            <Link
+              href="/legal/cgu"
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              CGU
+            </Link>{" "}
+            ou la loi applicable, vous pouvez utiliser la fonction{" "}
+            <strong>« Signaler »</strong> disponible sur la plateforme ou nous
+            écrire à{" "}
             <a
               href="mailto:support@magic-clock.com"
               className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -124,31 +154,49 @@ export default function CommunityGuidelinesPage() {
             </a>
             .
           </p>
+          <p className="mt-2">
+            Les signalements doivent être faits de bonne foi et avec un niveau
+            de précision suffisant pour permettre leur examen.
+          </p>
         </section>
 
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            6. Mesures possibles
+            6. Mesures possibles en cas de violation
           </h2>
           <p className="mt-2">
-            En cas de violation de la présente Charte ou des{" "}
+            En cas de violation de la présente Charte, des{" "}
             <Link
               href="/legal/cgu"
               className="font-medium text-indigo-600 hover:text-indigo-700"
             >
               CGU
             </Link>
-            , Magic Clock peut notamment&nbsp;:
+            , des{" "}
+            <Link
+              href="/legal/cgv"
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              CGV
+            </Link>{" "}
+            ou de la loi applicable, Magic Clock peut notamment :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>retirer ou limiter la visibilité d'un contenu ;</li>
-            <li>restreindre certaines fonctionnalités du compte ;</li>
-            <li>suspendre ou fermer un compte utilisateur ;</li>
+            <li>retirer un contenu ou en limiter la visibilité ;</li>
+            <li>restreindre certaines fonctionnalités d’un compte ;</li>
+            <li>suspendre temporairement un compte ;</li>
+            <li>fermer définitivement un compte ;</li>
             <li>
-              bloquer les versements liés à des contenus manifestement
-              illicites.
+              bloquer ou différer certains versements lorsqu’un contenu ou une
+              activité paraît manifestement illicite, frauduleux ou contraire
+              aux règles applicables.
             </li>
           </ul>
+          <p className="mt-2">
+            Les mesures prises dépendent de la gravité des faits, de leur
+            répétition, des éléments disponibles et des obligations légales de
+            la plateforme.
+          </p>
         </section>
       </div>
     </main>
