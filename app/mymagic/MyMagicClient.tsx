@@ -539,9 +539,13 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
             <Link href="/notifications" className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
               <Bell className="h-4 w-4" strokeWidth={1.8} />
             </Link>
-            <Link href="/legal" className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
-              <Settings className="h-4 w-4" strokeWidth={1.8} />
-            </Link>
+            <button
+  type="button"
+  onClick={() => setShowSettings(true)}
+  className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow"
+>
+  <Settings className="h-4 w-4" strokeWidth={1.8} />
+</button>
           </div>
         </div>
 
