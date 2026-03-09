@@ -1,17 +1,24 @@
 // app/monet/page.tsx
-// ✅ v4.4 ULTIMATE — Header unifié visiteur/connecté + suppression CTA bas + Lucide icons
+// ✅ v4.5 FINAL — Bear correct · emojis → Lucide icons gradient · graphique hero supprimé
 "use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BarChart2, SlidersHorizontal } from "lucide-react";
+import { BarChart2, SlidersHorizontal, Users, TrendingUp, Zap } from "lucide-react";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
 import { RealMonetPanel } from "./RealMonetPanel";
 import { SimMonetPanel } from "./SimMonetPanel";
 
 const PRIMARY_GRADIENT = "linear-gradient(135deg,#7B4BF5,#C44BDA,#F54B8F)";
+
+// Gradient texte partagé
+const GRAD_TEXT = {
+  background: "linear-gradient(135deg,#4B7BF5 0%,#7B4BF5 40%,#F54B8F 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+} as React.CSSProperties;
 
 function MonetSkeleton() {
   return (
@@ -23,7 +30,6 @@ function MonetSkeleton() {
         <div className="h-20 rounded-2xl bg-slate-100" />
       </div>
       <div className="h-40 rounded-2xl bg-slate-100" />
-      <div className="h-32 rounded-2xl bg-slate-100" />
     </div>
   );
 }
@@ -78,7 +84,7 @@ function MonetContent({
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
 
-      {/* ══ HEADER STICKY — même structure connecté / visiteur ══ */}
+      {/* ══ HEADER STICKY ══ */}
       <header
         className="sticky top-0 z-50 border-b border-slate-100 bg-white px-4 py-3 shadow-sm"
         style={{
@@ -93,6 +99,7 @@ function MonetContent({
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <div className="relative flex-shrink-0">
               {isLoggedIn ? (
+                // Avatar connecté — ring animé
                 <div className="relative h-[46px] w-[46px]">
                   <div
                     className="absolute inset-[-2px] animate-spin rounded-full"
@@ -116,22 +123,19 @@ function MonetContent({
                   </div>
                 </div>
               ) : (
-                // Visiteur : bear avec ring dégradé statique
+                // Visiteur — Bear avatar avec ring dégradé statique
                 <div className="relative h-[46px] w-[46px]">
                   <div
                     className="absolute inset-[-2px] rounded-full"
                     style={{ background: PRIMARY_GRADIENT, opacity: 0.35 }}
                   />
                   <div className="absolute inset-0 rounded-full bg-white" />
-                  <div
-                    className="absolute inset-[2px] overflow-hidden rounded-full"
-                    style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}
-                  >
+                  <div className="absolute inset-[2px] overflow-hidden rounded-full bg-slate-100">
                     <Image
-                      src="/bear-avatar.png"
+                      src="/images/magic-clock-bear/avatar.png"
                       alt="Magic Clock"
                       fill
-                      className="object-cover"
+                      className="object-cover object-top"
                     />
                   </div>
                 </div>
@@ -168,7 +172,6 @@ function MonetContent({
                 Réalité
               </button>
             ) : (
-              // Visiteur : Réalité grisé = invitation à se connecter
               <Link
                 href="/auth?next=/monet"
                 className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold text-slate-400 transition-all hover:text-violet-500"
@@ -217,33 +220,49 @@ function MonetContent({
         </div>
       </header>
 
-      {/* ══ HERO VISITEUR — badge dupliqué supprimé, CTA bas supprimé ══ */}
+      {/* ══ HERO VISITEUR — icônes Lucide + gradient cards identiques au mode connecté ══ */}
       {!isLoggedIn && activeMode === "sim" && (
         <div className="border-b border-slate-100 bg-white px-4 py-6">
           <h2 className="mb-2 text-[26px] font-black leading-tight tracking-tight text-slate-900">
             Combien peux-tu{" "}
-            <span style={{ background: PRIMARY_GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              gagner avec Magic Clock ?
-            </span>
+            <span style={GRAD_TEXT}>gagner avec Magic Clock ?</span>
           </h2>
           <p className="mb-5 text-[13px] leading-relaxed text-slate-500">
             Simule ton potentiel de revenus avec tes followers actuels.<br />
             Modèles FREE · SUB · PPV — sans rien installer.
           </p>
+
+          {/* 3 KPI cards — identiques au mode connecté, icônes Lucide */}
           <div className="grid grid-cols-3 gap-2">
-            {[
-              { icon: "👥", val: "12 450", lbl: "Followers", color: "rgba(123,75,245,.08)" },
-              { icon: "📈", val: "6 213 CHF", lbl: "/ mois", color: "rgba(196,75,218,.08)", gradient: true },
-              { icon: "⚡", val: "80%", lbl: "Tu gardes", color: "rgba(245,75,143,.08)" },
-            ].map((k, i) => (
-              <div key={i} className="rounded-2xl border border-slate-200 p-3 text-center" style={{ background: k.color }}>
-                <p className="mb-1 text-base">{k.icon}</p>
-                <p className="text-[13px] font-black" style={k.gradient ? { background: PRIMARY_GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" } : { color: "#1e293b" }}>
-                  {k.val}
-                </p>
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{k.lbl}</p>
+            {/* Followers */}
+            <div className="rounded-2xl p-3 text-center"
+              style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5)", boxShadow: "0 4px 14px rgba(75,123,245,.25)" }}>
+              <div className="mb-1.5 flex justify-center">
+                <Users size={18} strokeWidth={2} color="white" />
               </div>
-            ))}
+              <p className="text-[16px] font-black leading-none text-white">12 450</p>
+              <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Followers</p>
+            </div>
+
+            {/* Revenus */}
+            <div className="rounded-2xl p-3 text-center"
+              style={{ background: "linear-gradient(135deg,#7B4BF5,#C44BDA)", boxShadow: "0 4px 14px rgba(123,75,245,.3)" }}>
+              <div className="mb-1.5 flex justify-center">
+                <TrendingUp size={18} strokeWidth={2} color="white" />
+              </div>
+              <p className="text-[14px] font-black leading-none text-white">6 213 CHF</p>
+              <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">/ mois</p>
+            </div>
+
+            {/* Tu gardes */}
+            <div className="rounded-2xl p-3 text-center"
+              style={{ background: "linear-gradient(135deg,#C44BDA,#F54B8F)", boxShadow: "0 4px 14px rgba(196,75,218,.25)" }}>
+              <div className="mb-1.5 flex justify-center">
+                <Zap size={18} strokeWidth={2} color="white" />
+              </div>
+              <p className="text-[16px] font-black leading-none text-white">80%</p>
+              <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Tu gardes</p>
+            </div>
           </div>
         </div>
       )}
