@@ -9,7 +9,7 @@ body { @apply bg-white text-slate-900; }
 .link { @apply text-brand-600 hover:underline; }
 
 /* ============================================================
-   MAGIC CLOCK â€” Design System v2
+   MAGIC CLOCK Ã¢â‚¬â€ Design System v2
    ============================================================ */
 :root {
   --mc-1: #4B7BF5;
@@ -31,7 +31,7 @@ body { @apply bg-white text-slate-900; }
 }
 .mc-bg-gradient { background: var(--mc-gradient); }
 
-/* â”€â”€ Anneau avatar animÃ© (cercle) â€” My Magic Clock â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Anneau avatar animÃƒÂ© (cercle) Ã¢â‚¬â€ My Magic Clock Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-avatar-ring { position: relative; }
 .mc-avatar-ring::before {
   content: '';
@@ -56,7 +56,7 @@ body { @apply bg-white text-slate-900; }
   to { transform: rotate(360deg); }
 }
 
-/* â”€â”€ Bouton gradient principal â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Bouton gradient principal Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-btn-primary {
   background: var(--mc-gradient-btn);
   box-shadow: var(--mc-shadow);
@@ -72,17 +72,17 @@ body { @apply bg-white text-slate-900; }
 .mc-tab-active-indicator { position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--mc-gradient-btn); border-radius: 2px 2px 0 0; }
 
 /* ============================================================
-   MEET ME v2.3 â€” Halos cartes (mÃªme technique que mc-avatar-ring)
-   âš ï¸  overflow:hidden + border-radius sur le wrapper = clÃ© du fix
+   MEET ME v2.3 Ã¢â‚¬â€ Halos cartes (mÃƒÂªme technique que mc-avatar-ring)
+   Ã¢Å¡ Ã¯Â¸Â  overflow:hidden + border-radius sur le wrapper = clÃƒÂ© du fix
    ============================================================ */
 
-/* â”€â”€ Base commune Ã  tous les halos carte â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Base commune Ãƒ  tous les halos carte Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-card-ring-live,
 .mc-card-ring-studio,
 .mc-card-ring-idle,
 .mc-card-ring-mc {
   position: relative;
-  /* âœ… CES DEUX LIGNES SONT LE FIX â€” elles coupent le ::before qui dÃ©passe */
+  /* Ã¢Å“â€¦ CES DEUX LIGNES SONT LE FIX Ã¢â‚¬â€ elles coupent le ::before qui dÃƒÂ©passe */
   overflow: hidden;
   border-radius: 20px;
 }
@@ -90,11 +90,11 @@ body { @apply bg-white text-slate-900; }
   border-radius: 24px;
 }
 
-/* â”€â”€ LIVE â€” vert Ã©meraude â†’ cyan â†’ violet â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ LIVE Ã¢â‚¬â€ vert ÃƒÂ©meraude Ã¢â€ â€™ cyan Ã¢â€ â€™ violet Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-card-ring-live::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: 0;
   border-radius: 22px;
   background: conic-gradient(from 0deg, #4ade80 0%, #22d3ee 25%, #7B4BF5 55%, #4ade80 100%);
   animation: mc-ring-spin 3s linear infinite;
@@ -110,11 +110,11 @@ body { @apply bg-white text-slate-900; }
 }
 .mc-card-ring-live > * { position: relative; z-index: 2; }
 
-/* â”€â”€ STUDIO â€” violet â†’ magenta â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ STUDIO Ã¢â‚¬â€ violet Ã¢â€ â€™ magenta Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-card-ring-studio::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: 0;
   border-radius: 22px;
   background: conic-gradient(from 0deg, #7B4BF5 0%, #C44BDA 40%, rgba(167,139,250,.25) 60%, #7B4BF5 100%);
   animation: mc-ring-spin 6s linear infinite;
@@ -130,11 +130,11 @@ body { @apply bg-white text-slate-900; }
 }
 .mc-card-ring-studio > * { position: relative; z-index: 2; }
 
-/* â”€â”€ IDLE â€” violet subtil, fixe â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ IDLE Ã¢â‚¬â€ violet subtil, fixe Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-card-ring-idle::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: 0;
   border-radius: 22px;
   background: conic-gradient(from 0deg, rgba(123,75,245,.3) 0%, rgba(196,75,218,.2) 50%, rgba(123,75,245,.3) 100%);
   /* Pas d'animation : contour fixe pour "Actif" */
@@ -150,11 +150,11 @@ body { @apply bg-white text-slate-900; }
 }
 .mc-card-ring-idle > * { position: relative; z-index: 2; }
 
-/* â”€â”€ MC FEATURED â€” gradient signature complet â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ MC FEATURED Ã¢â‚¬â€ gradient signature complet Ã¢â€â‚¬Ã¢â€â‚¬ */
 .mc-card-ring-mc::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: 0;
   border-radius: 26px;
   background: conic-gradient(from 180deg, #4B7BF5 0%, #7B4BF5 25%, #C44BDA 50%, #F54B8F 75%, #F5834B 88%, #4B7BF5 100%);
   animation: mc-ring-spin 5s linear infinite;
@@ -170,7 +170,7 @@ body { @apply bg-white text-slate-900; }
 }
 .mc-card-ring-mc > * { position: relative; z-index: 2; }
 
-/* â”€â”€ Animations Meet me â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Animations Meet me Ã¢â€â‚¬Ã¢â€â‚¬ */
 @keyframes meetLivePulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.5; transform: scale(0.7); }
