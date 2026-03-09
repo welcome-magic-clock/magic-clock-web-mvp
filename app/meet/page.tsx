@@ -1,14 +1,8 @@
-// app/meet/page.tsx  ✅ v2.6 — FIX DÉFINITIF overflow iPhone
-//
-// ROOT CAUSE IDENTIFIÉE via inspection live :
-//   app/layout.tsx ajoute <main className="flex-1 p-4 pb-16"> autour de {children}
-//   Ce p-4 (16px) crée un décalage + empêche notre overflow-x-hidden de fonctionner
-//
-// SOLUTION : -mx-4 -mt-4 sur notre conteneur racine pour annuler le padding du layout
-//   → Notre page reprend toute la largeur du viewport
-//   → overflow-x-hidden fonctionne correctement
-//   → Pas besoin de toucher layout.tsx (qui affecte toutes les autres pages)
-
+// app/meet/page.tsx  ✅ v2.7
+// Layout identique à MyMagicClient : <main className="mx-auto max-w-lg ...">
+// Le <main> du layout (flex-1 p-4) gère déjà le plein écran
+// Pas besoin de -mx-4 ni w-screen ni overflow-x-hidden
+// Le header sticky utilise -mx-4 -mt-4 pour couvrir toute la largeur
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
@@ -76,8 +70,7 @@ export default function MeetPage() {
   const [metCreators, setMetCreators]   = useState<Set<number>>(new Set());
   const [creators, setCreators]         = useState<CreatorFull[]>(CREATORS_STATIC);
 
-  // ── Supabase — colonnes confirmées : id, handle, display_name, bio,
-  //               profession, avatar_url, followers_count ─────────────
+  // ── Supabase profiles ────────────────────────────────────────
   useEffect(() => {
     const sb = getSupabaseBrowser();
     sb.from("profiles")
@@ -129,28 +122,27 @@ export default function MeetPage() {
     setMetCreators((prev) => new Set([...prev, id]));
   }, []);
 
+  // ── Layout identique à MyMagicClient ────────────────────────
+  // <main className="mx-auto max-w-lg pb-36 pt-0">
+  // Le layout parent (flex-1 p-4 pb-16) gère déjà la pleine hauteur
+  // Notre <main> s'inscrit naturellement dedans sans déborder
   return (
-    // ✅ -mx-4 -mt-4 annule le p-4 du <main> wrapper de app/layout.tsx
-    // ✅ overflow-x-hidden bloque tout débordement horizontal
-    // ✅ Le pb-28 compense la MobileNav en bas
-    <div className="-mx-4 -mt-4 overflow-x-hidden bg-white pb-28">
+    <main className="mx-auto max-w-lg pb-36 pt-0">
 
-      {/* ── HEADER sticky ──────────────────────────────────────────
-          w-screen = pleine largeur viewport (annule le contexte flex-1)
-          overflow-hidden = coupe tout enfant qui dépasserait            */}
+      {/* HEADER sticky
+          -mx-4 annule le p-4 du layout pour couvrir toute la largeur
+          -mt-4 annule le padding-top
+          Le contenu interne est re-paddé avec px-4                    */}
       <header
-        className="sticky top-0 z-50 w-screen overflow-hidden border-b border-slate-100 bg-white/95 backdrop-blur-xl"
+        className="sticky top-0 z-50 -mx-4 -mt-4 overflow-hidden border-b border-slate-100 bg-white/95 backdrop-blur-xl"
         style={{ boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}
       >
-        {/* max-w-lg centre le contenu sur desktop, px-4 = marges */}
-        <div className="mx-auto w-full max-w-lg px-4 py-2.5">
+        <div className="mx-auto max-w-lg px-4 py-2.5">
 
-          {/* Ligne titre + badge online */}
+          {/* Titre + badge */}
           <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-                Magic Clock
-              </p>
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Magic Clock</p>
               <h1
                 className="text-[18px] font-black leading-none tracking-tight"
                 style={{
@@ -162,16 +154,13 @@ export default function MeetPage() {
                 Meet me
               </h1>
             </div>
-            <div className="ml-3 flex flex-shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-              <span
-                className="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                style={{ animation: "meetLivePulse 1.5s ease-in-out infinite" }}
-              />
+            <div className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" style={{ animation: "meetLivePulse 1.5s ease-in-out infinite" }} />
               12 en ligne
             </div>
           </div>
 
-          {/* Barre d'activité — min-w-0 + truncate = jamais de débordement */}
+          {/* Barre d'activité */}
           <div
             className="mt-2 flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-1.5"
             style={{
@@ -180,10 +169,8 @@ export default function MeetPage() {
             }}
           >
             <svg className="flex-shrink-0" width="32" height="12" viewBox="0 0 32 12" fill="none">
-              <polyline
-                points="0,6 4,3 8,8 12,2 16,7 20,4 24,9 28,3 32,6"
-                stroke="url(#wg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-              />
+              <polyline points="0,6 4,3 8,8 12,2 16,7 20,4 24,9 28,3 32,6"
+                stroke="url(#wg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <defs>
                 <linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#7B4BF5" />
@@ -192,25 +179,18 @@ export default function MeetPage() {
               </defs>
             </svg>
             <p className="min-w-0 flex-1 truncate text-[10px] text-slate-500">
-              <span className="font-bold text-slate-700">2 créateurs</span>
-              {" "}transmettent · univers actif
+              <span className="font-bold text-slate-700">2 créateurs</span>{" "}transmettent · univers actif
             </p>
-            <span
-              className="flex-shrink-0 text-[11px] font-black"
-              style={{
-                background: "linear-gradient(135deg,#7B4BF5,#F54B8F)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
+            <span className="flex-shrink-0 text-[11px] font-black"
+              style={{ background: "linear-gradient(135deg,#7B4BF5,#F54B8F)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               5
             </span>
           </div>
         </div>
       </header>
 
-      {/* ── SEARCH ── */}
-      <div className="mx-auto w-full max-w-lg px-4 pt-2.5">
+      {/* SEARCH */}
+      <div className="pt-3">
         <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
           <Search className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
           <input
@@ -222,79 +202,71 @@ export default function MeetPage() {
         </div>
       </div>
 
-      {/* ── PILLS filtres ── scroll horizontal propre ── */}
-      <div className="mx-auto w-full max-w-lg overflow-hidden">
-        <div
-          className="flex gap-1.5 overflow-x-auto px-4 py-2"
-          style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
-        >
-          {FILTERS.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveFilter(id)}
-              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
-              style={
-                activeFilter === id
-                  ? { background: "rgba(123,75,245,.08)", color: "#7B4BF5", border: "1px solid rgba(123,75,245,.22)", fontWeight: 700 }
-                  : { background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", fontWeight: 600 }
-              }
-            >
-              <Icon className="h-2.5 w-2.5" />
-              {label}
-            </button>
-          ))}
-        </div>
+      {/* PILLS filtres — -mx-4 pour déborder du max-w-lg et scroller edge-to-edge */}
+      <div
+        className="-mx-4 flex gap-1.5 overflow-x-auto px-4 py-2"
+        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+      >
+        {FILTERS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveFilter(id)}
+            className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
+            style={
+              activeFilter === id
+                ? { background: "rgba(123,75,245,.08)", color: "#7B4BF5", border: "1px solid rgba(123,75,245,.22)", fontWeight: 700 }
+                : { background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", fontWeight: 600 }
+            }
+          >
+            <Icon className="h-2.5 w-2.5" />{label}
+          </button>
+        ))}
       </div>
 
-      {/* ── GRILLE ── */}
-      <div className="mx-auto w-full max-w-lg px-4">
-        <div className="mb-2 flex items-baseline justify-between">
-          <p className="text-[12px] font-bold text-slate-800">La Constellation</p>
-          <p className="text-[10px] text-slate-400">{filtered.length + 1} créateurs</p>
-        </div>
+      {/* GRILLE */}
+      <div className="mb-2 flex items-baseline justify-between">
+        <p className="text-[12px] font-bold text-slate-800">La Constellation</p>
+        <p className="text-[10px] text-slate-400">{filtered.length + 1} créateurs</p>
+      </div>
 
-        {/* Magic Clock featured */}
-        <div className="mb-3">
-          <CreatorConstellationCard
-            creator={MC_CREATOR}
-            featured
-            isMet={metCreators.has(MC_CREATOR.id)}
-            onOpen={() => setSelected(MC_CREATOR)}
-            onMeet={() => handleMeet(MC_CREATOR.id)}
-          />
-        </div>
+      {/* Magic Clock featured */}
+      <div className="mb-3">
+        <CreatorConstellationCard
+          creator={MC_CREATOR}
+          featured
+          isMet={metCreators.has(MC_CREATOR.id)}
+          onOpen={() => setSelected(MC_CREATOR)}
+          onMeet={() => handleMeet(MC_CREATOR.id)}
+        />
+      </div>
 
-        {/* Grille 2 colonnes — gap-3 comme My Magic Clock */}
-        <div className="grid grid-cols-2 gap-3">
-          {filtered.map((c, i) => (
-            <div key={c.id} style={{ marginTop: i % 2 === 1 ? "12px" : "0" }}>
-              <CreatorConstellationCard
-                creator={c}
-                isMet={metCreators.has(c.id)}
-                onOpen={() => setSelected(c)}
-                onMeet={() => handleMeet(c.id)}
-              />
-            </div>
-          ))}
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-10 text-center">
-            <Users className="h-8 w-8 text-slate-200" />
-            <p className="text-[12px] font-semibold text-slate-400">Aucun créateur trouvé</p>
-            <button
-              type="button"
-              className="text-[11px] font-bold text-violet-600"
-              onClick={() => { setSearch(""); setActiveFilter("all"); }}
-            >
-              Réinitialiser
-            </button>
+      {/* Grille 2 colonnes */}
+      <div className="grid grid-cols-2 gap-3">
+        {filtered.map((c, i) => (
+          <div key={c.id} style={{ marginTop: i % 2 === 1 ? "12px" : "0" }}>
+            <CreatorConstellationCard
+              creator={c}
+              isMet={metCreators.has(c.id)}
+              onOpen={() => setSelected(c)}
+              onMeet={() => handleMeet(c.id)}
+            />
           </div>
-        )}
+        ))}
       </div>
 
-      {/* ── PROFILE SHEET ── */}
+      {filtered.length === 0 && (
+        <div className="flex flex-col items-center gap-2 py-10 text-center">
+          <Users className="h-8 w-8 text-slate-200" />
+          <p className="text-[12px] font-semibold text-slate-400">Aucun créateur trouvé</p>
+          <button type="button" className="text-[11px] font-bold text-violet-600"
+            onClick={() => { setSearch(""); setActiveFilter("all"); }}>
+            Réinitialiser
+          </button>
+        </div>
+      )}
+
+      {/* PROFILE SHEET */}
       {selectedCreator && (
         <CreatorProfileSheet
           creator={selectedCreator}
@@ -303,6 +275,6 @@ export default function MeetPage() {
           onClose={() => setSelected(null)}
         />
       )}
-    </div>
+    </main>
   );
 }
