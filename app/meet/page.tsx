@@ -1,7 +1,14 @@
-// app/meet/page.tsx  ✅ v2.5
-// — Fix overflow iPhone (header w-full + conteneur strict)
-// — Branchement Supabase table `profiles` pour les créateurs réels
-// — Fallback propre sur CREATORS mock si Supabase vide
+// app/meet/page.tsx  ✅ v2.6 — FIX DÉFINITIF overflow iPhone
+//
+// ROOT CAUSE IDENTIFIÉE via inspection live :
+//   app/layout.tsx ajoute <main className="flex-1 p-4 pb-16"> autour de {children}
+//   Ce p-4 (16px) crée un décalage + empêche notre overflow-x-hidden de fonctionner
+//
+// SOLUTION : -mx-4 -mt-4 sur notre conteneur racine pour annuler le padding du layout
+//   → Notre page reprend toute la largeur du viewport
+//   → overflow-x-hidden fonctionne correctement
+//   → Pas besoin de toucher layout.tsx (qui affecte toutes les autres pages)
+
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
@@ -21,12 +28,12 @@ export type CreatorFull = Creator & {
   resonance?: number;
 };
 
-// ── Données statiques enrichies (fallback + mock status/stars) ──
+// ── Enrichissement mock ──────────────────────────────────────────
 const MOCK_EXTRA: Record<number, Partial<CreatorFull>> = {
-  1: { status: "live",   stars: 4.8, magicClocks: 28, bio: "Experte balayage & soins japonais. Mes secrets de coloriste depuis 12 ans dans les meilleurs salons de Suisse romande.", isCertified: true,  resonance: 82 },
-  2: { status: "studio", stars: 4.7, magicClocks: 15, bio: "Coloriste passionnée. De Madrid au monde entier — mes techniques de balayage naturel et soins premium font voyager.", isCertified: false, resonance: 65 },
-  3: { status: "idle",   stars: 4.9, magicClocks: 41, bio: "Top coloriste lyonnaise, spécialiste blond froid et coupes structurées. 41 Magic Clocks, 18k followers fidèles.",  isCertified: true,  resonance: 73 },
-  4: { status: "live",   stars: 4.6, magicClocks: 19, bio: "Coloriste & vidéaste basée à Zurich. Je documente chaque transformation avec passion et précision.",                  isCertified: false, resonance: 58 },
+  1: { status: "live",   stars: 4.8, magicClocks: 28, bio: "Experte balayage & soins japonais. 12 ans dans les meilleurs salons de Suisse romande.", isCertified: true,  resonance: 82 },
+  2: { status: "studio", stars: 4.7, magicClocks: 15, bio: "Coloriste passionnée. De Madrid au monde entier — mes techniques font voyager.", isCertified: false, resonance: 65 },
+  3: { status: "idle",   stars: 4.9, magicClocks: 41, bio: "Top coloriste lyonnaise, spécialiste blond froid et coupes structurées.", isCertified: true,  resonance: 73 },
+  4: { status: "live",   stars: 4.6, magicClocks: 19, bio: "Coloriste & vidéaste à Zurich. Je documente chaque transformation.", isCertified: false, resonance: 58 },
 };
 
 const CREATORS_STATIC: CreatorFull[] = CREATORS.map((c) => ({
@@ -69,35 +76,36 @@ export default function MeetPage() {
   const [metCreators, setMetCreators]   = useState<Set<number>>(new Set());
   const [creators, setCreators]         = useState<CreatorFull[]>(CREATORS_STATIC);
 
-  // ── Branchement Supabase — table `profiles` ──
+  // ── Supabase — colonnes confirmées : id, handle, display_name, bio,
+  //               profession, avatar_url, followers_count ─────────────
   useEffect(() => {
     const sb = getSupabaseBrowser();
     sb.from("profiles")
-      .select("id, handle, display_name, avatar_url, bio, city, profession")
+      .select("id, handle, display_name, bio, profession, avatar_url, followers_count")
       .not("handle", "is", null)
+      .order("followers_count", { ascending: false, nullsFirst: false })
       .limit(20)
       .then(({ data, error }) => {
-        if (error || !data || data.length === 0) return; // fallback sur mock
+        if (error || !data || data.length === 0) return;
+        const STATUSES = ["live", "studio", "idle"] as const;
         const fromSupabase: CreatorFull[] = data.map((row, i) => ({
-          // Mapper les champs Supabase → CreatorFull
-          id: i + 100, // id temporaire (pas de collision avec mocks)
-          name: row.display_name ?? row.handle ?? "Créateur",
-          handle: `@${(row.handle ?? "").replace(/^@/, "")}`,
-          city: row.city ?? "—",
-          langs: ["FR"],
-          followers: Math.floor(Math.random() * 20000) + 1000, // → remplacer par vraie colonne
-          avatar: row.avatar_url ?? "",
-          access: ["FREE"] as ("FREE" | "ABO" | "PPV")[],
+          id:          1000 + i,
+          name:        row.display_name ?? row.handle ?? "Créateur",
+          handle:      `@${(row.handle ?? "").replace(/^@/, "")}`,
+          city:        "",
+          langs:       ["FR"],
+          followers:   row.followers_count ?? 0,
+          avatar:      row.avatar_url ?? "",
+          access:      ["FREE"] as ("FREE" | "ABO" | "PPV")[],
           specialties: row.profession ? [row.profession] : [],
-          bio: row.bio ?? undefined,
-          status: (["live", "studio", "idle"] as const)[i % 3],
-          stars: 4.5 + Math.random() * 0.4,
-          magicClocks: Math.floor(Math.random() * 30) + 5,
-          isCertified: i < 2,
-          resonance: 50 + Math.floor(Math.random() * 40),
+          bio:         row.bio ?? undefined,
+          status:      STATUSES[i % 3],
+          stars:       4.6 + (i % 3) * 0.1,
+          magicClocks: 5 + i * 3,
+          isCertified: i === 0,
+          resonance:   60 + (i % 4) * 10,
         }));
-        // Merge : créateurs Supabase en premier, puis mocks pour compléter
-        setCreators([...fromSupabase, ...CREATORS_STATIC].slice(0, 12));
+        setCreators([...fromSupabase, ...CREATORS_STATIC]);
       });
   }, []);
 
@@ -122,21 +130,27 @@ export default function MeetPage() {
   }, []);
 
   return (
-    // ✅ overflow-x-hidden sur main + w-screen max-w corrigé
-    <main className="min-h-screen w-full overflow-x-hidden bg-white pb-28">
+    // ✅ -mx-4 -mt-4 annule le p-4 du <main> wrapper de app/layout.tsx
+    // ✅ overflow-x-hidden bloque tout débordement horizontal
+    // ✅ Le pb-28 compense la MobileNav en bas
+    <div className="-mx-4 -mt-4 overflow-x-hidden bg-white pb-28">
 
-      {/* ── HEADER ── overflow-hidden pour bloquer tout débordement enfant */}
+      {/* ── HEADER sticky ──────────────────────────────────────────
+          w-screen = pleine largeur viewport (annule le contexte flex-1)
+          overflow-hidden = coupe tout enfant qui dépasserait            */}
       <header
-        className="sticky top-0 z-50 w-full overflow-hidden border-b border-slate-100 bg-white/95 backdrop-blur-xl"
+        className="sticky top-0 z-50 w-screen overflow-hidden border-b border-slate-100 bg-white/95 backdrop-blur-xl"
         style={{ boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}
       >
-        {/* Conteneur centré + max-w-lg identique à My Magic Clock */}
+        {/* max-w-lg centre le contenu sur desktop, px-4 = marges */}
         <div className="mx-auto w-full max-w-lg px-4 py-2.5">
 
-          {/* Titre + badge en ligne */}
+          {/* Ligne titre + badge online */}
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Magic Clock</p>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                Magic Clock
+              </p>
               <h1
                 className="text-[18px] font-black leading-none tracking-tight"
                 style={{
@@ -148,13 +162,16 @@ export default function MeetPage() {
                 Meet me
               </h1>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 flex-shrink-0">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" style={{ animation: "meetLivePulse 1.5s ease-in-out infinite" }} />
+            <div className="ml-3 flex flex-shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                style={{ animation: "meetLivePulse 1.5s ease-in-out infinite" }}
+              />
               12 en ligne
             </div>
           </div>
 
-          {/* Barre d'activité — truncate pour ne jamais déborder */}
+          {/* Barre d'activité — min-w-0 + truncate = jamais de débordement */}
           <div
             className="mt-2 flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-1.5"
             style={{
@@ -163,8 +180,10 @@ export default function MeetPage() {
             }}
           >
             <svg className="flex-shrink-0" width="32" height="12" viewBox="0 0 32 12" fill="none">
-              <polyline points="0,6 4,3 8,8 12,2 16,7 20,4 24,9 28,3 32,6"
-                stroke="url(#wg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline
+                points="0,6 4,3 8,8 12,2 16,7 20,4 24,9 28,3 32,6"
+                stroke="url(#wg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              />
               <defs>
                 <linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#7B4BF5" />
@@ -173,7 +192,8 @@ export default function MeetPage() {
               </defs>
             </svg>
             <p className="min-w-0 flex-1 truncate text-[10px] text-slate-500">
-              <span className="font-bold text-slate-700">2 créateurs</span> transmettent · univers actif
+              <span className="font-bold text-slate-700">2 créateurs</span>
+              {" "}transmettent · univers actif
             </p>
             <span
               className="flex-shrink-0 text-[11px] font-black"
@@ -202,7 +222,7 @@ export default function MeetPage() {
         </div>
       </div>
 
-      {/* ── PILLS filtres ── overflow-x-auto pour scroll horizontal sans déborder */}
+      {/* ── PILLS filtres ── scroll horizontal propre ── */}
       <div className="mx-auto w-full max-w-lg overflow-hidden">
         <div
           className="flex gap-1.5 overflow-x-auto px-4 py-2"
@@ -220,13 +240,14 @@ export default function MeetPage() {
                   : { background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", fontWeight: 600 }
               }
             >
-              <Icon className="h-2.5 w-2.5" />{label}
+              <Icon className="h-2.5 w-2.5" />
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── CONTENU principal ── */}
+      {/* ── GRILLE ── */}
       <div className="mx-auto w-full max-w-lg px-4">
         <div className="mb-2 flex items-baseline justify-between">
           <p className="text-[12px] font-bold text-slate-800">La Constellation</p>
@@ -282,6 +303,6 @@ export default function MeetPage() {
           onClose={() => setSelected(null)}
         />
       )}
-    </main>
+    </div>
   );
 }
