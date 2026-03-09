@@ -5,7 +5,7 @@ import MobileTabs from "@/components/MobileTabs";
 import { CookieBanner } from "@/components/legal/CookieBanner";
 
 export const metadata: Metadata = {
-  title: "Magic Clock® – It’s time to smile!",
+  title: "Magic Clock® – It's time to smile!",
   description:
     "Magic Clock®, la plateforme pour partager tes techniques et faire grandir tes projets.",
   icons: {
@@ -34,7 +34,7 @@ export default function RootLayout({
         <div className="min-h-screen flex">
           <LeftNav />
 
-          <main className="flex-1 p-4 pb-16 md:pb-4">
+          <main className="flex-1 p-4 pb-16 md:pb-4 overflow-x-hidden">
             {children}
           </main>
         </div>
