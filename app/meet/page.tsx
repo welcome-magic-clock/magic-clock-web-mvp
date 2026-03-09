@@ -227,8 +227,7 @@ export default function MeetPage() {
         <p className="text-[10px] text-slate-400">{filtered.length + 1} créateurs</p>
       </div>
 
-      {/* FEATURED — overflow-hidden sur le wrapper pour bloquer mc-card-ring-mc */}
-      <div className="mb-3 overflow-hidden rounded-[23px]">
+      <div className="mb-3">
         <CreatorConstellationCard
           creator={mcCreator}
           featured
