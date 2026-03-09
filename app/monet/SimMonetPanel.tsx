@@ -1,9 +1,9 @@
 // app/monet/SimMonetPanel.tsx
-// ✅ v4.4 ULTIMATE — Icônes Lucide React partout + gradient unifié
+// ✅ v4.5 FINAL — KPI cards Lucide icons + gradient identique RealMonetPanel
 "use client";
 
 import { useState } from "react";
-import { Users, RefreshCw, Zap, DollarSign, Percent } from "lucide-react";
+import { Users, RefreshCw, Zap, DollarSign, Percent, TrendingUp } from "lucide-react";
 import {
   CreatorLight,
   COUNTRY_VAT_TABLE,
@@ -18,6 +18,7 @@ import {
 
 type Props = { creator?: CreatorLight };
 
+// Gradient texte — identique page.tsx et RealMonetPanel
 const GRAD = {
   background: "linear-gradient(135deg,#4B7BF5 0%,#7B4BF5 40%,#F54B8F 100%)",
   WebkitBackgroundClip: "text",
@@ -26,28 +27,74 @@ const GRAD = {
 
 export function SimMonetPanel({ creator }: Props) {
   const [simFollowers, setSimFollowers] = useState(creator?.followers ?? 5000);
-  const [simLikes, setSimLikes] = useState(creator?.likes ?? 3200);
-  const [simAboPrice, setSimAboPrice] = useState(9.99);
-  const [simAboConv, setSimAboConv] = useState(3);
-  const [simPpvPrice, setSimPpvPrice] = useState(0.99);
-  const [simPpvConv, setSimPpvConv] = useState(0);
+  const [simLikes, setSimLikes]         = useState(creator?.likes ?? 3200);
+  const [simAboPrice, setSimAboPrice]   = useState(9.99);
+  const [simAboConv, setSimAboConv]     = useState(3);
+  const [simPpvPrice, setSimPpvPrice]   = useState(0.99);
+  const [simPpvConv, setSimPpvConv]     = useState(0);
   const [simPpvPerBuyer, setSimPpvPerBuyer] = useState(100);
   const [simCountryCode, setSimCountryCode] = useState(CURRENT_COUNTRY.code);
 
-  const simCountry = COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ?? CURRENT_COUNTRY;
-  const vatRate = simCountry.vatRate;
-  const simTier = getTierFromLikes(simLikes);
-  const priceTier = getPriceTierFromPrice(simPpvPrice);
+  const simCountry  = COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ?? CURRENT_COUNTRY;
+  const vatRate     = simCountry.vatRate;
+  const simTier     = getTierFromLikes(simLikes);
+  const priceTier   = getPriceTierFromPrice(simPpvPrice);
 
-  const aboSubs = (simFollowers * simAboConv) / 100;
+  const aboSubs  = (simFollowers * simAboConv) / 100;
   const ppvBuyers = (simFollowers * simPpvConv) / 100;
   const grossAbos = aboSubs * simAboPrice;
-  const grossPpv = ppvBuyers * simPpvPrice * simPpvPerBuyer;
+  const grossPpv  = ppvBuyers * simPpvPrice * simPpvPerBuyer;
   const grossTotal = grossAbos + grossPpv;
-  const { vatAmount, netBase, platformShareNet, creatorShareNet } = computeVatAndShares(grossTotal, priceTier, vatRate);
+  const { vatAmount, netBase, platformShareNet, creatorShareNet } =
+    computeVatAndShares(grossTotal, priceTier, vatRate);
+
+  // Taux conservé pour la 3e KPI card
+  const creatorPct = Math.round(priceTier.creatorRate * 100);
 
   return (
     <div className="space-y-0 pb-8">
+
+      {/* ── KPI CARDS 3 colonnes — identiques au mode connecté ── */}
+      <div className="grid grid-cols-3 gap-2 px-4 pt-3">
+        {/* Followers */}
+        <div className="rounded-2xl p-3 text-center"
+          style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5)", boxShadow: "0 4px 14px rgba(75,123,245,.25)" }}>
+          <div className="mb-1.5 flex justify-center">
+            <Users size={18} strokeWidth={2} color="white" />
+          </div>
+          <p className="text-[15px] font-black leading-none text-white">
+            {simFollowers >= 1000
+              ? `${(simFollowers / 1000).toFixed(simFollowers >= 10000 ? 0 : 1)}k`
+              : simFollowers.toLocaleString("fr-CH")}
+          </p>
+          <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Followers</p>
+        </div>
+
+        {/* Revenus / mois */}
+        <div className="rounded-2xl p-3 text-center"
+          style={{ background: "linear-gradient(135deg,#7B4BF5,#C44BDA)", boxShadow: "0 4px 14px rgba(123,75,245,.3)" }}>
+          <div className="mb-1.5 flex justify-center">
+            <TrendingUp size={18} strokeWidth={2} color="white" />
+          </div>
+          <p className="text-[13px] font-black leading-none text-white">
+            {grossTotal >= 1000
+              ? `${Math.round(grossTotal / 100) / 10}k`
+              : Math.round(grossTotal).toLocaleString("fr-CH")}{" "}
+            CHF
+          </p>
+          <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">/ mois</p>
+        </div>
+
+        {/* Tu gardes */}
+        <div className="rounded-2xl p-3 text-center"
+          style={{ background: "linear-gradient(135deg,#C44BDA,#F54B8F)", boxShadow: "0 4px 14px rgba(196,75,218,.25)" }}>
+          <div className="mb-1.5 flex justify-center">
+            <Zap size={18} strokeWidth={2} color="white" />
+          </div>
+          <p className="text-[15px] font-black leading-none text-white">{creatorPct}%</p>
+          <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Tu gardes</p>
+        </div>
+      </div>
 
       {/* ── AUDIENCE ── */}
       <div className="mx-4 mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
