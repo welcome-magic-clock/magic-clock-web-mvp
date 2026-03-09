@@ -1,8 +1,17 @@
-// app/meet/page.tsx  ✅ v2.7
-// Layout identique à MyMagicClient : <main className="mx-auto max-w-lg ...">
-// Le <main> du layout (flex-1 p-4) gère déjà le plein écran
-// Pas besoin de -mx-4 ni w-screen ni overflow-x-hidden
-// Le header sticky utilise -mx-4 -mt-4 pour couvrir toute la largeur
+// app/meet/page.tsx  ✅ v2.8 — FIX DÉFINITIF
+//
+// DIAGNOSTIC PRÉCIS (via inspection live) :
+//   Sur iPhone 390px :
+//   - layout <main flex-1 p-4> = 390px de large
+//   - notre <main mx-auto max-w-lg> = 390px (max-w-lg=512, mais contraint à 390)
+//   - -mx-4 sur header/pills = 390 + 32px = 422px → DÉBORDEMENT DE 32px
+//
+// SOLUTION FINALE :
+//   Le header devient `position: fixed` pleine largeur viewport (comme MobileTabs)
+//   → Il ne dépend plus du contexte flex parent
+//   → Un padding-top compense l'espace occupé par le header fixed
+//   → Les pills utilisent `overflow-x-auto` sans -mx (pas de marge négative)
+
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
@@ -22,7 +31,6 @@ export type CreatorFull = Creator & {
   resonance?: number;
 };
 
-// ── Enrichissement mock ──────────────────────────────────────────
 const MOCK_EXTRA: Record<number, Partial<CreatorFull>> = {
   1: { status: "live",   stars: 4.8, magicClocks: 28, bio: "Experte balayage & soins japonais. 12 ans dans les meilleurs salons de Suisse romande.", isCertified: true,  resonance: 82 },
   2: { status: "studio", stars: 4.7, magicClocks: 15, bio: "Coloriste passionnée. De Madrid au monde entier — mes techniques font voyager.", isCertified: false, resonance: 65 },
@@ -70,7 +78,6 @@ export default function MeetPage() {
   const [metCreators, setMetCreators]   = useState<Set<number>>(new Set());
   const [creators, setCreators]         = useState<CreatorFull[]>(CREATORS_STATIC);
 
-  // ── Supabase profiles ────────────────────────────────────────
   useEffect(() => {
     const sb = getSupabaseBrowser();
     sb.from("profiles")
@@ -122,21 +129,29 @@ export default function MeetPage() {
     setMetCreators((prev) => new Set([...prev, id]));
   }, []);
 
-  // ── Layout identique à MyMagicClient ────────────────────────
-  // <main className="mx-auto max-w-lg pb-36 pt-0">
-  // Le layout parent (flex-1 p-4 pb-16) gère déjà la pleine hauteur
-  // Notre <main> s'inscrit naturellement dedans sans déborder
   return (
+    // Même racine que MyMagicClient — pas de trick de marge
     <main className="mx-auto max-w-lg pb-36 pt-0">
 
-      {/* HEADER sticky
-          -mx-4 annule le p-4 du layout pour couvrir toute la largeur
-          -mt-4 annule le padding-top
-          Le contenu interne est re-paddé avec px-4                    */}
+      {/* ══ HEADER
+          position: fixed + left-0 right-0 = TOUJOURS pleine largeur viewport
+          Jamais de débordement quel que soit le contexte parent
+          top = 0 car le layout n'a pas de header global fixe               */}
       <header
-        className="sticky top-0 z-50 -mx-4 -mt-4 overflow-hidden border-b border-slate-100 bg-white/95 backdrop-blur-xl"
-        style={{ boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          background: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: "1px solid #f1f5f9",
+          boxShadow: "0 1px 4px rgba(0,0,0,.04)",
+        }}
       >
+        {/* Centrage max-w-lg + px-4 identique au reste du contenu */}
         <div className="mx-auto max-w-lg px-4 py-2.5">
 
           {/* Titre + badge */}
@@ -162,7 +177,7 @@ export default function MeetPage() {
 
           {/* Barre d'activité */}
           <div
-            className="mt-2 flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-1.5"
+            className="mt-2 flex items-center gap-2 rounded-xl px-2.5 py-1.5"
             style={{
               background: "linear-gradient(160deg,rgba(75,123,245,.05),rgba(196,75,218,.04))",
               border: "1px solid rgba(123,75,245,.1)",
@@ -189,23 +204,26 @@ export default function MeetPage() {
         </div>
       </header>
 
+      {/* Espace pour compenser le header fixed
+          header = py-2.5 (10px×2) + h1 (~22px) + barre (~32px) + mt-2 = ~76px
+          On ajoute une marge généreuse de 90px                              */}
+      <div style={{ height: 90 }} />
+
       {/* SEARCH */}
-      <div className="pt-3">
-        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <Search className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-          <input
-            className="min-w-0 flex-1 bg-transparent text-[12px] text-slate-800 outline-none placeholder:text-slate-400"
-            placeholder="Nom, spécialité, ville…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+        <Search className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+        <input
+          className="min-w-0 flex-1 bg-transparent text-[12px] text-slate-800 outline-none placeholder:text-slate-400"
+          placeholder="Nom, spécialité, ville…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {/* PILLS filtres — -mx-4 pour déborder du max-w-lg et scroller edge-to-edge */}
+      {/* PILLS — overflow-x-auto simple, pas de -mx */}
       <div
-        className="-mx-4 flex gap-1.5 overflow-x-auto px-4 py-2"
-        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+        className="flex gap-1.5 overflow-x-auto py-2"
+        style={{ scrollbarWidth: "none" } as React.CSSProperties}
       >
         {FILTERS.map(({ id, label, Icon }) => (
           <button
@@ -230,7 +248,6 @@ export default function MeetPage() {
         <p className="text-[10px] text-slate-400">{filtered.length + 1} créateurs</p>
       </div>
 
-      {/* Magic Clock featured */}
       <div className="mb-3">
         <CreatorConstellationCard
           creator={MC_CREATOR}
@@ -241,7 +258,6 @@ export default function MeetPage() {
         />
       </div>
 
-      {/* Grille 2 colonnes */}
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((c, i) => (
           <div key={c.id} style={{ marginTop: i % 2 === 1 ? "12px" : "0" }}>
@@ -266,7 +282,6 @@ export default function MeetPage() {
         </div>
       )}
 
-      {/* PROFILE SHEET */}
       {selectedCreator && (
         <CreatorProfileSheet
           creator={selectedCreator}
