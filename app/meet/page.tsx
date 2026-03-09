@@ -165,7 +165,7 @@ export default function MeetPage() {
           boxShadow: "0 1px 4px rgba(0,0,0,.04)",
         }}
       >
-        <div className="mx-auto max-w-lg px-4 py-2.5">
+        <div className="px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Magic Clock</p>
