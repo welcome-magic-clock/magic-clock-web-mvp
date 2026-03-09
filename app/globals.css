@@ -9,16 +9,13 @@ body { @apply bg-slate-50 text-slate-900; }
 .link { @apply text-brand-600 hover:underline; }
 /* ============================================================
    MAGIC CLOCK â€” Design System v2
-   Ã€ AJOUTER dans app/globals.css, dans le bloc :root existant
    ============================================================ */
 :root {
-  /* â”€â”€ Gradient Magic Clock (couleurs du logo dÃ©posÃ©) â”€â”€ */
-  --mc-1: #4B7BF5;   /* bleu */
-  --mc-2: #7B4BF5;   /* violet */
-  --mc-3: #C44BDA;   /* magenta */
-  --mc-4: #F54B8F;   /* rose */
-  --mc-5: #F5834B;   /* orange */
-  /* Gradient linÃ©aire principal */
+  --mc-1: #4B7BF5;
+  --mc-2: #7B4BF5;
+  --mc-3: #C44BDA;
+  --mc-4: #F54B8F;
+  --mc-5: #F5834B;
   --mc-gradient: linear-gradient(135deg,
     #4B7BF5 0%,
     #7B4BF5 30%,
@@ -26,30 +23,24 @@ body { @apply bg-slate-50 text-slate-900; }
     #F54B8F 80%,
     #F5834B 100%
   );
-  /* Pour Tailwind (used via style={{ background: 'var(--mc-gradient)' }}) */
   --mc-gradient-btn: linear-gradient(135deg, #4B7BF5 0%, #7B4BF5 40%, #F54B8F 100%);
-  /* Shadow colorÃ©e pour les boutons gradient */
   --mc-shadow: 0 4px 16px rgba(123, 75, 245, 0.35);
   --mc-shadow-lg: 0 6px 24px rgba(123, 75, 245, 0.4);
-  /* Cover background trÃ¨s subtil */
   --mc-cover-bg: linear-gradient(160deg,
     rgba(75, 123, 245, 0.07) 0%,
     rgba(196, 75, 218, 0.05) 50%,
     rgba(245, 131, 75, 0.04) 100%
   );
 }
-/* â”€â”€ Classe utilitaire gradient texte â”€â”€ */
 .mc-text-gradient {
   background: var(--mc-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-/* â”€â”€ Classe utilitaire gradient fond â”€â”€ */
 .mc-bg-gradient {
   background: var(--mc-gradient);
 }
-/* â”€â”€ Anneau avatar animÃ© â”€â”€ */
 .mc-avatar-ring {
   position: relative;
 }
@@ -85,7 +76,6 @@ body { @apply bg-slate-50 text-slate-900; }
 @keyframes mc-ring-spin {
   to { transform: rotate(360deg); }
 }
-/* â”€â”€ Bouton gradient principal â”€â”€ */
 .mc-btn-primary {
   background: var(--mc-gradient-btn);
   box-shadow: var(--mc-shadow);
@@ -102,7 +92,6 @@ body { @apply bg-slate-50 text-slate-900; }
 .mc-btn-primary:active {
   transform: scale(0.97);
 }
-/* â”€â”€ Progress bar gradient â”€â”€ */
 .mc-progress-bar {
   height: 4px;
   background: #f1f5f9;
@@ -114,7 +103,6 @@ body { @apply bg-slate-50 text-slate-900; }
   background: var(--mc-gradient-btn);
   border-radius: 2px;
 }
-/* â”€â”€ Dot gradient (titres de section) â”€â”€ */
 .mc-dot {
   width: 7px;
   height: 7px;
@@ -123,7 +111,6 @@ body { @apply bg-slate-50 text-slate-900; }
   flex-shrink: 0;
   display: inline-block;
 }
-/* â”€â”€ Tab active indicator â”€â”€ */
 .mc-tab-active-indicator {
   position: absolute;
   bottom: -1px;
@@ -135,21 +122,29 @@ body { @apply bg-slate-50 text-slate-900; }
 }
 
 /* ============================================================
-   MEET ME v2.1 â€” Animations halos & bottom sheet
+   MEET ME v2.2 â€” Halo anneau propre Â· animations Â· bottom sheet
    ============================================================ */
 
-/* Rotation du halo conic-gradient (anneau vivant des crÃ©ateurs) */
+/* Rotation du wrapper halo â€” le conic-gradient tourne */
 @keyframes mcHaloSpin {
-  to { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* Pulsation du dot de statut Live */
+/* Contre-rotation exacte sur le div intÃ©rieur
+   â†’ le contenu reste parfaitement droit, seul l'anneau colorÃ© tourne */
+@keyframes mcHaloSpinReverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* Pulsation du dot de statut Live / Studio */
 @keyframes meetLivePulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.5; transform: scale(0.7); }
 }
 
-/* Animation d'entrÃ©e de la bottom sheet profil */
+/* EntrÃ©e de la bottom sheet profil pleine hauteur */
 @keyframes sheetUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
