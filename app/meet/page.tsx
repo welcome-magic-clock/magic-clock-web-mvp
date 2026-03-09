@@ -9,7 +9,7 @@
 //   1. FeaturedCard wrappée dans overflow-hidden → géré dans CreatorConstellationCard
 //      mais on ajoute un wrapper overflow-hidden ici pour être sûr
 //   2. MC_CREATOR.avatar → remplacé par la vraie photo Supabase au montage
-//   3. Header fixed left-0 right-0 conservé (propre et indépendant du layout)
+//   3. Header dans le flux normal — identique pattern MyMagicClient (pas de fixed)
 
 "use client";
 
@@ -152,20 +152,8 @@ export default function MeetPage() {
   return (
     <main className="mx-auto max-w-lg pb-36 pt-0">
 
-      {/* HEADER fixed — indépendant du layout, jamais de débordement */}
-      <header
-        style={{
-          position: "fixed",
-          top: 0, left: 0, right: 0,
-          zIndex: 50,
-          background: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderBottom: "1px solid #f1f5f9",
-          boxShadow: "0 1px 4px rgba(0,0,0,.04)",
-        }}
-      >
-        <div className="px-4 py-2.5">
+      {/* HEADER dans le flux — pas de fixed, pas de débordement */}
+      <div className="pb-2">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Magic Clock</p>
@@ -191,11 +179,7 @@ export default function MeetPage() {
             <span className="flex-shrink-0 text-[11px] font-black"
               style={{ background: "linear-gradient(135deg,#7B4BF5,#F54B8F)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>5</span>
           </div>
-        </div>
-      </header>
-
-      {/* Espace pour le header fixed (~88px) */}
-      <div style={{ height: 88 }} />
+      </div>
 
       {/* SEARCH */}
       <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
