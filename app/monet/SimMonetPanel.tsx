@@ -289,8 +289,8 @@ export function SimMonetPanel({ creator }: Props) {
           style={{ background: "linear-gradient(135deg,rgba(123,75,245,.06),rgba(196,75,218,.06))", border: "1px solid rgba(123,75,245,.12)" }}>
           <div>
             {/* ✅ "Tu gardes" → "Tu gagnes" */}
-            <p className="text-[13px] font-bold text-slate-800">Tu gagnes estimé</p>
-            <p className="text-[10px] text-slate-400">Après TVA + commission · versé le 15</p>
+            <p className="text-[13px] font-bold text-slate-800">Gain estimé</p>
+            <p className="text-[10px] text-slate-400">Après TVA + commission · versement le 15 du mois</p>
           </div>
           <p className="text-[24px] font-black leading-tight" style={GRAD}>
             {formatMoney(creatorShareNet)}
