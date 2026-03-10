@@ -1,6 +1,6 @@
 // app/settings/kyc/page.tsx
 // ✅ v1.0 — Statut KYC Stripe Connect
-import { createClient } from "@/core/supabase/server";
+import { getSupabaseServer } from "@/core/supabase/server";
 import { redirect }     from "next/navigation";
 import Link             from "next/link";
 import { ChevronLeft, Shield, CheckCircle, Clock, AlertTriangle, ExternalLink } from "lucide-react";
@@ -8,7 +8,7 @@ import { ChevronLeft, Shield, CheckCircle, Clock, AlertTriangle, ExternalLink } 
 const PRIMARY_GRADIENT = "linear-gradient(135deg,#7B4BF5,#C44BDA,#F54B8F)";
 
 export default async function KycPage() {
-  const supabase = await createClient();
+  const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
