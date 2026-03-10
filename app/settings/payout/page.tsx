@@ -1,6 +1,6 @@
 // app/settings/payout/page.tsx
 // ✅ v1.0 — Compte bancaire + calendrier versements Stripe
-import { createClient } from "@/core/supabase/server";
+import { getSupabaseServer } from "@/core/supabase/server";
 import { redirect }     from "next/navigation";
 import Link             from "next/link";
 import { ChevronLeft, Wallet, Calendar, Shield, ExternalLink, CreditCard } from "lucide-react";
@@ -13,7 +13,7 @@ const GRAD = {
 const PRIMARY_GRADIENT = "linear-gradient(135deg,#7B4BF5,#C44BDA,#F54B8F)";
 
 export default async function PayoutPage() {
-  const supabase = await createClient();
+  const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
