@@ -1,9 +1,10 @@
 // app/meet/page.tsx
-// ✅ v3.0 — Header supprimé · Search sticky scroll-aware · Pills redessinées · Grille directe
+// ✅ v3.1 — Pills réordonnées : Tous · FREE · Abonnement · PPV · Expert · En direct
+
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Users, Radio, Brush, Scissors, Star, BadgeDollarSign } from "lucide-react";
+import { Users, Radio, Star, Scissors, BadgeDollarSign, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CREATORS } from "@/features/meet/creators";
 import { CreatorConstellationCard } from "@/features/meet/CreatorConstellationCard";
@@ -22,9 +23,9 @@ export type CreatorFull = Creator & {
 
 const MOCK_EXTRA: Record<number, Partial<CreatorFull>> = {
   1: { status: "live",   stars: 4.8, magicClocks: 28, bio: "Experte balayage & soins japonais. 12 ans dans les meilleurs salons.", isCertified: true,  resonance: 82 },
-  2: { status: "studio", stars: 4.7, magicClocks: 15, bio: "Coloriste passionnée. De Madrid au monde entier.",                     isCertified: false, resonance: 65 },
-  3: { status: "idle",   stars: 4.9, magicClocks: 41, bio: "Top coloriste lyonnaise, blond froid et coupes structurées.",           isCertified: true,  resonance: 73 },
-  4: { status: "live",   stars: 4.6, magicClocks: 19, bio: "Coloriste & vidéaste à Zurich.",                                        isCertified: false, resonance: 58 },
+  2: { status: "studio", stars: 4.7, magicClocks: 15, bio: "Coloriste passionnée. De Madrid au monde entier.",                   isCertified: false, resonance: 65 },
+  3: { status: "idle",   stars: 4.9, magicClocks: 41, bio: "Top coloriste lyonnaise, blond froid et coupes structurées.",        isCertified: true,  resonance: 73 },
+  4: { status: "live",   stars: 4.6, magicClocks: 19, bio: "Coloriste & vidéaste à Zurich.",                                     isCertified: false, resonance: 58 },
 };
 
 const CREATORS_STATIC: CreatorFull[] = CREATORS.map((c) => ({
@@ -32,40 +33,36 @@ const CREATORS_STATIC: CreatorFull[] = CREATORS.map((c) => ({
   ...(MOCK_EXTRA[c.id] ?? { status: "idle" as const, stars: 4.5, magicClocks: 5, resonance: 50 }),
 }));
 
-type FilterId = "all" | "live" | "studio" | "abo" | "ppv" | "expert";
+// ── Ordre : Tous · FREE · Abonnement · PPV · Expert · En direct
+type FilterId = "all" | "free" | "abo" | "ppv" | "expert" | "live";
 
 const FILTERS: { id: FilterId; label: string; Icon: React.FC<{ className?: string }> }[] = [
-  { id: "all",    label: "Tous",        Icon: Users            },
-  { id: "live",   label: "En direct",   Icon: Radio            },
-  { id: "studio", label: "En création", Icon: Brush            },
-  { id: "abo",    label: "Abonnement",  Icon: Star             },
-  { id: "ppv",    label: "PPV",         Icon: Scissors         },
-  { id: "expert", label: "Expert",      Icon: BadgeDollarSign  },
+  { id: "all",    label: "Tous",        Icon: Users          },
+  { id: "free",   label: "FREE",        Icon: Zap            },
+  { id: "abo",    label: "Abonnement",  Icon: Star           },
+  { id: "ppv",    label: "PPV",         Icon: Scissors       },
+  { id: "expert", label: "Expert",      Icon: BadgeDollarSign },
+  { id: "live",   label: "En direct",   Icon: Radio          },
 ];
 
 export default function MeetPage() {
   const router = useRouter();
-  const [search, setSearch]           = useState("");
+  const [search, setSearch]             = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [selectedCreator, setSelected]  = useState<CreatorFull | null>(null);
   const [metCreators, setMetCreators]   = useState<Set<number>>(new Set());
   const [creators, setCreators]         = useState<CreatorFull[]>(CREATORS_STATIC);
 
-  // Search sticky : disparaît au scroll bas, réapparaît au scroll haut
-  const searchRef    = useRef<HTMLDivElement>(null);
-  const lastScrollY  = useRef(0);
+  // Search sticky
+  const lastScrollY = useRef(0);
   const [searchVisible, setSearchVisible] = useState(true);
 
   useEffect(() => {
     const onScroll = () => {
       const current = window.scrollY;
-      if (current < 10) {
-        setSearchVisible(true);
-      } else if (current > lastScrollY.current + 8) {
-        setSearchVisible(false); // scroll bas
-      } else if (current < lastScrollY.current - 8) {
-        setSearchVisible(true);  // scroll haut
-      }
+      if (current < 10)                        setSearchVisible(true);
+      else if (current > lastScrollY.current + 8) setSearchVisible(false);
+      else if (current < lastScrollY.current - 8) setSearchVisible(true);
       lastScrollY.current = current;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -105,10 +102,7 @@ export default function MeetPage() {
   }, []);
 
   const handleFilterClick = useCallback((id: FilterId) => {
-    if (id === "live") {
-      router.push("/meet/live");
-      return;
-    }
+    if (id === "live") { router.push("/meet/live"); return; }
     setActiveFilter(id);
   }, [router]);
 
@@ -122,9 +116,9 @@ export default function MeetPage() {
 
     const matchFilter =
       activeFilter === "all"    ? true :
-      activeFilter === "studio" ? c.status === "studio" :
-      activeFilter === "abo"    ? c.access.includes("ABO") :
-      activeFilter === "ppv"    ? c.access.includes("PPV") :
+      activeFilter === "free"   ? c.access.includes("FREE") :
+      activeFilter === "abo"    ? c.access.includes("ABO")  :
+      activeFilter === "ppv"    ? c.access.includes("PPV")  :
       activeFilter === "expert" ? (c.access.includes("ABO") && c.access.includes("PPV")) :
       true;
 
@@ -140,12 +134,11 @@ export default function MeetPage() {
 
       {/* ── SEARCH + PILLS — sticky scroll-aware ── */}
       <div
-        ref={searchRef}
         className="sticky top-0 z-30 pb-2 pt-3 transition-all duration-300"
         style={{
           background: "linear-gradient(to bottom, rgba(248,250,252,1) 80%, rgba(248,250,252,0))",
           transform: searchVisible ? "translateY(0)" : "translateY(-110%)",
-          opacity: searchVisible ? 1 : 0,
+          opacity:   searchVisible ? 1 : 0,
         }}
       >
         {/* Barre de recherche */}
@@ -161,7 +154,9 @@ export default function MeetPage() {
           />
           {search && (
             <button type="button" onClick={() => setSearch("")} className="text-slate-400 hover:text-slate-600">
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
             </button>
           )}
         </div>
@@ -178,18 +173,8 @@ export default function MeetPage() {
                 className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[10px] transition-all active:scale-95"
                 style={
                   isActive
-                    ? {
-                        background: "linear-gradient(135deg,rgba(75,123,245,.12),rgba(123,75,245,.1))",
-                        color: "#7B4BF5",
-                        border: "1px solid rgba(123,75,245,.25)",
-                        fontWeight: 700,
-                      }
-                    : {
-                        background: "white",
-                        color: "#64748b",
-                        border: "1px solid #e2e8f0",
-                        fontWeight: 600,
-                      }
+                    ? { background: "linear-gradient(135deg,rgba(75,123,245,.12),rgba(123,75,245,.1))", color: "#7B4BF5", border: "1px solid rgba(123,75,245,.25)", fontWeight: 700 }
+                    : { background: "white", color: "#64748b", border: "1px solid #e2e8f0", fontWeight: 600 }
                 }
               >
                 <Icon className="h-2.5 w-2.5" />
@@ -200,7 +185,7 @@ export default function MeetPage() {
         </div>
       </div>
 
-      {/* ── GRILLE 2 colonnes — directe, sans featured card ── */}
+      {/* ── GRILLE 2 colonnes ── */}
       <div className="mt-3 grid grid-cols-2 gap-3">
         {filtered.map((c, i) => (
           <div key={c.id} style={{ marginTop: i % 2 === 1 ? "12px" : "0" }}>
