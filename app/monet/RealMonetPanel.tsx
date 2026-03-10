@@ -9,7 +9,7 @@ import {
   Percent, Users, Shield, Edit2, Check, X, AlertTriangle,
   ChevronRight, Clock,
 } from "lucide-react";
-import { createClient } from "@/core/supabase/browser";
+import { getSupabaseBrowser } from "@/core/supabase/browser";
 import {
   CreatorLight,
   CURRENT_COUNTRY,
@@ -70,7 +70,7 @@ type SocialFollowers = Record<string, number>;
 type Props = { creator?: CreatorLight };
 
 export function RealMonetPanel({ creator }: Props) {
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
   const vatRate  = CURRENT_COUNTRY.vatRate;
 
   // ── State Supabase ────────────────────────────────────────
