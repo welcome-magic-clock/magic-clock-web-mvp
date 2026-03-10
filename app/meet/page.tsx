@@ -1,5 +1,5 @@
 // app/meet/page.tsx
-// ✅ v3.1 — Pills réordonnées : Tous · FREE · Abonnement · PPV · Expert · En direct
+// ✅ v3.2 — stars & magicClocks réels depuis Supabase (plus de mock)
 
 "use client";
 
@@ -21,21 +21,8 @@ export type CreatorFull = Creator & {
   resonance?: number;
 };
 
-const MOCK_EXTRA: Record<number, Partial<CreatorFull>> = {
-  1: { status: "live",   stars: 4.8, magicClocks: 28, bio: "Experte balayage & soins japonais. 12 ans dans les meilleurs salons.", isCertified: true,  resonance: 82 },
-  2: { status: "studio", stars: 4.7, magicClocks: 15, bio: "Coloriste passionnée. De Madrid au monde entier.",                   isCertified: false, resonance: 65 },
-  3: { status: "idle",   stars: 4.9, magicClocks: 41, bio: "Top coloriste lyonnaise, blond froid et coupes structurées.",        isCertified: true,  resonance: 73 },
-  4: { status: "live",   stars: 4.6, magicClocks: 19, bio: "Coloriste & vidéaste à Zurich.",                                     isCertified: false, resonance: 58 },
-};
-
-const CREATORS_STATIC: CreatorFull[] = CREATORS.map((c) => ({
-  ...c,
-  ...(MOCK_EXTRA[c.id] ?? { status: "idle" as const, stars: 4.5, magicClocks: 5, resonance: 50 }),
-}));
-
 // ── Ordre : Tous · FREE · Abonnement · PPV · Expert · En direct
 type FilterId = "all" | "free" | "abo" | "ppv" | "expert" | "live";
-
 const FILTERS: { id: FilterId; label: string; Icon: React.FC<{ className?: string }> }[] = [
   { id: "all",    label: "Tous",        Icon: Users          },
   { id: "free",   label: "FREE",        Icon: Zap            },
@@ -47,20 +34,19 @@ const FILTERS: { id: FilterId; label: string; Icon: React.FC<{ className?: strin
 
 export default function MeetPage() {
   const router = useRouter();
-  const [search, setSearch]             = useState("");
-  const [activeFilter, setActiveFilter] = useState<FilterId>("all");
-  const [selectedCreator, setSelected]  = useState<CreatorFull | null>(null);
-  const [metCreators, setMetCreators]   = useState<Set<number>>(new Set());
-  const [creators, setCreators]         = useState<CreatorFull[]>(CREATORS_STATIC);
+  const [search, setSearch]               = useState("");
+  const [activeFilter, setActiveFilter]   = useState<FilterId>("all");
+  const [selectedCreator, setSelected]    = useState<CreatorFull | null>(null);
+  const [metCreators, setMetCreators]     = useState<Set<number>>(new Set());
+  const [creators, setCreators]           = useState<CreatorFull[]>([]);
 
   // Search sticky
   const lastScrollY = useRef(0);
   const [searchVisible, setSearchVisible] = useState(true);
-
   useEffect(() => {
     const onScroll = () => {
       const current = window.scrollY;
-      if (current < 10)                        setSearchVisible(true);
+      if (current < 10) setSearchVisible(true);
       else if (current > lastScrollY.current + 8) setSearchVisible(false);
       else if (current < lastScrollY.current - 8) setSearchVisible(true);
       lastScrollY.current = current;
@@ -69,21 +55,63 @@ export default function MeetPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Chargement Supabase
+  // ── Chargement Supabase — profils + stats réelles ──────────
   useEffect(() => {
     const sb = getSupabaseBrowser();
-    sb.from("profiles")
-      .select("id, handle, display_name, bio, profession, avatar_url, followers_count")
-      .not("handle", "is", null)
-      .order("followers_count", { ascending: false, nullsFirst: false })
-      .limit(20)
-      .then(({ data, error }) => {
-        if (error || !data || data.length === 0) return;
-        const STATUSES = ["live", "studio", "idle"] as const;
-        const fromSupabase: CreatorFull[] = data.map((row, i) => ({
+
+    async function loadCreators() {
+      // 1. Profils
+      const { data: profiles, error } = await sb
+        .from("profiles")
+        .select("id, handle, display_name, bio, profession, avatar_url, followers_count, is_creator")
+        .not("handle", "is", null)
+        .order("followers_count", { ascending: false, nullsFirst: false })
+        .limit(20);
+
+      if (error || !profiles || profiles.length === 0) {
+        // Fallback sur données statiques si Supabase vide
+        setCreators(CREATORS.map((c) => ({
+          ...c,
+          status: "idle" as const,
+          stars: undefined,
+          magicClocks: 0,
+          resonance: 50,
+        })));
+        return;
+      }
+
+      // 2. Stats Magic Clocks agrégées par handle (count + avg stars)
+      const handles = profiles.map((p) => p.handle).filter(Boolean) as string[];
+      const { data: statsRows } = await sb
+        .from("magic_clocks")
+        .select("creator_handle, rating_avg")
+        .in("creator_handle", handles)
+        .eq("is_published", true);
+
+      // Agréger côté client
+      const statsMap = new Map<string, { count: number; totalRating: number; ratingCount: number }>();
+      for (const row of (statsRows ?? [])) {
+        const h = row.creator_handle;
+        if (!h) continue;
+        const prev = statsMap.get(h) ?? { count: 0, totalRating: 0, ratingCount: 0 };
+        statsMap.set(h, {
+          count: prev.count + 1,
+          totalRating: prev.totalRating + (row.rating_avg ?? 0),
+          ratingCount: prev.ratingCount + (row.rating_avg != null ? 1 : 0),
+        });
+      }
+
+      const STATUSES = ["live", "studio", "idle"] as const;
+      const fromSupabase: CreatorFull[] = profiles.map((row, i) => {
+        const handle = (row.handle ?? "").replace(/^@/, "");
+        const stats = statsMap.get(handle);
+        const avgStars = stats && stats.ratingCount > 0
+          ? Math.round((stats.totalRating / stats.ratingCount) * 10) / 10
+          : undefined;
+        return {
           id: 1000 + i,
           name: row.display_name ?? row.handle ?? "Créateur",
-          handle: `@${(row.handle ?? "").replace(/^@/, "")}`,
+          handle: `@${handle}`,
           city: "",
           langs: ["FR"],
           followers: row.followers_count ?? 0,
@@ -92,13 +120,17 @@ export default function MeetPage() {
           specialties: row.profession ? [row.profession] : [],
           bio: row.bio ?? undefined,
           status: STATUSES[i % 3],
-          stars: 4.6 + (i % 3) * 0.1,
-          magicClocks: 5 + i * 3,
+          stars: avgStars,
+          magicClocks: stats?.count ?? 0,
           isCertified: i === 0,
           resonance: 60 + (i % 4) * 10,
-        }));
-        setCreators([...fromSupabase, ...CREATORS_STATIC]);
+        };
       });
+
+      setCreators(fromSupabase);
+    }
+
+    loadCreators();
   }, []);
 
   const handleFilterClick = useCallback((id: FilterId) => {
@@ -113,7 +145,6 @@ export default function MeetPage() {
       c.name.toLowerCase().includes(q) ||
       c.handle.toLowerCase().includes(q) ||
       (c.city ?? "").toLowerCase().includes(q);
-
     const matchFilter =
       activeFilter === "all"    ? true :
       activeFilter === "free"   ? c.access.includes("FREE") :
@@ -121,7 +152,6 @@ export default function MeetPage() {
       activeFilter === "ppv"    ? c.access.includes("PPV")  :
       activeFilter === "expert" ? (c.access.includes("ABO") && c.access.includes("PPV")) :
       true;
-
     return matchSearch && matchFilter;
   });
 
@@ -138,7 +168,7 @@ export default function MeetPage() {
         style={{
           background: "linear-gradient(to bottom, rgba(248,250,252,1) 80%, rgba(248,250,252,0))",
           transform: searchVisible ? "translateY(0)" : "translateY(-110%)",
-          opacity:   searchVisible ? 1 : 0,
+          opacity: searchVisible ? 1 : 0,
         }}
       >
         {/* Barre de recherche */}
@@ -200,7 +230,7 @@ export default function MeetPage() {
       </div>
 
       {/* État vide */}
-      {filtered.length === 0 && (
+      {filtered.length === 0 && creators.length > 0 && (
         <div className="flex flex-col items-center gap-2 py-16 text-center">
           <Users className="h-10 w-10 text-slate-200" />
           <p className="text-[13px] font-semibold text-slate-400">Aucun créateur trouvé</p>
@@ -214,7 +244,19 @@ export default function MeetPage() {
         </div>
       )}
 
-      {/* Sheet profil */}
+      {/* Skeleton chargement */}
+      {creators.length === 0 && (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i}
+              className="animate-pulse rounded-[24px] bg-slate-100"
+              style={{ marginTop: i % 2 === 1 ? "12px" : "0", aspectRatio: "3/4" }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Sheet profil — plein écran */}
       {selectedCreator && (
         <CreatorProfileSheet
           creator={selectedCreator}
