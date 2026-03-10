@@ -1,5 +1,5 @@
 // app/monet/page.tsx
-// ✅ v4.5 FINAL — Bear correct · emojis → Lucide icons gradient · graphique hero supprimé
+// ✅ v4.6 — Suppression "Cockpit monétisation" visiteur · "Tu gagnes" · hero 1 rangée unique
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +13,6 @@ import { SimMonetPanel } from "./SimMonetPanel";
 
 const PRIMARY_GRADIENT = "linear-gradient(135deg,#7B4BF5,#C44BDA,#F54B8F)";
 
-// Gradient texte partagé
 const GRAD_TEXT = {
   background: "linear-gradient(135deg,#4B7BF5 0%,#7B4BF5 40%,#F54B8F 100%)",
   WebkitBackgroundClip: "text",
@@ -99,7 +98,6 @@ function MonetContent({
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <div className="relative flex-shrink-0">
               {isLoggedIn ? (
-                // Avatar connecté — ring animé
                 <div className="relative h-[46px] w-[46px]">
                   <div
                     className="absolute inset-[-2px] animate-spin rounded-full"
@@ -123,7 +121,6 @@ function MonetContent({
                   </div>
                 </div>
               ) : (
-                // Visiteur — Bear avatar avec ring dégradé statique
                 <div className="relative h-[46px] w-[46px]">
                   <div
                     className="absolute inset-[-2px] rounded-full"
@@ -143,9 +140,12 @@ function MonetContent({
             </div>
 
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                Cockpit monétisation
-              </p>
+              {/* ✅ "Cockpit monétisation" affiché uniquement en mode connecté */}
+              {isLoggedIn && (
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  Cockpit monétisation
+                </p>
+              )}
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <span className="truncate text-[15px] font-black leading-tight text-slate-800">
                   {headerName}
@@ -220,50 +220,17 @@ function MonetContent({
         </div>
       </header>
 
-      {/* ══ HERO VISITEUR — icônes Lucide + gradient cards identiques au mode connecté ══ */}
+      {/* ══ HERO VISITEUR — titre + sous-titre uniquement, sans cards fixes ══ */}
       {!isLoggedIn && activeMode === "sim" && (
         <div className="border-b border-slate-100 bg-white px-4 py-6">
           <h2 className="mb-2 text-[26px] font-black leading-tight tracking-tight text-slate-900">
             Combien peux-tu{" "}
             <span style={GRAD_TEXT}>gagner avec Magic Clock ?</span>
           </h2>
-          <p className="mb-5 text-[13px] leading-relaxed text-slate-500">
+          <p className="text-[13px] leading-relaxed text-slate-500">
             Simule ton potentiel de revenus avec tes followers actuels.<br />
             Modèles FREE · SUB · PPV — sans rien installer.
           </p>
-
-          {/* 3 KPI cards — identiques au mode connecté, icônes Lucide */}
-          <div className="grid grid-cols-3 gap-2">
-            {/* Followers */}
-            <div className="rounded-2xl p-3 text-center"
-              style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5)", boxShadow: "0 4px 14px rgba(75,123,245,.25)" }}>
-              <div className="mb-1.5 flex justify-center">
-                <Users size={18} strokeWidth={2} color="white" />
-              </div>
-              <p className="text-[16px] font-black leading-none text-white">12 450</p>
-              <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Followers</p>
-            </div>
-
-            {/* Revenus */}
-            <div className="rounded-2xl p-3 text-center"
-              style={{ background: "linear-gradient(135deg,#7B4BF5,#C44BDA)", boxShadow: "0 4px 14px rgba(123,75,245,.3)" }}>
-              <div className="mb-1.5 flex justify-center">
-                <TrendingUp size={18} strokeWidth={2} color="white" />
-              </div>
-              <p className="text-[14px] font-black leading-none text-white">6 213 CHF</p>
-              <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">/ mois</p>
-            </div>
-
-            {/* Tu gardes */}
-            <div className="rounded-2xl p-3 text-center"
-              style={{ background: "linear-gradient(135deg,#C44BDA,#F54B8F)", boxShadow: "0 4px 14px rgba(196,75,218,.25)" }}>
-              <div className="mb-1.5 flex justify-center">
-                <Zap size={18} strokeWidth={2} color="white" />
-              </div>
-              <p className="text-[16px] font-black leading-none text-white">80%</p>
-              <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Tu gardes</p>
-            </div>
-          </div>
         </div>
       )}
 
