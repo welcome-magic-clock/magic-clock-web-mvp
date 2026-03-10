@@ -1,9 +1,10 @@
 // features/meet/CreatorProfileSheet.tsx
-// ✅ v3.0 — Bandeau stats · Réseaux sociaux · Orbite abonnés · Magic Clocks Amazing style
+// ✅ v4.0 — Logos réels · Followers & Abonnés style TikTok/IG · Cartes Amazing
+
 "use client";
 
 import { useEffect } from "react";
-import { X, UserPlus, Check, MessageCircle, BadgeCheck, Layers, MapPin } from "lucide-react";
+import { X, UserPlus, Check, MessageCircle, BadgeCheck, Layers, MapPin, UserCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { CreatorFull } from "@/app/meet/page";
@@ -21,303 +22,175 @@ function formatN(n: number): string {
   return String(n);
 }
 
+// Gradient 5 couleurs identique FeaturedCard v2.4 / cartes v3.2
 const GRAD = {
-  background: "linear-gradient(135deg,#4B7BF5 0%,#7B4BF5 40%,#C44BDA 65%,#F54B8F 100%)",
+  background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
   WebkitBackgroundClip: "text" as const,
   WebkitTextFillColor: "transparent" as const,
 };
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  live:   { label: "En direct",    color: "#16a34a" },
-  studio: { label: "En création",  color: "#7B4BF5" },
-  idle:   { label: "Actif",        color: "#94a3b8" },
+  live:   { label: "En direct", color: "#16a34a" },
+  studio: { label: "En création", color: "#7B4BF5" },
+  idle:   { label: "Actif",     color: "#94a3b8" },
 };
 
-// Réseaux sociaux — icônes SVG inline légères
+// ── Logos sociaux — images officielles via URLs publiques ──────
+// SimpleIcons CDN (svg format via unpkg)
 const SOCIAL_NETWORKS = [
-  {
-    key: "instagram",
-    label: "Instagram",
-    color: "#E1306C",
-    bg: "rgba(225,48,108,.08)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-        <circle cx="12" cy="12" r="4"/>
-        <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
-      </svg>
-    ),
-  },
-  {
-    key: "tiktok",
-    label: "TikTok",
-    color: "#010101",
-    bg: "rgba(0,0,0,.06)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.93a8.17 8.17 0 004.77 1.52V7.01a4.85 4.85 0 01-1-.32z"/>
-      </svg>
-    ),
-  },
-  {
-    key: "youtube",
-    label: "YouTube",
-    color: "#FF0000",
-    bg: "rgba(255,0,0,.07)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-        <path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 00.5 6.19 31.5 31.5 0 000 12a31.5 31.5 0 00.5 5.81 3.02 3.02 0 002.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.5 31.5 0 0024 12a31.5 31.5 0 00-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/>
-      </svg>
-    ),
-  },
-  {
-    key: "facebook",
-    label: "Facebook",
-    color: "#1877F2",
-    bg: "rgba(24,119,242,.08)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-        <path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.5h-2.79V24C19.61 23.1 24 18.1 24 12.07z"/>
-      </svg>
-    ),
-  },
-  {
-    key: "snapchat",
-    label: "Snapchat",
-    color: "#FFFC00",
-    bg: "rgba(255,252,0,.12)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" style={{ color: "#CCCA00" }}>
-        <path d="M12.02 1c-3.56 0-6.44 2.89-6.44 6.46 0 .37.03.73.09 1.09-.28.14-.58.2-.88.2-.5 0-.93-.2-1.2-.53-.09-.11-.2-.14-.3-.08-.1.07-.1.19-.04.3.32.6.96.99 1.69.99.28 0 .56-.05.83-.16-.12.56-.19 1.13-.19 1.71 0 .11 0 .22.01.33-1.04.19-2.29.69-2.43 1.56-.02.13.07.25.2.27.07 0 .13-.02.18-.07.55-.51 1.39-.62 2.07-.26.04.02.08.04.13.04.14 0 .26-.1.28-.24.04-.3.09-.6.16-.89.11-.47.4-.72.82-.72.28 0 .61.1.98.3.5.27 1.06.41 1.65.41.6 0 1.16-.14 1.66-.41.37-.2.7-.3.98-.3.42 0 .71.25.82.72.07.29.12.59.16.89.02.14.14.24.28.24.05 0 .09-.02.13-.04.68-.36 1.52-.25 2.07.26.05.05.11.07.18.07.13-.02.22-.14.2-.27-.14-.87-1.39-1.37-2.43-1.56.01-.11.01-.22.01-.33 0-.58-.07-1.15-.19-1.71.27.11.55.16.83.16.73 0 1.37-.39 1.69-.99.06-.11.06-.23-.04-.3-.1-.06-.21-.03-.3.08-.27.33-.7.53-1.2.53-.3 0-.6-.06-.88-.2.06-.36.09-.72.09-1.09C18.46 3.89 15.58 1 12.02 1z"/>
-      </svg>
-    ),
-  },
-  {
-    key: "pinterest",
-    label: "Pinterest",
-    color: "#E60023",
-    bg: "rgba(230,0,35,.07)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.08 3.16 9.43 7.63 11.17-.1-.94-.2-2.39.04-3.42.22-.93 1.45-6.16 1.45-6.16s-.37-.74-.37-1.84c0-1.72 1-3.01 2.24-3.01 1.06 0 1.57.79 1.57 1.75 0 1.06-.68 2.65-1.03 4.12-.29 1.23.61 2.23 1.82 2.23 2.19 0 3.66-2.83 3.66-6.17 0-2.54-1.72-4.32-4.18-4.32-2.85 0-4.52 2.13-4.52 4.34 0 .86.33 1.78.74 2.28.08.1.09.19.07.29-.08.31-.25 1-.28 1.14-.04.18-.14.22-.32.13-1.22-.57-1.99-2.35-1.99-3.79 0-3.08 2.24-5.91 6.46-5.91 3.39 0 6.03 2.42 6.03 5.65 0 3.37-2.13 6.08-5.08 6.08-1 0-1.93-.52-2.25-1.13l-.61 2.28c-.22.85-.82 1.92-1.22 2.57.92.28 1.89.44 2.9.44 6.63 0 12-5.37 12-12S18.63 0 12 0z"/>
-      </svg>
-    ),
-  },
-  {
-    key: "twitter",
-    label: "X (Twitter)",
-    color: "#000000",
-    bg: "rgba(0,0,0,.06)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.741l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-      </svg>
-    ),
-  },
-  {
-    key: "linkedin",
-    label: "LinkedIn",
-    color: "#0A66C2",
-    bg: "rgba(10,102,194,.08)",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-        <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.37V9h3.41v1.56h.05c.47-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.12 2.06 2.06 0 010 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/>
-      </svg>
-    ),
-  },
+  { key: "instagram", label: "Instagram", url: "https://www.instagram.com", color: "#E1306C",
+    logo: "https://cdn.simpleicons.org/instagram/E1306C" },
+  { key: "tiktok", label: "TikTok", url: "https://www.tiktok.com", color: "#010101",
+    logo: "https://cdn.simpleicons.org/tiktok/010101" },
+  { key: "youtube", label: "YouTube", url: "https://www.youtube.com", color: "#FF0000",
+    logo: "https://cdn.simpleicons.org/youtube/FF0000" },
+  { key: "facebook", label: "Facebook", url: "https://www.facebook.com", color: "#1877F2",
+    logo: "https://cdn.simpleicons.org/facebook/1877F2" },
+  { key: "snapchat", label: "Snapchat", url: "https://www.snapchat.com", color: "#FFCC00",
+    logo: "https://cdn.simpleicons.org/snapchat/FFCC00" },
+  { key: "pinterest", label: "Pinterest", url: "https://www.pinterest.com", color: "#E60023",
+    logo: "https://cdn.simpleicons.org/pinterest/E60023" },
+  { key: "x", label: "X", url: "https://www.x.com", color: "#000000",
+    logo: "https://cdn.simpleicons.org/x/000000" },
+  { key: "linkedin", label: "LinkedIn", url: "https://www.linkedin.com", color: "#0A66C2",
+    logo: "https://cdn.simpleicons.org/linkedin/0A66C2" },
+  { key: "twitch", label: "Twitch", url: "https://www.twitch.tv", color: "#9146FF",
+    logo: "https://cdn.simpleicons.org/twitch/9146FF" },
+  { key: "threads", label: "Threads", url: "https://www.threads.net", color: "#000000",
+    logo: "https://cdn.simpleicons.org/threads/000000" },
+  { key: "discord", label: "Discord", url: "https://www.discord.com", color: "#5865F2",
+    logo: "https://cdn.simpleicons.org/discord/5865F2" },
 ];
 
-// Orbiteurs mock (abonnés)
-// Clé 0 = fallback pour tous les créateurs sans entrée dédiée
-const MOCK_ORBITERS: Record<number, { name: string; initial: string; color: string; avatar?: string }[]> = {
-  1: [
-    { name: "Sofia",  initial: "S", color: "#C44BDA" },
-    { name: "Magic",  initial: "M", color: "#7B4BF5" },
-    { name: "Lena",   initial: "L", color: "#4B7BF5" },
-    { name: "Yuki",   initial: "Y", color: "#F5834B" },
-    { name: "Tom",    initial: "T", color: "#22d3ee" },
-    { name: "Nina",   initial: "N", color: "#4ade80" },
-    { name: "Paulo",  initial: "P", color: "#F54B8F" },
-    { name: "Hana",   initial: "H", color: "#4B7BF5" },
-  ],
-  0: [
-    { name: "Aiko",  initial: "A", color: "#7B4BF5" },
-    { name: "Maya",  initial: "M", color: "#F54B8F" },
-    { name: "Tom",   initial: "T", color: "#22d3ee" },
-    { name: "Nina",  initial: "N", color: "#4ade80" },
-    { name: "Sofia", initial: "S", color: "#C44BDA" },
-    { name: "Yuki",  initial: "Y", color: "#F5834B" },
-  ],
-};
+// ── Mock followers / abonnés ────────────────────────────────────
+const MOCK_FOLLOWERS = [
+  { name: "Sofia Rivera",   handle: "@sofia.r",   avatar: "/creators/sofia-rivera.jpeg",  isFollowing: false },
+  { name: "Aiko Tanaka",    handle: "@aiko_tanaka",avatar: "/creators/aiko-tanaka.jpeg",  isFollowing: true  },
+  { name: "Lena Martin",    handle: "@lena.martin",avatar: "/creators/lena-martin.jpeg",  isFollowing: false },
+  { name: "Maya Flores",    handle: "@maya.flores",avatar: "/creators/maya-flores.jpeg",  isFollowing: true  },
+  { name: "Tom Bernard",    handle: "@tom.b",      avatar: "",                            isFollowing: false },
+  { name: "Nina Koch",      handle: "@nina.k",     avatar: "",                            isFollowing: false },
+];
 
-// Mock Magic Clocks du créateur
+const MOCK_ABONNES = [
+  { name: "Aiko Tanaka",    handle: "@aiko_tanaka",avatar: "/creators/aiko-tanaka.jpeg",  isFollowing: true  },
+  { name: "Sofia Rivera",   handle: "@sofia.r",   avatar: "/creators/sofia-rivera.jpeg",  isFollowing: false },
+  { name: "Lena Martin",    handle: "@lena.martin",avatar: "/creators/lena-martin.jpeg",  isFollowing: true  },
+  { name: "Paulo Saenz",    handle: "@paulo.s",    avatar: "",                            isFollowing: false },
+];
+
+// ── Mock Magic Clocks (style Amazing) ──────────────────────────
 const MOCK_MAGIC_CLOCKS = [
-  { title: "Technique signature",  views: "2,4k", stars: "4.9", access: "FREE",   gradient: "linear-gradient(135deg,rgba(75,123,245,.08),rgba(123,75,245,.06))"  },
-  { title: "Collection hiver",     views: "1,8k", stars: "4.8", access: "PPV",    gradient: "linear-gradient(135deg,rgba(196,75,218,.07),rgba(245,75,143,.05))"  },
-  { title: "Masterclass balayage", views: "3,1k", stars: "5.0", access: "ABO",    gradient: "linear-gradient(135deg,rgba(245,131,75,.07),rgba(245,75,143,.05))"  },
-  { title: "Tutoriel couleur",     views: "987",  stars: "4.7", access: "FREE",   gradient: "linear-gradient(135deg,rgba(75,123,245,.06),rgba(34,211,238,.05))"  },
+  {
+    title: "Technique signature balayage californien",
+    views: 2400, stars: 4.9, access: "FREE",
+    before: "/images/magic-clock-bear/before-thumb.jpg",
+    after:  "/images/magic-clock-bear/after-thumb.jpg",
+  },
+  {
+    title: "Collection hiver — couleurs froides",
+    views: 1800, stars: 4.8, access: "PPV",
+    before: "/images/magic-clock-bear/face-1.jpg",
+    after:  "/images/magic-clock-bear/face-2.jpg",
+  },
+  {
+    title: "Masterclass balayage complet",
+    views: 3100, stars: 5.0, access: "ABO",
+    before: "/images/magic-clock-bear/face-3.jpg",
+    after:  "/images/magic-clock-bear/face-4.jpg",
+  },
+  {
+    title: "Tutoriel couleur végétale",
+    views: 987, stars: 4.7, access: "FREE",
+    before: "/images/magic-clock-bear/face-5.jpg",
+    after:  "/images/magic-clock-bear/face-6.jpg",
+  },
 ];
 
 const ACCESS_CFG = {
   FREE: { bg: "rgba(22,163,74,.08)",   color: "#16a34a", border: "rgba(22,163,74,.2)"   },
-  ABO:  { bg: "rgba(123,75,245,.08)",  color: "#7B4BF5", border: "rgba(123,75,245,.2)"  },
-  PPV:  { bg: "rgba(245,75,143,.08)",  color: "#e11d48", border: "rgba(245,75,143,.2)"  },
+  ABO:  { bg: "rgba(123,75,245,.08)", color: "#7B4BF5", border: "rgba(123,75,245,.2)"  },
+  PPV:  { bg: "rgba(245,75,143,.08)", color: "#e11d48", border: "rgba(245,75,143,.2)"  },
 };
 
-// ── ORBITE ABONNÉS ─────────────────────────────────────────────
-function OrbitalSubscribers({ creator, orbiters }: {
-  creator: CreatorFull;
-  orbiters: { name: string; initial: string; color: string; avatar?: string }[];
+// ── Composant liste followers / abonnés ─────────────────────────
+function UserRow({ name, handle, avatar, isFollowing }: {
+  name: string; handle: string; avatar: string; isFollowing: boolean;
 }) {
-  const count = Math.min(orbiters.length, 8);
-  const displayed = orbiters.slice(0, count);
-
-  // Deux orbites : rayon 80 et 115
-  const orbit1 = displayed.slice(0, Math.ceil(count / 2));
-  const orbit2 = displayed.slice(Math.ceil(count / 2));
-
   return (
-    <div className="relative flex items-center justify-center" style={{ height: 280 }}>
-      {/* Cercles orbitaux décoratifs */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 160, height: 160,
-          border: "1px dashed rgba(123,75,245,.15)",
-          top: "50%", left: "50%",
-          transform: "translate(-50%,-50%)",
-        }}
-      />
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 230, height: 230,
-          border: "1px dashed rgba(196,75,218,.1)",
-          top: "50%", left: "50%",
-          transform: "translate(-50%,-50%)",
-        }}
-      />
-
-      {/* Avatar créateur — centre */}
-      <div
-        className="absolute z-10"
-        style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}
-      >
-        <div className="mc-avatar-ring" style={{ width: 64, height: 64 }}>
-          <div
-            className="overflow-hidden rounded-full"
-            style={{ width: 64, height: 64, background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}
-          >
-            {creator.avatar ? (
-              <img src={creator.avatar} alt={creator.name} className="h-full w-full object-cover rounded-full" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-[18px] font-black text-violet-600">
-                {creator.name[0].toUpperCase()}
-              </span>
-            )}
+    <div className="flex items-center gap-3 py-2.5">
+      {/* Avatar */}
+      <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
+        style={{ width: 44, height: 44, border: "1.5px solid rgba(226,232,240,.8)" }}>
+        {avatar ? (
+          <img src={avatar} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[14px] font-black text-violet-400"
+            style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
+            {name[0].toUpperCase()}
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Orbite 1 — rayon 80 */}
-      {orbit1.map((f, i) => {
-        const angle = (360 / orbit1.length) * i;
-        const duration = 14 + i * 2;
-        const delay = -(duration / orbit1.length) * i;
-        return (
-          <div
-            key={`o1-${i}`}
-            className="absolute"
-            style={{
-              width: 160, height: 160,
-              top: "50%", left: "50%",
-              marginTop: -80, marginLeft: -80,
-              animation: `orbitCW ${duration}s linear ${delay}s infinite`,
-              transformOrigin: "50% 50%",
-              transform: `rotate(${angle}deg)`,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: "50%",
-                transform: `translateX(-50%) rotate(-${angle}deg)`,
-                animation: `orbitCCW ${duration}s linear ${delay}s infinite`,
-              }}
-            >
-              <div
-                className="flex items-center justify-center rounded-full text-[11px] font-black shadow-sm"
-                style={{
-                  width: 32, height: 32,
-                  background: `${f.color}18`,
-                  border: `2px solid ${f.color}40`,
-                  color: f.color,
-                }}
-              >
-                {f.initial}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Orbite 2 — rayon 115 */}
-      {orbit2.map((f, i) => {
-        const angle = (360 / orbit2.length) * i + 45;
-        const duration = 22 + i * 3;
-        const delay = -(duration / orbit2.length) * i;
-        return (
-          <div
-            key={`o2-${i}`}
-            className="absolute"
-            style={{
-              width: 230, height: 230,
-              top: "50%", left: "50%",
-              marginTop: -115, marginLeft: -115,
-              animation: `orbitCCW ${duration}s linear ${delay}s infinite`,
-              transformOrigin: "50% 50%",
-              transform: `rotate(${angle}deg)`,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: "50%",
-                transform: `translateX(-50%) rotate(-${angle}deg)`,
-                animation: `orbitCW ${duration}s linear ${delay}s infinite`,
-              }}
-            >
-              <div
-                className="flex items-center justify-center rounded-full text-[11px] font-black shadow-sm"
-                style={{
-                  width: 28, height: 28,
-                  background: `${f.color}18`,
-                  border: `2px solid ${f.color}40`,
-                  color: f.color,
-                }}
-              >
-                {f.initial}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* CSS animations */}
-      <style>{`
-        @keyframes orbitCW  { from { transform: rotate(0deg);    } to { transform: rotate(360deg);  } }
-        @keyframes orbitCCW { from { transform: rotate(0deg);    } to { transform: rotate(-360deg); } }
-      `}</style>
+      {/* Nom + handle */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-bold text-slate-900 truncate">{name}</p>
+        <p className="text-[11px] text-slate-400 truncate">{handle}</p>
+      </div>
+      {/* Bouton Suivre */}
+      <button
+        type="button"
+        className="flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-all active:scale-95"
+        style={
+          isFollowing
+            ? { background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0" }
+            : { background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#F54B8F)", color: "white", boxShadow: "0 2px 8px rgba(123,75,245,.25)" }
+        }
+      >
+        {isFollowing ? "Suivi" : "Suivre"}
+      </button>
     </div>
   );
 }
 
-// ── SHEET PRINCIPALE ───────────────────────────────────────────
+// ── Carte Amazing compacte (2 col) ──────────────────────────────
+function MiniAmazingCard({ mc }: { mc: typeof MOCK_MAGIC_CLOCKS[0] }) {
+  const acfg = ACCESS_CFG[mc.access as keyof typeof ACCESS_CFG];
+  return (
+    <div className="overflow-hidden rounded-[16px] cursor-pointer transition-transform active:scale-95"
+      style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 8px rgba(15,23,42,.05)" }}>
+      {/* Zone avant/après */}
+      <div className="relative w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
+        <div className="grid h-full w-full grid-cols-2">
+          <div className="relative h-full w-full overflow-hidden">
+            <img src={mc.before} alt="avant" className="h-full w-full object-cover object-top" />
+          </div>
+          <div className="relative h-full w-full overflow-hidden">
+            <img src={mc.after} alt="après" className="h-full w-full object-cover object-top" />
+          </div>
+          {/* Ligne centrale */}
+          <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-white/85" />
+        </div>
+        {/* Gradient bas */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0"
+          style={{ height: "30%", background: "linear-gradient(to top,rgba(10,15,30,.45),transparent)" }} />
+        {/* Badge access */}
+        <div className="absolute top-2 right-2 rounded-[6px] px-1.5 py-0.5 text-[8px] font-extrabold uppercase"
+          style={{ background: acfg.bg, color: acfg.color, border: `1px solid ${acfg.border}`, backdropFilter: "blur(4px)", backgroundColor: "white" }}>
+          {mc.access}
+        </div>
+      </div>
+      {/* Footer */}
+      <div className="p-2.5">
+        <p className="text-[11px] font-bold text-slate-800 leading-tight truncate">{mc.title}</p>
+        <p className="mt-0.5 text-[9px] text-slate-400">{formatN(mc.views)} vues · ★ {mc.stars.toFixed(1)}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── SHEET PRINCIPALE ────────────────────────────────────────────
 export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) {
   const statusInfo = STATUS_LABEL[creator.status ?? "idle"] ?? STATUS_LABEL.idle;
-  const orbiters   = MOCK_ORBITERS[creator.id] ?? MOCK_ORBITERS[0];
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -350,27 +223,37 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
         {/* Handle */}
         <div className="mx-auto mt-3 mb-0 h-1 w-9 rounded-full bg-slate-200" />
 
-        {/* ── BANDEAU STATS (ex-Cockpit monétisation, sans le label) ── */}
+        {/* Bouton fermer */}
+        <button
+          type="button"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-slate-500 backdrop-blur-sm"
+          style={{ zIndex: 10 }}
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* ══════════════════════════════════════════════════
+            BLOC 1 — BANDEAU STATS (style Cockpit v2.4)
+        ══════════════════════════════════════════════════ */}
         <div className="mx-4 mt-4">
           <div
             className="overflow-hidden"
             style={{
               borderRadius: 20,
               boxShadow: "0 0 0 2px white, 0 0 0 3px #7B4BF5, 0 4px 20px rgba(123,75,245,.2)",
-              background: "linear-gradient(160deg,rgba(75,123,245,.05),rgba(196,75,218,.03))",
+              background: "linear-gradient(160deg,rgba(75,123,245,.06),rgba(196,75,218,.04),rgba(245,131,75,.03))",
             }}
           >
-            {/* Ligne avatar + nom + status */}
+            {/* Avatar + nom + status */}
             <div className="flex items-center gap-2.5 px-3 pt-3 pb-2">
-              <div className="mc-avatar-ring flex-shrink-0" style={{ width: 40, height: 40 }}>
-                <div
-                  className="relative overflow-hidden rounded-full"
-                  style={{ width: 40, height: 40, background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}
-                >
+              <div className="mc-avatar-ring flex-shrink-0" style={{ width: 44, height: 44 }}>
+                <div className="relative overflow-hidden rounded-full"
+                  style={{ width: 44, height: 44, background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
                   {creator.avatar ? (
                     <img src={creator.avatar} alt={creator.name} className="h-full w-full object-cover rounded-full" />
                   ) : (
-                    <span className="flex h-full w-full items-center justify-center text-[14px] font-black text-violet-600">
+                    <span className="flex h-full w-full items-center justify-center text-[15px] font-black text-violet-600">
                       {creator.name[0].toUpperCase()}
                     </span>
                   )}
@@ -378,7 +261,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <p className="text-[13px] font-black text-slate-900 truncate">{creator.name}</p>
+                  <p className="text-[14px] font-black text-slate-900 truncate">{creator.name}</p>
                   {creator.isCertified && <BadgeCheck className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />}
                 </div>
                 <p className="text-[9px] text-slate-400 truncate">
@@ -386,8 +269,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
                 </p>
               </div>
               {/* Status badge */}
-              <div
-                className="flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold"
+              <div className="flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold"
                 style={
                   creator.status === "live"
                     ? { background: "rgba(22,163,74,.08)", border: "1px solid rgba(22,163,74,.2)", color: "#16a34a" }
@@ -396,56 +278,58 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
                     : { background: "rgba(148,163,184,.08)", border: "1px solid rgba(148,163,184,.2)", color: "#94a3b8" }
                 }
               >
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{
-                    background: statusInfo.color,
-                    animation: creator.status === "live" ? "meetLivePulse 1.2s ease-in-out infinite" : "none",
-                  }}
-                />
+                <span className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: statusInfo.color, animation: creator.status === "live" ? "meetLivePulse 1.2s ease-in-out infinite" : "none" }} />
                 {statusInfo.label}
               </div>
             </div>
 
-            {/* 4 bulles stats */}
+            {/* 4 bulles stats — gradient 5 couleurs */}
             <div className="mx-3 mb-3 grid grid-cols-4 gap-1.5">
               {[
-                { val: formatN(creator.followers),       lbl: "Followers" },
-                { val: formatN(creator.magicClocks ?? 0),lbl: "M. Clocks" },
-                { val: `★ ${creator.stars?.toFixed(1)}`, lbl: "Étoiles"   },
+                { val: formatN(creator.followers),        lbl: "Followers" },
+                { val: formatN(creator.magicClocks ?? 0), lbl: "M. Clocks" },
+                { val: `★ ${creator.stars?.toFixed(1)}`,  lbl: "Étoiles"   },
                 { val: "98k",                             lbl: "Abonnés"   },
               ].map(({ val, lbl }) => (
-                <div
-                  key={lbl}
-                  className="rounded-xl py-2 text-center"
-                  style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}
-                >
+                <div key={lbl} className="rounded-xl py-2 text-center"
+                  style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}>
                   <p className="text-[11px] font-black" style={GRAD}>{val}</p>
                   <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400">{lbl}</p>
                 </div>
               ))}
             </div>
 
-            {/* ── Réseaux sociaux ── */}
+            {/* ── Logos sociaux — tous sur une ligne, scrollable ── */}
             <div className="mx-3 mb-3">
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div
+                className="flex gap-2 overflow-x-auto pb-0.5"
+                style={{ scrollbarWidth: "none" } as React.CSSProperties}
+              >
                 {SOCIAL_NETWORKS.map((sn) => (
                   <a
                     key={sn.key}
-                    href={`https://www.${sn.key}.com`}
+                    href={sn.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={sn.label}
-                    className="flex items-center justify-center rounded-full transition-transform active:scale-90"
+                    className="flex-shrink-0 flex items-center justify-center rounded-full transition-transform active:scale-90"
                     style={{
-                      width: 32, height: 32,
-                      background: sn.bg,
-                      border: `1px solid ${sn.color}25`,
-                      color: sn.color,
+                      width: 34, height: 34,
+                      background: "white",
+                      border: "1px solid rgba(226,232,240,.8)",
+                      boxShadow: "0 1px 4px rgba(0,0,0,.06)",
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {sn.icon}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={sn.logo}
+                      alt={sn.label}
+                      width={18}
+                      height={18}
+                      style={{ width: 18, height: 18, objectFit: "contain" }}
+                    />
                   </a>
                 ))}
               </div>
@@ -453,32 +337,14 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
           </div>
         </div>
 
-        {/* Bouton fermer */}
-        <button
-          type="button"
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-slate-500 backdrop-blur-sm transition-colors hover:bg-slate-100"
-          style={{ zIndex: 10 }}
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </button>
-
         {/* ── Corps ── */}
         <div className="px-5 pb-12 mt-4">
 
           {/* Status + localisation */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div
-              className="inline-flex items-center gap-1.5 text-[10px] font-bold"
-              style={{ color: statusInfo.color }}
-            >
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{
-                  background: statusInfo.color,
-                  animation: creator.status === "live" ? "meetLivePulse 1.2s ease-in-out infinite" : "none",
-                }}
-              />
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold" style={{ color: statusInfo.color }}>
+              <span className="h-1.5 w-1.5 rounded-full"
+                style={{ background: statusInfo.color, animation: creator.status === "live" ? "meetLivePulse 1.2s ease-in-out infinite" : "none" }} />
               {statusInfo.label}
             </div>
             {creator.city && (
@@ -520,58 +386,65 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
             </Link>
           </div>
 
-          {/* ── SECTION ABONNÉS — orbite ── */}
+          {/* ══════════════════════════════════════════════════
+              BLOC 2 — FOLLOWERS & ABONNÉS style TikTok/IG
+          ══════════════════════════════════════════════════ */}
           <div className="mt-8">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Abonnés</p>
-              <div className="flex-1 border-t border-slate-100" />
+            {/* Tabs Followers / Abonnés */}
+            <div className="flex border-b border-slate-100 mb-1">
+              {[
+                { id: "followers", label: "Followers", count: formatN(creator.followers) },
+                { id: "abonnes",   label: "Abonnés",   count: "98k" },
+              ].map((tab, i) => (
+                <div
+                  key={tab.id}
+                  className="flex-1 pb-2 text-center cursor-pointer"
+                  style={
+                    i === 0
+                      ? { borderBottom: "2px solid #7B4BF5" }
+                      : { borderBottom: "2px solid transparent" }
+                  }
+                >
+                  <p className="text-[13px] font-black" style={i === 0 ? GRAD : { color: "#94a3b8" }}>
+                    {tab.count}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide"
+                    style={{ color: i === 0 ? "#7B4BF5" : "#94a3b8" }}>
+                    {tab.label}
+                  </p>
+                </div>
+              ))}
             </div>
-            <OrbitalSubscribers creator={creator} orbiters={orbiters} />
+
+            {/* Liste — 6 premiers followers */}
+            <div className="divide-y divide-slate-50">
+              {MOCK_FOLLOWERS.map((f) => (
+                <UserRow key={f.handle} {...f} />
+              ))}
+            </div>
+
+            {/* Voir tous */}
+            <button type="button"
+              className="mt-2 w-full rounded-xl py-2.5 text-[12px] font-bold transition-all active:scale-95"
+              style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#7B4BF5" }}>
+              Voir tous les followers →
+            </button>
           </div>
 
-          {/* ── SECTION MAGIC CLOCKS (style Amazing) ── */}
-          <div className="mt-2">
-            <div className="flex items-center gap-2 mb-3">
+          {/* ══════════════════════════════════════════════════
+              BLOC 3 — MAGIC CLOCKS (cartes Amazing)
+          ══════════════════════════════════════════════════ */}
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
               <Layers className="h-3.5 w-3.5 text-slate-400" />
               <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Magic Clock</p>
               <div className="flex-1 border-t border-slate-100" />
+              <span className="text-[10px] font-bold text-violet-500">{MOCK_MAGIC_CLOCKS.length} contenus</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {MOCK_MAGIC_CLOCKS.map((mc) => {
-                const acfg = ACCESS_CFG[mc.access as keyof typeof ACCESS_CFG];
-                return (
-                  <div
-                    key={mc.title}
-                    className="overflow-hidden rounded-[16px] cursor-pointer transition-transform active:scale-95"
-                    style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 8px rgba(15,23,42,.05)" }}
-                  >
-                    {/* Thumbnail Amazing-style */}
-                    <div
-                      className="relative flex h-28 w-full items-center justify-center overflow-hidden"
-                      style={{ background: mc.gradient }}
-                    >
-                      <div
-                        className="flex h-12 w-12 items-center justify-center rounded-2xl"
-                        style={{ background: "rgba(255,255,255,.7)", backdropFilter: "blur(8px)" }}
-                      >
-                        <Layers className="h-6 w-6 text-violet-400" />
-                      </div>
-                      {/* Badge access */}
-                      <div
-                        className="absolute top-2 right-2 rounded-[6px] px-1.5 py-0.5 text-[8px] font-extrabold uppercase"
-                        style={{ background: acfg.bg, color: acfg.color, border: `1px solid ${acfg.border}` }}
-                      >
-                        {mc.access}
-                      </div>
-                    </div>
-                    {/* Info */}
-                    <div className="p-2.5">
-                      <p className="text-[11px] font-bold text-slate-800 leading-tight truncate">{mc.title}</p>
-                      <p className="mt-0.5 text-[9px] text-slate-400">{mc.views} vues · ★ {mc.stars}</p>
-                    </div>
-                  </div>
-                );
-              })}
+              {MOCK_MAGIC_CLOCKS.map((mc) => (
+                <MiniAmazingCard key={mc.title} mc={mc} />
+              ))}
             </div>
           </div>
 
