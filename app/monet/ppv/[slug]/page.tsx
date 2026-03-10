@@ -1,6 +1,6 @@
 // app/monet/ppv/[slug]/page.tsx
 // ✅ v1.0 — Détail d'un Magic Clock PPV : ventes · gains · commission · historique
-import { createClient } from "@/core/supabase/server";
+import { getSupabaseServer } from "@/core/supabase/server";
 import { redirect }     from "next/navigation";
 import Link             from "next/link";
 import { ChevronLeft, Zap, TrendingUp, DollarSign } from "lucide-react";
@@ -22,7 +22,7 @@ export default async function PpvDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const supabase = await createClient();
+  const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
