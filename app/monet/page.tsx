@@ -147,7 +147,7 @@ function MonetContent({
                 </p>
               )}
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <span className="truncate text-[15px] font-black leading-tight text-slate-800">
+                <span className="text-[15px] font-black leading-tight text-slate-800 break-words">
                   {headerName}
                 </span>
                 <span className="shrink-0 text-[11px] text-slate-400">{headerHandle}</span>
