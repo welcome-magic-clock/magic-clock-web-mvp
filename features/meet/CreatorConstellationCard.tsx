@@ -1,10 +1,10 @@
 // features/meet/CreatorConstellationCard.tsx
-// ✅ v3.2 — Carte normale : bas de carte = FeaturedCard v2.4 exact (4 bulles + contour violet + gradient)
+// ✅ v3.3 — 4 bulles compactes en 2×2 sur mobile · contour violet · gradient FeaturedCard v2.4
 
 "use client";
 
 import Image from "next/image";
-import { BadgeCheck, UserPlus, Check, Users, Star, Layers } from "lucide-react";
+import { BadgeCheck, UserPlus, Check, Users } from "lucide-react";
 import type { CreatorFull } from "@/app/meet/page";
 
 type Props = {
@@ -27,7 +27,7 @@ const STATUS_CFG = {
   idle:   { label: "Actif",  color: "#94a3b8", bg: "rgba(148,163,184,.08)", border: "rgba(148,163,184,.2)" },
 };
 
-// Gradient 5 couleurs — identique FeaturedCard v2.4
+// Gradient 5 couleurs identique FeaturedCard v2.4
 const GRAD = {
   background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
   WebkitBackgroundClip: "text" as const,
@@ -38,13 +38,20 @@ export function CreatorConstellationCard({ creator, isMet, onOpen, onMeet }: Pro
   const sk = creator.status ?? "idle";
   const sc = STATUS_CFG[sk as keyof typeof STATUS_CFG] ?? STATUS_CFG.idle;
 
+  const stats = [
+    { val: formatN(creator.followers),        lbl: "Followers" },
+    { val: formatN(creator.magicClocks ?? 0), lbl: "M. Clocks" },
+    { val: `★ ${creator.stars?.toFixed(1)}`,  lbl: "Étoiles"   },
+    { val: "98k",                             lbl: "Abonnés"   },
+  ];
+
   return (
     <div className="w-full cursor-pointer" onClick={onOpen}>
       <div
         className="overflow-hidden"
         style={{
           borderRadius: 17,
-          // Contour triple violet — identique FeaturedCard v2.4
+          // Contour triple violet identique FeaturedCard v2.4
           boxShadow: "0 0 0 2px white, 0 0 0 3px #7B4BF5, 0 4px 20px rgba(123,75,245,.25)",
         }}
       >
@@ -85,49 +92,43 @@ export function CreatorConstellationCard({ creator, isMet, onOpen, onMeet }: Pro
           </div>
         </div>
 
-        {/* ── Bandeau bas — style FeaturedCard v2.4 exact ── */}
+        {/* ── Bandeau bas — gradient FeaturedCard v2.4 ── */}
         <div
-          className="rounded-b-[17px]"
           style={{
             background: "linear-gradient(160deg,rgba(75,123,245,.06),rgba(196,75,218,.04),rgba(245,131,75,.03))",
           }}
         >
           {/* Nom + certif + handle */}
-          <div className="flex items-start gap-1 px-2.5 pt-2.5 pb-1 min-w-0">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1">
-                <p className="truncate text-[12px] font-black text-slate-900 leading-tight">
-                  {creator.name}
-                </p>
-                {creator.isCertified && (
-                  <BadgeCheck className="h-3 w-3 text-violet-500 flex-shrink-0" />
-                )}
-              </div>
-              <p className="truncate text-[9px] text-slate-400">{creator.handle}</p>
+          <div className="px-2 pt-2 pb-1.5">
+            <div className="flex items-center gap-1 min-w-0">
+              <p className="truncate text-[11px] font-black text-slate-900 leading-tight">
+                {creator.name}
+              </p>
+              {creator.isCertified && (
+                <BadgeCheck className="h-3 w-3 text-violet-500 flex-shrink-0" />
+              )}
+            </div>
+            <p className="truncate text-[9px] text-slate-400 leading-tight mb-1.5">
+              {creator.handle}
+            </p>
+
+            {/* ── 4 bulles en grille 2×2 — lisibles sur mobile ── */}
+            <div className="grid grid-cols-2 gap-1">
+              {stats.map(({ val, lbl }) => (
+                <div
+                  key={lbl}
+                  className="rounded-[8px] py-1.5 text-center"
+                  style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}
+                >
+                  <p className="text-[10px] font-black leading-none" style={GRAD}>{val}</p>
+                  <p className="mt-0.5 text-[6px] font-bold uppercase tracking-wide text-slate-400">{lbl}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* ── 4 bulles stats — identiques FeaturedCard v2.4 ── */}
-          <div className="mx-2.5 mb-2.5 grid grid-cols-4 gap-1.5">
-            {[
-              { val: formatN(creator.followers),        lbl: "Followers" },
-              { val: formatN(creator.magicClocks ?? 0), lbl: "M. Clocks" },
-              { val: `★ ${creator.stars?.toFixed(1)}`,  lbl: "Étoiles"   },
-              { val: "98k",                             lbl: "Abonnés"   },
-            ].map(({ val, lbl }) => (
-              <div
-                key={lbl}
-                className="rounded-xl py-2 text-center"
-                style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}
-              >
-                <p className="text-[11px] font-black" style={GRAD}>{val}</p>
-                <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400">{lbl}</p>
-              </div>
-            ))}
-          </div>
-
           {/* ── Bouton Meet me ── */}
-          <div className="px-2.5 pb-2.5">
+          <div className="px-2 pb-2.5 pt-1">
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onMeet(); }}
