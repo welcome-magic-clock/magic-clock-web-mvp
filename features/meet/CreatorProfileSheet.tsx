@@ -128,6 +128,7 @@ const SOCIAL_NETWORKS = [
 ];
 
 // Orbiteurs mock (abonnés)
+// Clé 0 = fallback pour tous les créateurs sans entrée dédiée
 const MOCK_ORBITERS: Record<number, { name: string; initial: string; color: string; avatar?: string }[]> = {
   1: [
     { name: "Sofia",  initial: "S", color: "#C44BDA" },
@@ -139,7 +140,7 @@ const MOCK_ORBITERS: Record<number, { name: string; initial: string; color: stri
     { name: "Paulo",  initial: "P", color: "#F54B8F" },
     { name: "Hana",   initial: "H", color: "#4B7BF5" },
   ],
-  default: [
+  0: [
     { name: "Aiko",  initial: "A", color: "#7B4BF5" },
     { name: "Maya",  initial: "M", color: "#F54B8F" },
     { name: "Tom",   initial: "T", color: "#22d3ee" },
@@ -316,7 +317,7 @@ function OrbitalSubscribers({ creator, orbiters }: {
 // ── SHEET PRINCIPALE ───────────────────────────────────────────
 export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) {
   const statusInfo = STATUS_LABEL[creator.status ?? "idle"] ?? STATUS_LABEL.idle;
-  const orbiters   = MOCK_ORBITERS[creator.id] ?? MOCK_ORBITERS.default;
+  const orbiters   = MOCK_ORBITERS[creator.id] ?? MOCK_ORBITERS[0];
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
