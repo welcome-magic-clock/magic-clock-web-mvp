@@ -1,5 +1,5 @@
 // features/meet/CreatorProfileSheet.tsx
-// ✅ v4.3 — Flèche seule back button · Carte Amazing complète (avatar+nom+@+vues+cœur+étoiles+titre+hashtags+CTA+cadenas) · Fix liens sociaux
+// ✅ v4.4 — UX iPhone optimisé · Nom créateur footer corrigé · Cartes compactes · X cliquable
 
 "use client";
 
@@ -16,25 +16,21 @@ type Props = {
   onClose: () => void;
 };
 
-// ── Helpers ────────────────────────────────────────────────────
 function formatN(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(".", ",")}M`;
   if (n >= 1_000)     return `${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1).replace(".", ",")}k`;
   return String(n);
 }
 
-// Fix liens sociaux — s'assure que l'URL est absolue
 function ensureAbsoluteUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   const t = url.trim();
   if (!t) return null;
   if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  // Handle court sans domaine (ex: "Magic_Clock_app") → pas cliquable
   if (!t.includes(".") && !t.startsWith("/")) return null;
   return `https://${t}`;
 }
 
-// Gradient 5 couleurs
 const GRAD = {
   background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
   WebkitBackgroundClip: "text" as const,
@@ -47,7 +43,6 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   idle:   { label: "Actif",       color: "#94a3b8" },
 };
 
-// ── Logos sociaux PNG GitHub ───────────────────────────────────
 const BASE = "https://raw.githubusercontent.com/welcome-magic-clock/magic-clock-web-mvp/main/public";
 type SocialKey = "social_instagram"|"social_tiktok"|"social_youtube"|"social_facebook"|"social_snapchat"|"social_pinterest"|"social_x"|"social_linkedin"|"social_twitch"|"social_threads"|"social_bereal";
 const SOCIAL_NETWORKS: { key: SocialKey; label: string; logo: string }[] = [
@@ -65,12 +60,12 @@ const SOCIAL_NETWORKS: { key: SocialKey; label: string; logo: string }[] = [
 ];
 type SocialUrls = Partial<Record<SocialKey, string | null>>;
 
-// ── Types ──────────────────────────────────────────────────────
 type FollowRow = {
   follower_handle: string;
   following_handle: string;
   profiles: { display_name: string | null; avatar_url: string | null } | null;
 };
+
 type MagicClockRow = {
   id: string;
   slug: string | null;
@@ -82,10 +77,10 @@ type MagicClockRow = {
   views_count: number;
   likes_count: number;
   rating_avg: number | null;
-  hashtags?: string[] | null;
+  hashtags?: string[];
 };
 
-// ── Étoiles — identique Amazing ───────────────────────────────
+// ── Étoiles identique Amazing ─────────────────────────────────
 function StarRating({ value }: { value: number }) {
   const full  = Math.floor(value);
   const half  = value - full >= 0.5;
@@ -107,7 +102,7 @@ function StarRating({ value }: { value: number }) {
   );
 }
 
-// ── Carte Magic Clock — format EXACT Amazing ──────────────────
+// ── Carte Magic Clock — format Amazing · optimisée iPhone ─────
 function MagicClockCard({ mc, creatorAvatar, creatorName, creatorHandle }: {
   mc: MagicClockRow;
   creatorAvatar: string;
@@ -122,12 +117,8 @@ function MagicClockCard({ mc, creatorAvatar, creatorName, creatorHandle }: {
   const FALLBACK = "/images/examples/balayage-before.jpg";
   const beforeThumb = mc.before_url ?? mc.thumbnail_url ?? FALLBACK;
   const afterThumb  = mc.after_url  ?? mc.thumbnail_url ?? FALLBACK;
-
-  // Hashtags depuis le champ work ou la colonne dédiée
-  const hashtags: string[] = (mc.hashtags ?? []).slice(0, 3);
-
-  const slug = mc.slug ?? mc.id;
-  const href = `/magic-clock-display/${slug}`;
+  const hashtags = (mc.hashtags ?? []).slice(0, 3);
+  const href = `/magic-clock-display/${mc.slug ?? mc.id}`;
 
   return (
     <Link href={href}>
@@ -135,104 +126,96 @@ function MagicClockCard({ mc, creatorAvatar, creatorName, creatorHandle }: {
         className="w-full overflow-hidden rounded-3xl bg-white cursor-pointer transition-transform active:scale-95"
         style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 12px rgba(0,0,0,.05)" }}
       >
-        {/* ── Zone média avant/après ── */}
+        {/* Zone média avant/après */}
         <div className="relative w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
           <div className="grid h-full w-full grid-cols-2">
             <div className="relative h-full w-full overflow-hidden">
-              <img src={beforeThumb} alt={`${mc.title} - Avant`} className="h-full w-full object-cover object-top" />
+              <img src={beforeThumb} alt="avant" className="h-full w-full object-cover object-top" />
             </div>
             <div className="relative h-full w-full overflow-hidden">
-              <img src={afterThumb} alt={`${mc.title} - Après`} className="h-full w-full object-cover object-top" />
+              <img src={afterThumb} alt="après" className="h-full w-full object-cover object-top" />
             </div>
             {/* Ligne centrale blanche */}
             <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-white/85" />
           </div>
           {/* Gradient bas */}
           <div className="pointer-events-none absolute bottom-0 left-0 right-0"
-            style={{ height: "30%", background: "linear-gradient(to top,rgba(10,15,30,.45),transparent)" }} />
-          {/* Avatar créateur centré */}
+            style={{ height: "28%", background: "linear-gradient(to top,rgba(10,15,30,.5),transparent)" }} />
+          {/* Avatar centré */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
             <div className="overflow-hidden rounded-full bg-white"
-              style={{ width: 44, height: 44, border: "3px solid white", boxShadow: "0 2px 14px rgba(0,0,0,.22)" }}>
-              {creatorAvatar ? (
-                <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-[13px] font-black text-violet-600"
-                  style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
-                  {creatorName[0]?.toUpperCase()}
-                </div>
-              )}
+              style={{ width: 40, height: 40, border: "3px solid white", boxShadow: "0 2px 12px rgba(0,0,0,.2)" }}>
+              {creatorAvatar
+                ? <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
+                : <div className="flex h-full w-full items-center justify-center text-[12px] font-black text-violet-600"
+                    style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
+                    {creatorName[0]?.toUpperCase()}
+                  </div>
+              }
             </div>
           </div>
         </div>
 
-        {/* ── Footer EXACT Amazing — 3 lignes ── */}
-        <div className="px-3 pt-2.5 pb-3 space-y-1.5">
+        {/* Footer — 3 lignes identique Amazing */}
+        <div className="px-2.5 pt-2 pb-2.5 space-y-1">
 
           {/* Ligne 1 : mini avatar · nom · @handle · vues · cœur · étoiles */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            {/* Mini avatar */}
+          <div className="flex items-center gap-1 min-w-0">
             <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
-              style={{ width: 24, height: 24, border: "1.5px solid rgba(226,232,240,.8)" }}>
-              {creatorAvatar ? (
-                <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-[8px] font-black text-violet-600">
-                  {creatorName[0]?.toUpperCase()}
-                </div>
-              )}
+              style={{ width: 20, height: 20, border: "1.5px solid rgba(226,232,240,.8)" }}>
+              {creatorAvatar
+                ? <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover" />
+                : <div className="flex h-full w-full items-center justify-center text-[7px] font-black text-violet-600">
+                    {creatorName[0]?.toUpperCase()}
+                  </div>
+              }
             </div>
-            {/* Nom */}
-            <span className="text-[11px] font-bold text-slate-800 truncate max-w-[80px]">{creatorName}</span>
-            {/* @handle */}
-            <span className="text-[9px] text-slate-400 truncate">@{creatorHandle}</span>
+            {/* Nom du créateur */}
+            <span className="text-[10px] font-bold text-slate-800 truncate" style={{ maxWidth: 64 }}>
+              {creatorName}
+            </span>
             {/* Séparateur */}
-            <span className="h-[3px] w-[3px] rounded-full bg-slate-200 flex-shrink-0" />
+            <span className="h-[3px] w-[3px] flex-shrink-0 rounded-full bg-slate-200" />
             {/* Vues */}
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-400 flex-shrink-0">
+            <span className="flex flex-shrink-0 items-center gap-0.5 text-[9px] text-slate-400">
               <Eye className="h-2.5 w-2.5" />{mc.views_count > 0 ? formatN(mc.views_count) : "0"}
             </span>
             {/* Cœur */}
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-400 flex-shrink-0">
+            <span className="flex flex-shrink-0 items-center gap-0.5 text-[9px] text-slate-400">
               <Heart className="h-2.5 w-2.5" />{mc.likes_count > 0 ? formatN(mc.likes_count) : "0"}
             </span>
-            {/* Étoiles à droite */}
             <span className="flex-1" />
             {mc.rating_avg != null && <StarRating value={mc.rating_avg} />}
           </div>
 
           {/* Ligne 2 : titre + hashtags gris inline */}
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
-            {mc.title && (
-              <span className="text-[11px] font-semibold text-slate-800 leading-snug">{mc.title}</span>
-            )}
-            {hashtags.map((tag) => (
+          <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0 min-w-0">
+            <span className="text-[11px] font-semibold text-slate-800 leading-snug truncate">{mc.title}</span>
+            {hashtags.map(tag => (
               <span key={tag} className="text-[10px] text-slate-400 font-medium">
                 {tag.startsWith("#") ? tag : `#${tag}`}
               </span>
             ))}
           </div>
 
-          {/* Ligne 3 : bouton CTA gradient + cadenas gris */}
-          <div className="flex gap-2 pt-0.5">
+          {/* Ligne 3 : bouton CTA + cadenas */}
+          <div className="flex gap-1.5 pt-0.5">
             <button type="button"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[11px] font-bold text-white transition-all active:scale-95"
+              onClick={e => e.preventDefault()}
+              className="flex flex-1 items-center justify-center gap-1 rounded-2xl py-2 text-[10px] font-bold text-white transition-all active:scale-95"
               style={{
                 background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
-                boxShadow: "0 2px 10px rgba(123,75,245,.25)",
-              }}
-              onClick={(e) => e.preventDefault()}
-            >
-              <BtnIcon className="h-3 w-3" />
-              {btnLabel}
+                boxShadow: "0 2px 8px rgba(123,75,245,.2)",
+                minWidth: 0,
+              }}>
+              <BtnIcon className="h-2.5 w-2.5 flex-shrink-0" />
+              <span className="truncate">{btnLabel}</span>
             </button>
-            {/* Cadenas gris */}
             <button type="button"
-              className="flex flex-shrink-0 items-center justify-center rounded-2xl px-3 py-2.5 transition-all active:scale-95"
-              style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}
-              onClick={(e) => e.preventDefault()}
-            >
-              {isUnlocked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+              onClick={e => e.preventDefault()}
+              className="flex flex-shrink-0 items-center justify-center rounded-2xl px-2.5 py-2 transition-all active:scale-95"
+              style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
+              {isUnlocked ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
             </button>
           </div>
 
@@ -249,14 +232,13 @@ function UserRow({ name, handle, avatar }: { name: string; handle: string; avata
     <div className="flex items-center gap-3 py-2.5 border-b border-slate-50 last:border-0">
       <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
         style={{ width: 44, height: 44, border: "1.5px solid rgba(226,232,240,.8)" }}>
-        {avatar ? (
-          <img src={avatar} alt={name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-[14px] font-black text-violet-400"
-            style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
-            {name[0]?.toUpperCase() ?? "?"}
-          </div>
-        )}
+        {avatar
+          ? <img src={avatar} alt={name} className="h-full w-full object-cover" />
+          : <div className="flex h-full w-full items-center justify-center text-[14px] font-black text-violet-400"
+              style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
+              {name[0]?.toUpperCase() ?? "?"}
+            </div>
+        }
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-bold text-slate-900 truncate">{name}</p>
@@ -296,61 +278,49 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
     async function load() {
       setLoading(true);
       try {
-        // 1. URLs sociales
         const { data: prof } = await sb
           .from("profiles")
           .select(`social_instagram, social_tiktok, social_youtube, social_facebook,
                    social_snapchat, social_pinterest, social_x, social_linkedin,
                    social_twitch, social_threads, social_bereal`)
-          .eq("handle", handle)
-          .single();
+          .eq("handle", handle).single();
         if (prof) setSocialUrls(prof as unknown as SocialUrls);
 
-        // 2. Followers
-        const { data: fols } = await sb
-          .from("follows")
+        const { data: fols } = await sb.from("follows")
           .select("follower_handle, following_handle, profiles!follows_follower_id_fkey(display_name, avatar_url)")
           .eq("following_handle", handle).limit(20);
         setFollowers((fols as unknown as FollowRow[]) ?? []);
 
-        // 3. Suivis
-        const { data: fing } = await sb
-          .from("follows")
+        const { data: fing } = await sb.from("follows")
           .select("follower_handle, following_handle, profiles!follows_following_id_fkey(display_name, avatar_url)")
           .eq("follower_handle", handle).limit(20);
         setFollowing((fing as unknown as FollowRow[]) ?? []);
 
-        // 4. Abonnés
         const { data: mcs } = await sb.from("magic_clocks").select("id")
           .eq("creator_handle", handle).eq("is_published", true);
         if (mcs && mcs.length > 0) {
           const mcIds = mcs.map(m => m.id);
-          const { data: accesses, count } = await sb
-            .from("magic_clock_accesses").select("user_handle", { count: "exact" })
+          const { data: accesses, count } = await sb.from("magic_clock_accesses")
+            .select("user_handle", { count: "exact" })
             .in("magic_clock_id", mcIds).eq("access_type", "SUB");
           setAbonnesCount(count ?? 0);
-          const uniqHandles = [...new Set((accesses ?? []).map(a => a.user_handle))].slice(0, 20);
+          const uniqHandles = [...new Set((accesses ?? []).map((a: any) => a.user_handle))].slice(0, 20);
           if (uniqHandles.length > 0) {
             const { data: abProfiles } = await sb.from("profiles")
               .select("handle, display_name, avatar_url").in("handle", uniqHandles);
-            setAbonnes((abProfiles ?? []).map(p => ({
+            setAbonnes((abProfiles ?? []).map((p: any) => ({
               handle: `@${p.handle}`, name: p.display_name ?? p.handle ?? "Créateur", avatar: p.avatar_url,
             })));
           }
         }
 
-        // 5. Magic Clocks — avec before_url, after_url, likes_count, hashtags depuis work
-        const { data: clocks } = await sb
-          .from("magic_clocks")
+        const { data: clocks } = await sb.from("magic_clocks")
           .select("id, slug, title, thumbnail_url, before_url, after_url, gating_mode, views_count, likes_count, rating_avg, work")
           .eq("creator_handle", handle).eq("is_published", true)
           .order("created_at", { ascending: false }).limit(6);
 
-        // Extraire les hashtags depuis le champ work JSON si disponible
         const enriched: MagicClockRow[] = (clocks ?? []).map((c: any) => ({
-          id: c.id,
-          slug: c.slug,
-          title: c.title,
+          id: c.id, slug: c.slug, title: c.title,
           thumbnail_url: c.thumbnail_url,
           before_url: c.before_url ?? c.work?.studio?.beforeUrl ?? null,
           after_url:  c.after_url  ?? c.work?.studio?.afterUrl  ?? null,
@@ -361,7 +331,6 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
           hashtags: c.work?.studio?.hashtags ?? [],
         }));
         setMagicClocks(enriched);
-
       } catch (e) {
         console.error("Sheet load error:", e);
       } finally {
@@ -406,30 +375,29 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
     <div className="fixed inset-0 z-[200] bg-white overflow-y-auto"
       style={{ animation: "sheetUp .3s cubic-bezier(.34,1.2,.64,1)" }}>
 
-      {/* ── Header — flèche seule (← sans texte) ── */}
+      {/* ── Header sticky — flèche seule ── */}
       <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3"
         style={{
-          background: "rgba(255,255,255,.92)",
+          background: "rgba(255,255,255,.95)",
           backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
           borderBottom: "1px solid rgba(226,232,240,.6)",
         }}>
-        {/* Flèche seule — style iOS */}
-        <button type="button" onClick={onClose}
-          className="flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-90"
-          style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
-          aria-label="Retour">
+        {/* ← flèche seule, pas de texte */}
+        <button type="button" onClick={onClose} aria-label="Retour"
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-90"
+          style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
           <ArrowLeft className="h-4 w-4 text-slate-600" />
         </button>
-        <div className="flex-1 text-center">
-          <p className="text-[13px] font-black text-slate-900">{creator.name}</p>
-          <p className="text-[10px] text-slate-400">{creator.handle}</p>
+        <div className="flex-1 min-w-0 text-center">
+          <p className="text-[13px] font-black text-slate-900 truncate">{creator.name}</p>
+          <p className="text-[10px] text-slate-400 truncate">{creator.handle}</p>
         </div>
-        {/* Espace symétrique */}
-        <div style={{ width: 36 }} />
+        <div className="h-9 w-9 flex-shrink-0" /> {/* espaceur symétrique */}
       </div>
 
-      {/* ── CONTENU ── */}
-      <div className="px-4 pb-20">
+      {/* ── Contenu scrollable ── */}
+      <div className="px-4 pb-24">
 
         {/* ══ BLOC 1 — BANDEAU STATS ══════════════════════════ */}
         <div className="mt-4">
@@ -442,13 +410,12 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
             <div className="flex items-center gap-2.5 px-3 pt-3 pb-2">
               <div className="flex-shrink-0 overflow-hidden rounded-full"
                 style={{ width: 48, height: 48, border: "2px solid white", boxShadow: "0 0 0 2px #7B4BF5", background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}>
-                {creator.avatar ? (
-                  <img src={creator.avatar} alt={creator.name} className="h-full w-full object-cover rounded-full" />
-                ) : (
-                  <span className="flex h-full w-full items-center justify-center text-[16px] font-black text-violet-600">
-                    {creator.name[0].toUpperCase()}
-                  </span>
-                )}
+                {creator.avatar
+                  ? <img src={creator.avatar} alt={creator.name} className="h-full w-full object-cover rounded-full" />
+                  : <span className="flex h-full w-full items-center justify-center text-[16px] font-black text-violet-600">
+                      {creator.name[0].toUpperCase()}
+                    </span>
+                }
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
@@ -460,15 +427,16 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
                 </p>
               </div>
               <div className="flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold"
-                style={
-                  creator.status === "live"
-                    ? { background: "rgba(22,163,74,.08)", border: "1px solid rgba(22,163,74,.2)", color: "#16a34a" }
-                    : creator.status === "studio"
-                    ? { background: "rgba(123,75,245,.08)", border: "1px solid rgba(123,75,245,.2)", color: "#7B4BF5" }
-                    : { background: "rgba(148,163,184,.08)", border: "1px solid rgba(148,163,184,.2)", color: "#94a3b8" }
+                style={creator.status === "live"
+                  ? { background: "rgba(22,163,74,.08)",   border: "1px solid rgba(22,163,74,.2)",   color: "#16a34a" }
+                  : creator.status === "studio"
+                  ? { background: "rgba(123,75,245,.08)", border: "1px solid rgba(123,75,245,.2)",   color: "#7B4BF5" }
+                  : { background: "rgba(148,163,184,.08)",border: "1px solid rgba(148,163,184,.2)", color: "#94a3b8" }
                 }>
-                <span className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: statusInfo.color, animation: creator.status === "live" ? "meetLivePulse 1.2s ease-in-out infinite" : "none" }} />
+                <span className="h-1.5 w-1.5 rounded-full" style={{
+                  background: statusInfo.color,
+                  animation: creator.status === "live" ? "meetLivePulse 1.2s ease-in-out infinite" : "none",
+                }} />
                 {statusInfo.label}
               </div>
             </div>
@@ -483,17 +451,18 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
               ].map(({ val, lbl }) => (
                 <div key={lbl} className="rounded-xl py-2 text-center"
                   style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}>
-                  <p className="text-[11px] font-black" style={GRAD}>{val}</p>
-                  <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400">{lbl}</p>
+                  <p className="text-[11px] font-black leading-tight" style={GRAD}>{val}</p>
+                  <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400 leading-tight">{lbl}</p>
                 </div>
               ))}
             </div>
 
-            {/* Logos sociaux — PNG, 1 ligne scrollable, liens absolus */}
+            {/* Logos sociaux — 1 ligne scrollable, masquer sans URL */}
             <div className="mx-3 mb-3">
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
+              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
                 {SOCIAL_NETWORKS.map((sn) => {
                   const url = ensureAbsoluteUrl(socialUrls[sn.key]);
+                  // Ne montrer que les réseaux avec une URL valide + les autres en grisé
                   return (
                     <a key={sn.key}
                       href={url ?? undefined}
@@ -502,16 +471,14 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
                       title={sn.label}
                       className="flex-shrink-0 flex items-center justify-center rounded-full transition-transform active:scale-90"
                       style={{
-                        width: 32, height: 32,
+                        width: 34, height: 34,
                         background: url ? "white" : "#f8fafc",
-                        border: "1px solid rgba(226,232,240,.8)",
-                        boxShadow: "0 1px 4px rgba(0,0,0,.06)",
-                        opacity: url ? 1 : 0.35,
-                        cursor: url ? "pointer" : "default",
+                        border: `1px solid ${url ? "rgba(226,232,240,.8)" : "rgba(226,232,240,.4)"}`,
+                        boxShadow: url ? "0 1px 4px rgba(0,0,0,.06)" : "none",
+                        opacity: url ? 1 : 0.3,
                         pointerEvents: url ? "auto" : "none",
                       }}>
-                      <img src={sn.logo} alt={sn.label}
-                        style={{ width: 18, height: 18, objectFit: "contain" }} />
+                      <img src={sn.logo} alt={sn.label} style={{ width: 18, height: 18, objectFit: "contain" }} />
                     </a>
                   );
                 })}
@@ -547,11 +514,13 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
 
         {/* ══ BLOC 2 — FOLLOWERS · ABONNÉS · SUIVIS ═══════════ */}
         <div className="mt-8">
-          <div className="flex border-b border-slate-100 mb-1">
-            {tabs.map((tab) => (
+          <div className="flex border-b border-slate-100">
+            {tabs.map(tab => (
               <button key={tab.id} type="button"
                 className="flex-1 pb-2.5 text-center transition-colors"
-                style={activeTab === tab.id ? { borderBottom: "2px solid #7B4BF5" } : { borderBottom: "2px solid transparent" }}
+                style={activeTab === tab.id
+                  ? { borderBottom: "2px solid #7B4BF5" }
+                  : { borderBottom: "2px solid transparent" }}
                 onClick={() => setActiveTab(tab.id)}>
                 <p className="text-[13px] font-black"
                   style={activeTab === tab.id ? GRAD : { color: "#94a3b8" }}>{tab.count}</p>
@@ -560,20 +529,24 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
               </button>
             ))}
           </div>
-          {loading ? (
-            <div className="py-8 text-center text-[12px] text-slate-400">Chargement…</div>
-          ) : tabData[activeTab].length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-[13px] text-slate-400">Aucun {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} pour l'instant</p>
-            </div>
-          ) : (
-            <div>{tabData[activeTab].map((u) => (
-              <UserRow key={u.handle} name={u.name} handle={u.handle} avatar={u.avatar} />
-            ))}</div>
-          )}
+          <div className="mt-1">
+            {loading ? (
+              <div className="py-8 text-center text-[12px] text-slate-400">Chargement…</div>
+            ) : tabData[activeTab].length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-[13px] text-slate-400">
+                  Aucun {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} pour l'instant
+                </p>
+              </div>
+            ) : (
+              tabData[activeTab].map(u => (
+                <UserRow key={u.handle} name={u.name} handle={u.handle} avatar={u.avatar} />
+              ))
+            )}
+          </div>
         </div>
 
-        {/* ══ BLOC 3 — MAGIC CLOCKS format Amazing ════════════ */}
+        {/* ══ BLOC 3 — MAGIC CLOCKS ════════════════════════════ */}
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
             <Layers className="h-3.5 w-3.5 text-slate-400" />
@@ -583,6 +556,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
               {creator.magicClocks ?? magicClocks.length} contenus
             </span>
           </div>
+
           {loading ? (
             <div className="py-8 text-center text-[12px] text-slate-400">Chargement…</div>
           ) : magicClocks.length === 0 ? (
@@ -591,7 +565,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {magicClocks.map((mc) => (
+              {magicClocks.map(mc => (
                 <MagicClockCard key={mc.id} mc={mc}
                   creatorAvatar={creator.avatar ?? ""}
                   creatorName={creator.name}
