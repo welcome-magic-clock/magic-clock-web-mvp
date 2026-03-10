@@ -198,7 +198,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
                    social_twitch, social_threads, social_bereal`)
           .eq("handle", handle)
           .single();
-        if (prof) setSocialUrls(prof as SocialUrls);
+        if (prof) setSocialUrls(prof as unknown as SocialUrls);
 
         // 2. Followers (qui suit ce créateur)
         const { data: fols } = await sb
@@ -206,7 +206,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
           .select("follower_handle, following_handle, profiles!follows_follower_id_fkey(display_name, avatar_url)")
           .eq("following_handle", handle)
           .limit(20);
-        setFollowers((fols as FollowRow[]) ?? []);
+        setFollowers((fols as unknown as FollowRow[]) ?? []);
 
         // 3. Suivis (qui ce créateur suit)
         const { data: fing } = await sb
@@ -214,7 +214,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
           .select("follower_handle, following_handle, profiles!follows_following_id_fkey(display_name, avatar_url)")
           .eq("follower_handle", handle)
           .limit(20);
-        setFollowing((fing as FollowRow[]) ?? []);
+        setFollowing((fing as unknown as FollowRow[]) ?? []);
 
         // 4. Abonnés Magic Clock (accès SUB)
         const { data: mcs } = await sb
