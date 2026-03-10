@@ -26,13 +26,6 @@ export default async function PayoutPage() {
   const hasStripe = !!profile?.stripe_account_id;
   const isActive  = profile?.stripe_account_status === "active";
 
-  // Historique versements (3 derniers mois simulés — TODO: brancher Stripe payouts API)
-  const payoutHistory = [
-    { date: "15 mars 2026",  amount: 1240.5,  status: "paid" },
-    { date: "15 fév. 2026",  amount: 980.0,   status: "paid" },
-    { date: "15 jan. 2026",  amount: 820.75,  status: "paid" },
-  ];
-
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
       <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-3">
@@ -139,20 +132,17 @@ export default async function PayoutPage() {
         {/* Historique */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="mb-3 text-[13px] font-bold text-slate-800">Historique des versements</p>
-          {payoutHistory.map((p, i) => (
-            <div key={i} className="flex items-center justify-between border-b border-slate-100 py-2.5 last:border-0">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-[9px] text-violet-600">✓</span>
-                <span className="text-[12px] text-slate-600">{p.date}</span>
-              </div>
-              <span className="text-[13px] font-black text-slate-800">
-                {new Intl.NumberFormat("fr-CH", { style: "currency", currency: "CHF" }).format(p.amount)}
-              </span>
+          <div className="flex flex-col items-center gap-2 py-4 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+              <Calendar className="h-5 w-5 text-slate-400" />
             </div>
-          ))}
-          <p className="mt-3 text-center text-[10px] text-slate-400">
-            {/* TODO: brancher Stripe payouts API pour l'historique réel */}
-            Historique complet disponible sur le tableau de bord Stripe
+            <p className="text-[12px] font-semibold text-slate-500">Aucun versement effectué pour l'instant</p>
+            <p className="text-[11px] text-slate-400">
+              Ton premier versement apparaîtra ici dès que ton compte sera activé.
+            </p>
+          </div>
+          <p className="mt-1 text-center text-[10px] text-slate-400">
+            Historique complet disponible sur le tableau de bord Stripe une fois activé
           </p>
         </div>
 
