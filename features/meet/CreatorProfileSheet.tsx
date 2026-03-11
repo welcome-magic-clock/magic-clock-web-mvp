@@ -4,7 +4,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, UserPlus, Check, MessageCircle, BadgeCheck, Layers, Eye, Heart, Lock, Unlock, Gift, Sparkles, CreditCard, Star } from "lucide-react";
+import { ArrowLeft, UserPlus, Check, MessageCircle, BadgeCheck, Layers, Eye, Heart, Lock, Unlock, Gift, Sparkles, CreditCard } from "lucide-react";
 import Link from "next/link";
 import type { CreatorFull } from "@/app/meet/page";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
@@ -80,24 +80,58 @@ type MagicClockRow = {
   hashtags?: string[];
 };
 
-// ── Étoiles identique Amazing ─────────────────────────────────
+// ── Étoiles — gradient Magic Clock 5 couleurs · cohérence Amazing ──
+const STAR_GRAD_ID = "mcStarGrad";
+const STAR_GRAD_STOPS = (
+  <defs>
+    <linearGradient id={STAR_GRAD_ID} x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stopColor="#4B7BF5" />
+      <stop offset="25%"  stopColor="#7B4BF5" />
+      <stop offset="55%"  stopColor="#C44BDA" />
+      <stop offset="80%"  stopColor="#F54B8F" />
+      <stop offset="100%" stopColor="#F5834B" />
+    </linearGradient>
+  </defs>
+);
+
+function StarSvg({ size = 10, fill = `url(#${STAR_GRAD_ID})` }: { size?: number; fill?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+    </svg>
+  );
+}
+
 function StarRating({ value }: { value: number }) {
   const full  = Math.floor(value);
   const half  = value - full >= 0.5;
   const empty = 5 - full - (half ? 1 : 0);
+  const SIZE  = 10;
   return (
     <span className="inline-flex items-center gap-0.5">
-      {Array.from({ length: full  }).map((_, i) => <Star key={`f${i}`} className="h-2.5 w-2.5 fill-slate-300 text-slate-300" />)}
+      <svg width="0" height="0" style={{ position: "absolute" }}>
+        {STAR_GRAD_STOPS}
+      </svg>
+      {Array.from({ length: full  }).map((_, i) => <StarSvg key={`f${i}`} size={SIZE} />)}
       {half && (
-        <span className="relative inline-block h-2.5 w-2.5">
-          <Star className="absolute inset-0 h-2.5 w-2.5 fill-slate-200 text-slate-200" />
-          <span className="absolute inset-0 w-1/2 overflow-hidden">
-            <Star className="h-2.5 w-2.5 fill-slate-400 text-slate-400" />
+        <span className="relative inline-block" style={{ width: SIZE, height: SIZE }}>
+          <StarSvg size={SIZE} fill="#e2e8f0" />
+          <span className="absolute inset-0 overflow-hidden" style={{ width: "50%" }}>
+            <StarSvg size={SIZE} />
           </span>
         </span>
       )}
-      {Array.from({ length: empty }).map((_, i) => <Star key={`e${i}`} className="h-2.5 w-2.5 fill-slate-200 text-slate-200" />)}
-      <span className="ml-0.5 text-[9px] font-bold text-slate-400">{value.toFixed(1)}</span>
+      {Array.from({ length: empty }).map((_, i) => <StarSvg key={`e${i}`} size={SIZE} fill="#e2e8f0" />)}
+      <span
+        className="ml-0.5 text-[9px] font-bold"
+        style={{
+          background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        {value.toFixed(1)}
+      </span>
     </span>
   );
 }
