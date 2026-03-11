@@ -80,63 +80,18 @@ type MagicClockRow = {
   hashtags?: string[];
 };
 
-// ── Étoiles — gradient Magic Clock 5 couleurs · defs inline · cohérence Amazing ──
-const GRAD_STOPS = [
-  { offset: "0%",   color: "#4B7BF5" },
-  { offset: "25%",  color: "#7B4BF5" },
-  { offset: "55%",  color: "#C44BDA" },
-  { offset: "80%",  color: "#F54B8F" },
-  { offset: "100%", color: "#F5834B" },
-];
-
-function StarSvg({ size = 10, gradient = true }: { size?: number; gradient?: boolean }) {
-  const id = "sg" + size;
-  if (!gradient) {
-    return (
-      <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <polygon fill="#e2e8f0" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-      </svg>
-    );
-  }
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="0%">
-          {GRAD_STOPS.map(s => <stop key={s.offset} offset={s.offset} stopColor={s.color} />)}
-        </linearGradient>
-      </defs>
-      <polygon fill={`url(#${id})`} points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-    </svg>
-  );
-}
+// ── Étoiles — style doux : ★ unicode + chiffre gradient texte ───────────────
+const STAR_GRAD: React.CSSProperties = {
+  background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+};
 
 function StarRating({ value }: { value: number }) {
-  const full  = Math.floor(value);
-  const half  = value - full >= 0.5;
-  const empty = 5 - full - (half ? 1 : 0);
-  const SIZE  = 10;
   return (
     <span className="inline-flex items-center gap-0.5">
-      {Array.from({ length: full  }).map((_, i) => <StarSvg key={`f${i}`} size={SIZE} gradient />)}
-      {half && (
-        <span className="relative inline-block" style={{ width: SIZE, height: SIZE }}>
-          <StarSvg size={SIZE} gradient={false} />
-          <span className="absolute inset-0 overflow-hidden" style={{ width: "50%" }}>
-            <StarSvg size={SIZE} gradient />
-          </span>
-        </span>
-      )}
-      {Array.from({ length: empty }).map((_, i) => <StarSvg key={`e${i}`} size={SIZE} gradient={false} />)}
-      <span
-        className="ml-0.5 text-[9px] font-bold"
-        style={{
-          background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        {value.toFixed(1)}
-      </span>
+      <span className="text-[10px] font-black" style={STAR_GRAD}>★</span>
+      <span className="text-[9px] font-bold" style={STAR_GRAD}>{value.toFixed(1)}</span>
     </span>
   );
 }
@@ -482,11 +437,10 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
 
             {/* 4 bulles stats */}
             <div className="mx-3 mb-3 grid grid-cols-4 gap-1.5">
+              {/* Followers */}
               {[
                 { val: formatN(creator.followers), lbl: "Followers" },
                 { val: String(creator.magicClocks ?? magicClocks.length), lbl: "M. Clocks" },
-                { val: creator.stars != null ? `★ ${creator.stars.toFixed(1)}` : "–", lbl: "Étoiles" },
-                { val: formatN(abonnesCount), lbl: "Abonnés" },
               ].map(({ val, lbl }) => (
                 <div key={lbl} className="rounded-xl py-2 text-center"
                   style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}>
@@ -494,6 +448,23 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
                   <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400 leading-tight">{lbl}</p>
                 </div>
               ))}
+              {/* Étoiles — StarRating 5 étoiles SVG gradient, identique Amazing */}
+              <div className="rounded-xl py-2 text-center"
+                style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}>
+                <div className="flex items-center justify-center">
+                  {creator.stars != null
+                    ? <StarRating value={creator.stars} />
+                    : <span className="text-[11px] font-black" style={GRAD}>–</span>
+                  }
+                </div>
+                <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400 leading-tight">Étoiles</p>
+              </div>
+              {/* Abonnés */}
+              <div className="rounded-xl py-2 text-center"
+                style={{ background: "white", border: "1px solid rgba(123,75,245,.1)" }}>
+                <p className="text-[11px] font-black leading-tight" style={GRAD}>{formatN(abonnesCount)}</p>
+                <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-slate-400 leading-tight">Abonnés</p>
+              </div>
             </div>
 
             {/* Logos sociaux — 1 ligne scrollable, masquer sans URL */}
