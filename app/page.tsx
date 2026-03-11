@@ -1,9 +1,9 @@
-// app/page.tsx — Amazing v5
+// app/page.tsx — Amazing v6
+// ✅ 0 mock — 100% Supabase — id UUID réel pour route free
 // ✅ Avatar réel depuis profiles · rating_avg connecté · views/likes réels · zéro mock
 
 import { Suspense } from "react";
 import { supabaseAdmin } from "@/core/supabase/admin";
-import { FEED } from "@/features/amazing/feed";
 import type { FeedCard } from "@/core/domain/types";
 import AmazingFeed from "@/features/amazing/AmazingFeed";
 import AmazingHeader from "@/features/amazing/AmazingHeader";
@@ -22,10 +22,10 @@ async function getAmazingFeed(): Promise<FeedCard[]> {
 
     if (error) {
       console.error("[Amazing] Feed error:", error.message);
-      return FEED; // fallback ours uniquement
+      return [];
     }
 
-    if (!clocks || clocks.length === 0) return FEED;
+    if (!clocks || clocks.length === 0) return [];
 
     // 2. Charger les avatars des créateurs en une seule requête
     const handles = [...new Set(clocks.map((r) => r.creator_handle).filter(Boolean))];
@@ -76,7 +76,7 @@ async function getAmazingFeed(): Promise<FeedCard[]> {
           typeof row.rating_avg === "number" ? row.rating_avg : undefined;
 
         return {
-          id: row.slug ?? row.id,
+          id: row.id,  // UUID réel — utilisé par /api/access/free
           title,
           image:  afterUrl ?? beforeUrl ?? "",
           beforeUrl,
@@ -96,12 +96,11 @@ async function getAmazingFeed(): Promise<FeedCard[]> {
       })
       .filter(Boolean) as FeedCard[];
 
-    // L'ours onboarding reste toujours en premier, puis les vraies données
-    return [FEED[0], ...supabaseCards];
+    return supabaseCards;
 
   } catch (err) {
     console.error("[Amazing] Unexpected error:", err);
-    return FEED;
+    return [];
   }
 }
 
