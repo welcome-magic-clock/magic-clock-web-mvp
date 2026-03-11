@@ -1,251 +1,193 @@
-// app/notifications/page.tsx
 "use client";
+// app/notifications/page.tsx
+// ✅ v2 — Notifications réelles depuis Supabase · lecture automatique
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getSupabaseBrowser } from "@/core/supabase/browser";
 import BackButton from "@/components/navigation/BackButton";
+import {
+  Bell, Package, UserPlus, Star,
+  Zap, Loader2, BellOff, CheckCheck,
+} from "lucide-react";
 
-type NotificationType = "activity" | "earnings" | "system";
+const GRAD: React.CSSProperties = {
+  background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+};
+const GRAD_BG = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
 
-type NotificationItem = {
+type NotifType = "acquisition" | "follow" | "subscription" | "system" | "earnings";
+
+interface Notif {
   id: string;
-  type: NotificationType;
+  type: NotifType;
   title: string;
   message: string;
-  time: string;
-  unread?: boolean;
-  avatarInitial?: string;
-};
+  from_handle: string | null;
+  magic_clock_id: string | null;
+  read: boolean;
+  created_at: string;
+}
 
-const NOTIFICATIONS_TODAY: NotificationItem[] = [
-  {
-    id: "n1",
-    type: "earnings",
-    title: "Nouvel abonnement",
-    message: "@color_artist vient de s’abonner à tes contenus premium.",
-    time: "Il y a 8 min",
-    unread: true,
-    avatarInitial: "C",
-  },
-  {
-    id: "n2",
-    type: "activity",
-    title: "Nouveau commentaire",
-    message: "@curlyqueen a commenté ton Magic Studio “Balayage caramel”.",
-    time: "Il y a 23 min",
-    unread: true,
-    avatarInitial: "Q",
-  },
-];
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1)   return "À l'instant";
+  if (min < 60)  return `Il y a ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24)    return `Il y a ${h}h`;
+  const d = Math.floor(h / 24);
+  if (d === 1)   return "Hier";
+  if (d < 7)     return `Il y a ${d} jours`;
+  return new Date(iso).toLocaleDateString("fr-CH", { day: "numeric", month: "short" });
+}
 
-const NOTIFICATIONS_THIS_WEEK: NotificationItem[] = [
-  {
-    id: "n3",
-    type: "activity",
-    title: "Nouveaux likes",
-    message:
-      "18 personnes ont aimé ton Magic Display “Carte des blonds froids”.",
-    time: "Hier",
-    avatarInitial: "❤",
-  },
-  {
-    id: "n4",
-    type: "earnings",
-    title: "Vente PPV",
-    message:
-      "@studio_paris a acheté ton contenu PPV “Correction cuivre intense”.",
-    time: "Lundi",
-    avatarInitial: "S",
-  },
-];
-
-const NOTIFICATIONS_EARLIER: NotificationItem[] = [
-  {
-    id: "n5",
-    type: "system",
-    title: "Mise à jour de la plateforme",
-    message:
-      "Nous avons mis à jour les CGV et la Politique de confidentialité de Magic Clock.",
-    time: "16 novembre",
-    avatarInitial: "MC",
-  },
-];
-
-const gradientByType: Record<NotificationType, string> = {
-  activity: "bg-gradient-to-tr from-sky-500 via-indigo-500 to-violet-500",
-  earnings: "bg-gradient-to-tr from-emerald-500 via-teal-500 to-sky-400",
-  system: "bg-gradient-to-tr from-slate-500 via-slate-600 to-slate-800",
-};
-
-function NotificationCard({ item }: { item: NotificationItem }) {
-  const gradient = gradientByType[item.type] ?? "bg-slate-900";
-
+function NotifIcon({ type }: { type: NotifType }) {
+  const cfg: Record<NotifType, { Icon: any; bg: string; color: string }> = {
+    acquisition: { Icon: Package,  bg: "#f0fdf4", color: "#10b981" },
+    follow:      { Icon: UserPlus, bg: "#f5f3ff", color: "#7B4BF5" },
+    subscription:{ Icon: Star,     bg: "#fef3c7", color: "#f59e0b" },
+    earnings:    { Icon: Zap,      bg: "#fff7ed", color: "#f97316" },
+    system:      { Icon: Bell,     bg: "#f8fafc", color: "#64748b" },
+  };
+  const { Icon, bg, color } = cfg[type] ?? cfg.system;
   return (
-    <article className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-4">
-      <div
-        className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${gradient}`}
-      >
-        {item.avatarInitial ?? "MC"}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate text-sm font-semibold text-slate-900">
-            {item.title}
-          </h3>
-          {item.unread && (
-            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600">
-              Nouveau
-            </span>
-          )}
-        </div>
-        <p className="mt-0.5 text-xs text-slate-600">{item.message}</p>
-        <p className="mt-1 text-[11px] text-slate-400">{item.time}</p>
-      </div>
-    </article>
+    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+      style={{ background: bg }}>
+      <Icon className="h-4.5 w-4.5" style={{ color }} size={18} />
+    </div>
   );
 }
 
 export default function NotificationsPage() {
-  const [showBanner, setShowBanner] = useState(true);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const totalCount =
-    NOTIFICATIONS_TODAY.length +
-    NOTIFICATIONS_THIS_WEEK.length +
-    NOTIFICATIONS_EARLIER.length;
+  useEffect(() => {
+    const sb = getSupabaseBrowser();
+    async function load() {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { setLoading(false); return; }
+      setUserId(user.id);
+
+      const { data } = await sb
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      setNotifs((data ?? []) as Notif[]);
+
+      // Marquer tout comme lu après 1.5s
+      setTimeout(async () => {
+        const unreadIds = (data ?? []).filter(n => !n.read).map(n => n.id);
+        if (unreadIds.length > 0) {
+          await sb.from("notifications").update({ read: true }).in("id", unreadIds);
+          setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+        }
+      }, 1500);
+
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const unreadCount = notifs.filter(n => !n.read).length;
+
+  // Grouper par date
+  const today = new Date(); today.setHours(0,0,0,0);
+  const thisWeek = new Date(today); thisWeek.setDate(today.getDate() - 7);
+
+  const todayNotifs   = notifs.filter(n => new Date(n.created_at) >= today);
+  const weekNotifs    = notifs.filter(n => new Date(n.created_at) >= thisWeek && new Date(n.created_at) < today);
+  const olderNotifs   = notifs.filter(n => new Date(n.created_at) < thisWeek);
+
+  function NotifItem({ n }: { n: Notif }) {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl p-3 transition-colors"
+        style={{
+          background: n.read ? "white" : "rgba(123,75,245,.04)",
+          border: n.read ? "1px solid rgba(226,232,240,.6)" : "1px solid rgba(123,75,245,.12)",
+          boxShadow: n.read ? "none" : "0 1px 8px rgba(123,75,245,.06)",
+        }}>
+        <NotifIcon type={n.type} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-[12px] font-bold text-slate-800 leading-snug">{n.title}</p>
+            {!n.read && (
+              <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full"
+                style={{ background: GRAD_BG }} />
+            )}
+          </div>
+          <p className="mt-0.5 text-[11px] text-slate-500 leading-relaxed">{n.message}</p>
+          <p className="mt-1 text-[10px] text-slate-300">{timeAgo(n.created_at)}</p>
+        </div>
+      </div>
+    );
+  }
+
+  function Section({ label, items }: { label: string; items: Notif[] }) {
+    if (items.length === 0) return null;
+    return (
+      <div className="mb-5">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+        <div className="space-y-2">
+          {items.map(n => <NotifItem key={n.id} n={n} />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col px-4 pb-28 pt-4 sm:px-6 lg:px-8">
-      {/* Flèche retour vers My Magic */}
-      <div className="mb-3">
-        <BackButton fallbackHref="/mymagic" label="Retour à My Magic" />
+    <main className="mx-auto max-w-lg pb-24 pt-0">
+
+      {/* Header */}
+      <div className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
+        style={{ background: "rgba(248,250,252,0.95)", backdropFilter: "blur(12px)" }}>
+        <BackButton />
+        <div className="flex flex-1 items-center gap-2">
+          <h1 className="text-[15px] font-bold text-slate-900">Notifications</h1>
+          {unreadCount > 0 && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+              style={{ background: GRAD_BG }}>{unreadCount}</span>
+          )}
+        </div>
+        {notifs.length > 0 && (
+          <span className="flex items-center gap-1 text-[10px] text-slate-400">
+            <CheckCheck className="h-3 w-3" />Lu
+          </span>
+        )}
       </div>
 
-      {/* Carte principale */}
-      <section className="mt-1 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5 lg:p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
-            Notifications
-          </h1>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-            {totalCount} événements
-          </span>
-        </div>
-
-        {/* Filtres visuels */}
-        <section className="mb-5 flex flex-wrap gap-2 text-xs">
-          <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-medium text-white">
-            Tout
-          </span>
-          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
-            Activité
-          </span>
-          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
-            Revenus
-          </span>
-          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700">
-            Système
-          </span>
-        </section>
-
-        {/* Aujourd’hui */}
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Aujourd’hui
-          </h2>
-          <div className="space-y-3">
-            {NOTIFICATIONS_TODAY.map((item) => (
-              <NotificationCard key={item.id} item={item} />
-            ))}
+      <div className="px-4 pt-2">
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
           </div>
-        </section>
-
-        {/* Cette semaine */}
-        <section className="mt-6 space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Cette semaine
-          </h2>
-          <div className="space-y-3">
-            {NOTIFICATIONS_THIS_WEEK.map((item) => (
-              <NotificationCard key={item.id} item={item} />
-            ))}
+        ) : !userId ? (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <BellOff className="h-10 w-10 text-slate-200" />
+            <p className="text-[13px] text-slate-400">Connecte-toi pour voir tes notifications</p>
           </div>
-        </section>
-
-        {/* Plus tôt */}
-        <section className="mt-6 space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Plus tôt
-          </h2>
-          <div className="space-y-3">
-            {NOTIFICATIONS_EARLIER.map((item) => (
-              <NotificationCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-      </section>
-
-      {/* Bannière d’activation */}
-      {showBanner && (
-        <section className="fixed inset-x-0 bottom-[72px] z-20 px-4 pb-4 sm:bottom-6 sm:flex sm:justify-center sm:px-0">
-          <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-slate-50/95 p-4 shadow-lg backdrop-blur">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-sky-500 text-white shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                >
-                  <path
-                    d="M12 3a5 5 0 00-5 5v2.586c0 .265-.105.52-.293.707L5 14h14l-1.707-2.707A1 1 0 0117 10.586V8a5 5 0 00-5-5z"
-                    fill="currentColor"
-                  />
-                  <path d="M10 18a2 2 0 004 0h-4z" fill="currentColor" />
-                </svg>
-              </div>
-
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900">
-                  Activer les notifications Magic Clock ?
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Reste informé·e en temps réel des nouveaux abonnements, ventes
-                  PPV, likes et commentaires sur tes contenus. Tu pourras
-                  modifier ce choix plus tard dans les paramètres.
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
-                    onClick={() => setShowBanner(false)}
-                  >
-                    Plus tard
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex flex-1 items-center justify-center rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
-                  >
-                    Activer les notifications
-                  </button>
-                </div>
-                <p className="mt-2 text-[10px] text-slate-400">
-                  En continuant, tu acceptes de recevoir des notifications
-                  liées à ton activité Magic Clock. Aucune pub, uniquement de
-                  l’activité utile.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="ml-2 mt-1 text-slate-400 hover:text-slate-600"
-                onClick={() => setShowBanner(false)}
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
+        ) : notifs.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50">
+              <Bell className="h-7 w-7 text-slate-200" />
             </div>
+            <p className="text-[13px] font-semibold text-slate-400">Aucune notification pour l&apos;instant</p>
+            <p className="text-[11px] text-slate-300">Elles apparaîtront ici dès qu&apos;un créateur interagit avec toi</p>
           </div>
-        </section>
-      )}
+        ) : (
+          <>
+            <Section label="Aujourd'hui"    items={todayNotifs} />
+            <Section label="Cette semaine"  items={weekNotifs} />
+            <Section label="Plus ancien"    items={olderNotifs} />
+          </>
+        )}
+      </div>
     </main>
   );
 }
