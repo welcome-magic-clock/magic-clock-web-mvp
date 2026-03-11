@@ -1,5 +1,6 @@
 "use client";
-// features/amazing/MediaCard.tsx — V6
+// features/amazing/MediaCard.tsx
+// ✅ v7 — ConditionalLink natif (fix clic iOS/Mac) — V6
 // ✅ Zéro import CREATORS — toutes les données viennent de Supabase/Cloudflare via FeedCard
 // ✅ Avatar : creatorAvatar Supabase → afterThumb → beforeThumb (zéro fallback statique mock)
 // ✅ Étoiles style doux · stars depuis rating_avg Supabase uniquement
@@ -13,7 +14,6 @@ import {
   Sparkles, CreditCard, Gift,
 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
-import { useRouter } from "next/navigation";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type AccessKind  = "FREE" | "ABO" | "PPV";
@@ -121,8 +121,34 @@ async function launchStripeCheckout({
 }
 
 // ─────────────────────────────────────────────────────────────
+
+// ── ConditionalLink : vrai <a> natif si href — fiable iOS/Mac/Android
+function ConditionalLink({
+  href,
+  children,
+  className,
+  style,
+}: {
+  href: string | null;
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  if (href) {
+    return (
+      <Link href={href} className={className} style={style}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <div className={className} style={style}>
+      {children}
+    </div>
+  );
+}
+
 export default function MediaCard({ item }: Props) {
-  const router = useRouter();
 
   // ── Créateur — 100% depuis FeedCard (Supabase) · zéro CREATORS statique ──
   const cleanUserHandle = item.user.startsWith("@") ? item.user.slice(1) : item.user;
@@ -130,7 +156,7 @@ export default function MediaCard({ item }: Props) {
   const creatorHandle = `@${cleanUserHandle}`;
   const meetHref      = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
   // Lien vers la page du Magic Clock (fix 404)
-  const clockSlug     = (item as any).slug ?? null;
+  const clockSlug     = item.slug ?? null;
   const clockHref     = clockSlug ? `/magic-clock/${clockSlug}` : null;
 
   // Flags
@@ -245,9 +271,8 @@ export default function MediaCard({ item }: Props) {
       style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 12px rgba(0,0,0,.05)" }}
     >
 
-      {/* ── Zone média — cliquable vers page Magic Clock ── */}
-      <div className="relative w-full overflow-hidden bg-slate-100 cursor-pointer" style={{ aspectRatio: "4/5" }}
-        onClick={() => clockHref && router.push(clockHref)}>
+      {/* ── Zone média — Link natif fiable iOS/Mac ── */}
+      <ConditionalLink href={clockHref} className="relative block w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
 
         {heroVideoSrc ? (
           <AutoPlayVideo src={heroVideoSrc} poster={afterThumb || beforeThumb} alt={title} />
@@ -290,7 +315,7 @@ export default function MediaCard({ item }: Props) {
           </div>
         </Link>
 
-      </div>{/* /media */}
+      </ConditionalLink>{/* /media */}
 
       {/* ── Footer compact ── */}
       <div className="px-3 pt-2.5 pb-3 space-y-1.5">
