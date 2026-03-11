@@ -19,7 +19,7 @@ import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
 import type { AcquiredMagicClockRow } from "./page";
 
-type MyMagicTab = "creations" | "identite" | "stats";
+type MyMagicTab = "creations" | "bibliotheque" | "identite" | "stats";
 
 export type SupabaseMagicClockRow = {
   id: string;
@@ -465,7 +465,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
   const [activeTab, setActiveTab] = useState<MyMagicTab>("creations");
   useEffect(() => {
     const tab = searchParams.get("tab") as MyMagicTab | null;
-    if (tab === "identite" || tab === "stats") setActiveTab(tab);
+    if (tab === "identite" || tab === "stats" || tab === "bibliotheque") setActiveTab(tab);
     else setActiveTab("creations");
   }, [searchParams]);
 
@@ -630,7 +630,8 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
         {/* ══ TABS ══ */}
         <div className="flex border-b border-slate-200 px-4 mb-0">
           {([
-            { id: "creations" as const, label: "Créations", icon: null, count: initialPublished.length },
+            { id: "creations"    as const, label: "Créations",   icon: null,     count: initialPublished.length },
+            { id: "bibliotheque" as const, label: "Bibliothèque", icon: BookOpen, count: initialAcquired.length },
             { id: "identite"  as const, label: "Identité",  icon: User },
             { id: "stats"     as const, label: "Stats",     icon: BarChart2 },
           ] as const).map((tab) => {
@@ -756,6 +757,70 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
                     <div className="mb-2 flex items-center gap-1.5">
                       <Lock className="h-3 w-3 text-amber-500" />
                       <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">À l'unité</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {libraryPPV.map(item => (
+                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
+                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && item.id === openParam} />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ══ TAB BIBLIOTHÈQUE ══ */}
+        {activeTab === "bibliotheque" && (
+          <section className="px-4 pt-4">
+            {initialAcquired.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-16 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50">
+                  <BookOpen className="h-7 w-7 text-slate-200" />
+                </div>
+                <p className="text-[13px] font-semibold text-slate-400">Ta bibliothèque est vide</p>
+                <p className="text-[11px] text-slate-300">Débloque des Magic Clocks depuis Amazing</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {libraryFree.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <Unlock className="h-3 w-3 text-emerald-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Gratuit · {libraryFree.length}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {libraryFree.map(item => (
+                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
+                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl}
+                            isHighlighted={!!openParam && (item.id === openParam || item.magic_clock_id === openParam)} />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {librarySub.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <Lock className="h-3 w-3 text-violet-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">Abonnement · {librarySub.length}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {librarySub.map(item => (
+                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
+                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && item.id === openParam} />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {libraryPPV.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <Lock className="h-3 w-3 text-amber-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">À l&apos;unité · {libraryPPV.length}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {libraryPPV.map(item => (
