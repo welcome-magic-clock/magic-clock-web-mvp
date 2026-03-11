@@ -1,8 +1,10 @@
 "use client";
-// features/amazing/AmazingHeader.tsx — V4
-// ✅ Pas de titre — Search sticky hide/reveal au scroll — Pills Lucide
+// features/amazing/AmazingHeader.tsx — V5
+// ✅ Pills : Tous · FREE · Abonnement · PPV · Expert · En direct
+// ✅ "En direct" = lien vers /meet/live
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   Search, Star, Radio, Scissors,
   Heart, Unlock, Palette,
@@ -10,43 +12,56 @@ import {
 
 type FilterId = "all" | "free" | "abo" | "ppv" | "expert" | "live";
 
-const FILTERS: { id: FilterId; label: string; Icon: React.FC<{ className?: string }>; href?: string }[] = [
-  { id: "all",    label: "Tous",         Icon: Star     },
-  { id: "free",   label: "FREE",         Icon: Unlock   },
-  { id: "abo",    label: "Abonnement",   Icon: Heart    },
-  { id: "ppv",    label: "PPV",          Icon: Palette  },
-  { id: "expert", label: "Expert",       Icon: Scissors },
-  { id: "live",   label: "En direct",    Icon: Radio,   href: "/meet/live" },
+interface Filter {
+  id: FilterId;
+  label: string;
+  Icon: React.FC<{ className?: string }>;
+  href?: string;
+}
+
+const FILTERS: Filter[] = [
+  { id: "all",    label: "Tous",       Icon: Star     },
+  { id: "free",   label: "FREE",       Icon: Unlock   },
+  { id: "abo",    label: "Abonnement", Icon: Heart    },
+  { id: "ppv",    label: "PPV",        Icon: Palette  },
+  { id: "expert", label: "Expert",     Icon: Scissors },
+  { id: "live",   label: "En direct",  Icon: Radio,   href: "/meet/live" },
 ];
+
+const ACTIVE_STYLE: React.CSSProperties = {
+  background: "rgba(123,75,245,.08)",
+  color: "#7B4BF5",
+  border: "1px solid rgba(123,75,245,.22)",
+  fontWeight: 700,
+};
+const IDLE_STYLE: React.CSSProperties = {
+  background: "#f8fafc",
+  color: "#64748b",
+  border: "1px solid #e2e8f0",
+  fontWeight: 600,
+};
 
 type Props = { count: number };
 
 export default function AmazingHeader({ count }: Props) {
-  const [search, setSearch]           = useState("");
+  const [search, setSearch]             = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
-  const [visible, setVisible]         = useState(true);
-  const lastScrollY                   = useRef(0);
-  const hideTimer                     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visible, setVisible]           = useState(true);
+  const lastScrollY                     = useRef(0);
+  const hideTimer                       = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onScroll = () => {
-      const y = window.scrollY ?? 0;
+      const y    = window.scrollY ?? 0;
       const diff = y - lastScrollY.current;
-
-      // Scroll vers le bas → on cache
       if (diff > 6 && y > 60) setVisible(false);
-      // Scroll vers le haut → on réaffiche
       if (diff < -6) setVisible(true);
-
       lastScrollY.current = y;
-
-      // Auto-hide après 2s si on est descendu
       if (hideTimer.current) clearTimeout(hideTimer.current);
       hideTimer.current = setTimeout(() => {
         if (window.scrollY > 100) setVisible(false);
       }, 2000);
     };
-
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
@@ -56,7 +71,7 @@ export default function AmazingHeader({ count }: Props) {
 
   return (
     <>
-      {/* ── Barre sticky ── */}
+      {/* Barre sticky */}
       <div
         className={`sticky top-0 z-40 transition-transform duration-300 ${
           visible ? "translate-y-0" : "-translate-y-full"
@@ -93,53 +108,33 @@ export default function AmazingHeader({ count }: Props) {
           className="flex gap-1.5 overflow-x-auto"
           style={{ scrollbarWidth: "none" } as React.CSSProperties}
         >
-          {FILTERS.map(({ id, label, Icon, href }) =>
-            href ? (
-              <a
-                key={id}
-                href={href}
-                className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
-                style={{
-                  background: "#f8fafc",
-                  color: "#64748b",
-                  border: "1px solid #e2e8f0",
-                  fontWeight: 600,
-                }}
-              >
-                <Icon className="h-2.5 w-2.5" />
-                {label}
-              </a>
-            ) : (
+          {FILTERS.map(({ id, label, Icon, href }) => {
+            const pillClass = "inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all";
+            if (href) {
+              return (
+                <Link key={id} href={href} className={pillClass} style={IDLE_STYLE}>
+                  <Icon className="h-2.5 w-2.5" />
+                  {label}
+                </Link>
+              );
+            }
+            return (
               <button
                 key={id}
                 type="button"
                 onClick={() => setActiveFilter(id)}
-                className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
-                style={
-                  activeFilter === id
-                    ? {
-                        background: "rgba(123,75,245,.08)",
-                        color: "#7B4BF5",
-                        border: "1px solid rgba(123,75,245,.22)",
-                        fontWeight: 700,
-                      }
-                    : {
-                        background: "#f8fafc",
-                        color: "#64748b",
-                        border: "1px solid #e2e8f0",
-                        fontWeight: 600,
-                      }
-                }
+                className={pillClass}
+                style={activeFilter === id ? ACTIVE_STYLE : IDLE_STYLE}
               >
                 <Icon className="h-2.5 w-2.5" />
                 {label}
               </button>
-            )}
-          )}
+            );
+          })}
         </div>
       </div>
 
-      {/* ── Section header (pas sticky) ── */}
+      {/* Section header */}
       <div className="mb-3 mt-3 flex items-baseline justify-between">
         <p className="text-[12px] font-bold text-slate-800">Transformations récentes</p>
         <p className="text-[10px] text-slate-400">{count} contenus</p>
