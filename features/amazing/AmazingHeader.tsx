@@ -5,19 +5,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search, Star, Radio, Scissors,
-  Heart, Unlock, Palette, Flame,
+  Heart, Unlock, Palette,
 } from "lucide-react";
 
-type FilterId = "all" | "live" | "tendances" | "coiffure" | "coloriste" | "coups" | "free";
+type FilterId = "all" | "free" | "abo" | "ppv" | "expert" | "live";
 
-const FILTERS: { id: FilterId; label: string; Icon: React.FC<{ className?: string }> }[] = [
-  { id: "all",       label: "Tous",          Icon: Star     },
-  { id: "live",      label: "En direct",     Icon: Radio    },
-  { id: "tendances", label: "Tendances",      Icon: Flame    },
-  { id: "coiffure",  label: "Coiffure",       Icon: Scissors },
-  { id: "coloriste", label: "Coloriste",      Icon: Palette  },
-  { id: "coups",     label: "Coups de cœur", Icon: Heart    },
-  { id: "free",      label: "Gratuit",        Icon: Unlock   },
+const FILTERS: { id: FilterId; label: string; Icon: React.FC<{ className?: string }>; href?: string }[] = [
+  { id: "all",    label: "Tous",         Icon: Star     },
+  { id: "free",   label: "FREE",         Icon: Unlock   },
+  { id: "abo",    label: "Abonnement",   Icon: Heart    },
+  { id: "ppv",    label: "PPV",          Icon: Palette  },
+  { id: "expert", label: "Expert",       Icon: Scissors },
+  { id: "live",   label: "En direct",    Icon: Radio,   href: "/meet/live" },
 ];
 
 type Props = { count: number };
@@ -94,31 +93,48 @@ export default function AmazingHeader({ count }: Props) {
           className="flex gap-1.5 overflow-x-auto"
           style={{ scrollbarWidth: "none" } as React.CSSProperties}
         >
-          {FILTERS.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveFilter(id)}
-              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
-              style={
-                activeFilter === id
-                  ? {
-                      background: "rgba(123,75,245,.08)",
-                      color: "#7B4BF5",
-                      border: "1px solid rgba(123,75,245,.22)",
-                      fontWeight: 700,
-                    }
-                  : {
-                      background: "#f8fafc",
-                      color: "#64748b",
-                      border: "1px solid #e2e8f0",
-                      fontWeight: 600,
-                    }
-              }
-            >
-              <Icon className="h-2.5 w-2.5" />
-              {label}
-            </button>
+          {FILTERS.map(({ id, label, Icon, href }) => (
+            {href ? (
+              <a
+                key={id}
+                href={href}
+                className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
+                style={{
+                  background: "#f8fafc",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  fontWeight: 600,
+                }}
+              >
+                <Icon className="h-2.5 w-2.5" />
+                {label}
+              </a>
+            ) : (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveFilter(id)}
+                className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all"
+                style={
+                  activeFilter === id
+                    ? {
+                        background: "rgba(123,75,245,.08)",
+                        color: "#7B4BF5",
+                        border: "1px solid rgba(123,75,245,.22)",
+                        fontWeight: 700,
+                      }
+                    : {
+                        background: "#f8fafc",
+                        color: "#64748b",
+                        border: "1px solid #e2e8f0",
+                        fontWeight: 600,
+                      }
+                }
+              >
+                <Icon className="h-2.5 w-2.5" />
+                {label}
+              </button>
+            )}
           ))}
         </div>
       </div>
