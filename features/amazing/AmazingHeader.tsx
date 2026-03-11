@@ -93,8 +93,8 @@ export default function AmazingHeader({ count }: Props) {
           className="flex gap-1.5 overflow-x-auto"
           style={{ scrollbarWidth: "none" } as React.CSSProperties}
         >
-          {FILTERS.map(({ id, label, Icon, href }) => (
-            {href ? (
+          {FILTERS.map(({ id, label, Icon, href }) =>
+            href ? (
               <a
                 key={id}
                 href={href}
@@ -135,7 +135,7 @@ export default function AmazingHeader({ count }: Props) {
                 {label}
               </button>
             )}
-          ))}
+          )}
         </div>
       </div>
 
