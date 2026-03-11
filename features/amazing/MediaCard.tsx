@@ -221,13 +221,15 @@ export default function MediaCard({ item }: Props) {
   async function handleFreeAccess() {
     setIsLoading("FREE");
     try {
-      const params = new URLSearchParams({ magicClockId: String(item.id) });
+      // magicClockId = UUID réel de la table magic_clocks
+      const uuid = item.magicClockId ?? String(item.id);
+      const params = new URLSearchParams({ magicClockId: uuid });
       const res = await fetch(`/api/access/free?${params}`, { method: "GET" });
       if (res.ok) {
         setIsUnlocked(true);
         window.location.href =
           `/access/result?status=ok` +
-          `&contentId=${encodeURIComponent(String(item.id))}` +
+          `&contentId=${encodeURIComponent(item.magicClockId ?? String(item.id))}` +
           `&creator=${encodeURIComponent(creatorHandle)}`;
       } else window.location.href = `/access/result?status=error`;
     } catch { window.location.href = `/access/result?status=error`; }
@@ -238,7 +240,7 @@ export default function MediaCard({ item }: Props) {
     setIsLoading("PPV");
     try {
       await launchStripeCheckout({
-        contentId: String(item.id), contentType: "ppv",
+        contentId: item.magicClockId ?? String(item.id), contentType: "ppv",
         amountValue: ppvAmountValue, currency,
         creatorId: cleanUserHandle, creatorHandle,
       });
@@ -250,7 +252,7 @@ export default function MediaCard({ item }: Props) {
     setIsLoading("ABO");
     try {
       await launchStripeCheckout({
-        contentId: String(item.id), contentType: "subscription",
+        contentId: item.magicClockId ?? String(item.id), contentType: "subscription",
         amountValue: aboAmountValue, currency,
         creatorId: cleanUserHandle, creatorHandle,
       });
