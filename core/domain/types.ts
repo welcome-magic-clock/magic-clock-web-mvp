@@ -1,3 +1,6 @@
+// core/domain/types.ts
+// ✅ v2 — stars ajouté à FeedCard pour connexion rating_avg Supabase
+
 // Types d'accès possibles à un contenu
 export type AccessKind = "FREE" | "ABO" | "PPV";
 
@@ -14,35 +17,36 @@ export type Creator = {
   followers: number;
   avatar: string;
   access: Access[];
-  specialties?: string[]; // ex. ["Balayage", "Blond froid"]
+  specialties?: string[];
 };
 
-// 🔹 Alias dédié pour le flux Amazing (même union que AccessKind)
+// 🔹 Alias dédié pour le flux Amazing
 export type FeedAccess = "FREE" | "ABO" | "PPV";
 
 // Carte du flux Amazing / contenus Magic Clock
 export type FeedCard = {
   id: string | number;
   title: string;
-  image: string;              // image de couverture principale
+  image: string;
 
-  // AVANT / APRÈS (optionnels pour compat mocks)
+  // AVANT / APRÈS
   beforeUrl?: string | null;
   afterUrl?: string | null;
 
-  user: string;               // handle (avec ou sans @, on nettoie dans MediaCard)
-  access: FeedAccess;         // "FREE" | "ABO" | "PPV"
+  user: string;
+  access: FeedAccess;
   views: number;
 
-  // Champs optionnels (pas obligatoires pour les anciens mocks)
+  // Champs optionnels
   likes?: number;
+  stars?: number;           // ← NOUVEAU : rating_avg depuis Supabase
   creatorName?: string;
   creatorHandle?: string;
-  creatorAvatar?: string;
+  creatorAvatar?: string;   // ← avatar_url depuis profiles
   hashtags?: string[];
-  isCertified?: boolean;          // ✅ pastille compte certifié
+  isCertified?: boolean;
 
-  // 👇 NOUVEAU : flags pour les contenus système
-  isSystemFeatured?: boolean;       // ex. l’ours tout en haut du flux
-  isSystemUnlockedForAll?: boolean; // ex. déjà présent dans My Magic Clock
+  // Flags système
+  isSystemFeatured?: boolean;
+  isSystemUnlockedForAll?: boolean;
 };
