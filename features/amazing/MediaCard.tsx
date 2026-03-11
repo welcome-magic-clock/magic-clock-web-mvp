@@ -129,6 +129,9 @@ export default function MediaCard({ item }: Props) {
   const creatorName   = (item as any).creatorName   ?? item.user;
   const creatorHandle = `@${cleanUserHandle}`;
   const meetHref      = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
+  // Lien vers la page du Magic Clock (fix 404)
+  const clockSlug     = (item as any).slug ?? null;
+  const clockHref     = clockSlug ? `/magic-clock/${clockSlug}` : null;
 
   // Flags
   const isSystemUnlockedForAll = (item as any).isSystemUnlockedForAll === true;
@@ -242,8 +245,9 @@ export default function MediaCard({ item }: Props) {
       style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 12px rgba(0,0,0,.05)" }}
     >
 
-      {/* ── Zone média ── */}
-      <div className="relative w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
+      {/* ── Zone média — cliquable vers page Magic Clock ── */}
+      <div className="relative w-full overflow-hidden bg-slate-100 cursor-pointer" style={{ aspectRatio: "4/5" }}
+        onClick={() => clockHref && router.push(clockHref)}>
 
         {heroVideoSrc ? (
           <AutoPlayVideo src={heroVideoSrc} poster={afterThumb || beforeThumb} alt={title} />
