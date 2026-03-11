@@ -32,72 +32,18 @@ function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max) + "…" : s;
 }
 
-// ── Étoiles ──────────────────────────────────────────────────
-// Étoile SVG avec gradient Magic Clock 5 couleurs intégré — identique Meet me
-// Technique : defs inline dans chaque SVG pour garantir résolution cross-context
-
-const GRAD_STOPS = [
-  { offset: "0%",   color: "#4B7BF5" },
-  { offset: "25%",  color: "#7B4BF5" },
-  { offset: "55%",  color: "#C44BDA" },
-  { offset: "80%",  color: "#F54B8F" },
-  { offset: "100%", color: "#F5834B" },
-];
-
-function StarSvg({ size = 10, gradient = true }: { size?: number; gradient?: boolean }) {
-  const id = "sg" + size; // id unique par taille
-  if (!gradient) {
-    return (
-      <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <polygon fill="#e2e8f0" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-      </svg>
-    );
-  }
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="0%">
-          {GRAD_STOPS.map(s => <stop key={s.offset} offset={s.offset} stopColor={s.color} />)}
-        </linearGradient>
-      </defs>
-      <polygon fill={`url(#${id})`} points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-    </svg>
-  );
-}
+// ── Étoiles — style doux Meet me : ★ unicode + chiffre gradient texte ───────
+const STAR_GRAD: React.CSSProperties = {
+  background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+};
 
 function StarRating({ value }: { value: number }) {
-  const full  = Math.floor(value);
-  const half  = value - full >= 0.5;
-  const empty = 5 - full - (half ? 1 : 0);
-  const SIZE  = 10;
   return (
     <span className="inline-flex items-center gap-0.5">
-      {Array.from({ length: full }).map((_, i) => (
-        <StarSvg key={`f${i}`} size={SIZE} gradient />
-      ))}
-      {half && (
-        <span className="relative inline-block" style={{ width: SIZE, height: SIZE }}>
-          {/* Fond gris */}
-          <StarSvg size={SIZE} gradient={false} />
-          {/* Moitié gauche gradient */}
-          <span className="absolute inset-0 overflow-hidden" style={{ width: "50%" }}>
-            <StarSvg size={SIZE} gradient />
-          </span>
-        </span>
-      )}
-      {Array.from({ length: empty }).map((_, i) => (
-        <StarSvg key={`e${i}`} size={SIZE} gradient={false} />
-      ))}
-      <span
-        className="ml-0.5 text-[9px] font-bold"
-        style={{
-          background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        {value.toFixed(1)}
-      </span>
+      <span className="text-[10px] font-black" style={STAR_GRAD}>★</span>
+      <span className="text-[9px] font-bold" style={STAR_GRAD}>{value.toFixed(1)}</span>
     </span>
   );
 }
