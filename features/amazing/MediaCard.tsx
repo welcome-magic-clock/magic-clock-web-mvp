@@ -1,8 +1,8 @@
 "use client";
-// features/amazing/MediaCard.tsx — V5
-// ✅ Étoiles dorées amber-400 · Avatar Supabase en priorité · stars depuis rating_avg · Zéro mock
-// ✅ Footer compact 3 lignes · Sans labels Avant/Après
-//    Cadenas gris · Hashtags gris sans bulles · Titres/hashtags tronqués
+// features/amazing/MediaCard.tsx — V6
+// ✅ Zéro import CREATORS — toutes les données viennent de Supabase/Cloudflare via FeedCard
+// ✅ Avatar : creatorAvatar Supabase → afterThumb → beforeThumb (zéro fallback statique mock)
+// ✅ Étoiles style doux · stars depuis rating_avg Supabase uniquement
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -13,7 +13,6 @@ import {
   Sparkles, CreditCard, Gift,
 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
-import { CREATORS } from "@/features/meet/creators";
 import { useRouter } from "next/navigation";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
@@ -23,7 +22,6 @@ type Props = { item: FeedCard };
 const FALLBACK_BEFORE = "/images/examples/balayage-before.jpg";
 const FALLBACK_AFTER  = "/images/examples/balayage-after.jpg";
 
-// Longueurs max pour éviter abus
 const MAX_TITLE   = 60;
 const MAX_TAG_LEN = 20;
 const MAX_TAGS    = 3;
@@ -32,7 +30,7 @@ function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max) + "…" : s;
 }
 
-// ── Étoiles — style doux Meet me : ★ unicode + chiffre gradient texte ───────
+// ── Étoiles — style doux : ★ unicode + chiffre gradient texte ───────────────
 const STAR_GRAD: React.CSSProperties = {
   background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
   WebkitBackgroundClip: "text",
@@ -126,14 +124,10 @@ async function launchStripeCheckout({
 export default function MediaCard({ item }: Props) {
   const router = useRouter();
 
-  // Créateur
+  // ── Créateur — 100% depuis FeedCard (Supabase) · zéro CREATORS statique ──
   const cleanUserHandle = item.user.startsWith("@") ? item.user.slice(1) : item.user;
-  const creator = CREATORS.find((c) => {
-    const h = c.handle.startsWith("@") ? c.handle.slice(1) : c.handle;
-    return h === cleanUserHandle;
-  }) ?? null;
-  const creatorName   = creator?.name   ?? item.user;
-  const creatorHandle = creator?.handle ?? `@${cleanUserHandle}`;
+  const creatorName   = (item as any).creatorName   ?? item.user;
+  const creatorHandle = `@${cleanUserHandle}`;
   const meetHref      = `/meet?creator=${encodeURIComponent(creatorHandle)}`;
 
   // Flags
@@ -150,15 +144,11 @@ export default function MediaCard({ item }: Props) {
   const aboAmountValue = 1490;
   const currency = "CHF";
 
-  // Étoiles — depuis Supabase (item.stars = rating_avg) ou profil statique, jamais de défaut mock
+  // Étoiles — Supabase uniquement (rating_avg via item.stars)
   const starsValue: number | undefined =
-    typeof (item as any).stars === "number"
-      ? (item as any).stars
-      : creator && typeof (creator as any).stars === "number"
-        ? (creator as any).stars
-        : undefined;
+    typeof (item as any).stars === "number" ? (item as any).stars : undefined;
 
-  // Titre & hashtags — tronqués + sécurisés
+  // Titre & hashtags
   const rawTitle    = item.title ?? "Magic Clock";
   const title       = truncate(rawTitle, MAX_TITLE);
   const rawHashtags = Array.isArray((item as any).hashtags) ? (item as any).hashtags as string[] : [];
@@ -180,14 +170,12 @@ export default function MediaCard({ item }: Props) {
     ? (item.afterUrl as string)
     : isVideo(item.beforeUrl) ? (item.beforeUrl as string) : null;
 
-  // Avatar — priorité : creatorAvatar Supabase → CREATORS statique → fallback image
+  // Avatar — priorité : ours système → creatorAvatar Supabase → image média
   const systemAvatar = "/images/magic-clock-bear/avatar.png";
   const avatar: string = isSystemCard
     ? systemAvatar
-    : (item as any).creatorAvatar ?? creator?.avatar ?? afterThumb ?? beforeThumb;
-  const isCertified =
-    (item as any).isCertified === true ||
-    (creator && (creator as any).isCertified === true);
+    : (item as any).creatorAvatar ?? afterThumb ?? beforeThumb;
+  const isCertified = (item as any).isCertified === true;
 
   // État
   const [isLoading, setIsLoading] = useState<AccessKind | null>(null);
@@ -254,7 +242,7 @@ export default function MediaCard({ item }: Props) {
       style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 12px rgba(0,0,0,.05)" }}
     >
 
-      {/* ── Zone média — sans labels Avant/Après ── */}
+      {/* ── Zone média ── */}
       <div className="relative w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
 
         {heroVideoSrc ? (
@@ -343,7 +331,7 @@ export default function MediaCard({ item }: Props) {
           {starsValue !== undefined && <StarRating value={starsValue} />}
         </div>
 
-        {/* ── Ligne 2 : titre + hashtags gris (inline, sans bulles) ── */}
+        {/* ── Ligne 2 : titre + hashtags ── */}
         <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
           {title && (
             <span className="text-[11px] font-semibold text-slate-800 leading-snug">
@@ -357,10 +345,9 @@ export default function MediaCard({ item }: Props) {
           ))}
         </div>
 
-        {/* ── Ligne 3 : bouton CTA + cadenas gris ── */}
+        {/* ── Ligne 3 : bouton CTA + cadenas ── */}
         <div className="flex gap-2 pt-0.5">
 
-          {/* Bouton principal Stripe */}
           <button
             type="button"
             onClick={handleMainAction}
@@ -381,7 +368,6 @@ export default function MediaCard({ item }: Props) {
             )}
           </button>
 
-          {/* Cadenas — gris, sans code couleur */}
           <button
             type="button"
             onClick={handleMainAction}
