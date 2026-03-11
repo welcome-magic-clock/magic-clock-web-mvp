@@ -1,5 +1,6 @@
 "use client";
-// features/amazing/MediaCard.tsx — V4
+// features/amazing/MediaCard.tsx — V5
+// ✅ Étoiles dorées amber-400 · Avatar Supabase en priorité · stars depuis rating_avg · Zéro mock
 // ✅ Footer compact 3 lignes · Sans labels Avant/Après
 //    Cadenas gris · Hashtags gris sans bulles · Titres/hashtags tronqués
 
@@ -8,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Eye, Heart, Lock, Unlock,
-  Loader2, BadgeCheck, Star,
+  Loader2, BadgeCheck,
   Sparkles, CreditCard, Gift,
 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
@@ -32,27 +33,66 @@ function truncate(s: string, max: number) {
 }
 
 // ── Étoiles ──────────────────────────────────────────────────
+// Gradient Magic Clock 5 couleurs — identique Meet me
+const STAR_GRAD_ID = "mcStarGrad";
+const STAR_GRAD_STOPS = (
+  <defs>
+    <linearGradient id={STAR_GRAD_ID} x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stopColor="#4B7BF5" />
+      <stop offset="25%"  stopColor="#7B4BF5" />
+      <stop offset="55%"  stopColor="#C44BDA" />
+      <stop offset="80%"  stopColor="#F54B8F" />
+      <stop offset="100%" stopColor="#F5834B" />
+    </linearGradient>
+  </defs>
+);
+
+// Étoile SVG native (pas Lucide) pour supporter fill gradient
+function StarSvg({ size = 10, fill = `url(#${STAR_GRAD_ID})`, opacity = 1 }: { size?: number; fill?: string; opacity?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} style={{ opacity }} xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+    </svg>
+  );
+}
+
 function StarRating({ value }: { value: number }) {
   const full  = Math.floor(value);
   const half  = value - full >= 0.5;
   const empty = 5 - full - (half ? 1 : 0);
+  const SIZE = 10;
   return (
     <span className="inline-flex items-center gap-0.5">
+      {/* Définition gradient — rendue une seule fois, invisible */}
+      <svg width="0" height="0" style={{ position: "absolute" }}>
+        {STAR_GRAD_STOPS}
+      </svg>
       {Array.from({ length: full }).map((_, i) => (
-        <Star key={`f${i}`} className="h-2.5 w-2.5 fill-slate-300 text-slate-300" />
+        <StarSvg key={`f${i}`} size={SIZE} />
       ))}
       {half && (
-        <span className="relative inline-block h-2.5 w-2.5">
-          <Star className="absolute inset-0 h-2.5 w-2.5 fill-slate-200 text-slate-200" />
-          <span className="absolute inset-0 w-1/2 overflow-hidden">
-            <Star className="h-2.5 w-2.5 fill-slate-400 text-slate-400" />
+        <span className="relative inline-block" style={{ width: SIZE, height: SIZE }}>
+          {/* Étoile vide grise en fond */}
+          <StarSvg size={SIZE} fill="#e2e8f0" />
+          {/* Moitié gauche avec gradient par clip */}
+          <span className="absolute inset-0 overflow-hidden" style={{ width: "50%" }}>
+            <StarSvg size={SIZE} />
           </span>
         </span>
       )}
       {Array.from({ length: empty }).map((_, i) => (
-        <Star key={`e${i}`} className="h-2.5 w-2.5 fill-slate-200 text-slate-200" />
+        <StarSvg key={`e${i}`} size={SIZE} fill="#e2e8f0" />
       ))}
-      <span className="ml-0.5 text-[9px] font-bold text-slate-400">{value.toFixed(1)}</span>
+      <span
+        className="ml-0.5 text-[9px] font-bold"
+        style={{
+          background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        {value.toFixed(1)}
+      </span>
     </span>
   );
 }
@@ -159,19 +199,19 @@ export default function MediaCard({ item }: Props) {
   const aboAmountValue = 1490;
   const currency = "CHF";
 
-  // Étoiles
-  const starsValue: number =
+  // Étoiles — depuis Supabase (item.stars = rating_avg) ou profil statique, jamais de défaut mock
+  const starsValue: number | undefined =
     typeof (item as any).stars === "number"
       ? (item as any).stars
       : creator && typeof (creator as any).stars === "number"
         ? (creator as any).stars
-        : 4.8;
+        : undefined;
 
   // Titre & hashtags — tronqués + sécurisés
   const rawTitle    = item.title ?? "Magic Clock";
   const title       = truncate(rawTitle, MAX_TITLE);
   const rawHashtags = Array.isArray((item as any).hashtags) ? (item as any).hashtags as string[] : [];
-  const safeHashtags = (rawHashtags.length > 0 ? rawHashtags : ["#coiffure", "#magicclock"])
+  const safeHashtags = rawHashtags
     .slice(0, MAX_TAGS)
     .map((t) => truncate(t, MAX_TAG_LEN));
 
@@ -189,11 +229,11 @@ export default function MediaCard({ item }: Props) {
     ? (item.afterUrl as string)
     : isVideo(item.beforeUrl) ? (item.beforeUrl as string) : null;
 
-  // Avatar
+  // Avatar — priorité : creatorAvatar Supabase → CREATORS statique → fallback image
   const systemAvatar = "/images/magic-clock-bear/avatar.png";
   const avatar: string = isSystemCard
     ? systemAvatar
-    : creator?.avatar ?? item.image ?? afterThumb ?? beforeThumb;
+    : (item as any).creatorAvatar ?? creator?.avatar ?? afterThumb ?? beforeThumb;
   const isCertified =
     (item as any).isCertified === true ||
     (creator && (creator as any).isCertified === true);
@@ -349,7 +389,7 @@ export default function MediaCard({ item }: Props) {
 
           {/* Spacer + étoiles à droite */}
           <span className="flex-1" />
-          <StarRating value={starsValue} />
+          {starsValue !== undefined && <StarRating value={starsValue} />}
         </div>
 
         {/* ── Ligne 2 : titre + hashtags gris (inline, sans bulles) ── */}
