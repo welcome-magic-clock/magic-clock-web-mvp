@@ -1,5 +1,5 @@
 // core/domain/types.ts
-// ✅ v2 — stars ajouté à FeedCard pour connexion rating_avg Supabase
+// ✅ v3 — stars + slug + magicClockId ajoutés à FeedCard
 
 // Types d'accès possibles à un contenu
 export type AccessKind = "FREE" | "ABO" | "PPV";
@@ -45,6 +45,10 @@ export type FeedCard = {
   creatorAvatar?: string;   // ← avatar_url depuis profiles
   hashtags?: string[];
   isCertified?: boolean;
+
+  // Identifiants Magic Clock
+  slug?: string | null;
+  magicClockId?: string;
 
   // Flags système
   isSystemFeatured?: boolean;
