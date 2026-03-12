@@ -1,5 +1,5 @@
 // app/monet/SimMonetPanel.tsx
-// ✅ v4.6 — Chiffres entiers · suppression tier médaille · "tu gagnes" · ordre commission reformulé
+// ✅ v4.7 — PPV : suppression Conversion · Acheteurs lié en temps réel à Audience · tiers renommés
 "use client";
 
 import { useState } from "react";
@@ -28,7 +28,6 @@ export function SimMonetPanel({ creator }: Props) {
   const [simAboPrice, setSimAboPrice]   = useState(9.99);
   const [simAboConv, setSimAboConv]     = useState(3);
   const [simPpvPrice, setSimPpvPrice]   = useState(0.99);
-  const [simPpvConv, setSimPpvConv]     = useState(0);
   const [simPpvPerBuyer, setSimPpvPerBuyer] = useState(100);
   const [simCountryCode, setSimCountryCode] = useState(CURRENT_COUNTRY.code);
 
@@ -37,9 +36,8 @@ export function SimMonetPanel({ creator }: Props) {
   const priceTier  = getPriceTierFromPrice(simPpvPrice);
 
   const aboSubs    = (simFollowers * simAboConv) / 100;
-  const ppvBuyers  = (simFollowers * simPpvConv) / 100;
   const grossAbos  = aboSubs * simAboPrice;
-  const grossPpv   = ppvBuyers * simPpvPrice * simPpvPerBuyer;
+  const grossPpv   = simPpvPerBuyer * simPpvPrice;
   const grossTotal = grossAbos + grossPpv;
   const { vatAmount, netBase, platformShareNet, creatorShareNet } =
     computeVatAndShares(grossTotal, priceTier, vatRate);
@@ -205,7 +203,8 @@ export function SimMonetPanel({ creator }: Props) {
             {priceTier.label} · {Math.round(priceTier.creatorRate * 100)}%
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Prix moyen */}
           <div>
             <div className="mb-1 flex justify-between text-[12px]">
               <span className="text-slate-500">Prix moyen</span>
@@ -223,35 +222,37 @@ export function SimMonetPanel({ creator }: Props) {
               />
             </div>
           </div>
+          {/* Acheteurs — max = simFollowers (lié en temps réel à l'audience) */}
           <div>
             <div className="mb-1 flex justify-between text-[12px]">
-              <span className="text-slate-500">Conversion</span>
-              <span className="font-black" style={GRAD}>{simPpvConv.toFixed(1)}%</span>
+              <span className="text-slate-500">Acheteurs</span>
+              <span className="font-black" style={GRAD}>{simPpvPerBuyer.toLocaleString("fr-CH")}</span>
             </div>
-            <input type="range" min={0} max={100} step={0.5} value={simPpvConv}
-              onChange={(e) => setSimPpvConv(clamp(Number(e.target.value), 0, 100))}
-              className="w-full" />
-          </div>
-          <div>
-            <div className="mb-1 flex justify-between text-[12px]">
-              <span className="text-slate-500">/ acheteur</span>
-              <span className="font-black" style={GRAD}>{simPpvPerBuyer.toFixed(1)}</span>
+            <input
+              type="range"
+              min={0}
+              max={simFollowers}
+              step={Math.max(1, Math.floor(simFollowers / 200))}
+              value={Math.min(simPpvPerBuyer, simFollowers)}
+              onChange={(e) => setSimPpvPerBuyer(clamp(Number(e.target.value), 0, simFollowers))}
+              className="w-full"
+            />
+            <div className="mt-0.5 flex justify-between text-[10px] text-slate-400">
+              <span>0</span>
+              <span>{simFollowers.toLocaleString("fr-CH")} (audience)</span>
             </div>
-            <input type="range" min={0} max={100} step={0.1} value={Math.min(simPpvPerBuyer, 100)}
-              onChange={(e) => setSimPpvPerBuyer(clamp(Number(e.target.value), 0, 100000000))}
-              className="w-full" />
             <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
               <span>Précis :</span>
-              <input type="number" min={0} step={0.1} value={simPpvPerBuyer}
+              <input type="number" min={0} step={1} value={simPpvPerBuyer}
                 onFocus={(e) => e.target.select()}
-                onChange={(e) => setSimPpvPerBuyer(clamp(Number(e.target.value.replace(/^0+(?=\d)/, "")) || 0, 0, 100000000))}
-                className="w-16 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-right text-[11px] font-bold text-slate-700 outline-none focus:border-violet-400"
+                onChange={(e) => setSimPpvPerBuyer(clamp(Number(e.target.value.replace(/^0+(?=\d)/, "")) || 0, 0, simFollowers))}
+                className="w-20 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-right text-[11px] font-bold text-slate-700 outline-none focus:border-violet-400"
               />
             </div>
           </div>
         </div>
         <p className="mt-2 text-[11px] text-slate-400">
-          ≈ {Math.round(ppvBuyers).toLocaleString("fr-CH")} acheteurs · {formatMoney(grossPpv)} brut / mois
+          ≈ {simPpvPerBuyer.toLocaleString("fr-CH")} acheteurs · {formatMoney(grossPpv)} brut / mois
         </p>
       </div>
 
