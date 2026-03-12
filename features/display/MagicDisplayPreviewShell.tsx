@@ -12,6 +12,8 @@ export type PreviewMedia = {
   type: MediaKind;
   url: string;
   filename?: string;
+  /** URL CDN du thumbnail JPEG (uniquement pour type === "video") */
+  thumbnailUrl?: string | null;
 };
 
 export type PreviewSegment = {
@@ -550,6 +552,7 @@ export default function MagicDisplayPreviewShell({
                                 {imgUrl ? (
                                   <CubeFaceMedia
                                     src={imgUrl}
+                                    thumbnailSrc={mergedFace.coverMedia?.type === "video" ? (mergedFace.coverMedia.thumbnailUrl ?? null) : null}
                                     kind={mergedFace.coverMedia?.type === "video" ? "video" : "photo"}
                                     alt={label}
                                     isActive={isActive}
