@@ -1,5 +1,5 @@
 // app/legal/privacy/page.tsx
-// ✅ v2.1 — 6 mars 2026 · Magic Clock Maldonado-Verger RI · support@magic-clock.com
+// ✅ v2.2 — 12 mars 2026 · Magic Clock SA · support@magic-clock.com
 // Prestataires listés : Supabase · Cloudflare · Vercel · Stripe · GitHub
 export const metadata = {
   title: "Politique de confidentialité – Magic Clock",
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
           Politique de confidentialité
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Plateforme Magic Clock – Dernière mise à jour : 6 mars 2026
+          Plateforme Magic Clock – Dernière mise à jour : 12 mars 2026
         </p>
       </header>
 
@@ -25,12 +25,12 @@ export default function PrivacyPage() {
           <p className="mt-2">
             La présente politique de confidentialité (ci-après la{" "}
             <strong>« Politique »</strong>) décrit la manière dont{" "}
-            <strong>Magic Clock Maldonado-Verger RI</strong>, entreprise
-            individuelle de droit suisse dont le siège est situé à{" "}
+            <strong>Magic Clock SA</strong>, société de droit suisse dont le
+            siège est situé à{" "}
             <strong>Rue des Saars 6, 2000 Neuchâtel – Suisse</strong>{" "}
-            (ci-après <strong>« Magic Clock »</strong>,{" "}
-            <strong>« nous »</strong>), traite les données personnelles des
-            utilisateurs de la plateforme <strong>Magic Clock</strong>.
+            (ci-après <strong>« Magic Clock »</strong>, <strong>« nous »</strong>)
+            traite les données personnelles des utilisateurs de la plateforme{" "}
+            <strong>Magic Clock</strong>.
           </p>
           <p className="mt-2">
             Magic Clock agit en qualité de{" "}
@@ -52,6 +52,12 @@ export default function PrivacyPage() {
               situés aux États-Unis, lorsque ces lois sont applicables.
             </li>
           </ul>
+          <p className="mt-2">
+            Lorsque le droit applicable l’exige, Magic Clock désignera un{" "}
+            <strong>représentant dans l’UE/EEE et/ou au Royaume-Uni</strong>,
+            dont les coordonnées seront alors communiquées dans la présente
+            Politique ou par tout autre moyen approprié.
+          </p>
         </section>
 
         <section>
@@ -82,13 +88,19 @@ export default function PrivacyPage() {
             <li>
               <strong>Données techniques et de navigation</strong> : adresse IP,
               type de navigateur, système d’exploitation, identifiant
-              d’appareil, pages consultées, journaux techniques, identifiants
-              de cookies et données de session.
+              d’appareil, pages consultées, journaux techniques, identifiants de
+              cookies et données de session.
             </li>
             <li>
               <strong>Données de support</strong> : contenu des demandes
-              adressées au support et échanges par e-mail ou via d’autres
-              canaux de contact.
+              adressées au support et échanges par e-mail ou via d’autres canaux
+              de contact.
+            </li>
+            <li>
+              <strong>Données de conformité</strong> : lorsque cela est requis,
+              données nécessaires à la vérification d’identité, à la prévention
+              de la fraude, à la sécurité des paiements ou aux obligations
+              réglementaires liées aux versements et à la monétisation.
             </li>
           </ul>
         </section>
@@ -166,18 +178,25 @@ export default function PrivacyPage() {
             <li>
               <strong>Données de compte</strong> : pendant la durée
               d’utilisation du compte, puis pendant une période limitée
-              nécessaire à la gestion administrative, à la sécurité ou aux
-              litiges éventuels.
+              nécessaire à la gestion administrative, à la sécurité, à la
+              défense de nos droits ou aux litiges éventuels.
             </li>
             <li>
               <strong>Données de transaction</strong> : pendant la durée requise
-              par la législation comptable, fiscale ou réglementaire
-              applicable.
+              par la législation comptable, fiscale, réglementaire ou de lutte
+              contre la fraude applicable.
             </li>
             <li>
               <strong>Logs techniques et sécurité</strong> : pour une durée
-              limitée compatible avec les besoins de sécurité, de maintenance ou
-              d’investigation, sauf nécessité de conservation plus longue.
+              limitée compatible avec les besoins de sécurité, de maintenance,
+              d’audit ou d’investigation, sauf nécessité de conservation plus
+              longue.
+            </li>
+            <li>
+              <strong>Données de support</strong> : pendant la durée nécessaire
+              au traitement de la demande puis, si nécessaire, pendant une
+              période limitée pour le suivi, la preuve ou l’amélioration du
+              service.
             </li>
           </ul>
         </section>
@@ -197,13 +216,20 @@ export default function PrivacyPage() {
             <li>
               <strong>Autorités et organismes publics</strong> : lorsque la loi
               l’exige, lorsqu’une demande valable nous est adressée ou lorsque
-              cela est nécessaire pour défendre nos droits.
+              cela est nécessaire pour défendre nos droits, respecter nos
+              obligations ou prévenir la fraude et les abus.
             </li>
             <li>
               <strong>Autres utilisateurs</strong> : dans la mesure où certaines
               informations de profil, contenus ou interactions sont rendus
               publics ou partagés selon les paramètres de visibilité de la
               plateforme.
+            </li>
+            <li>
+              <strong>Partenaires liés aux paiements et reversements</strong> :
+              dans la mesure nécessaire au traitement d’un paiement, d’un
+              remboursement, d’un litige, d’une vérification d’identité ou d’un
+              versement à un créateur.
             </li>
           </ul>
           <p className="mt-2">
@@ -247,8 +273,8 @@ export default function PrivacyPage() {
           <p className="mt-2 text-xs text-slate-500">
             Chacun de ces prestataires dispose de sa propre politique de
             confidentialité. Lorsque cela est requis, nous mettons en place des
-            garanties contractuelles ou organisationnelles appropriées pour
-            encadrer les traitements et transferts de données.
+            garanties contractuelles, techniques ou organisationnelles
+            appropriées pour encadrer les traitements et transferts de données.
           </p>
         </section>
 
@@ -286,6 +312,11 @@ export default function PrivacyPage() {
               support@magic-clock.com
             </a>
           </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Avant de contacter l’autorité compétente, nous vous invitons, lorsque
+            cela est possible, à nous contacter d’abord afin de tenter de résoudre
+            votre demande directement.
+          </p>
         </section>
 
         <section>
@@ -296,8 +327,8 @@ export default function PrivacyPage() {
             Nous mettons en œuvre des mesures techniques et organisationnelles
             raisonnables pour protéger vos données, notamment le chiffrement des
             communications, les contrôles d’accès, la gestion des droits, la
-            séparation des environnements et des mesures de surveillance ou de
-            sécurité adaptées.
+            séparation des environnements, la journalisation, la surveillance et
+            des mesures de sécurité adaptées au niveau de risque.
           </p>
           <p className="mt-2">
             Aucun système n’étant totalement exempt de risque, nous vous
@@ -312,10 +343,11 @@ export default function PrivacyPage() {
             10. Utilisation par des mineurs
           </h2>
           <p className="mt-2">
-            La plateforme n’est pas destinée aux enfants en dessous de l’âge
-            minimum indiqué dans nos CGU/CGV. Certaines fonctionnalités peuvent
-            être limitées ou nécessiter l’autorisation d’un représentant légal
-            lorsque la loi applicable l’exige.
+            La plateforme n’est pas destinée aux personnes ne remplissant pas les
+            conditions d’âge minimum prévues par nos CGU/CGV et par le droit
+            applicable. Certaines fonctionnalités peuvent être limitées ou
+            nécessiter l’autorisation d’un représentant légal lorsque la loi
+            applicable l’exige.
           </p>
         </section>
 
@@ -323,6 +355,12 @@ export default function PrivacyPage() {
           <h2 className="text-base font-semibold text-slate-900">
             11. Cookies et technologies similaires
           </h2>
+          <p className="mt-2">
+            Nous utilisons des cookies et technologies similaires pour assurer le
+            fonctionnement de la plateforme, mémoriser certaines préférences,
+            sécuriser les accès, mesurer l’audience lorsque cela est autorisé et
+            améliorer l’expérience utilisateur.
+          </p>
           <p className="mt-2">
             Pour plus d’informations, consultez notre{" "}
             <a
@@ -340,11 +378,11 @@ export default function PrivacyPage() {
             12. Modifications de la présente Politique
           </h2>
           <p className="mt-2">
-            Nous pouvons mettre à jour la présente Politique afin de refléter
-            les évolutions légales, techniques, organisationnelles ou liées à
-            nos services. En cas de modification importante, nous pourrons vous
-            en informer par notification dans l’application, par e-mail ou par
-            tout autre moyen approprié.
+            Nous pouvons mettre à jour la présente Politique afin de refléter les
+            évolutions légales, techniques, organisationnelles ou liées à nos
+            services. En cas de modification importante, nous pourrons vous en
+            informer par notification dans l’application, par e-mail ou par tout
+            autre moyen approprié.
           </p>
         </section>
 
