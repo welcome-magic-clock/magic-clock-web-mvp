@@ -250,18 +250,18 @@ function loadFaceState(faceId: number): FaceState | null {
 }
 
 export default function MagicDisplayFaceEditor({
-  creatorName: _creatorName,
-  creatorAvatar: _creatorAvatar,
-  creatorInitials: _creatorInitials,
+  creatorName: _creatorName = "Créateur",
+  creatorAvatar: _creatorAvatar = undefined,
+  creatorInitials: _creatorInitials = "MC",
   faceId = 1,
   faceLabel = "Face 1",
   onBack,
   onFaceChange,
 }: MagicDisplayFaceEditorProps) {
-  // 🔒 Valeurs figées pour les captures
-  const creatorName = "User";
-  const creatorInitials = "U";
-  const creatorAvatar = undefined;
+  // ✅ Props réelles du créateur connecté — zéro mock
+  const creatorName = _creatorName ?? "Créateur";
+  const creatorInitials = _creatorInitials ?? "MC";
+  const creatorAvatar = _creatorAvatar ?? undefined;
 
   const [faces, setFaces] = useState<Record<number, FaceState>>(() => ({
     [faceId]: {
@@ -607,9 +607,14 @@ export default function MagicDisplayFaceEditor({
 
         <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
           <span className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200">
-              <User className="h-4 w-4 text-slate-500" />
-            </span>
+            {creatorAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={creatorAvatar} alt={creatorName} className="h-full w-full object-cover rounded-full" />
+            ) : (
+              // ✅ Ours Magic Clock si pas de photo
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/images/magic-clock-bear/avatar.png" alt="Magic Clock" className="h-full w-full object-cover rounded-full" />
+            )}
           </span>
           <span className="font-medium">{creatorName}</span>
         </div>
