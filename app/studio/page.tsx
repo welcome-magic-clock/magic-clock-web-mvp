@@ -543,6 +543,13 @@ export default function MagicStudioPage() {
     (!before.url && !before.cdnUrl && before.kind !== null) ||
     (!after.url && !after.cdnUrl && after.kind !== null);
 
+  // ✅ Peut aller au Display = les deux côtés ont une vraie CDN URL ET pas d'upload en cours
+  // Empêche de passer au Display avec des base64 ou des URLs manquantes
+  const canGoToDisplay =
+    !isUploading &&
+    isCdnUrl(before.cdnUrl) &&
+    isCdnUrl(after.cdnUrl);
+
   return (
     <>
       {showPublishModal && (
@@ -827,14 +834,16 @@ export default function MagicStudioPage() {
                   </div>
                   <p className="text-[11px] text-slate-500">{modeDescription}</p>
                 </div>
-                {/* ↗ Bouton publier */}
+                {/* ↗ Bouton publier — actif uniquement si les 2 CDN URLs sont confirmées */}
                 <button
                   type="button"
                   onClick={handleGoToDisplay}
-                  disabled={isUploading}
+                  disabled={!canGoToDisplay && isLoggedIn}
                   title={
                     isUploading
                       ? "Upload en cours, patiente…"
+                      : !isCdnUrl(before.cdnUrl) || !isCdnUrl(after.cdnUrl)
+                      ? "Importe tes photos AVANT et APRÈS d'abord"
                       : isLoggedIn
                       ? "Passer à Magic Display"
                       : "Connecte-toi pour publier"
@@ -848,6 +857,11 @@ export default function MagicStudioPage() {
                 <p className="text-[11px] text-amber-600 font-medium">
                   ⏳ Upload des médias vers R2 en cours… Patiente avant de
                   passer au Display.
+                </p>
+              )}
+              {!isUploading && isLoggedIn && (!isCdnUrl(before.cdnUrl) || !isCdnUrl(after.cdnUrl)) && (before.kind || after.kind) && (
+                <p className="text-[11px] text-amber-600 font-medium">
+                  ⚠️ Upload non confirmé — attends la fin de l&apos;upload avant de passer au Display.
                 </p>
               )}
               {!isLoggedIn && !loading && (
