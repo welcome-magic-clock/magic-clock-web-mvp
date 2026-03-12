@@ -1,96 +1,62 @@
-import { prisma } from "@/core/prisma";
+// core/server/viewerAccess.ts
+// ✅ v2 — Migration Prisma → Supabase (stack Magic Clock)
+import { supabaseAdmin } from "@/core/supabase/admin";
 import type { ViewerAccessContext } from "@/core/domain/access";
-import { PaymentStatus, SubscriptionStatus } from "@prisma/client";
-
-function isSubscriptionCurrentlyActive(subscription: {
-  status: SubscriptionStatus;
-  endsAt: Date | null;
-  cancelledAt: Date | null;
-}): boolean {
-  if (subscription.status !== SubscriptionStatus.ACTIVE) {
-    return false;
-  }
-
-  const now = new Date();
-
-  // Si une date de fin existe et qu'elle est passée, l'abonnement n'est plus actif.
-  if (subscription.endsAt && subscription.endsAt <= now) {
-    return false;
-  }
-
-  // cancelledAt ne coupe pas forcément l'accès immédiatement si endsAt est dans le futur.
-  return true;
-}
 
 export async function getViewerAccessContext(
   userId: string
 ): Promise<ViewerAccessContext> {
-  const [subscriptions, ppvPurchases] = await Promise.all([
-    prisma.subscription.findMany({
-      where: {
-        userId,
-      },
-      select: {
-        creator: {
-          select: {
-            handle: true,
-          },
-        },
-        status: true,
-        endsAt: true,
-        cancelledAt: true,
-        payments: {
-          select: {
-            status: true,
-          },
-        },
-      },
-    }),
-
-    prisma.ppvPurchase.findMany({
-      where: {
-        userId,
-      },
-      select: {
-        contentId: true,
-        payment: {
-          select: {
-            status: true,
-          },
-        },
-      },
-    }),
+  const [subscriptionsResult, ppvPurchasesResult] = await Promise.all([
+    supabaseAdmin
+      .from("subscriptions")
+      .select(`
+        status,
+        ends_at,
+        cancelled_at,
+        creator:profiles!subscriptions_creator_id_fkey(handle),
+        payments(status)
+      `)
+      .eq("user_id", userId),
+    supabaseAdmin
+      .from("ppv_purchases")
+      .select(`
+        content_id,
+        payment:payment_logs(status)
+      `)
+      .eq("user_id", userId),
   ]);
+
+  const subscriptions = subscriptionsResult.data ?? [];
+  const ppvPurchases = ppvPurchasesResult.data ?? [];
+
+  // ── Abonnements actifs ────────────────────────────────────
+  const now = new Date();
 
   const activeSubscriptions = subscriptions
     .filter((sub) => {
-      if (!isSubscriptionCurrentlyActive(sub)) {
-        return false;
-      }
+      if (sub.status !== "ACTIVE") return false;
+      if (sub.ends_at && new Date(sub.ends_at) <= now) return false;
 
-      // On exige au moins un paiement réussi et aucun paiement remboursé.
-      const hasSucceededPayment = sub.payments.some(
-        (payment) => payment.status === PaymentStatus.SUCCEEDED
-      );
-
-      const hasRefundedPayment = sub.payments.some(
-        (payment) => payment.status === PaymentStatus.REFUNDED
-      );
-
+      const payments = Array.isArray(sub.payments) ? sub.payments : [];
+      const hasSucceededPayment = payments.some((p: any) => p.status === "SUCCEEDED");
+      const hasRefundedPayment = payments.some((p: any) => p.status === "REFUNDED");
       return hasSucceededPayment && !hasRefundedPayment;
     })
-    .map((sub) => sub.creator.handle);
+    .map((sub) => {
+      const creator = Array.isArray(sub.creator) ? sub.creator[0] : sub.creator;
+      return (creator as any)?.handle ?? "";
+    })
+    .filter(Boolean);
 
+  // ── Achats PPV valides ────────────────────────────────────
   const unlockedPpvContentIds = ppvPurchases
     .filter((purchase) => {
-      // Achat PPV valide si paiement présent et réussi
-      if (!purchase.payment) {
-        return false;
-      }
-
-      return purchase.payment.status === PaymentStatus.SUCCEEDED;
+      const payment = Array.isArray(purchase.payment)
+        ? purchase.payment[0]
+        : purchase.payment;
+      return (payment as any)?.status === "SUCCEEDED";
     })
-    .map((purchase) => purchase.contentId);
+    .map((purchase) => String(purchase.content_id));
 
   return {
     isAuthenticated: true,
