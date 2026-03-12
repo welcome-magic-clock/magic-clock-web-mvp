@@ -210,7 +210,11 @@ export function useMagicDisplay(searchParams: URLSearchParams) {
     faces: segments.map((seg): PreviewFace => {
       const details = faceDetails[seg.id];
       const coverFromCube = seg.mediaUrl && seg.mediaType
-        ? ({ type: seg.mediaType as MediaKind, url: seg.mediaUrl } satisfies PreviewMedia)
+        ? ({
+            type: seg.mediaType as MediaKind,
+            url: seg.mediaUrl,
+            thumbnailUrl: seg.thumbnailUrl ?? null,
+          } satisfies PreviewMedia)
         : undefined;
       const faceTitle = seg.description?.trim() || seg.label;
 
@@ -232,7 +236,7 @@ export function useMagicDisplay(searchParams: URLSearchParams) {
       }
 
       const mediaArray: PreviewMedia[] = seg.mediaUrl && seg.mediaType
-        ? [{ type: seg.mediaType as MediaKind, url: seg.mediaUrl }]
+        ? [{ type: seg.mediaType as MediaKind, url: seg.mediaUrl, thumbnailUrl: seg.thumbnailUrl ?? null }]
         : [];
 
       return {
@@ -315,7 +319,22 @@ export function useMagicDisplay(searchParams: URLSearchParams) {
       const result = await processAndUpload(file, "display", String(targetFaceId), (phase) => {
         console.log(`[Display] Face ${targetFaceId} — Upload phase:`, phase);
       });
-      setSegments((prev) => prev.map((seg) => seg.id === targetFaceId ? { ...seg, mediaUrl: result.cdnUrl } : seg));
+
+      if (result.kind === "video") {
+        // Vidéo : persister cdnUrl + thumbnailCdnUrl pour le cube et le viewer
+        setSegments((prev) => prev.map((seg) =>
+          seg.id === targetFaceId
+            ? { ...seg, mediaUrl: result.cdnUrl, thumbnailUrl: result.thumbnailCdnUrl }
+            : seg
+        ));
+      } else {
+        // Image : pas de thumbnail
+        setSegments((prev) => prev.map((seg) =>
+          seg.id === targetFaceId
+            ? { ...seg, mediaUrl: result.cdnUrl, thumbnailUrl: null }
+            : seg
+        ));
+      }
     } catch (err) {
       console.error("[Display] Upload R2 failed:", err);
       // Garde le blob local en fallback — pas de régression UX
