@@ -1,6 +1,6 @@
 /**
  * app/api/webhooks/stripe/route.ts
- * v1.1 — Fix TypeScript : typage Stripe.Invoice corrigé
+ * v1.2 — Compatible Stripe SDK v20 (Invoice sans .subscription direct)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
 
       case "invoice.paid": {
-        const invoice = event.data.object as Stripe.Invoice;
+        // Stripe v20 : Invoice est typé comme Record — on cast via unknown
+        const invoice = event.data.object as unknown as Record<string, unknown>;
         await handleInvoicePaid(invoice);
         break;
       }
@@ -70,37 +71,43 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const subscriptionId = typeof invoice.subscription === "string"
-    ? invoice.subscription
-    : (invoice.subscription as Stripe.Subscription | null)?.id ?? null;
+// ─── Handlers ────────────────────────────────────────────────────────────────
 
-  if (!subscriptionId || invoice.billing_reason !== "subscription_cycle") {
+async function handleInvoicePaid(invoice: Record<string, unknown>) {
+  const subscriptionRaw = invoice.subscription;
+  const subscriptionId = typeof subscriptionRaw === "string"
+    ? subscriptionRaw
+    : (subscriptionRaw as Record<string, unknown> | null)?.id as string | null ?? null;
+
+  const billingReason = invoice.billing_reason as string | null;
+  if (!subscriptionId || billingReason !== "subscription_cycle") {
     return;
   }
 
-  const creatorId = invoice.metadata?.magic_clock_creator_id;
-  const subscriberId = invoice.metadata?.magic_clock_subscriber_id;
+  const metadata = (invoice.metadata ?? {}) as Record<string, string>;
+  const creatorId = metadata.magic_clock_creator_id;
+  const subscriberId = metadata.magic_clock_subscriber_id;
 
   if (!creatorId || !subscriberId) {
     console.warn("[invoice.paid] Metadata manquante:", invoice.id);
     return;
   }
 
-  const paymentIntentId = typeof invoice.payment_intent === "string"
-    ? invoice.payment_intent
-    : (invoice.payment_intent as Stripe.PaymentIntent | null)?.id ?? null;
+  const paymentIntentRaw = invoice.payment_intent;
+  const paymentIntentId = typeof paymentIntentRaw === "string"
+    ? paymentIntentRaw
+    : (paymentIntentRaw as Record<string, unknown> | null)?.id as string | null ?? null;
 
   try {
     await supabaseAdmin.from("payment_logs").insert({
       stripe_payment_intent_id: paymentIntentId,
       buyer_id: subscriberId,
-      creator_handle: invoice.metadata?.creator_handle ?? null,
-      amount: (invoice.amount_paid ?? 0) / 100,
-      currency: invoice.currency?.toUpperCase() ?? "CHF",
+      creator_handle: metadata.creator_handle ?? null,
+      amount: ((invoice.amount_paid as number) ?? 0) / 100,
+      currency: ((invoice.currency as string) ?? "chf").toUpperCase(),
       type: "subscription_renewal",
       status: "succeeded",
-      stripe_invoice_id: invoice.id,
+      stripe_invoice_id: invoice.id as string,
     });
   } catch (err) {
     console.warn("[invoice.paid] payment_logs insert warning:", err);
@@ -122,6 +129,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .eq("follower_id", subscriberId)
     .eq("creator_id", creatorId)
     .eq("type", "subscription");
+
+  console.log(`[subscription.deleted] Follow annulé: subscriber=${subscriberId} creator=${creatorId}`);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -146,4 +155,6 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .from("subscription_price_changes")
     .update({ status: "applied", stripe_applied_at: new Date().toISOString() })
     .eq("id", changeId);
+
+  console.log(`[subscription.updated] Prix appliqué: change_id=${changeId} nouveau_prix=${change.new_price}`);
 }
