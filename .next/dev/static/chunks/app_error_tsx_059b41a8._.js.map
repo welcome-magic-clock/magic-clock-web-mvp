@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/julienmaldonado/magic-clock-web-mvp/app/error.tsx"],"sourcesContent":["\"use client\"; export default function Error(){ return (<div className=\"p-8\"><h1 className=\"text-2xl font-bold\">Erreur</h1><p>Une erreur est survenue.</p></div>); }\n"],"names":[],"mappings":";;;;;AAAA;;AAA6B,SAAS;IAAS,qBAAQ,6LAAC;QAAI,WAAU;;0BAAM,6LAAC;gBAAG,WAAU;0BAAqB;;;;;;0BAAW,6LAAC;0BAAE;;;;;;;;;;;;AAAqC;KAA5H"}}]
-}
