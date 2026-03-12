@@ -1,5 +1,5 @@
 // app/legal/cookies/page.tsx
-// ✅ v2.1 — 6 mars 2026 · Magic Clock Maldonado-Verger RI · support@magic-clock.com
+// ✅ v2.2 — 12 mars 2026 · Magic Clock SA · support@magic-clock.com
 export const metadata = {
   title: "Politique de cookies – Magic Clock",
 };
@@ -12,7 +12,7 @@ export default function CookiesPage() {
           Politique de cookies
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Plateforme Magic Clock – Dernière mise à jour : 6 mars 2026
+          Plateforme Magic Clock – Dernière mise à jour : 12 mars 2026
         </p>
       </header>
 
@@ -23,10 +23,10 @@ export default function CookiesPage() {
           </h2>
           <p className="mt-2">
             La présente politique de cookies explique comment{" "}
-            <strong>Magic Clock Maldonado-Verger RI</strong> utilise des cookies
-            et technologies similaires (par exemple tags, pixels, stockage
-            local, identifiants de session et autres technologies comparables)
-            sur la plateforme <strong>Magic Clock</strong>.
+            <strong>Magic Clock SA</strong> utilise des cookies et technologies
+            similaires (par exemple tags, pixels, stockage local, identifiants
+            de session et autres technologies comparables) sur la plateforme{" "}
+            <strong>Magic Clock</strong>.
           </p>
           <p className="mt-2">
             Elle doit être lue conjointement avec notre{" "}
@@ -51,6 +51,12 @@ export default function CookiesPage() {
             de mémoriser certaines préférences, de sécuriser votre session et
             d’améliorer votre expérience d’utilisation.
           </p>
+          <p className="mt-2">
+            D’autres technologies comparables peuvent également être utilisées,
+            notamment le stockage local, les identifiants de session, certains
+            pixels ou autres mécanismes permettant de stocker ou d’accéder à des
+            informations sur votre terminal.
+          </p>
         </section>
 
         <section>
@@ -62,18 +68,23 @@ export default function CookiesPage() {
               <strong>Cookies strictement nécessaires</strong> : indispensables
               au fonctionnement de la plateforme, à l’authentification, à la
               sécurité, à la gestion des sessions et à l’accès à certaines
-              fonctionnalités essentielles.
-            </li>
-            <li>
-              <strong>Cookies de performance et de statistiques</strong> :
-              utilisés pour mesurer l’audience, détecter des erreurs,
-              comprendre l’usage de certaines fonctionnalités et améliorer les
-              performances globales du service.
+              fonctionnalités essentielles. Ces technologies peuvent être
+              utilisées sans consentement lorsqu’elles sont strictement
+              nécessaires à la fourniture du service demandé.
             </li>
             <li>
               <strong>Cookies de fonctionnalité</strong> : permettent de
               mémoriser certaines préférences, comme la langue, certains filtres
-              ou d’autres choix d’interface.
+              ou d’autres choix d’interface. Selon leur finalité exacte et le
+              droit applicable, ils peuvent être considérés comme nécessaires ou
+              soumis à consentement.
+            </li>
+            <li>
+              <strong>Cookies de performance et de statistiques</strong> :
+              utilisés pour mesurer l’audience, détecter des erreurs, comprendre
+              l’usage de certaines fonctionnalités et améliorer les performances
+              globales du service. Lorsqu’ils ne sont pas exemptés par le droit
+              applicable, ils sont activés uniquement avec votre consentement.
             </li>
             <li>
               <strong>Cookies de marketing ou de suivi</strong> : utilisés
@@ -83,9 +94,9 @@ export default function CookiesPage() {
           </ul>
           <p className="mt-2 text-xs text-slate-500">
             Magic Clock utilise en priorité les cookies strictement nécessaires
-            au fonctionnement du service. Les autres catégories peuvent dépendre
-            des fonctionnalités activées, des services tiers utilisés et des
-            choix exprimés par l’utilisateur.
+            au fonctionnement du service. Les autres catégories dépendent des
+            fonctionnalités activées, des services tiers utilisés et des choix
+            exprimés par l’utilisateur.
           </p>
         </section>
 
@@ -105,7 +116,8 @@ export default function CookiesPage() {
             </li>
             <li>
               un prestataire de paiement comme Stripe dans le cadre des flux de
-              paiement ou de vérification liés à une transaction ;
+              paiement, de vérification ou de sécurisation liés à une
+              transaction ;
             </li>
             <li>
               des outils de mesure d’audience, de performance ou de détection
@@ -129,8 +141,8 @@ export default function CookiesPage() {
             </li>
             <li>
               <strong>Cookies persistants</strong> : conservés pendant une durée
-              limitée, variable selon leur finalité, la configuration technique
-              et les obligations applicables.
+              limitée, variable selon leur finalité, la configuration technique,
+              les choix de l’utilisateur et les obligations applicables.
             </li>
           </ul>
         </section>
@@ -140,7 +152,7 @@ export default function CookiesPage() {
             6. Comment gérer vos cookies ?
           </h2>
           <p className="mt-2">
-            Lors de votre première visite, une bannière ou un module de
+            Lors de votre première visite, une bannière ou un centre de
             préférences peut vous permettre d’accepter, de refuser ou de
             personnaliser l’utilisation de certaines catégories de cookies,
             lorsque cela est requis.
@@ -149,6 +161,11 @@ export default function CookiesPage() {
             Vous pouvez également modifier vos préférences ultérieurement via
             les outils mis à disposition sur la plateforme, lorsqu’ils sont
             disponibles, ou via les paramètres de votre navigateur.
+          </p>
+          <p className="mt-2">
+            Le retrait de votre consentement n’affecte pas la licéité des
+            traitements réalisés avant ce retrait, mais peut limiter certaines
+            fonctionnalités non essentielles de la plateforme.
           </p>
         </section>
 
@@ -159,8 +176,8 @@ export default function CookiesPage() {
           <p className="mt-2">
             Lorsque les cookies ou technologies similaires permettent
             d’identifier directement ou indirectement une personne physique, les
-            informations collectées sont traitées comme des données
-            personnelles et soumises à notre{" "}
+            informations collectées sont traitées comme des données personnelles
+            et soumises à notre{" "}
             <a
               href="/legal/privacy"
               className="font-medium text-indigo-600 hover:text-indigo-700"
@@ -173,7 +190,24 @@ export default function CookiesPage() {
 
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            8. Mise à jour de la présente Politique
+            8. Base juridique et consentement
+          </h2>
+          <p className="mt-2">
+            Lorsque le droit applicable l’exige, Magic Clock recueille votre
+            consentement avant d’utiliser des cookies ou technologies similaires
+            qui ne sont pas strictement nécessaires au fonctionnement du
+            service demandé.
+          </p>
+          <p className="mt-2">
+            Le consentement peut être demandé de manière distincte selon les
+            finalités concernées, et vous pouvez refuser certaines catégories
+            sans accepter l’ensemble des traitements optionnels.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold text-slate-900">
+            9. Mise à jour de la présente Politique
           </h2>
           <p className="mt-2">
             Nous pouvons mettre à jour la présente Politique afin de refléter
@@ -181,11 +215,17 @@ export default function CookiesPage() {
             services proposés. La date de dernière mise à jour figure en haut de
             page.
           </p>
+          <p className="mt-2">
+            En cas de changement significatif dans l’utilisation des cookies ou
+            dans les choix qui vous sont proposés, nous pourrons mettre à jour
+            la bannière, le centre de préférences ou vous informer par tout
+            moyen approprié.
+          </p>
         </section>
 
         <section>
           <h2 className="text-base font-semibold text-slate-900">
-            9. Contact
+            10. Contact
           </h2>
           <p className="mt-2">
             Pour toute question relative à la présente Politique :{" "}
