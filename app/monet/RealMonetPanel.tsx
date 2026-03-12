@@ -1,5 +1,5 @@
 // app/monet/RealMonetPanel.tsx
-// ✅ v4.9 — Tiers renommés (Viral/Spotlight/Signature/Legendary) via monet-helpers
+// ✅ v5.0 — Commission progressive : double code couleur Abo(bleu)/PPV(rose) + légende · fond de ligne chromatique
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -554,7 +554,7 @@ export function RealMonetPanel({ creator }: Props) {
 
       {/* ══ COMMISSION PROGRESSIVE ══ */}
       <div className="mx-4 mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-2 flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100">
             <Percent size={12} strokeWidth={2.5} color="#475569" />
           </div>
@@ -562,17 +562,17 @@ export function RealMonetPanel({ creator }: Props) {
             Commission progressive par prix PPV &amp; abonnement
           </p>
         </div>
-        {/* Badges actifs */}
-        <div className="mb-2 flex flex-wrap gap-2 text-[10px]">
-          <span className="rounded-full px-2 py-0.5 font-semibold"
-            style={{ background: "rgba(75,123,245,.1)", color: "#4B7BF5" }}>
-            Abo · {priceTierAbo.label} · tu gagnes {Math.round(priceTierAbo.creatorRate * 100)}%
+        {/* Légende couleurs */}
+        <div className="mb-3 flex items-center gap-3 text-[10px]">
+          <span className="flex items-center gap-1 font-semibold" style={{ color: "#4B7BF5" }}>
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "#4B7BF5" }} />
+            Abonnement · {priceTierAbo.label} · tu gagnes {Math.round(priceTierAbo.creatorRate * 100)}%
           </span>
           {activePpvTierIds.map((tid) => {
             const t = PRICE_TIERS.find((p) => p.id === tid)!;
             return (
-              <span key={tid} className="rounded-full px-2 py-0.5 font-semibold"
-                style={{ background: "rgba(196,75,218,.1)", color: "#C44BDA" }}>
+              <span key={tid} className="flex items-center gap-1 font-semibold" style={{ color: "#C44BDA" }}>
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: "#C44BDA" }} />
                 PPV · {t.label} · tu gagnes {Math.round(t.creatorRate * 100)}%
               </span>
             );
@@ -584,24 +584,38 @@ export function RealMonetPanel({ creator }: Props) {
             const isAboActive = tier.id === priceTierAbo.id;
             const isPpvActive = activePpvTierIds.includes(tier.id);
             const isActive    = isAboActive || isPpvActive;
+
+            let rowBg  = "";
+            let rowBdr = "";
+            let rowClr = "#64748b";
+            if (isAboActive && isPpvActive) {
+              rowBg  = "linear-gradient(to right,rgba(75,123,245,.07),rgba(196,75,218,.07))";
+              rowBdr = "1px solid rgba(75,123,245,.2)";
+              rowClr = "#7B4BF5";
+            } else if (isAboActive) {
+              rowBg  = "rgba(75,123,245,.07)";
+              rowBdr = "1px solid rgba(75,123,245,.2)";
+              rowClr = "#4B7BF5";
+            } else if (isPpvActive) {
+              rowBg  = "rgba(196,75,218,.07)";
+              rowBdr = "1px solid rgba(196,75,218,.2)";
+              rowClr = "#C44BDA";
+            }
+
             return (
               <div key={tier.id}
-                className={`flex items-center justify-between rounded-[10px] px-3 py-2.5 text-[11px] ${isActive ? "font-semibold" : "text-slate-400"}`}
-                style={isActive ? {
-                  background: "linear-gradient(to right,rgba(123,75,245,.06),rgba(196,75,218,.06))",
-                  border: "1px solid rgba(123,75,245,.18)",
-                  color: "#7B4BF5",
-                } : {}}
+                className={`flex items-center justify-between rounded-[10px] px-3 py-2.5 text-[11px] transition-all ${!isActive ? "text-slate-400" : "font-semibold"}`}
+                style={isActive ? { background: rowBg, border: rowBdr, color: rowClr } : {}}
               >
                 <span className={isActive ? "font-bold" : ""}>
                   Tu gagnes {Math.round(tier.creatorRate * 100)}%
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                    style={{ background: isActive ? "#7B4BF5" : "#cbd5e1" }} />
-                  <span>{tier.label} · {tier.description}</span>
                   {isAboActive && <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white" style={{ background: "#4B7BF5" }}>Abo</span>}
                   {isPpvActive && <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white" style={{ background: "#C44BDA" }}>PPV</span>}
+                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                    style={{ background: isActive ? rowClr : "#cbd5e1" }} />
+                  <span>{tier.label} · {tier.description}</span>
                 </div>
               </div>
             );
