@@ -1,11 +1,18 @@
 // app/studio/page.tsx
-// ✅ v2.0 — Modale "Connecte-toi pour publier" pour les visiteurs
+// ✅ v2.1 — Fix draft v1 base64 + blocage publish si CDN URL manquante
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Upload, Hash, ArrowUpRight, X, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  Upload,
+  Hash,
+  ArrowUpRight,
+  X,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import {
   STUDIO_FORWARD_KEY,
   type StudioForwardPayload,
@@ -51,8 +58,34 @@ const OLD_STUDIO_DRAFT_KEY = "mc-studio-draft-v1";
 const MAX_TITLE_LENGTH = 30;
 const MAX_HASHTAGS_LENGTH = 30;
 
+// ✅ Helper : valider qu'une URL est une vraie CDN URL (jamais base64 ou blob)
+function isCdnUrl(url: string | null | undefined): url is string {
+  return (
+    typeof url === "string" &&
+    url.length > 0 &&
+    !url.startsWith("data:") &&
+    !url.startsWith("blob:")
+  );
+}
+
+// ✅ Helper : nettoyer un MediaState — ne garder que les CDN URLs
+function sanitizeMediaState(m: Partial<MediaState>): MediaState {
+  const cdnUrl = isCdnUrl(m.cdnUrl) ? m.cdnUrl : null;
+  const thumbnailCdnUrl = isCdnUrl(m.thumbnailCdnUrl) ? m.thumbnailCdnUrl : null;
+  const thumbnailUrl = thumbnailCdnUrl ?? (isCdnUrl(m.thumbnailUrl) ? m.thumbnailUrl : null);
+  return {
+    kind: m.kind ?? null,
+    url: cdnUrl,           // ✅ jamais de base64/blob en état persisté
+    cdnUrl,
+    thumbnailUrl,
+    thumbnailCdnUrl,
+    duration: m.duration ?? null,
+    coverTime: m.coverTime ?? null,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────
-// Modale : Connecte-toi pour publier — style Magic Clock
+// Modale visiteur : Se connecter pour publier
 // ─────────────────────────────────────────────────────────────
 function PublishAuthModal({ onClose }: { onClose: () => void }) {
   return (
@@ -64,11 +97,8 @@ function PublishAuthModal({ onClose }: { onClose: () => void }) {
         className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle mobile */}
         <div className="mx-auto mt-4 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
-
         <div className="px-6 pb-10 pt-6">
-          {/* Bouton fermer */}
           <div className="mb-5 flex justify-end">
             <button
               onClick={onClose}
@@ -77,25 +107,20 @@ function PublishAuthModal({ onClose }: { onClose: () => void }) {
               <X className="h-4 w-4" />
             </button>
           </div>
-
-          {/* Icône */}
           <div className="mb-5 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-500 via-purple-500 to-pink-500 shadow-lg">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
           </div>
-
-          {/* Titre */}
           <div className="mb-6 text-center">
             <h2 className="text-xl font-bold text-slate-900">
               Publie ton Magic Clock ✨
             </h2>
             <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-              Connecte-toi ou crée un compte pour publier ta transformation sur Amazing.
+              Connecte-toi ou crée un compte pour publier ta transformation sur
+              Amazing.
             </p>
           </div>
-
-          {/* Points clés */}
           <div className="mb-6 space-y-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
             {[
               "Ton Magic Clock en cours sera sauvegardé sur ton profil",
@@ -104,12 +129,12 @@ function PublishAuthModal({ onClose }: { onClose: () => void }) {
             ].map((point, i) => (
               <div key={i} className="flex items-start gap-2.5">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                <p className="text-[13px] text-slate-600 leading-snug">{point}</p>
+                <p className="text-[13px] text-slate-600 leading-snug">
+                  {point}
+                </p>
               </div>
             ))}
           </div>
-
-          {/* CTA principal */}
           <Link
             href="/auth?next=/studio"
             className="mc-btn-primary flex w-full items-center justify-center gap-2 rounded-full py-4 text-[15px] font-bold"
@@ -117,15 +142,11 @@ function PublishAuthModal({ onClose }: { onClose: () => void }) {
             <Sparkles className="h-4 w-4" />
             Se connecter pour publier
           </Link>
-
-          {/* Lien secondaire */}
           <p className="mt-4 text-center text-[12px] text-slate-400">
             Nouveau ? Un compte est créé automatiquement. ✨
           </p>
-
-          {/* Footer signature */}
           <p className="mt-6 text-center text-[11px] text-slate-300">
-            Magic Clock — It's time to smile
+            Magic Clock — It&apos;s time to smile
           </p>
         </div>
       </div>
@@ -142,7 +163,6 @@ export default function MagicStudioPage() {
   const isLoggedIn = !loading && !!user;
 
   const [showPublishModal, setShowPublishModal] = useState(false);
-
   const [canvasFormat, setCanvasFormat] = useState<CanvasFormat>("portrait");
   const [before, setBefore] = useState<MediaState>(EMPTY_MEDIA);
   const [after, setAfter] = useState<MediaState>(EMPTY_MEDIA);
@@ -158,32 +178,38 @@ export default function MagicStudioPage() {
   const beforeVideoRef = useRef<HTMLVideoElement | null>(null);
   const afterVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // ── Charger le draft ─────────────────────────────────────────
+  // ── Charger le draft ────────────────────────────────────────
   useEffect(() => {
     try {
+      // ✅ Migration v1 → v2 : nettoyer les base64, ne migrer que si CDN URLs valides
       const legacyRaw = window.localStorage.getItem(OLD_STUDIO_DRAFT_KEY);
-      const v2Raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
-      if (!v2Raw && legacyRaw) {
-        window.localStorage.setItem(STUDIO_DRAFT_KEY, legacyRaw);
+      if (legacyRaw) {
+        try {
+          const legacy = JSON.parse(legacyRaw) as StudioDraft;
+          const cleanBefore = sanitizeMediaState(legacy.before ?? {});
+          const cleanAfter = sanitizeMediaState(legacy.after ?? {});
+          const hasCdnData = isCdnUrl(cleanBefore.cdnUrl) || isCdnUrl(cleanAfter.cdnUrl);
+          if (hasCdnData) {
+            // Migrer uniquement si on a des vraies CDN URLs
+            const cleaned: StudioDraft = { ...legacy, before: cleanBefore, after: cleanAfter };
+            window.localStorage.setItem(STUDIO_DRAFT_KEY, JSON.stringify(cleaned));
+          }
+          // Sinon on jette silencieusement le draft corrompu
+        } catch {}
+        // ✅ Toujours supprimer le vieux draft v1 (corrompu ou pas)
         window.localStorage.removeItem(OLD_STUDIO_DRAFT_KEY);
       }
+
       const raw = window.localStorage.getItem(STUDIO_DRAFT_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw) as StudioDraft;
       if (!parsed) return;
+
       setCanvasFormat(parsed.canvasFormat ?? "portrait");
-      setBefore({
-        ...EMPTY_MEDIA,
-        ...parsed.before,
-        url: parsed.before?.cdnUrl ?? null,
-        thumbnailUrl: parsed.before?.thumbnailCdnUrl ?? parsed.before?.cdnUrl ?? null,
-      });
-      setAfter({
-        ...EMPTY_MEDIA,
-        ...parsed.after,
-        url: parsed.after?.cdnUrl ?? null,
-        thumbnailUrl: parsed.after?.thumbnailCdnUrl ?? parsed.after?.cdnUrl ?? null,
-      });
+      // ✅ Clé du fix : on passe par sanitizeMediaState à la lecture
+      // → élimine toute URL base64/blob qui aurait pu survivre
+      setBefore(sanitizeMediaState(parsed.before ?? {}));
+      setAfter(sanitizeMediaState(parsed.after ?? {}));
       setTitle((parsed.title ?? "").slice(0, MAX_TITLE_LENGTH));
       setHashtags((parsed.hashtags ?? "").slice(0, MAX_HASHTAGS_LENGTH));
       setMode(parsed.mode ?? "FREE");
@@ -193,22 +219,38 @@ export default function MagicStudioPage() {
     }
   }, []);
 
-  // ── Sauvegarder le draft ──────────────────────────────────────
+  // ── Sauvegarder le draft ─────────────────────────────────────
   useEffect(() => {
     try {
+      // ✅ Fix : on ne persiste JAMAIS les blob:/data: — uniquement CDN URLs
       const draftBefore: MediaState = {
-        ...before,
-        url: before.cdnUrl,
-        thumbnailUrl: before.thumbnailCdnUrl ?? before.cdnUrl,
+        ...EMPTY_MEDIA,
+        kind: before.kind,
+        cdnUrl: before.cdnUrl,
+        url: before.cdnUrl,                          // url = cdnUrl uniquement
+        thumbnailCdnUrl: before.thumbnailCdnUrl,
+        thumbnailUrl: before.thumbnailCdnUrl,
+        duration: before.duration,
+        coverTime: before.coverTime,
       };
       const draftAfter: MediaState = {
-        ...after,
+        ...EMPTY_MEDIA,
+        kind: after.kind,
+        cdnUrl: after.cdnUrl,
         url: after.cdnUrl,
-        thumbnailUrl: after.thumbnailCdnUrl ?? after.cdnUrl,
+        thumbnailCdnUrl: after.thumbnailCdnUrl,
+        thumbnailUrl: after.thumbnailCdnUrl,
+        duration: after.duration,
+        coverTime: after.coverTime,
       };
       const draft: StudioDraft = {
-        canvasFormat, before: draftBefore, after: draftAfter,
-        title, hashtags, mode, ppvPrice,
+        canvasFormat,
+        before: draftBefore,
+        after: draftAfter,
+        title,
+        hashtags,
+        mode,
+        ppvPrice,
       };
       window.localStorage.setItem(STUDIO_DRAFT_KEY, JSON.stringify(draft));
     } catch (error) {
@@ -216,9 +258,11 @@ export default function MagicStudioPage() {
     }
   }, [canvasFormat, before, after, title, hashtags, mode, ppvPrice]);
 
-  useEffect(() => { setPpvPriceInput(ppvPrice.toFixed(2)); }, [ppvPrice]);
+  useEffect(() => {
+    setPpvPriceInput(ppvPrice.toFixed(2));
+  }, [ppvPrice]);
 
-  // ── Gestion médias ────────────────────────────────────────────
+  // ── Gestion médias ───────────────────────────────────────────
   function updateMedia(side: Side, updater: (prev: MediaState) => MediaState) {
     if (side === "before") setBefore((prev) => updater(prev));
     else setAfter((prev) => updater(prev));
@@ -226,27 +270,39 @@ export default function MagicStudioPage() {
 
   async function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
-    side: Side,
+    side: Side
   ) {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Preview locale immédiate (blob temporaire)
     const localBlob = URL.createObjectURL(file);
     updateMedia(side, (prev) => ({
-      ...prev, url: localBlob, cdnUrl: null,
+      ...prev,
+      url: localBlob,
+      cdnUrl: null, // pas encore uploadé → bloque la publication
       kind: file.type.startsWith("video") ? "video" : "image",
     }));
+
     try {
       const result = await processAndUpload(file, "studio", undefined, (phase) => {
         console.log("[Studio] Upload phase:", phase);
       });
+
       if (result.kind === "image") {
         updateMedia(side, (prev) => ({
-          ...prev, cdnUrl: result.cdnUrl, thumbnailCdnUrl: result.cdnUrl,
+          ...prev,
+          // ✅ Dès que l'upload réussit, on remplace le blob par la CDN URL
+          url: result.cdnUrl,
+          cdnUrl: result.cdnUrl,
+          thumbnailCdnUrl: result.cdnUrl,
           thumbnailUrl: result.cdnUrl,
         }));
       } else {
         updateMedia(side, (prev) => ({
-          ...prev, cdnUrl: result.cdnUrl,
+          ...prev,
+          url: result.cdnUrl,
+          cdnUrl: result.cdnUrl,
           thumbnailCdnUrl: result.thumbnailCdnUrl ?? result.cdnUrl,
           duration: result.durationSeconds,
           thumbnailUrl: result.thumbnailCdnUrl ?? result.cdnUrl,
@@ -254,48 +310,66 @@ export default function MagicStudioPage() {
       }
     } catch (err) {
       console.error("[Studio] Upload R2 failed:", err);
+      // ✅ Echec upload : on nettoie l'état pour ne pas bloquer avec un blob mort
+      updateMedia(side, (prev) => ({
+        ...prev,
+        url: null,
+        cdnUrl: null,
+      }));
     }
     event.target.value = "";
   }
 
-  function handleLoadedMetadata(side: Side, event: React.SyntheticEvent<HTMLVideoElement>) {
+  function handleLoadedMetadata(
+    side: Side,
+    event: React.SyntheticEvent<HTMLVideoElement>
+  ) {
     const duration = event.currentTarget.duration || 0;
     updateMedia(side, (prev) => ({
-      ...prev, duration,
+      ...prev,
+      duration,
       coverTime: prev.coverTime ?? (duration > 0 ? duration / 2 : null),
     }));
   }
 
-  // ── Pont vers Magic Display — avec vérification auth ─────────
+  // ── Pont vers Magic Display ──────────────────────────────────
   function handleGoToDisplay() {
-    // Visiteur → modale de connexion
     if (!isLoggedIn) {
       setShowPublishModal(true);
       return;
     }
 
-    // Connecté → comportement normal
     const params = new URLSearchParams();
     const cleanTitle = title.trim().slice(0, MAX_TITLE_LENGTH);
     const rawHashtags = hashtags.trim().slice(0, MAX_HASHTAGS_LENGTH);
-    const hashtagArray = rawHashtags.length === 0 ? [] : rawHashtags
-      .split(/[,\s]+/).map((t) => t.trim()).filter(Boolean)
-      .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+    const hashtagArray =
+      rawHashtags.length === 0
+        ? []
+        : rawHashtags
+            .split(/[,\s]+/)
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
 
+    // ✅ Fix : mapMedia ne transmet QUE des CDN URLs — jamais blob/base64
     const mapMedia = (media: MediaState): StudioForwardPayload["before"] => {
       if (!media.kind) return null;
-      const permanentUrl = media.cdnUrl ?? null;
-      const previewUrl = media.url ?? null;
+      const permanentUrl = isCdnUrl(media.cdnUrl) ? media.cdnUrl : null;
+      const thumbnailUrl =
+        isCdnUrl(media.thumbnailCdnUrl) ? media.thumbnailCdnUrl :
+        isCdnUrl(media.thumbnailUrl) ? media.thumbnailUrl : null;
+      if (!permanentUrl) return null; // ✅ Bloque si pas encore uploadé sur R2
       return {
         type: media.kind === "video" ? "video" : "photo",
-        url: permanentUrl ?? previewUrl ?? "",
+        url: permanentUrl,
         coverTime: media.coverTime ?? null,
-        thumbnailUrl: media.thumbnailCdnUrl ?? media.thumbnailUrl ?? null,
+        thumbnailUrl,
       };
     };
 
     const payload: StudioForwardPayload = {
-      title: cleanTitle, mode,
+      title: cleanTitle,
+      mode,
       ppvPrice: mode === "PPV" ? Number(ppvPrice.toFixed(2)) : undefined,
       hashtags: hashtagArray,
       before: mapMedia(before),
@@ -316,7 +390,7 @@ export default function MagicStudioPage() {
     router.push(`/magic-display?${params.toString()}`);
   }
 
-  // ── Couverture vidéo ──────────────────────────────────────────
+  // ── Couverture vidéo ─────────────────────────────────────────
   function openCoverSelection(side: Side, event?: React.MouseEvent) {
     if (event) event.stopPropagation();
     const media = side === "before" ? before : after;
@@ -325,8 +399,10 @@ export default function MagicStudioPage() {
   }
 
   function currentMediaForCover() {
-    if (selectingCoverFor === "before") return { media: before, videoRef: beforeVideoRef };
-    if (selectingCoverFor === "after") return { media: after, videoRef: afterVideoRef };
+    if (selectingCoverFor === "before")
+      return { media: before, videoRef: beforeVideoRef };
+    if (selectingCoverFor === "after")
+      return { media: after, videoRef: afterVideoRef };
     return { media: null, videoRef: beforeVideoRef };
   }
 
@@ -339,7 +415,10 @@ export default function MagicStudioPage() {
     const duration = media.duration ?? videoEl.duration;
     if (!duration || Number.isNaN(duration) || duration === Infinity) return;
     const time = (duration * percent) / 100;
-    try { videoEl.pause(); videoEl.currentTime = time; } catch {}
+    try {
+      videoEl.pause();
+      videoEl.currentTime = time;
+    } catch {}
     updateMedia(selectingCoverFor, (prev) => ({ ...prev, coverTime: time }));
   }
 
@@ -364,20 +443,27 @@ export default function MagicStudioPage() {
     return (media.coverTime / media.duration) * 100;
   })();
 
-  // ── PPV helpers ───────────────────────────────────────────────
+  // ── PPV helpers ──────────────────────────────────────────────
   const minPpvIndex = 0;
   const maxPpvIndex = 1998;
-  const ppvSliderValue = Math.max(minPpvIndex, Math.min(maxPpvIndex,
-    Math.round((ppvPrice - 0.99) / 0.5)));
+  const ppvSliderValue = Math.max(
+    minPpvIndex,
+    Math.min(maxPpvIndex, Math.round((ppvPrice - 0.99) / 0.5))
+  );
 
   function commitPpvPriceFromInput(rawInput: string) {
     const normalized = rawInput.replace(",", ".");
     let value = Number(normalized);
-    if (Number.isNaN(value)) { setPpvPriceInput(ppvPrice.toFixed(2)); return; }
+    if (Number.isNaN(value)) {
+      setPpvPriceInput(ppvPrice.toFixed(2));
+      return;
+    }
     if (value < 0.99) value = 0.99;
     if (value > 999.99) value = 999.99;
-    const idx = Math.max(minPpvIndex, Math.min(maxPpvIndex,
-      Math.round((value - 0.99) / 0.5)));
+    const idx = Math.max(
+      minPpvIndex,
+      Math.min(maxPpvIndex, Math.round((value - 0.99) / 0.5))
+    );
     const finalPrice = Number((0.99 + 0.5 * idx).toFixed(2));
     setPpvPrice(finalPrice);
     setPpvPriceInput(finalPrice.toFixed(2));
@@ -388,37 +474,62 @@ export default function MagicStudioPage() {
     { value: "SUB", label: "Abonnement" },
     { value: "PPV", label: "PayPerView" },
   ];
+
   const modeDescription =
-    mode === "FREE" ? "Accessible à tous les utilisateurs." :
-    mode === "SUB" ? "Réservé à tes abonnés payants." :
-    "Débloqué à l'achat pour chaque spectateur (PayPerView).";
+    mode === "FREE"
+      ? "Accessible à tous les utilisateurs."
+      : mode === "SUB"
+      ? "Réservé à tes abonnés payants."
+      : "Débloqué à l'achat pour chaque spectateur (PayPerView).";
 
   const isPortrait = canvasFormat === "portrait";
-  const isUploading = (before.url?.startsWith("blob:") && !before.cdnUrl) ||
+
+  // ✅ Upload en cours = blob local sans CDN URL confirmée
+  const isUploading =
+    (before.url?.startsWith("blob:") && !before.cdnUrl) ||
     (after.url?.startsWith("blob:") && !after.cdnUrl);
+
+  // ✅ Média présent mais CDN URL manquante (upload échoué)
+  const hasUploadError =
+    (!before.url && !before.cdnUrl && before.kind !== null) ||
+    (!after.url && !after.cdnUrl && after.kind !== null);
 
   return (
     <>
-      {/* Modale visiteur */}
       {showPublishModal && (
         <PublishAuthModal onClose={() => setShowPublishModal(false)} />
       )}
-
       <main className="container max-w-4xl py-8 space-y-6">
         <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 sm:p-6 space-y-4">
           <header className="mb-2 sm:mb-3">
-            <h1 className="text-2xl font-semibold">Magic Studio — Avant / Après</h1>
+            <h1 className="text-2xl font-semibold">
+              Magic Studio — Avant / Après
+            </h1>
           </header>
 
           {/* Toggle Portrait / Horizontal */}
           <div className="flex justify-center">
             <div className="inline-flex rounded-full bg-slate-100 p-1 text-xs font-medium">
-              <button type="button" onClick={() => setCanvasFormat("portrait")}
-                className={`rounded-full px-4 py-1 transition ${isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+              <button
+                type="button"
+                onClick={() => setCanvasFormat("portrait")}
+                className={`rounded-full px-4 py-1 transition ${
+                  isPortrait
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500"
+                }`}
+              >
                 Portrait
               </button>
-              <button type="button" onClick={() => setCanvasFormat("horizontal")}
-                className={`rounded-full px-4 py-1 transition ${!isPortrait ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+              <button
+                type="button"
+                onClick={() => setCanvasFormat("horizontal")}
+                className={`rounded-full px-4 py-1 transition ${
+                  !isPortrait
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500"
+                }`}
+              >
                 Horizontal
               </button>
             </div>
@@ -426,17 +537,42 @@ export default function MagicStudioPage() {
 
           {/* CANEVAS AVANT / APRÈS */}
           <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-            <div className={`relative mx-auto w-full max-w-xl ${isPortrait ? "aspect-[4/5]" : "aspect-[16/9]"}`}>
-              <div className={`absolute inset-0 ${isPortrait ? "grid grid-cols-2 divide-x divide-slate-200" : "grid grid-rows-2 divide-y divide-slate-200"}`}>
-
+            <div
+              className={`relative mx-auto w-full max-w-xl ${
+                isPortrait ? "aspect-[4/5]" : "aspect-[16/9]"
+              }`}
+            >
+              <div
+                className={`absolute inset-0 ${
+                  isPortrait
+                    ? "grid grid-cols-2 divide-x divide-slate-200"
+                    : "grid grid-rows-2 divide-y divide-slate-200"
+                }`}
+              >
                 {/* AVANT */}
-                <button type="button"
+                <button
+                  type="button"
                   className="relative flex h-full w-full flex-col items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                  onClick={() => beforeInputRef.current?.click()}>
+                  onClick={() => beforeInputRef.current?.click()}
+                >
                   {before.url ? (
-                    before.kind === "video"
-                      ? <video ref={beforeVideoRef} src={before.url} className="h-full w-full object-cover" controls onLoadedMetadata={(e) => handleLoadedMetadata("before", e)} />
-                      : <img src={before.url} alt="Avant" className="h-full w-full object-cover" />
+                    before.kind === "video" ? (
+                      <video
+                        ref={beforeVideoRef}
+                        src={before.url}
+                        className="h-full w-full object-cover"
+                        controls
+                        onLoadedMetadata={(e) =>
+                          handleLoadedMetadata("before", e)
+                        }
+                      />
+                    ) : (
+                      <img
+                        src={before.url}
+                        alt="Avant"
+                        className="h-full w-full object-cover"
+                      />
+                    )
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                       <Upload className="h-6 w-6" />
@@ -444,29 +580,53 @@ export default function MagicStudioPage() {
                       <span className="text-[10px] text-slate-400">AVANT</span>
                     </div>
                   )}
-                  <input ref={beforeInputRef} type="file" accept="image/*,video/*" className="hidden"
-                    onChange={(e) => handleFileChange(e, "before")} />
+                  <input
+                    ref={beforeInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(e, "before")}
+                  />
                   {before.url?.startsWith("blob:") && !before.cdnUrl && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-xs font-medium">
                       ⬆️ Upload R2…
                     </div>
                   )}
                   {before.kind === "video" && before.url && (
-                    <button type="button" onClick={(e) => openCoverSelection("before", e)}
-                      className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm">
+                    <button
+                      type="button"
+                      onClick={(e) => openCoverSelection("before", e)}
+                      className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm"
+                    >
                       Couverture
                     </button>
                   )}
                 </button>
 
                 {/* APRÈS */}
-                <button type="button"
+                <button
+                  type="button"
                   className="relative flex h-full w-full flex-col items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                  onClick={() => afterInputRef.current?.click()}>
+                  onClick={() => afterInputRef.current?.click()}
+                >
                   {after.url ? (
-                    after.kind === "video"
-                      ? <video ref={afterVideoRef} src={after.url} className="h-full w-full object-cover" controls onLoadedMetadata={(e) => handleLoadedMetadata("after", e)} />
-                      : <img src={after.url} alt="Après" className="h-full w-full object-cover" />
+                    after.kind === "video" ? (
+                      <video
+                        ref={afterVideoRef}
+                        src={after.url}
+                        className="h-full w-full object-cover"
+                        controls
+                        onLoadedMetadata={(e) =>
+                          handleLoadedMetadata("after", e)
+                        }
+                      />
+                    ) : (
+                      <img
+                        src={after.url}
+                        alt="Après"
+                        className="h-full w-full object-cover"
+                      />
+                    )
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-slate-500">
                       <Upload className="h-6 w-6" />
@@ -474,47 +634,89 @@ export default function MagicStudioPage() {
                       <span className="text-[10px] text-slate-400">APRÈS</span>
                     </div>
                   )}
-                  <input ref={afterInputRef} type="file" accept="image/*,video/*" className="hidden"
-                    onChange={(e) => handleFileChange(e, "after")} />
+                  <input
+                    ref={afterInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(e, "after")}
+                  />
                   {after.url?.startsWith("blob:") && !after.cdnUrl && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-xs font-medium">
                       ⬆️ Upload R2…
                     </div>
                   )}
                   {after.kind === "video" && after.url && (
-                    <button type="button" onClick={(e) => openCoverSelection("after", e)}
-                      className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm">
+                    <button
+                      type="button"
+                      onClick={(e) => openCoverSelection("after", e)}
+                      className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm"
+                    >
                       Couverture
                     </button>
                   )}
                 </button>
               </div>
 
-              {/* Avatar centre neutre */}
+              {/* Avatar centre */}
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
-                <svg viewBox="0 0 100 100" className="h-[72px] w-[72px]" aria-hidden="true">
+                <svg
+                  viewBox="0 0 100 100"
+                  className="h-[72px] w-[72px]"
+                  aria-hidden="true"
+                >
                   <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
                   <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
-                  <path d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74" fill="#9CA3AF" />
+                  <path
+                    d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
+                    fill="#9CA3AF"
+                  />
                 </svg>
               </div>
             </div>
           </div>
 
+          {/* ✅ Alerte upload échoué */}
+          {hasUploadError && (
+            <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
+              <p className="text-[12px] text-red-700 leading-snug">
+                L&apos;upload a échoué pour une ou plusieurs photos. Clique sur
+                le cadre pour réimporter ta photo.
+              </p>
+            </div>
+          )}
+
           {/* Panneau couverture vidéo */}
           {selectingCoverFor && (
             <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-600">
               <p className="font-medium text-slate-700">
-                Choisir la couverture vidéo ({selectingCoverFor === "before" ? "Avant" : "Après"})
+                Choisir la couverture vidéo (
+                {selectingCoverFor === "before" ? "Avant" : "Après"})
               </p>
-              <p>Fais glisser le curseur pour choisir l&apos;image qui servira de couverture dans le flux Amazing.</p>
+              <p>
+                Fais glisser le curseur pour choisir l&apos;image qui servira de
+                couverture dans le flux Amazing.
+              </p>
               <div className="mt-1 flex items-center gap-3">
-                <input type="range" min={0} max={100} step={1} value={coverSliderValue}
-                  onChange={handleCoverSliderChange} className="flex-1 accent-brand-500" />
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={coverSliderValue}
+                  onChange={handleCoverSliderChange}
+                  className="flex-1 accent-brand-500"
+                />
               </div>
-              <button type="button"
-                onClick={() => { if (selectingCoverFor) captureCoverThumbnail(selectingCoverFor); setSelectingCoverFor(null); }}
-                className="mt-2 inline-flex rounded-full bg-slate-800 px-3 py-1 text-[11px] font-semibold text-white">
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectingCoverFor) captureCoverThumbnail(selectingCoverFor);
+                  setSelectingCoverFor(null);
+                }}
+                className="mt-2 inline-flex rounded-full bg-slate-800 px-3 py-1 text-[11px] font-semibold text-white"
+              >
                 Terminer le choix de couverture
               </button>
             </div>
@@ -523,58 +725,87 @@ export default function MagicStudioPage() {
           {/* TITRE, HASHTAGS & MODE */}
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Titre du Magic Clock</label>
-              <input type="text" value={title}
-                onChange={(e) => setTitle(e.target.value.slice(0, MAX_TITLE_LENGTH))}
+              <label className="text-xs font-medium text-slate-700">
+                Titre du Magic Clock
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) =>
+                  setTitle(e.target.value.slice(0, MAX_TITLE_LENGTH))
+                }
                 placeholder="Balayage caramel lumineux, cheveux longs"
-                className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
             </div>
-
             <div className="space-y-1">
               <label className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                <Hash className="h-3 w-3" /> Hashtags
+                <Hash className="h-3 w-3" />
+                Hashtags
               </label>
-              <input type="text" value={hashtags}
-                onChange={(e) => setHashtags(e.target.value.slice(0, MAX_HASHTAGS_LENGTH))}
+              <input
+                type="text"
+                value={hashtags}
+                onChange={(e) =>
+                  setHashtags(e.target.value.slice(0, MAX_HASHTAGS_LENGTH))
+                }
                 placeholder="#balayage #cheveuxblonds #magicclock"
-                className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
             </div>
-
             <div className="space-y-1 pt-1">
-              <label className="text-xs font-medium text-slate-700">Mode de publication</label>
+              <label className="text-xs font-medium text-slate-700">
+                Mode de publication
+              </label>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium">
                     {publishModes.map((opt) => (
-                      <button key={opt.value} type="button" onClick={() => setMode(opt.value)}
-                        className={`rounded-full px-3 py-1 transition ${mode === opt.value ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setMode(opt.value)}
+                        className={`rounded-full px-3 py-1 transition ${
+                          mode === opt.value
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500"
+                        }`}
+                      >
                         {opt.label}
                       </button>
                     ))}
                   </div>
                   <p className="text-[11px] text-slate-500">{modeDescription}</p>
                 </div>
-
-                {/* ↗ Bouton publier — ouvre modale si visiteur */}
-                <button type="button" onClick={handleGoToDisplay}
+                {/* ↗ Bouton publier */}
+                <button
+                  type="button"
+                  onClick={handleGoToDisplay}
                   disabled={isUploading}
-                  title={isUploading ? "Upload en cours, patiente…" : isLoggedIn ? "Passer à Magic Display" : "Connecte-toi pour publier"}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                  title={
+                    isUploading
+                      ? "Upload en cours, patiente…"
+                      : isLoggedIn
+                      ? "Passer à Magic Display"
+                      : "Connecte-toi pour publier"
+                  }
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
-
               {isUploading && (
                 <p className="text-[11px] text-amber-600 font-medium">
-                  ⏳ Upload des médias vers R2 en cours… Patiente avant de passer au Display.
+                  ⏳ Upload des médias vers R2 en cours… Patiente avant de
+                  passer au Display.
                 </p>
               )}
-
-              {/* Hint visiteur sous le bouton */}
               {!isLoggedIn && !loading && (
                 <p className="text-[11px] text-slate-400 flex items-center gap-1">
                   <span>🔐</span>
-                  <span>Connecte-toi pour publier ton Magic Clock sur Amazing.</span>
+                  <span>
+                    Connecte-toi pour publier ton Magic Clock sur Amazing.
+                  </span>
                 </p>
               )}
             </div>
@@ -582,22 +813,48 @@ export default function MagicStudioPage() {
             {/* Sélecteur prix PPV */}
             {mode === "PPV" && (
               <div className="space-y-2 pt-2">
-                <label className="text-xs font-medium text-slate-700">Prix PayPerView</label>
+                <label className="text-xs font-medium text-slate-700">
+                  Prix PayPerView
+                </label>
                 <div className="flex items-center gap-3">
-                  <input type="range" min={minPpvIndex} max={maxPpvIndex} step={1}
+                  <input
+                    type="range"
+                    min={minPpvIndex}
+                    max={maxPpvIndex}
+                    step={1}
                     value={ppvSliderValue}
-                    onChange={(e) => { const idx = Number(e.target.value); setPpvPrice(Number((0.99 + 0.5 * idx).toFixed(2))); }}
-                    className="flex-1 accent-brand-500" />
-                  <div className="w-20 text-right text-xs font-semibold text-slate-700">{ppvPrice.toFixed(2)} CHF</div>
+                    onChange={(e) => {
+                      const idx = Number(e.target.value);
+                      setPpvPrice(Number((0.99 + 0.5 * idx).toFixed(2)));
+                    }}
+                    className="flex-1 accent-brand-500"
+                  />
+                  <div className="w-20 text-right text-xs font-semibold text-slate-700">
+                    {ppvPrice.toFixed(2)} CHF
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-500">Ou entre le prix exact :</span>
-                  <input type="number" min={0.99} max={999.99} step={0.1}
+                  <span className="text-[11px] text-slate-500">
+                    Ou entre le prix exact :
+                  </span>
+                  <input
+                    type="number"
+                    min={0.99}
+                    max={999.99}
+                    step={0.1}
                     value={ppvPriceInput}
-                    onChange={(e) => setPpvPriceInput(e.target.value.replace(",", "."))}
+                    onChange={(e) =>
+                      setPpvPriceInput(e.target.value.replace(",", "."))
+                    }
                     onBlur={() => commitPpvPriceFromInput(ppvPriceInput)}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitPpvPriceFromInput(ppvPriceInput); } }}
-                    className="w-24 rounded-full border border-slate-200 px-2 py-1 text-xs text-right shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitPpvPriceFromInput(ppvPriceInput);
+                      }
+                    }}
+                    className="w-24 rounded-full border border-slate-200 px-2 py-1 text-xs text-right shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  />
                   <span className="text-[11px] text-slate-500">CHF</span>
                 </div>
               </div>
