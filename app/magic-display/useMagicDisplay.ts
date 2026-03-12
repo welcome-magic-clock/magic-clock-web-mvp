@@ -284,6 +284,8 @@ export function useMagicDisplay(searchParams: URLSearchParams) {
     computeMagicClockPublishProgress({ studioCompleted, faces: faceProgressInput });
   const totalPercentDisplay = studioPartDisplay + displayPart;
   const clampedPublishPercent = Math.max(0, Math.min(100, totalPercentDisplay));
+  // ✅ Logique originale conservée : Studio (40%) + Display (60%) = 100% pour publier
+  // Les pastilles orange/vert du Display doivent toutes être vertes
   const canPublish = clampedPublishPercent >= 100;
 
   const studioStatusLabel =
@@ -295,9 +297,21 @@ export function useMagicDisplay(searchParams: URLSearchParams) {
       ? "Photo APRÈS manquante ou non uploadée sur le CDN"
       : "Studio complété";
 
+  // Message d'aide contextuel — guide le créateur vers la prochaine action
+  const studioNotUploadedMsg =
+    !isCdnValid(studioBeforeUrl) && !isCdnValid(studioAfterUrl)
+      ? "⚠️ Photos AVANT/APRÈS non reçues du Studio — retourne dans le Studio et vérifie que l'upload est terminé."
+      : !isCdnValid(studioBeforeUrl)
+      ? "⚠️ Photo AVANT non reçue — retourne dans le Studio."
+      : !isCdnValid(studioAfterUrl)
+      ? "⚠️ Photo APRÈS non reçue — retourne dans le Studio."
+      : null;
+
   const publishHelperText = canPublish
-    ? "Studio complété · Display complété · Tu peux publier ton Magic Clock ✨"
-    : `${studioStatusLabel} · Termine ton Display pour publier.`;
+    ? "Studio ✅ · Display ✅ · Tu peux publier ton Magic Clock ! ✨"
+    : studioNotUploadedMsg
+    ? studioNotUploadedMsg
+    : `${studioStatusLabel} · Complete les faces du Display pour publier.`;
 
   // ── Previews avant/après ─────────────────────────────────────
   const beforePreview =
