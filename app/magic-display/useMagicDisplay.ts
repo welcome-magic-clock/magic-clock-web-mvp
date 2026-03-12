@@ -162,6 +162,30 @@ export function useMagicDisplay(searchParams: URLSearchParams) {
         !url.startsWith("data:") &&
         !url.startsWith("blob:");
 
+      // ✅ Détection payload corrompu : before ou after en base64
+      // → Nettoyer le localStorage et afficher un message d'erreur clair
+      const beforeIsCorrupt = payload.before?.url
+        ? !isCdnUrl(payload.before.url)
+        : false;
+      const afterIsCorrupt = payload.after?.url
+        ? !isCdnUrl(payload.after.url)
+        : false;
+
+      if (beforeIsCorrupt || afterIsCorrupt) {
+        // Supprimer le payload corrompu pour éviter qu'il bloque les prochaines sessions
+        try { window.localStorage.removeItem(STUDIO_FORWARD_KEY); } catch {}
+        setPublishError(
+          "⚠️ Les photos du Studio n'ont pas été envoyées sur le CDN. " +
+          "Retourne dans le Studio, réimporte tes photos et attends que l'upload soit terminé avant de continuer."
+        );
+        // Charger quand même le mode/prix/titre pour ne pas tout perdre
+        if (payload.title) setBridgeTitle(payload.title);
+        if (payload.mode) setBridgeMode(payload.mode as PublishMode);
+        if (typeof payload.ppvPrice === "number") setBridgePpvPrice(payload.ppvPrice);
+        if (Array.isArray(payload.hashtags)) setBridgeHashtags(payload.hashtags);
+        return;
+      }
+
       if (payload.before?.url && isCdnUrl(payload.before.url))
         setStudioBeforeUrl(payload.before.url);
       if (typeof payload.before?.coverTime === "number")
