@@ -1,5 +1,5 @@
 // app/monet/RealMonetPanel.tsx
-// ✅ v4.8 — Supabase réel · PPV par Magic Clock · commission individuelle par palier · slider Abo · 4 pages liées
+// ✅ v4.9 — Tiers renommés (Viral/Spotlight/Signature/Legendary) via monet-helpers
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
