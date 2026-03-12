@@ -1,59 +1,74 @@
 // core/domain/repository.ts
-// Repository "en mémoire" pour le MVP (sans Prisma / base de données)
+// ✅ Zéro mock — toutes les données viennent de Supabase en production.
+// Ce fichier est un pont de compatibilité pour les composants encore migrés.
+//
+// ⚠️ USAGE EN PRODUCTION :
+//   - Amazing       → app/page.tsx          lit Supabase directement (supabaseAdmin)
+//   - My Magic      → app/mymagic/page.tsx  lit Supabase directement (supabaseAdmin)
+//   - Meet me       → app/meet/page.tsx     lit Supabase directement (getSupabaseBrowser)
+//   - Ces fonctions NE SONT PLUS appelées dans les pages principales.
+//   - Elles restent pour les tests et les composants intermédiaires.
 
 import type { Creator, FeedCard } from "@/core/domain/types";
 import { CREATORS } from "@/features/meet/creators";
 import { FEED } from "@/features/amazing/feed";
 
-// 👇 tableau commun pour Amazing, My Magic Clock et Magic Display
-// FEED contient déjà l’ours d’onboarding en premier
+// FEED = [ONBOARDING_MAGIC_CLOCK_FEED_CARD] uniquement (l'ours d'onboarding)
+// Toutes les vraies FeedCards viennent de Supabase — pas d'ici.
 const ALL_FEED_CARDS: FeedCard[] = FEED;
 
 /**
- * Retourne tous les créateurs (utilisé par Meet me, etc.)
+ * Retourne les créateurs statiques (tableau vide en prod).
+ * ⚠️ En production : meet/page.tsx charge depuis Supabase profiles.
  */
 export function listCreators(): Creator[] {
   return CREATORS;
 }
 
 /**
- * Cherche un créateur par son handle (@sofia, @aiko, etc.)
+ * Cherche un créateur par handle dans la liste statique.
+ * ⚠️ En production : utiliser /api/creators/[handle] (Supabase).
  */
 export function findCreatorByHandle(handle: string): Creator | undefined {
   return CREATORS.find((c) => c.handle === handle);
 }
 
 /**
- * Retourne tout le feed global (Amazing).
- * ⚠️ Synchrone pour éviter les erreurs de type dans My Magic.
+ * Retourne le feed statique (ours d'onboarding uniquement).
+ * ⚠️ En production : Amazing charge depuis Supabase directement.
  */
 export function listFeed(): FeedCard[] {
   return ALL_FEED_CARDS;
 }
 
 /**
- * Retourne les contenus d’un créateur donné.
+ * Retourne les contenus d'un créateur dans le feed statique.
+ * ⚠️ En production : toujours vide (FEED ne contient que l'ours).
  */
 export function listFeedByCreator(handle: string): FeedCard[] {
   return ALL_FEED_CARDS.filter((item) => item.user === handle);
 }
 
 /**
- * MVP : Magic Clock "créés" par un créateur.
+ * Retourne les Magic Clocks "créés" par un créateur dans le feed statique.
+ * ⚠️ En production : mymagic/page.tsx charge depuis Supabase directement.
  */
 export function listCreatedByCreator(handle: string): FeedCard[] {
   return ALL_FEED_CARDS.filter((item) => item.user === handle);
 }
 
 /**
- * MVP : Bibliothèque "achetée" par le viewer.
+ * Bibliothèque achetée par un viewer.
+ * ⚠️ Non utilisé en production — mymagic/page.tsx utilise magic_clock_accesses (Supabase).
+ * Retourne tableau vide pour ne jamais polluer l'UI avec de fausses données.
  */
-export function listLibraryForViewer(viewerHandle: string): FeedCard[] {
-  return ALL_FEED_CARDS.slice(0, 4);
+export function listLibraryForViewer(_viewerHandle: string): FeedCard[] {
+  return [];
 }
 
 /**
- * Recherche d'un contenu par son id (pour Magic Display, détails, etc.)
+ * Recherche d'un contenu par id dans le feed statique.
+ * ⚠️ En production : toujours null sauf pour l'ours d'onboarding.
  */
 export function findContentById(id: number | string): FeedCard | undefined {
   const target = String(id);
