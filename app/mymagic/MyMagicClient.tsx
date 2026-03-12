@@ -249,7 +249,8 @@ function MagicClockCard({
           <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-white/20 shadow-md overflow-hidden backdrop-blur-sm">
             {avatarUrl
               ? <img src={avatarUrl} alt={title} className="h-full w-full rounded-full object-cover" />
-              : <span className="mc-text-gradient text-base font-bold">{title[0]?.toUpperCase()}</span>
+              : /* ✅ Ours Magic Clock en fallback — jamais de lettre générique */
+                <img src="/images/magic-clock-bear/avatar.png" alt="Magic Clock" className="h-full w-full object-cover" />
             }
           </div>
         </div>
@@ -932,7 +933,8 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
           <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-white/20 shadow-md overflow-hidden backdrop-blur-sm">
             {avatarUrl
               ? <img src={avatarUrl} alt={title} className="h-full w-full rounded-full object-cover" />
-              : <span className="mc-text-gradient text-base font-bold">{title[0]?.toUpperCase()}</span>
+              : /* ✅ Ours Magic Clock en fallback — jamais de lettre générique */
+                <img src="/images/magic-clock-bear/avatar.png" alt="Magic Clock" className="h-full w-full object-cover" />
             }
           </div>
         </div>
