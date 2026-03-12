@@ -1,5 +1,5 @@
 // app/studio/page.tsx
-// ✅ v2.1 — Fix draft v1 base64 + blocage publish si CDN URL manquante
+// ✅ v2.2 — Fix draft v1 base64 + blocage publish si CDN URL manquante + avatar ours/réel
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,55 @@ import {
 } from "@/core/domain/magicStudioBridge";
 import { processAndUpload } from "@/lib/mediaCompressor";
 import { useAuth } from "@/core/supabase/useAuth";
+import { getSupabaseBrowser } from "@/core/supabase/browser";
+
+// ─────────────────────────────────────────────────────────────
+// Avatar créateur au centre du canevas
+// Charge depuis Supabase profiles — fallback ours si pas de photo
+// ─────────────────────────────────────────────────────────────
+function StudioAvatarCenter({ userId }: { userId: string }) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [initials, setInitials] = useState("MC");
+
+  useEffect(() => {
+    const sb = getSupabaseBrowser();
+    sb.from("profiles")
+      .select("avatar_url, display_name, handle")
+      .eq("id", userId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        if (data.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        } else {
+          const name = data.display_name ?? data.handle ?? "MC";
+          const parts = name.split(" ").filter(Boolean);
+          setInitials(
+            parts.length >= 2
+              ? (parts[0][0] + parts[1][0]).toUpperCase()
+              : name.slice(0, 2).toUpperCase()
+          );
+        }
+      });
+  }, [userId]);
+
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={avatarUrl} alt="Mon profil" className="h-full w-full object-cover" />
+    );
+  }
+
+  // Pas encore chargé ou pas de photo → ours Magic Clock
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/images/magic-clock-bear/avatar.png"
+      alt="Magic Clock"
+      className="h-full w-full object-cover"
+    />
+  );
+}
 
 type MediaKind = "image" | "video";
 type MediaState = {
@@ -658,20 +707,21 @@ export default function MagicStudioPage() {
                 </button>
               </div>
 
-              {/* Avatar centre */}
-              <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
-                <svg
-                  viewBox="0 0 100 100"
-                  className="h-[72px] w-[72px]"
-                  aria-hidden="true"
-                >
-                  <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
-                  <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
-                  <path
-                    d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
-                    fill="#9CA3AF"
+              {/* Avatar centre — vrai avatar si connecté, ours Magic Clock sinon */}
+              <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-md">
+                {user ? (
+                  // Connecté : on tente de charger le vrai avatar via le profil
+                  // StudioAvatarCenter le charge depuis Supabase
+                  <StudioAvatarCenter userId={user.id} />
+                ) : (
+                  // Non connecté : ours Magic Clock
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src="/images/magic-clock-bear/avatar.png"
+                    alt="Magic Clock"
+                    className="h-full w-full object-cover"
                   />
-                </svg>
+                )}
               </div>
             </div>
           </div>
