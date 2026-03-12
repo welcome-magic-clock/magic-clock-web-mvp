@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Camera, Clapperboard, FileText, Plus } from "lucide-react";
+import { CubeFaceMedia } from "@/components/media/LazyMediaSlot";
 
 type MediaType = "photo" | "video" | "file";
 
@@ -12,6 +13,8 @@ type FaceLike = {
   hasMedia: boolean;
   mediaType?: MediaType;
   mediaUrl?: string | null;
+  /** URL CDN du thumbnail JPEG pour les vidéos */
+  thumbnailUrl?: string | null;
 };
 
 type MagicCube3DProps = {
@@ -99,24 +102,14 @@ export default function MagicCube3D({
                 >
                   {isVisualMedia ? (
                     <>
-                      {seg.mediaType === "photo" ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={seg.mediaUrl!}
-                          alt={seg.description}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        // eslint-disable-next-line jsx-a11y/media-has-caption
-                        <video
-                          src={seg.mediaUrl!}
-                          className="h-full w-full object-cover"
-                          muted
-                          playsInline
-                          loop
-                          autoPlay
-                        />
-                      )}
+                      {/* CubeFaceMedia gère lazy load, skeleton, thumbnail vidéo — zéro <video autoPlay> */}
+                      <CubeFaceMedia
+                        src={seg.mediaUrl!}
+                        thumbnailSrc={seg.mediaType === "video" ? (seg.thumbnailUrl ?? null) : null}
+                        kind={seg.mediaType === "video" ? "video" : "photo"}
+                        alt={seg.description}
+                        isActive={isActive}
+                      />
                       {/* Pastille complétée en bas à droite */}
                       <span className="absolute bottom-3 right-3 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
                     </>
