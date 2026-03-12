@@ -1,17 +1,10 @@
 // app/magic-display/MagicDisplayClient.tsx
-// v1.1 — Branchement publishError sur MagicDisplayPublishBar
+// ✅ v1.2 — Zéro mock : creatorName/handle/avatar réels, views/likes depuis Supabase après publication
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Camera,
-  Clapperboard,
-  FileText,
-  Plus,
-  ArrowUpRight,
-  Lock,
-  Unlock,
-  Heart,
-  MoreHorizontal,
+  Camera, Clapperboard, FileText, Plus,
+  ArrowUpRight, Lock, Unlock, Heart, MoreHorizontal,
 } from "lucide-react";
 import { useMagicDisplay } from "./useMagicDisplay";
 import { MagicDisplayFacePanel } from "./MagicDisplayFacePanel";
@@ -37,6 +30,32 @@ function StudioMediaSlot({ src, alt }: { src: string; alt: string }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} className="h-full w-full object-cover" />
     </div>
+  );
+}
+
+// ── Avatar créateur (initiales ou photo) ────────────────────
+function CreatorAvatar({
+  avatarUrl,
+  initials,
+  name,
+}: {
+  avatarUrl: string | null | undefined;
+  initials: string;
+  name: string;
+}) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="h-5 w-5 rounded-full object-cover ring-1 ring-slate-200"
+      />
+    );
+  }
+  return (
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-tr from-violet-500 to-pink-500 text-[9px] font-bold text-white ring-1 ring-slate-200">
+      {initials}
+    </span>
   );
 }
 
@@ -81,12 +100,14 @@ export default function MagicDisplayClient() {
   }
 
   // ── Mode Principal ────────────────────────────────────────────
-  const mockViews = 0;
-  const mockLikes = 0;
+  // ✅ Zéro mock — nom/handle réels depuis useAuth+Supabase
+  const creatorDisplayName = d.currentCreator.name || "Créateur";
+  const creatorDisplayHandle = d.creatorHandle || "@...";
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6 sm:pt-8 sm:pb-28">
       <section className="mb-6 flex min-h-[calc(100vh-7rem)] flex-col gap-6 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+
         {/* ── Ligne 1 : Back + titre + Options ── */}
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -105,10 +126,7 @@ export default function MagicDisplayClient() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                d.setIsOptionsOpen(true);
-                d.setIsDuplicateOpen(false);
-              }}
+              onClick={() => { d.setIsOptionsOpen(true); d.setIsDuplicateOpen(false); }}
               aria-label="Ouvrir les options du cube"
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50"
             >
@@ -122,9 +140,7 @@ export default function MagicDisplayClient() {
           <article className="rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm">
             <button
               type="button"
-              onClick={() =>
-                router.push("/mymagic?tab=created&source=magic-display")
-              }
+              onClick={() => router.push("/mymagic?tab=created&source=magic-display")}
               className="block w-full text-left"
             >
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
@@ -140,39 +156,45 @@ export default function MagicDisplayClient() {
                     />
                   </div>
                   <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200" />
-                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white shadow-sm">
-                    <svg
-                      viewBox="0 0 100 100"
-                      className="h-[72px] w-[72px]"
-                      aria-hidden="true"
-                    >
-                      <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
-                      <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
-                      <path
-                        d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
-                        fill="#9CA3AF"
+                  {/* Avatar créateur centré */}
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-md">
+                    {d.creatorAvatar ? (
+                      <img
+                        src={d.creatorAvatar}
+                        alt={creatorDisplayName}
+                        className="h-full w-full object-cover"
                       />
-                    </svg>
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-violet-500 to-pink-500 text-xl font-bold text-white">
+                        {d.initials}
+                      </span>
+                    )}
                   </div>
                   <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white shadow-md">
                     <ArrowUpRight className="h-5 w-5" />
                   </div>
                 </div>
               </div>
+
+              {/* Infos bas de carte — ✅ données réelles */}
               <div className="mt-3 space-y-1 text-xs">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
-                  <span className="font-medium">User</span>
-                  <span className="text-slate-400">@user</span>
+                  {/* ✅ Avatar + Nom + Handle réels */}
+                  <CreatorAvatar
+                    avatarUrl={d.creatorAvatar}
+                    initials={d.initials}
+                    name={creatorDisplayName}
+                  />
+                  <span className="font-medium">{creatorDisplayName}</span>
+                  <span className="text-slate-400">{creatorDisplayHandle}</span>
                   <span className="h-[3px] w-[3px] rounded-full bg-slate-300" />
+                  {/* ✅ Vues/likes : 0 au moment de la création, réels après publication */}
                   <span>
-                    <span className="font-medium">
-                      {mockViews.toLocaleString("fr-CH")}
-                    </span>{" "}
-                    vues
+                    <span className="font-medium">0</span> vues
                   </span>
                   <span className="flex items-center gap-1">
                     <Heart className="h-3 w-3" />
-                    <span>{mockLikes}</span>
+                    <span>0</span>
                   </span>
                   <span className="flex items-center gap-1">
                     {d.isLockedPreview ? (
@@ -181,12 +203,11 @@ export default function MagicDisplayClient() {
                       <Unlock className="h-3 w-3" />
                     )}
                     <span>{d.accessLabel}</span>
-                    {d.effectiveMode === "PPV" &&
-                      d.effectivePpvPrice != null && (
-                        <span className="ml-1 text-[11px] text-slate-500">
-                          · {d.effectivePpvPrice.toFixed(2)} CHF
-                        </span>
-                      )}
+                    {d.effectiveMode === "PPV" && d.effectivePpvPrice != null && (
+                      <span className="ml-1 text-[11px] text-slate-500">
+                        · {d.effectivePpvPrice.toFixed(2)} CHF
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
@@ -195,18 +216,10 @@ export default function MagicDisplayClient() {
                       {d.effectiveTitle}
                     </span>
                   )}
-                  {d.effectiveHashtags.length > 0 ? (
-                    d.effectiveHashtags.map((tag) => (
-                      <span key={tag} className="text-brand-600">
-                        {tag}
-                      </span>
-                    ))
-                  ) : (
-                    <>
-                      <span className="text-brand-600">#coiffure</span>
-                      <span className="text-brand-600">#color</span>
-                    </>
-                  )}
+                  {/* ✅ Hashtags réels uniquement — zéro fallback hardcodé */}
+                  {d.effectiveHashtags.map((tag) => (
+                    <span key={tag} className="text-brand-600">{tag}</span>
+                  ))}
                 </div>
               </div>
             </button>
@@ -220,24 +233,17 @@ export default function MagicDisplayClient() {
             <div className="relative flex h-72 w-72 flex-shrink-0 items-center justify-center">
               <div
                 className="relative h-72 w-72 rounded-full border border-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.04)]"
-                style={{
-                  background:
-                    "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)",
-                }}
+                style={{ background: "radial-gradient(circle at 30% 30%, #ffffff, #e5e7eb 45%, #e2e8f0 75%)" }}
               >
+                {/* Avatar créateur au centre du cercle */}
                 <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white shadow-xl shadow-slate-900/20">
-                  <svg
-                    viewBox="0 0 100 100"
-                    className="h-full w-full"
-                    aria-hidden="true"
-                  >
-                    <circle cx="50" cy="50" r="48" fill="#E5E7EB" />
-                    <circle cx="50" cy="38" r="16" fill="#9CA3AF" />
-                    <path
-                      d="M25 74C28 58 37 50 50 50C63 50 72 58 75 74"
-                      fill="#9CA3AF"
-                    />
-                  </svg>
+                  {d.creatorAvatar ? (
+                    <img src={d.creatorAvatar} alt={creatorDisplayName} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-violet-500 to-pink-500 text-sm font-bold text-white">
+                      {d.initials}
+                    </span>
+                  )}
                 </div>
                 {d.segments.map((seg) => {
                   const radiusPercent = 40;
@@ -247,14 +253,9 @@ export default function MagicDisplayClient() {
                   const isSelected = seg.id === d.selectedId;
                   const meta = d.faceUniversalProgress[String(seg.id)] ?? {};
                   const hasSomething =
-                    seg.hasMedia ||
-                    Boolean(
-                      meta.coveredFromDetails || meta.universalContentCompleted
-                    );
+                    seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
                   const status: FaceStatus = hasSomething
-                    ? meta.universalContentCompleted
-                      ? "full"
-                      : "partial"
+                    ? meta.universalContentCompleted ? "full" : "partial"
                     : "empty";
                   return (
                     <button
@@ -270,9 +271,7 @@ export default function MagicDisplayClient() {
                       aria-label={`Face ${seg.label}`}
                     >
                       {renderSegmentIcon(seg)}
-                      <span
-                        className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(status)}`}
-                      />
+                      <span className={`absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full border border-white ${statusDotClass(status)}`} />
                     </button>
                   );
                 })}
@@ -308,8 +307,7 @@ export default function MagicDisplayClient() {
                 Faces de ce cube Magic Clock
               </h2>
               <p className="text-xs text-slate-500">
-                Chaque ligne correspond à une face. Sélectionne une face pour
-                compléter son contenu.
+                Chaque ligne correspond à une face. Sélectionne une face pour compléter son contenu.
               </p>
               <div className="space-y-2">
                 {d.segments.map((seg) => {
@@ -317,14 +315,9 @@ export default function MagicDisplayClient() {
                   const label = mediaTypeLabel(seg.mediaType);
                   const meta = d.faceUniversalProgress[String(seg.id)] ?? {};
                   const hasSomething =
-                    seg.hasMedia ||
-                    Boolean(
-                      meta.coveredFromDetails || meta.universalContentCompleted
-                    );
+                    seg.hasMedia || Boolean(meta.coveredFromDetails || meta.universalContentCompleted);
                   const status: FaceStatus = hasSomething
-                    ? meta.universalContentCompleted
-                      ? "full"
-                      : "partial"
+                    ? meta.universalContentCompleted ? "full" : "partial"
                     : "empty";
                   return (
                     <button
@@ -339,16 +332,13 @@ export default function MagicDisplayClient() {
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-slate-800">
-                          {seg.label}
-                          {seg.hasMedia && label ? ` · ${label}` : ""}
+                          {seg.label}{seg.hasMedia && label ? ` · ${label}` : ""}
                         </p>
                         <p className="mt-0.5 truncate text-[11px] text-slate-500">
                           {seg.description}
                         </p>
                       </div>
-                      <span
-                        className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(status)}`}
-                      />
+                      <span className={`ml-2 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusDotClass(status)}`} />
                     </button>
                   );
                 })}
@@ -372,41 +362,18 @@ export default function MagicDisplayClient() {
         {d.isOptionsOpen && (
           <MagicDisplayOptionsMenu
             isDuplicateOpen={d.isDuplicateOpen}
-            onClose={() => {
-              d.setIsOptionsOpen(false);
-              d.setIsDuplicateOpen(false);
-            }}
+            onClose={() => { d.setIsOptionsOpen(false); d.setIsDuplicateOpen(false); }}
             onApplyTemplate={d.handleApplyTemplate}
             onReset={d.handleResetCube}
-            onToggleDuplicate={() =>
-              d.setIsDuplicateOpen((prev) => !prev)
-            }
+            onToggleDuplicate={() => d.setIsDuplicateOpen((prev) => !prev)}
           />
         )}
       </section>
 
       {/* ── Inputs cachés upload ── */}
-      <input
-        ref={d.photoInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => d.handleMediaFileChange(e, "photo")}
-      />
-      <input
-        ref={d.videoInputRef}
-        type="file"
-        accept="video/*"
-        className="hidden"
-        onChange={(e) => d.handleMediaFileChange(e, "video")}
-      />
-      <input
-        ref={d.fileInputRef}
-        type="file"
-        accept="*/*"
-        className="hidden"
-        onChange={(e) => d.handleMediaFileChange(e, "file")}
-      />
+      <input ref={d.photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => d.handleMediaFileChange(e, "photo")} />
+      <input ref={d.videoInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => d.handleMediaFileChange(e, "video")} />
+      <input ref={d.fileInputRef} type="file" accept="*/*" className="hidden" onChange={(e) => d.handleMediaFileChange(e, "file")} />
     </main>
   );
 }
