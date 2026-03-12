@@ -1,11 +1,13 @@
 // features/meet/CreatorConstellationCard.tsx
-// ✅ v3.3 — 4 bulles compactes en 2×2 sur mobile · contour violet · gradient FeaturedCard v2.4
-
+// ✅ v3.4 — Avatar fallback = ours Magic Clock · stat "98k" supprimée → followers réels
 "use client";
 
 import Image from "next/image";
-import { BadgeCheck, UserPlus, Check, Users } from "lucide-react";
+import { BadgeCheck, UserPlus, Check } from "lucide-react";
 import type { CreatorFull } from "@/app/meet/page";
+
+// ✅ Chemin de l'avatar de l'ours — affiché quand le créateur n'a pas de photo
+const BEAR_AVATAR = "/images/magic-clock-bear/avatar.png";
 
 type Props = {
   creator: CreatorFull;
@@ -27,7 +29,6 @@ const STATUS_CFG = {
   idle:   { label: "Actif",  color: "#94a3b8", bg: "rgba(148,163,184,.08)", border: "rgba(148,163,184,.2)" },
 };
 
-// Gradient 5 couleurs identique FeaturedCard v2.4
 const GRAD = {
   background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
   WebkitBackgroundClip: "text" as const,
@@ -38,12 +39,17 @@ export function CreatorConstellationCard({ creator, isMet, onOpen, onMeet }: Pro
   const sk = creator.status ?? "idle";
   const sc = STATUS_CFG[sk as keyof typeof STATUS_CFG] ?? STATUS_CFG.idle;
 
+  // ✅ Zéro mock — uniquement des données réelles Supabase
+  // "98k Abonnés" était hardcodé — remplacé par les vraies stats disponibles
   const stats = [
-    { val: formatN(creator.followers),        lbl: "Followers" },
-    { val: formatN(creator.magicClocks ?? 0), lbl: "M. Clocks" },
-    { val: `★ ${creator.stars?.toFixed(1)}`,  lbl: "Étoiles"   },
-    { val: "98k",                             lbl: "Abonnés"   },
+    { val: formatN(creator.followers),        lbl: "Followers"  },
+    { val: formatN(creator.magicClocks ?? 0), lbl: "M. Clocks"  },
+    { val: creator.stars != null ? `★ ${creator.stars.toFixed(1)}` : "★ —", lbl: "Étoiles" },
+    { val: formatN(creator.resonance ?? 0),   lbl: "Résonance"  },
   ];
+
+  // ✅ Avatar : vrai avatar Supabase → sinon ours Magic Clock (jamais icône générique)
+  const avatarSrc = creator.avatar || BEAR_AVATAR;
 
   return (
     <div className="w-full cursor-pointer" onClick={onOpen}>
@@ -51,28 +57,18 @@ export function CreatorConstellationCard({ creator, isMet, onOpen, onMeet }: Pro
         className="overflow-hidden"
         style={{
           borderRadius: 17,
-          // Contour triple violet identique FeaturedCard v2.4
           boxShadow: "0 0 0 2px white, 0 0 0 3px #7B4BF5, 0 4px 20px rgba(123,75,245,.25)",
         }}
       >
         {/* ── Photo portrait 2/3 ── */}
         <div className="relative w-full overflow-hidden bg-slate-50" style={{ aspectRatio: "2/3" }}>
-          {creator.avatar ? (
-            <Image
-              src={creator.avatar}
-              alt={creator.name}
-              fill
-              className="object-cover object-top"
-              sizes="(max-width:512px) 45vw, 220px"
-            />
-          ) : (
-            <div
-              className="flex h-full w-full items-center justify-center"
-              style={{ background: "linear-gradient(135deg,#f8fafc,#ede9fe)" }}
-            >
-              <Users className="h-6 w-6 text-violet-200" />
-            </div>
-          )}
+          <Image
+            src={avatarSrc}
+            alt={creator.name}
+            fill
+            className="object-cover object-top"
+            sizes="(max-width:512px) 45vw, 220px"
+          />
 
           {/* Status badge */}
           <div
@@ -92,7 +88,7 @@ export function CreatorConstellationCard({ creator, isMet, onOpen, onMeet }: Pro
           </div>
         </div>
 
-        {/* ── Bandeau bas — gradient FeaturedCard v2.4 ── */}
+        {/* ── Bandeau bas ── */}
         <div
           style={{
             background: "linear-gradient(160deg,rgba(75,123,245,.06),rgba(196,75,218,.04),rgba(245,131,75,.03))",
@@ -112,7 +108,7 @@ export function CreatorConstellationCard({ creator, isMet, onOpen, onMeet }: Pro
               {creator.handle}
             </p>
 
-            {/* ── 4 bulles en grille 2×2 — lisibles sur mobile ── */}
+            {/* ── 4 bulles en grille 2×2 ── */}
             <div className="grid grid-cols-2 gap-1">
               {stats.map(({ val, lbl }) => (
                 <div
