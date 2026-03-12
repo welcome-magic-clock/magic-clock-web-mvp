@@ -1,5 +1,5 @@
 // app/monet/monet-helpers.tsx
-// ✅ v4.4 — Graphique premium Bezier + axes + labels + gradient fill
+// ✅ v4.5 — Tiers renommés : Viral · Spotlight · Signature · Legendary
 
 export type CreatorLight = {
   name?: string;
@@ -49,28 +49,28 @@ export type PriceTier = {
 
 export const PRICE_TIERS: PriceTier[] = [
   {
-    id: "MICRO", label: "Micro", emoji: "🌱",
+    id: "MICRO", label: "Viral", emoji: "🌱",
     platformRate: 0.35, creatorRate: 0.65,
     minPrice: 0.99, maxPrice: 1.99,
     description: "0.99 → 1.99 CHF/€/$",
     adyenNote: "Commission 35% absorbe le frais fixe Adyen (0.12 CHF)",
   },
   {
-    id: "STANDARD", label: "Standard", emoji: "⭐",
+    id: "STANDARD", label: "Spotlight", emoji: "⭐",
     platformRate: 0.28, creatorRate: 0.72,
     minPrice: 2.0, maxPrice: 9.98,
     description: "2.00 → 9.99 CHF/€/$",
     adyenNote: "Sweet spot volume · meilleur ratio frais/commission",
   },
   {
-    id: "PREMIUM", label: "Premium", emoji: "💎",
+    id: "PREMIUM", label: "Signature", emoji: "💎",
     platformRate: 0.22, creatorRate: 0.78,
     minPrice: 9.99, maxPrice: 29.98,
     description: "9.99 → 29.99 CHF/€/$",
     adyenNote: "Très attractif · idéal tutoriels & masterclass",
   },
   {
-    id: "EXPERT", label: "Expert", emoji: "🏆",
+    id: "EXPERT", label: "Legendary", emoji: "🏆",
     platformRate: 0.2, creatorRate: 0.8,
     minPrice: 29.99, maxPrice: 999.99,
     description: "29.99 → 999.99 CHF/€/$",
