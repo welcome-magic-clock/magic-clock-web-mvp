@@ -13,6 +13,8 @@ export type Segment = {
   hasMedia: boolean;
   mediaType?: MediaType;
   mediaUrl?: string | null;
+  /** URL CDN du thumbnail JPEG (uniquement pour mediaType === "video") */
+  thumbnailUrl?: string | null;
   notes?: string;
 };
 
