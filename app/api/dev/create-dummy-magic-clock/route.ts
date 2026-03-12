@@ -1,32 +1,39 @@
 // app/api/dev/create-dummy-magic-clock/route.ts
+// ⚠️ Route de développement uniquement — désactivée en production
+// Pour tester la création d'un Magic Clock sans passer par le Studio/Display
+
 import { NextResponse } from "next/server";
-import {
-  insertMagicClock,
-  type MagicClockRecord,
-} from "@/core/domain/magicClocksRepository.supabase";
 
 export async function GET() {
-  try {
-    const slug = `demo-${Date.now()}`;
+  // ✅ Bloqué en production — cette route ne doit jamais être accessible hors dev
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { ok: false, error: "Route désactivée en production." },
+      { status: 403 }
+    );
+  }
 
-    const record: MagicClockRecord = await insertMagicClock({
+  // En développement uniquement
+  try {
+    const { insertMagicClock } = await import(
+      "@/core/domain/magicClocksRepository.supabase"
+    );
+    const slug = `dev-test-${Date.now()}`;
+    const record = await insertMagicClock({
       slug,
-      creatorHandle: "demo_creator",
-      creatorName: "Demo Creator",
-      title: "Demo Magic Clock",
-      subtitle: "Créé depuis la route dev",
+      creatorHandle: "dev_creator",
+      creatorName: "Dev Creator",
+      title: "Dev Test Magic Clock",
+      subtitle: "Créé depuis la route dev (NODE_ENV=development uniquement)",
       gatingMode: "FREE",
-      // pas de PPV pour le test
       work: {
-        // Ceci est juste un exemple – plus tard on mettra le vrai JSON Studio+Display
         studioVersion: 1,
-        note: "Payload de test créé depuis /api/dev/create-dummy-magic-clock",
+        note: "Payload de test — dev uniquement",
       },
     });
-
     return NextResponse.json({ ok: true, magicClock: record });
   } catch (err: any) {
-    console.error("[create-dummy-magic-clock] error:", err);
+    console.error("[create-dev-magic-clock] error:", err);
     return NextResponse.json(
       { ok: false, error: err?.message ?? "Unknown error" },
       { status: 500 }
