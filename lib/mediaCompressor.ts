@@ -226,15 +226,31 @@ type UploadResult = {
   key: string;         // Clé R2 (ex: studio/abc123.webp)
 };
 
+// ─── Seuil de bascule vers presigned URL ────────────────────────────────────
+// Au-dessus de 10 MB, on contourne Vercel (limite 50 MB bodyParser)
+// et on PUT directement vers R2 via une URL signée.
+// Les images compressées WebP sont toujours < 2 MB → route directe suffisante.
+// Les thumbnails JPEG 480p sont toujours < 200 KB → route directe suffisante.
+// Les vidéos originales peuvent dépasser 50 MB → presigned obligatoire.
+const PRESIGNED_THRESHOLD_BYTES = 10 * 1024 * 1024; // 10 MB
+
 /**
- * Upload d'un File vers R2 via la route /api/r2/upload.
- * Retourne l'URL publique CDN.
+ * Upload d'un File vers R2.
+ * - Fichier < 10 MB  → /api/r2/upload (multipart via Vercel, simple)
+ * - Fichier ≥ 10 MB  → /api/upload/init (presigned URL, PUT direct vers R2)
+ *   → Bypass Vercel, limite 200 MB, zéro surcharge serverless
  */
 export async function uploadToR2(
   file: File,
   target: UploadTarget,
   workId?: string,
 ): Promise<UploadResult> {
+  // ── Route presigned pour les gros fichiers (vidéos) ─────────────────────
+  if (file.size >= PRESIGNED_THRESHOLD_BYTES) {
+    return uploadToR2Presigned(file, workId);
+  }
+
+  // ── Route directe pour les petits fichiers (images, thumbnails) ──────────
   const formData = new FormData();
   formData.append("file", file);
   formData.append("target", target);
@@ -251,6 +267,89 @@ export async function uploadToR2(
   }
 
   return res.json() as Promise<UploadResult>;
+}
+
+/**
+ * Upload via presigned URL — PUT direct navigateur → R2, sans passer par Vercel.
+ * Utilisé automatiquement pour tout fichier ≥ 10 MB (typiquement les vidéos).
+ * Requiert que l'utilisateur soit authentifié (JWT Supabase en localStorage).
+ */
+async function uploadToR2Presigned(
+  file: File,
+  _workId?: string,
+): Promise<UploadResult> {
+  // 1) Récupérer le JWT Supabase depuis le storage local
+  //    Supabase stocke la session sous la clé "sb-*-auth-token"
+  let token: string | null = null;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) ?? "";
+      if (k.startsWith("sb-") && k.endsWith("-auth-token")) {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          token = parsed?.access_token ?? null;
+        }
+        break;
+      }
+    }
+  } catch {
+    // localStorage indisponible (SSR guard) → fallback route directe
+  }
+
+  if (!token) {
+    // Pas de JWT disponible → fallback sur la route directe (max 50 MB)
+    console.warn("[uploadToR2] No JWT found — falling back to direct route (50 MB limit)");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("target", "display");
+    const res = await fetch("/api/r2/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error(`R2 fallback upload failed: ${res.status}`);
+    return res.json() as Promise<UploadResult>;
+  }
+
+  // 2) Obtenir une URL signée depuis /api/upload/init
+  const initRes = await fetch("/api/upload/init", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      filename: file.name,
+      contentType: file.type || "application/octet-stream",
+      size: file.size,
+    }),
+  });
+
+  if (!initRes.ok) {
+    const err = await initRes.json().catch(() => ({})) as Record<string, unknown>;
+    throw new Error(`Presigned init failed (${initRes.status}): ${String(err?.error ?? "")}`);
+  }
+
+  const { uploadUrl, fileUrl, key } = await initRes.json() as {
+    uploadUrl: string;
+    fileUrl: string | null;
+    key: string;
+    maxSize: number;
+  };
+
+  // 3) PUT direct navigateur → R2 (aucun byte ne transite par Vercel)
+  const putRes = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+    body: file,
+  });
+
+  if (!putRes.ok) {
+    throw new Error(`Presigned PUT failed: ${putRes.status}`);
+  }
+
+  // 4) URL publique CDN — fileUrl si disponible, sinon CDN_BASE + key
+  const CDN_BASE = "https://cdn.magic-clock.com";
+  const url = fileUrl ?? `${CDN_BASE}/${key}`;
+
+  return { url, key };
 }
 
 // ─── Pipeline complet : compress + upload ───────────────────────────────────
