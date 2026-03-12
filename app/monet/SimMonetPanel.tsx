@@ -1,5 +1,5 @@
 // app/monet/SimMonetPanel.tsx
-// ✅ v4.7 — PPV : suppression Conversion · Acheteurs lié en temps réel à Audience · tiers renommés
+// ✅ v4.8 — 2 tiers séparés Abo/PPV · double code couleur dans commission progressive · résumé financier par flux
 "use client";
 
 import { useState } from "react";
@@ -23,6 +23,10 @@ const GRAD = {
   WebkitTextFillColor: "transparent",
 } as React.CSSProperties;
 
+// Couleurs des 2 canaux
+const ABO_COLOR  = "#4B7BF5"; // bleu-violet = Abo
+const PPV_COLOR  = "#C44BDA"; // rose-violet = PPV
+
 export function SimMonetPanel({ creator }: Props) {
   const [simFollowers, setSimFollowers] = useState(creator?.followers ?? 5000);
   const [simAboPrice, setSimAboPrice]   = useState(9.99);
@@ -31,57 +35,56 @@ export function SimMonetPanel({ creator }: Props) {
   const [simPpvPerBuyer, setSimPpvPerBuyer] = useState(100);
   const [simCountryCode, setSimCountryCode] = useState(CURRENT_COUNTRY.code);
 
-  const simCountry = COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ?? CURRENT_COUNTRY;
-  const vatRate    = simCountry.vatRate;
-  const priceTier  = getPriceTierFromPrice(simPpvPrice);
+  const simCountry  = COUNTRY_VAT_TABLE.find((c) => c.code === simCountryCode) ?? CURRENT_COUNTRY;
+  const vatRate     = simCountry.vatRate;
 
-  const aboSubs    = (simFollowers * simAboConv) / 100;
-  const grossAbos  = aboSubs * simAboPrice;
-  const grossPpv   = simPpvPerBuyer * simPpvPrice;
-  const grossTotal = grossAbos + grossPpv;
-  const { vatAmount, netBase, platformShareNet, creatorShareNet } =
-    computeVatAndShares(grossTotal, priceTier, vatRate);
+  // ── 2 tiers indépendants ──────────────────────────────────
+  const priceTierAbo = getPriceTierFromPrice(simAboPrice);
+  const priceTierPpv = getPriceTierFromPrice(simPpvPrice);
 
-  const creatorPct = Math.round(priceTier.creatorRate * 100);
+  // ── Calculs par flux ──────────────────────────────────────
+  const aboSubs   = (simFollowers * simAboConv) / 100;
+  const grossAbos = aboSubs * simAboPrice;
+  const grossPpv  = simPpvPerBuyer * simPpvPrice;
+
+  const { vatAmount: vatAbo, platformShareNet: platAbo, creatorShareNet: gainAbo } =
+    computeVatAndShares(grossAbos, priceTierAbo, vatRate);
+  const { vatAmount: vatPpv, platformShareNet: platPpv, creatorShareNet: gainPpv } =
+    computeVatAndShares(grossPpv, priceTierPpv, vatRate);
+
+  const grossTotal     = grossAbos + grossPpv;
+  const vatTotal       = vatAbo + vatPpv;
+  const platTotal      = platAbo + platPpv;
+  const creatorTotal   = gainAbo + gainPpv;
+
+  // KPI card "Tu gagnes" : taux dominant (pondéré par brut)
+  const creatorPct = grossTotal > 0
+    ? Math.round(((gainAbo + gainPpv) / (grossTotal / (1 + vatRate))) * 100)
+    : Math.round(priceTierAbo.creatorRate * 100);
 
   return (
     <div className="space-y-0 pb-8">
 
-      {/* ── KPI CARDS — valeurs dynamiques, chiffres entiers, "Tu gagnes" ── */}
+      {/* ── KPI CARDS ── */}
       <div className="grid grid-cols-3 gap-2 px-4 pt-3">
-
-        {/* Followers */}
         <div className="rounded-2xl p-3 text-center"
           style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5)", boxShadow: "0 4px 14px rgba(75,123,245,.25)" }}>
-          <div className="mb-1.5 flex justify-center">
-            <Users size={18} strokeWidth={2} color="white" />
-          </div>
-          <p className="text-[15px] font-black leading-none text-white">
-            {simFollowers.toLocaleString("fr-CH")}
-          </p>
+          <div className="mb-1.5 flex justify-center"><Users size={18} strokeWidth={2} color="white" /></div>
+          <p className="text-[15px] font-black leading-none text-white">{simFollowers.toLocaleString("fr-CH")}</p>
           <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Followers</p>
         </div>
-
-        {/* Revenus / mois */}
         <div className="rounded-2xl p-3 text-center"
           style={{ background: "linear-gradient(135deg,#7B4BF5,#C44BDA)", boxShadow: "0 4px 14px rgba(123,75,245,.3)" }}>
-          <div className="mb-1.5 flex justify-center">
-            <TrendingUp size={18} strokeWidth={2} color="white" />
-          </div>
+          <div className="mb-1.5 flex justify-center"><TrendingUp size={18} strokeWidth={2} color="white" /></div>
           <p className="text-[13px] font-black leading-none text-white">
             {Math.round(grossTotal).toLocaleString("fr-CH")} CHF
           </p>
           <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">/ mois</p>
         </div>
-
-        {/* Tu gagnes */}
         <div className="rounded-2xl p-3 text-center"
           style={{ background: "linear-gradient(135deg,#C44BDA,#F54B8F)", boxShadow: "0 4px 14px rgba(196,75,218,.25)" }}>
-          <div className="mb-1.5 flex justify-center">
-            <Zap size={18} strokeWidth={2} color="white" />
-          </div>
+          <div className="mb-1.5 flex justify-center"><Zap size={18} strokeWidth={2} color="white" /></div>
           <p className="text-[15px] font-black leading-none text-white">{creatorPct}%</p>
-          {/* ✅ "Tu gardes" → "Tu gagnes" */}
           <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/70">Tu gagnes</p>
         </div>
       </div>
@@ -110,44 +113,43 @@ export function SimMonetPanel({ creator }: Props) {
             </select>
           </div>
         </div>
-
-        {/* Followers slider */}
         <div className="mb-2">
           <div className="mb-1.5 flex items-center justify-between text-[12px]">
             <span className="font-medium text-slate-600">Followers (tous réseaux)</span>
-            <span className="text-[15px] font-black" style={GRAD}>
-              {simFollowers.toLocaleString("fr-CH")}
-            </span>
+            <span className="text-[15px] font-black" style={GRAD}>{simFollowers.toLocaleString("fr-CH")}</span>
           </div>
-          <input
-            type="range" min={0} max={1000000} step={1000} value={simFollowers}
+          <input type="range" min={0} max={1000000} step={1000} value={simFollowers}
             onChange={(e) => setSimFollowers(clamp(Number(e.target.value), 0, 1000000000))}
-            className="w-full"
-          />
+            className="w-full" />
           <div className="mt-1 flex justify-between text-[10px] text-slate-400">
             <span>0</span><span>500k</span><span>1M+</span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
             <span>Valeur précise :</span>
-            <input
-              type="number" min={0} value={simFollowers}
+            <input type="number" min={0} value={simFollowers}
               onFocus={(e) => e.target.select()}
               onChange={(e) => setSimFollowers(clamp(Number(e.target.value.replace(/^0+(?=\d)/, "")) || 0, 0, 1000000000))}
               className="w-28 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-right text-[12px] font-bold text-slate-700 outline-none focus:border-violet-400 focus:bg-white"
             />
           </div>
         </div>
-        {/* ✅ Ligne médaille / tier supprimée */}
       </div>
 
       {/* ── ABONNEMENTS ── */}
       <div className="mx-4 mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[10px]"
-            style={{ background: "linear-gradient(135deg,#7B4BF5,#C44BDA)" }}>
-            <RefreshCw size={15} strokeWidth={2} color="white" />
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-[10px]"
+              style={{ background: "linear-gradient(135deg,#7B4BF5,#C44BDA)" }}>
+              <RefreshCw size={15} strokeWidth={2} color="white" />
+            </div>
+            <p className="text-[13px] font-bold text-slate-800">Abonnements</p>
           </div>
-          <p className="text-[13px] font-bold text-slate-800">Abonnements</p>
+          {/* Badge tier Abo — bleu */}
+          <div className="rounded-full px-2.5 py-1 text-[10px] font-semibold"
+            style={{ background: "rgba(75,123,245,.1)", border: "1px solid rgba(75,123,245,.2)", color: ABO_COLOR }}>
+            {priceTierAbo.label} · {Math.round(priceTierAbo.creatorRate * 100)}%
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -198,13 +200,13 @@ export function SimMonetPanel({ creator }: Props) {
             </div>
             <p className="text-[13px] font-bold text-slate-800">Pay-Per-View</p>
           </div>
+          {/* Badge tier PPV — rose */}
           <div className="rounded-full px-2.5 py-1 text-[10px] font-semibold"
-            style={{ background: "linear-gradient(135deg,rgba(123,75,245,.08),rgba(196,75,218,.08))", border: "1px solid rgba(123,75,245,.18)", color: "#7B4BF5" }}>
-            {priceTier.label} · {Math.round(priceTier.creatorRate * 100)}%
+            style={{ background: "rgba(196,75,218,.1)", border: "1px solid rgba(196,75,218,.2)", color: PPV_COLOR }}>
+            {priceTierPpv.label} · {Math.round(priceTierPpv.creatorRate * 100)}%
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Prix moyen */}
           <div>
             <div className="mb-1 flex justify-between text-[12px]">
               <span className="text-slate-500">Prix moyen</span>
@@ -222,21 +224,16 @@ export function SimMonetPanel({ creator }: Props) {
               />
             </div>
           </div>
-          {/* Acheteurs — max = simFollowers (lié en temps réel à l'audience) */}
           <div>
             <div className="mb-1 flex justify-between text-[12px]">
               <span className="text-slate-500">Acheteurs</span>
               <span className="font-black" style={GRAD}>{simPpvPerBuyer.toLocaleString("fr-CH")}</span>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={simFollowers}
+            <input type="range" min={0} max={simFollowers}
               step={Math.max(1, Math.floor(simFollowers / 200))}
               value={Math.min(simPpvPerBuyer, simFollowers)}
               onChange={(e) => setSimPpvPerBuyer(clamp(Number(e.target.value), 0, simFollowers))}
-              className="w-full"
-            />
+              className="w-full" />
             <div className="mt-0.5 flex justify-between text-[10px] text-slate-400">
               <span>0</span>
               <span>{simFollowers.toLocaleString("fr-CH")} (audience)</span>
@@ -279,29 +276,39 @@ export function SimMonetPanel({ creator }: Props) {
           </div>
           <div className="flex justify-between border-b border-slate-50 pb-1.5">
             <span className="text-slate-400">TVA estimée ({Math.round(vatRate * 1000) / 10}%)</span>
-            <span className="font-semibold text-slate-600">– {formatMoney(vatAmount)}</span>
+            <span className="font-semibold text-slate-600">– {formatMoney(vatTotal)}</span>
+          </div>
+          {/* Commission détaillée par flux */}
+          <div className="flex justify-between border-b border-slate-50 pb-1.5">
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ background: ABO_COLOR }} />
+              Commission Abo · {priceTierAbo.label} ({Math.round(priceTierAbo.platformRate * 100)}%)
+            </span>
+            <span className="font-semibold text-slate-600">– {formatMoney(platAbo)}</span>
           </div>
           <div className="flex justify-between pb-1">
-            <span className="text-slate-400">Commission Magic Clock</span>
-            <span className="font-semibold text-slate-600">– {formatMoney(platformShareNet)}</span>
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ background: PPV_COLOR }} />
+              Commission PPV · {priceTierPpv.label} ({Math.round(priceTierPpv.platformRate * 100)}%)
+            </span>
+            <span className="font-semibold text-slate-600">– {formatMoney(platPpv)}</span>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between rounded-[14px] px-3.5 py-3"
           style={{ background: "linear-gradient(135deg,rgba(123,75,245,.06),rgba(196,75,218,.06))", border: "1px solid rgba(123,75,245,.12)" }}>
           <div>
-            {/* ✅ "Tu gardes" → "Tu gagnes" */}
             <p className="text-[13px] font-bold text-slate-800">Gain estimé</p>
             <p className="text-[10px] text-slate-400">Après TVA + commission · versement le 15 du mois</p>
           </div>
           <p className="text-[24px] font-black leading-tight" style={GRAD}>
-            {formatMoney(creatorShareNet)}
+            {formatMoney(creatorTotal)}
           </p>
         </div>
       </div>
 
-      {/* ── COMMISSION PROGRESSIVE ── */}
+      {/* ── COMMISSION PROGRESSIVE — double code couleur Abo/PPV ── */}
       <div className="mx-4 mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-2 flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100">
             <Percent size={12} strokeWidth={2.5} color="#475569" />
           </div>
@@ -310,25 +317,63 @@ export function SimMonetPanel({ creator }: Props) {
           </p>
         </div>
 
+        {/* Légende codes couleur */}
+        <div className="mb-3 flex items-center gap-3 text-[10px]">
+          <span className="flex items-center gap-1 font-semibold" style={{ color: ABO_COLOR }}>
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: ABO_COLOR }} />
+            Abonnement
+          </span>
+          <span className="flex items-center gap-1 font-semibold" style={{ color: PPV_COLOR }}>
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: PPV_COLOR }} />
+            Pay-Per-View
+          </span>
+        </div>
+
         <div className="space-y-1.5">
           {PRICE_TIERS.map((tier) => {
-            const isActive = tier.id === priceTier.id;
+            const isAboActive = tier.id === priceTierAbo.id;
+            const isPpvActive = tier.id === priceTierPpv.id;
+            const isActive    = isAboActive || isPpvActive;
+
+            // Style de fond : si les 2 canaux sont dans le même tier → dégradé mixte
+            // sinon : fond monochrome du canal actif
+            let rowBg   = "";
+            let rowBdr  = "";
+            let rowClr  = "#64748b";
+            if (isAboActive && isPpvActive) {
+              rowBg  = "linear-gradient(to right,rgba(75,123,245,.07),rgba(196,75,218,.07))";
+              rowBdr = "1px solid rgba(75,123,245,.2)";
+              rowClr = "#7B4BF5";
+            } else if (isAboActive) {
+              rowBg  = "rgba(75,123,245,.07)";
+              rowBdr = `1px solid rgba(75,123,245,.2)`;
+              rowClr = ABO_COLOR;
+            } else if (isPpvActive) {
+              rowBg  = "rgba(196,75,218,.07)";
+              rowBdr = `1px solid rgba(196,75,218,.2)`;
+              rowClr = PPV_COLOR;
+            }
+
             return (
               <div key={tier.id}
-                className={`flex items-center justify-between rounded-[10px] px-3 py-2.5 text-[11px] ${isActive ? "font-semibold" : "text-slate-400"}`}
-                style={isActive ? {
-                  background: "linear-gradient(to right,rgba(123,75,245,.06),rgba(196,75,218,.06))",
-                  border: "1px solid rgba(123,75,245,.18)",
-                  color: "#7B4BF5",
-                } : {}}
+                className={`flex items-center justify-between rounded-[10px] px-3 py-2.5 text-[11px] transition-all ${!isActive ? "text-slate-400" : "font-semibold"}`}
+                style={isActive ? { background: rowBg, border: rowBdr, color: rowClr } : {}}
               >
-                {/* ✅ Nouvel ordre : "Tu gagnes X%" → "Palier · description" */}
                 <span className={isActive ? "font-bold" : ""}>
                   Tu gagnes {Math.round(tier.creatorRate * 100)}%
                 </span>
                 <div className="flex items-center gap-1.5">
+                  {/* Badges canaux actifs */}
+                  {isAboActive && (
+                    <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white"
+                      style={{ background: ABO_COLOR }}>Abo</span>
+                  )}
+                  {isPpvActive && (
+                    <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white"
+                      style={{ background: PPV_COLOR }}>PPV</span>
+                  )}
                   <span className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-                    style={{ background: isActive ? "#7B4BF5" : "#cbd5e1" }} />
+                    style={{ background: isActive ? rowClr : "#cbd5e1" }} />
                   <span>{tier.label} · {tier.description}</span>
                 </div>
               </div>
@@ -343,7 +388,6 @@ export function SimMonetPanel({ creator }: Props) {
         <div className="mt-1 flex justify-between text-[10px] text-slate-400">
           <span>0,99</span><span>2,00</span><span>9,99</span><span>29,99+</span>
         </div>
-        {/* ✅ Phrase reformulée */}
         <p className="mt-1.5 text-[10px] text-slate-400">
           Le prix que tu fixes détermine ce que tu gagnes — plus ton contenu a de la valeur, plus ta part est grande.
         </p>
