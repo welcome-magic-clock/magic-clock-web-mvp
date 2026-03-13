@@ -1,18 +1,16 @@
-// app/page.tsx — Amazing v6
-// ✅ 0 mock — 100% Supabase — id UUID réel pour route free
-// ✅ Avatar réel depuis profiles · rating_avg connecté · views/likes réels · zéro mock
-// ✅ v6.1 — dynamic force pour feed toujours frais (pas de cache statique Next.js)
+// app/page.tsx — Amazing v7.0
+// ✅ 0 mock — 100% Supabase — id UUID réel
+// ✅ v7.0 — AmazingHeader retiré ici : géré directement dans AmazingFeed (state filtre/search)
+// ✅ dynamic force pour feed toujours frais
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
 import { supabaseAdmin } from "@/core/supabase/admin";
 import type { FeedCard } from "@/core/domain/types";
 import AmazingFeed from "@/features/amazing/AmazingFeed";
-import AmazingHeader from "@/features/amazing/AmazingHeader";
 
 async function getAmazingFeed(): Promise<FeedCard[]> {
   try {
-    // 1. Charger les Magic Clocks publiés
     const { data: clocks, error } = await supabaseAdmin
       .from("magic_clocks")
       .select(
@@ -22,13 +20,9 @@ async function getAmazingFeed(): Promise<FeedCard[]> {
       .order("created_at", { ascending: false })
       .limit(100);
 
-    if (error) {
-      console.error("[Amazing] Feed error:", error.message);
-      return [];
-    }
+    if (error) { console.error("[Amazing] Feed error:", error.message); return []; }
     if (!clocks || clocks.length === 0) return [];
 
-    // 2. Charger les avatars des créateurs en une seule requête
     const handles = [...new Set(clocks.map((r) => r.creator_handle).filter(Boolean))];
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
@@ -40,54 +34,34 @@ async function getAmazingFeed(): Promise<FeedCard[]> {
       profileMap.set(p.handle, { avatar_url: p.avatar_url, display_name: p.display_name });
     }
 
-    // 3. Construire les FeedCards
     const supabaseCards: FeedCard[] = clocks
       .map((row) => {
         const work = (row.work as any) ?? {};
         const studio = work.studio ?? {};
 
-        // Priorité : colonnes dédiées → work JSON
         const beforeUrl: string | null =
-          (typeof row.before_url === "string" && row.before_url)
-            ? row.before_url
-            : (typeof studio.beforeUrl === "string" && studio.beforeUrl)
-            ? studio.beforeUrl
-            : null;
+          (typeof row.before_url === "string" && row.before_url) ? row.before_url :
+          (typeof studio.beforeUrl === "string" && studio.beforeUrl) ? studio.beforeUrl : null;
 
         const afterUrl: string | null =
-          (typeof row.after_url === "string" && row.after_url)
-            ? row.after_url
-            : (typeof studio.afterUrl === "string" && studio.afterUrl)
-            ? studio.afterUrl
-            : null;
+          (typeof row.after_url === "string" && row.after_url) ? row.after_url :
+          (typeof studio.afterUrl === "string" && studio.afterUrl) ? studio.afterUrl : null;
 
         if (!beforeUrl && !afterUrl) return null;
 
-        const title =
-          (typeof row.title === "string" && row.title)
-            ? row.title
-            : studio.title ?? "Magic Clock";
-
+        const title = (typeof row.title === "string" && row.title) ? row.title : studio.title ?? "Magic Clock";
         const handle = row.creator_handle ?? "magic_clock";
         const profile = profileMap.get(handle);
         const creatorName = profile?.display_name ?? row.creator_name ?? handle;
         const creatorAvatar = profile?.avatar_url ?? null;
-
         const mode = row.gating_mode ?? "FREE";
         const access = mode === "PPV" ? "PPV" : mode === "SUB" ? "ABO" : "FREE";
-
-        const hashtags: string[] = Array.isArray(studio.hashtags)
-          ? studio.hashtags
-          : Array.isArray(work.hashtags)
-          ? work.hashtags
-          : [];
-
-        // rating_avg depuis Supabase (colonne dédiée)
-        const stars: number | undefined =
-          typeof row.rating_avg === "number" ? row.rating_avg : undefined;
+        const hashtags: string[] = Array.isArray(studio.hashtags) ? studio.hashtags :
+          Array.isArray(work.hashtags) ? work.hashtags : [];
+        const stars: number | undefined = typeof row.rating_avg === "number" ? row.rating_avg : undefined;
 
         return {
-          id: row.id,           // UUID réel — utilisé par /api/access/free
+          id: row.id,
           title,
           image: afterUrl ?? beforeUrl ?? "",
           beforeUrl,
@@ -119,7 +93,7 @@ export default async function AmazingPage() {
   return (
     <Suspense fallback={null}>
       <main className="mx-auto max-w-lg pb-36 pt-0">
-        <AmazingHeader count={feed.length} />
+        {/* ✅ AmazingFeed intègre AmazingHeader + state filtre/search */}
         <AmazingFeed feed={feed} />
       </main>
     </Suspense>
