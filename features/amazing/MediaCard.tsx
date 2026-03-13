@@ -296,7 +296,7 @@ export default function MediaCard({ item }: Props) {
 
     // Optimistic UI
     setLiked(!wasLiked);
-    setLikesCount((c) => (wasLiked ? Math.max(0, c - 1) : c + 1));
+    setLikesCount((c: number) => (wasLiked ? Math.max(0, c - 1) : c + 1));
 
     try {
       const res = await fetch(`/api/magic-clocks/${magicClockId}/like`, {
@@ -305,18 +305,18 @@ export default function MediaCard({ item }: Props) {
       if (!res.ok) {
         // Rollback (non connecté, erreur réseau…)
         setLiked(wasLiked);
-        setLikesCount((c) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
+        setLikesCount((c: number) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
       } else {
         const data = await res.json();
         setLiked(data.liked === true);
         // Recalibrer si serveur retourne un état inattendu
         if (data.liked === wasLiked) {
-          setLikesCount((c) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
+          setLikesCount((c: number) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
         }
       }
     } catch {
       setLiked(wasLiked);
-      setLikesCount((c) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
+      setLikesCount((c: number) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
     } finally {
       setLikeLoading(false);
     }
