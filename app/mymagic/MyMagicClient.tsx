@@ -1,5 +1,5 @@
 // app/mymagic/MyMagicClient.tsx
-// ✅ v3.1 — Avatar centré des cartes (MagicClockCard + AcquiredCard) → anneau gradient MCAvatar
+// ✅ v3.2 — Avatar centré des cartes : cercle blanc fin (pas d'anneau gradient sur les cartes contenu)
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
@@ -8,7 +8,6 @@ import ProfileSection from "@/components/mymagic/ProfileSection";
 import Cockpit from "@/features/monet/Cockpit";
 import AccountSettingsModal from "@/components/mymagic/AccountSettingsModal";
 import { STUDIO_FORWARD_KEY, type StudioForwardPayload } from "@/core/domain/magicStudioBridge";
-import { MCAvatar } from "@/components/ui/MCAvatar";
 import {
   ArrowUpRight, BookOpen, Sparkles, LayoutGrid, User, BarChart2, Plus, Bell, Settings,
   ChevronRight, Camera, MessageCircle, Star, Lock, Unlock, Share2, Copy, Check, X,
@@ -209,14 +208,12 @@ function MagicClockCard({
         {/* Ligne centrale */}
         <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
 
-        {/* ✅ Avatar centré — anneau gradient canonique Magic Clock */}
+        {/* Avatar centré — cercle blanc fin, pas d'anneau gradient sur les cartes contenu */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <MCAvatar
-            src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"}
-            name={title}
-            px={44}
-            animated={false}
-          />
+          <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
+            style={{ width: 44, height: 44, border: "2px solid white" }}>
+            <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title} className="h-full w-full object-cover rounded-full" />
+          </div>
         </div>
 
         {isDraft && (
@@ -761,14 +758,12 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
         </div>
         <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
 
-        {/* ✅ Avatar centré — anneau gradient canonique Magic Clock */}
+        {/* Avatar centré — cercle blanc fin, pas d'anneau gradient sur les cartes contenu */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <MCAvatar
-            src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"}
-            name={title}
-            px={44}
-            animated={false}
-          />
+          <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
+            style={{ width: 44, height: 44, border: "2px solid white" }}>
+            <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title} className="h-full w-full object-cover rounded-full" />
+          </div>
         </div>
       </div>
       <div className="px-3 py-2.5">
