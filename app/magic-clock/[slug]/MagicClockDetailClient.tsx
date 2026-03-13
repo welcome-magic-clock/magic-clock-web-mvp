@@ -1,15 +1,14 @@
 "use client";
 // app/magic-clock/[slug]/MagicClockDetailClient.tsx
-// ✅ v1.0 — Page présentation Magic Clock · image studio · CTA acquisition
+// ✅ v2.0 — vues auto-incrémentées · cœur cliquable · ⭐ étoiles dans bloc créateur
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Eye, Heart, Star,
-  Gift, Sparkles, CreditCard,
-  BadgeCheck, Loader2, Users,
+  ArrowLeft, Eye, Heart, Star, Gift, Sparkles,
+  CreditCard, BadgeCheck, Loader2, Users,
 } from "lucide-react";
 
 const GRAD: React.CSSProperties = {
@@ -18,7 +17,6 @@ const GRAD: React.CSSProperties = {
   WebkitTextFillColor: "transparent",
 };
 const GRAD_BG = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
-
 const STAR_GRAD: React.CSSProperties = {
   background: GRAD_BG,
   WebkitBackgroundClip: "text",
@@ -48,8 +46,34 @@ interface ClockData {
 
 function formatN(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
+}
+
+// Composant étoiles (1-5) avec gradient Magic Clock
+function StarRating({ avg, count }: { avg: number; count: number }) {
+  return (
+    <span className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <span
+          key={s}
+          style={{
+            fontSize: 11,
+            background: s <= Math.round(avg) ? GRAD_BG : "none",
+            WebkitBackgroundClip: s <= Math.round(avg) ? "text" : "none",
+            WebkitTextFillColor: s <= Math.round(avg) ? "transparent" : "#cbd5e1",
+            color: s <= Math.round(avg) ? "transparent" : "#cbd5e1",
+          }}
+        >
+          ★
+        </span>
+      ))}
+      <span className="ml-0.5 text-[10px] font-bold" style={STAR_GRAD}>
+        {avg.toFixed(1)}
+      </span>
+      <span className="text-[9px] text-slate-300 ml-0.5">({count})</span>
+    </span>
+  );
 }
 
 export default function MagicClockDetailClient({ clock }: { clock: ClockData }) {
@@ -57,13 +81,57 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
   const [loading, setLoading] = useState(false);
   const [showBefore, setShowBefore] = useState(false);
 
+  // ── État likes & vues (optimistic UI) ──────────────────────────────────────
+  const [likesCount, setLikesCount] = useState(clock.likesCount);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [viewsCount, setViewsCount] = useState(clock.viewsCount);
+
+  // ── Incrément vues au montage ───────────────────────────────────────────────
+  useEffect(() => {
+    fetch(`/api/magic-clocks/${clock.id}/view`, { method: "POST" })
+      .then(() => setViewsCount((v) => v + 1))
+      .catch(() => {/* silencieux */});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clock.id]);
+
+  // ── Toggle like ────────────────────────────────────────────────────────────
+  async function handleLike() {
+    if (likeLoading) return;
+    setLikeLoading(true);
+
+    // Optimistic update
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikesCount((c) => wasLiked ? Math.max(0, c - 1) : c + 1);
+
+    try {
+      const res = await fetch(`/api/magic-clocks/${clock.id}/like`, { method: "POST" });
+      if (!res.ok) {
+        // Rollback si erreur (ex: non connecté)
+        setLiked(wasLiked);
+        setLikesCount((c) => wasLiked ? c + 1 : Math.max(0, c - 1));
+      } else {
+        const data = await res.json();
+        setLiked(data.liked);
+      }
+    } catch {
+      setLiked(wasLiked);
+      setLikesCount((c) => wasLiked ? c + 1 : Math.max(0, c - 1));
+    } finally {
+      setLikeLoading(false);
+    }
+  }
+
   const ppvAmountValue = clock.ppvPrice != null ? Math.round(clock.ppvPrice * 100) : 299;
   const aboAmountValue = 1490;
 
   const btnCfg =
-    clock.gatingMode === "FREE" ? { label: "Débloquer gratuitement", Icon: Gift,       color: GRAD_BG } :
-    clock.gatingMode === "SUB"  ? { label: "S'abonner pour accéder", Icon: Sparkles,   color: GRAD_BG } :
-                                  { label: `Acheter · CHF ${clock.ppvPrice?.toFixed(2) ?? "2.99"}`, Icon: CreditCard, color: GRAD_BG };
+    clock.gatingMode === "FREE"
+      ? { label: "Débloquer gratuitement", Icon: Gift, color: GRAD_BG }
+      : clock.gatingMode === "SUB"
+      ? { label: "S'abonner pour accéder", Icon: Sparkles, color: GRAD_BG }
+      : { label: `Acheter · CHF ${clock.ppvPrice?.toFixed(2) ?? "2.99"}`, Icon: CreditCard, color: GRAD_BG };
 
   async function handleCTA() {
     setLoading(true);
@@ -79,7 +147,6 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
           router.push("/access/result?status=error");
         }
       } else {
-        // Stripe
         const res = await fetch("/api/payments/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -119,11 +186,16 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
     <main className="mx-auto max-w-lg pb-32 pt-0 min-h-screen bg-[#f8fafc]">
 
       {/* ── Header ── */}
-      <div className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
-        style={{ background: "rgba(248,250,252,0.95)", backdropFilter: "blur(12px)" }}>
-        <button type="button" onClick={() => router.back()}
+      <div
+        className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
+        style={{ background: "rgba(248,250,252,0.95)", backdropFilter: "blur(12px)" }}
+      >
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white transition-colors"
-          style={{ border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,.06)" }}>
+          style={{ border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,.06)" }}
+        >
           <ArrowLeft className="h-4 w-4 text-slate-600" />
         </button>
         <h1 className="flex-1 truncate text-[13px] font-bold text-slate-800">{clock.title}</h1>
@@ -133,8 +205,11 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
       <div className="relative w-full overflow-hidden bg-slate-200" style={{ aspectRatio: "4/5" }}>
         {displayImg ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={displayImg} alt={clock.title}
-            className="h-full w-full object-cover transition-opacity duration-300" />
+          <img
+            src={displayImg}
+            alt={clock.title}
+            className="h-full w-full object-cover transition-opacity duration-300"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-slate-300">
             <Star className="h-16 w-16" />
@@ -142,21 +217,37 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
         )}
 
         {/* Gradient bas */}
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0"
-          style={{ height: "35%", background: "linear-gradient(to top,rgba(10,15,30,.6),transparent)" }} />
+        <div
+          className="pointer-events-none absolute bottom-0 left-0 right-0"
+          style={{ height: "35%", background: "linear-gradient(to top,rgba(10,15,30,.6),transparent)" }}
+        />
 
         {/* Toggle Avant / Après */}
         {clock.beforeUrl && clock.afterUrl && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex rounded-full overflow-hidden"
-            style={{ boxShadow: "0 2px 12px rgba(0,0,0,.3)" }}>
-            <button type="button" onClick={() => setShowBefore(true)}
+          <div
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex rounded-full overflow-hidden"
+            style={{ boxShadow: "0 2px 12px rgba(0,0,0,.3)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowBefore(true)}
               className="px-4 py-1.5 text-[11px] font-bold transition-colors"
-              style={{ background: showBefore ? "white" : "rgba(255,255,255,.25)", color: showBefore ? "#1e293b" : "white" }}>
+              style={{
+                background: showBefore ? "white" : "rgba(255,255,255,.25)",
+                color: showBefore ? "#1e293b" : "white",
+              }}
+            >
               Avant
             </button>
-            <button type="button" onClick={() => setShowBefore(false)}
+            <button
+              type="button"
+              onClick={() => setShowBefore(false)}
               className="px-4 py-1.5 text-[11px] font-bold transition-colors"
-              style={{ background: !showBefore ? "white" : "rgba(255,255,255,.25)", color: !showBefore ? "#1e293b" : "white" }}>
+              style={{
+                background: !showBefore ? "white" : "rgba(255,255,255,.25)",
+                color: !showBefore ? "#1e293b" : "white",
+              }}
+            >
               Après
             </button>
           </div>
@@ -164,8 +255,10 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
 
         {/* Badge mode */}
         <div className="absolute top-4 right-4">
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
-            style={{ background: clock.gatingMode === "FREE" ? "#10b981" : GRAD_BG }}>
+          <span
+            className="rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
+            style={{ background: clock.gatingMode === "FREE" ? "#10b981" : GRAD_BG }}
+          >
             {clock.gatingMode === "FREE" ? "FREE" : clock.gatingMode === "SUB" ? "Abonnement" : "PPV"}
           </span>
         </div>
@@ -179,14 +272,14 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
           <h2 className="text-[17px] font-bold text-slate-900">{clock.title}</h2>
           {clock.hashtags.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {clock.hashtags.map(tag => (
+              {clock.hashtags.map((tag) => (
                 <span key={tag} className="text-[11px] font-medium text-slate-400">{tag}</span>
               ))}
             </div>
           )}
         </div>
 
-        {/* Stats */}
+        {/* Stats — vues live + cœur cliquable */}
         <div className="flex items-center gap-3 text-[11px] text-slate-400">
           {clock.ratingAvg != null && (
             <span className="flex items-center gap-0.5">
@@ -196,23 +289,49 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
             </span>
           )}
           <span className="flex items-center gap-1">
-            <Eye className="h-3 w-3" />{formatN(clock.viewsCount)}
+            <Eye className="h-3 w-3" />{formatN(viewsCount)}
           </span>
-          <span className="flex items-center gap-1">
-            <Heart className="h-3 w-3" />{formatN(clock.likesCount)}
-          </span>
+          {/* Cœur cliquable */}
+          <button
+            type="button"
+            onClick={handleLike}
+            disabled={likeLoading}
+            className="flex items-center gap-1 transition-transform active:scale-110 disabled:opacity-60"
+            aria-label={liked ? "Je n'aime plus" : "J'aime"}
+          >
+            <Heart
+              className="h-3.5 w-3.5 transition-all"
+              style={liked ? {
+                fill: "#F54B8F",
+                color: "#F54B8F",
+                filter: "drop-shadow(0 0 3px #F54B8F88)",
+              } : {}}
+            />
+            <span style={liked ? { color: "#F54B8F" } : {}}>
+              {formatN(likesCount)}
+            </span>
+          </button>
         </div>
 
-        {/* Carte créateur */}
-        <Link href={`/meet?creator=${encodeURIComponent("@" + clock.creatorHandle)}`}
+        {/* Carte créateur — avec étoiles ajoutées */}
+        <Link
+          href={`/meet?creator=${encodeURIComponent("@" + clock.creatorHandle)}`}
           className="flex items-center gap-3 rounded-2xl bg-white p-3 transition-colors hover:bg-slate-50"
-          style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 1px 6px rgba(0,0,0,.04)" }}>
+          style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 1px 6px rgba(0,0,0,.04)" }}
+        >
           <div className="relative flex-shrink-0">
-            <div className="overflow-hidden rounded-full bg-slate-100"
-              style={{ width: 44, height: 44, border: "2px solid white", boxShadow: "0 0 0 2px #7B4BF5" }}>
+            <div
+              className="overflow-hidden rounded-full bg-slate-100"
+              style={{ width: 44, height: 44, border: "2px solid white", boxShadow: "0 0 0 2px #7B4BF5" }}
+            >
               {clock.creatorAvatar ? (
-                <Image src={clock.creatorAvatar} alt={clock.creatorName} width={44} height={44}
-                  className="h-full w-full object-cover" />
+                <Image
+                  src={clock.creatorAvatar}
+                  alt={clock.creatorName}
+                  width={44}
+                  height={44}
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center text-[16px] font-bold text-violet-400">
                   {clock.creatorName.charAt(0).toUpperCase()}
@@ -220,6 +339,7 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
               )}
             </div>
           </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <span className="text-[13px] font-bold text-slate-800 truncate">{clock.creatorName}</span>
@@ -229,7 +349,14 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
             {clock.creatorBio && (
               <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">{clock.creatorBio}</p>
             )}
+            {/* ⭐ Étoiles dans le bloc créateur */}
+            {clock.ratingAvg != null && clock.ratingCount > 0 && (
+              <div className="mt-1">
+                <StarRating avg={clock.ratingAvg} count={clock.ratingCount} />
+              </div>
+            )}
           </div>
+
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-[11px] font-bold" style={GRAD}>{formatN(clock.creatorFollowers)}</span>
             <span className="flex items-center gap-0.5 text-[9px] text-slate-400">
@@ -240,13 +367,21 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
       </div>
 
       {/* ── CTA fixe en bas ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-6 pt-3"
-        style={{ background: "linear-gradient(to top,rgba(248,250,252,1) 70%,rgba(248,250,252,0))" }}>
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-6 pt-3"
+        style={{ background: "linear-gradient(to top,rgba(248,250,252,1) 70%,rgba(248,250,252,0))" }}
+      >
         <div className="mx-auto max-w-lg">
-          <button type="button" onClick={handleCTA} disabled={loading}
+          <button
+            type="button"
+            onClick={handleCTA}
+            disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[14px] font-bold text-white transition-all active:scale-[.98] disabled:opacity-70"
-            style={{ background: GRAD_BG, boxShadow: "0 4px 20px rgba(123,75,245,.35)" }}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+            style={{ background: GRAD_BG, boxShadow: "0 4px 20px rgba(123,75,245,.35)" }}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <>
                 <btnCfg.Icon className="h-4 w-4" />
                 {btnCfg.label}
@@ -255,7 +390,6 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
           </button>
         </div>
       </div>
-
     </main>
   );
 }
