@@ -73,7 +73,8 @@ export default function MeetLivePage() {
         .from("magic_clocks")
         .select("creator_handle, rating_avg")
         .in("creator_handle", handles)
-        .eq("is_published", true);
+        .eq("is_published", true)
+        .is("deleted_at", null);
 
       const statsMap = new Map<string, { count: number; totalRating: number; ratingCount: number }>();
       for (const row of (statsRows ?? [])) {
