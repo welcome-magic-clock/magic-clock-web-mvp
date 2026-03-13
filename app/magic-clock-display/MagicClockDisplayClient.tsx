@@ -235,23 +235,47 @@ export default function MagicClockDisplayClient() {
         }
       }
 
-      // ── 3) Supabase — métadonnées uniquement ───────────────────
-      //    Les URLs médias dans work.display pointent vers R2 CDN directement
-      //    → 0 bande passante Supabase pour les binaires
+      // ── 3) Vérification accès via porte unique /api/access/check ──
+      //    Règles : auth requis, accès acquis obligatoire, deleted_at géré
       if (!cancelled) setState({ status: "loading", id: safeKey });
 
       try {
+        // ── 3a) Vérifier l'accès via la porte sécurisée ─────────
+        const params = new URLSearchParams();
+        if (idFromUrl)   params.set("id",   idFromUrl);
+        if (slugFromUrl) params.set("slug", slugFromUrl);
+
+        const checkRes = await fetch(`/api/access/check?${params}`);
+        const checkData = await checkRes.json().catch(() => ({}));
+
+        if (!checkData.granted) {
+          if (!cancelled) {
+            const reason = checkData.reason;
+            let message = "Accès non autorisé.";
+            if (reason === "not_authenticated") {
+              message = "Tu dois être connecté pour accéder à ce Magic Clock.";
+            } else if (reason === "no_access") {
+              message = "Tu n'as pas encore débloqué ce Magic Clock.";
+            } else if (reason === "creator_deleted") {
+              message = "Tu as supprimé ce Magic Clock.";
+            } else if (reason === "not_found") {
+              message = "Magic Clock introuvable.";
+            }
+            setState({ status: "error", id: safeKey, message, debugSlug: slugFromUrl });
+          }
+          return;
+        }
+
+        // ── 3b) Accès accordé — charger le contenu depuis Supabase ──
+        const clockId = checkData.id ?? idFromUrl;
+        const clockSlug = checkData.slug ?? slugFromUrl;
+
         let query = supabase
           .from("magic_clocks")
-          .select("id, slug, work")
-          .eq("is_published", true);
+          .select("id, slug, work");
 
-        // Requête par slug OU par id selon ce qui est disponible
-        if (slugFromUrl && !idFromUrl) {
-          query = query.eq("slug", slugFromUrl);
-        } else if (idFromUrl) {
-          query = query.eq("id", idFromUrl);
-        }
+        if (clockId)   query = query.eq("id", clockId);
+        else if (clockSlug) query = query.eq("slug", clockSlug);
 
         const { data, error } = await query.maybeSingle();
 
