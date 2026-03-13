@@ -2,7 +2,9 @@
 // ✅ v1.0 — Toggle like Magic Clock (like / unlike avec anti-doublon Supabase)
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/core/supabase/admin";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
 export async function POST(
   _req: NextRequest,
@@ -11,7 +13,19 @@ export async function POST(
   const { id } = params;
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
 
-  const supabase = createClient();
+  // Auth — pattern exact du projet (same as /api/access/free)
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (list: { name: string; value: string; options?: any }[]) =>
+          list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+      },
+    }
+  );
 
   // Vérifier que l'utilisateur est connecté
   const { data: { user } } = await supabase.auth.getUser();
@@ -20,7 +34,7 @@ export async function POST(
   }
 
   // Toggle via RPC atomique (retourne true=liked, false=unliked)
-  const { data: liked, error } = await supabase.rpc("toggle_like", {
+  const { data: liked, error } = await supabaseAdmin.rpc("toggle_like", {
     p_clock_id: id,
     p_user_id: user.id,
   });
