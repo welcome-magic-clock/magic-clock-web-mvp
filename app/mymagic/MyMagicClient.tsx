@@ -786,21 +786,9 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
           </div>
         </div>
 
-        {/* ── Footer identique Amazing ── */}
-        <div className="px-3 pt-2.5 pb-3 space-y-1.5">
-          {/* Ligne 1 : mini avatar · nom · handle · vues · ❤️ · étoiles */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
-              style={{ width: 24, height: 24, border: "1.5px solid rgba(226,232,240,.8)" }}>
-              <Image src={avatar} alt={creatorName} width={24} height={24} className="h-full w-full object-cover" />
-            </div>
-            <div className="flex items-center gap-1 min-w-0 flex-shrink">
-              <span className="text-[11px] font-bold text-slate-800 truncate max-w-[80px]">{creatorName}</span>
-              {cleanHandle && <span className="text-[9px] text-slate-400 truncate">@{cleanHandle}</span>}
-            </div>
         {/* ── Footer style CreatorProfileSheet ── */}
         <div className="px-2.5 pt-2 pb-2.5 space-y-1">
-          {/* Ligne 1 : mini avatar · nom · · vues · ❤️  (pas d'étoiles) */}
+          {/* Ligne 1 : mini avatar · nom · vues · ❤️ (pas d'étoiles) */}
           <div className="flex items-center gap-1 min-w-0">
             <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
               style={{ width: 20, height: 20, border: "1.5px solid rgba(226,232,240,.8)" }}>
@@ -826,7 +814,7 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
               <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
             ))}
           </div>
-          {/* Ligne 3 : ✅ "Ouvrir Magic Clock" avec icône Box (cube 3D) + cadenas */}
+          {/* Ligne 3 : "Ouvrir Magic Clock" → Link display + cadenas */}
           <div className="flex gap-1.5 pt-0.5">
             <Link href={displayUrl} prefetch={false}
               className="flex flex-1 items-center justify-center gap-1 rounded-2xl py-2 text-[10px] font-bold text-white transition-all active:scale-95"
