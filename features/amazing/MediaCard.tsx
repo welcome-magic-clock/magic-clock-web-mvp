@@ -1,6 +1,6 @@
 "use client";
 // features/amazing/MediaCard.tsx
-// ✅ v9 — Avatar centré anneau gradient canonique Magic Clock (MCAvatar)
+// ✅ v10 — Avatar centré : cercle blanc fin (pas d'anneau gradient sur les cartes contenu)
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,6 @@ import {
   Sparkles, CreditCard, Gift,
 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
-import { MCAvatar } from "@/components/ui/MCAvatar";
 
 type PublishMode = "FREE" | "SUB" | "PPV";
 type AccessKind  = "FREE" | "ABO" | "PPV";
@@ -276,20 +275,19 @@ export default function MediaCard({ item }: Props) {
           style={{ height: "30%", background: "linear-gradient(to top,rgba(10,15,30,.45),transparent)" }}
         />
 
-        {/* ✅ Avatar centré → Meet me — anneau gradient canonique Magic Clock */}
+        {/* Avatar centré → Meet me — cercle blanc fin, pas d'anneau sur les cartes contenu */}
         <Link
           href={meetHref}
           onClick={(e) => e.stopPropagation()}
           className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
           aria-label={`Meet me — ${creatorName}`}
         >
-          <MCAvatar
-            src={avatar}
-            name={creatorName}
-            px={52}
-            animated={false}
-            className="transition-transform active:scale-95"
-          />
+          <div
+            className="overflow-hidden rounded-full bg-white transition-transform active:scale-95"
+            style={{ width: 52, height: 52, border: "2.5px solid white", boxShadow: "0 2px 14px rgba(0,0,0,.22)" }}
+          >
+            <Image src={avatar} alt={creatorName} width={52} height={52} className="h-full w-full object-cover" />
+          </div>
         </Link>
       </ConditionalLink>
 
