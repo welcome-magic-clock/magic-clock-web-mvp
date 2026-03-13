@@ -41,7 +41,8 @@ export async function POST(
 
   if (error) {
     console.error("[like] rpc error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API] error:", error.message);
+    return NextResponse.json({ error: "Une erreur est survenue" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, liked });
