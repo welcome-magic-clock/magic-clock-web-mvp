@@ -1,16 +1,13 @@
 "use client";
-// features/amazing/AmazingHeader.tsx — V5
-// ✅ Pills : Tous · FREE · Abonnement · PPV · Expert · En direct
-// ✅ "En direct" = lien vers /meet/live
-
+// features/amazing/AmazingHeader.tsx — V6
+// ✅ "Expert" → "Legendary" avec icône Crown (Lucide)
+// ✅ Pills actives : gradient Magic Clock au lieu du violet uni
+// ✅ Pills inactives : style sobre inchangé
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  Search, Star, Radio, Scissors,
-  Heart, Unlock, Palette,
-} from "lucide-react";
+import { Search, Star, Radio, Heart, Unlock, Palette, Crown } from "lucide-react";
 
-type FilterId = "all" | "free" | "abo" | "ppv" | "expert" | "live";
+type FilterId = "all" | "free" | "abo" | "ppv" | "legendary" | "live";
 
 interface Filter {
   id: FilterId;
@@ -20,20 +17,17 @@ interface Filter {
 }
 
 const FILTERS: Filter[] = [
-  { id: "all",    label: "Tous",       Icon: Star     },
-  { id: "free",   label: "FREE",       Icon: Unlock   },
-  { id: "abo",    label: "Abonnement", Icon: Heart    },
-  { id: "ppv",    label: "PPV",        Icon: Palette  },
-  { id: "expert", label: "Expert",     Icon: Scissors },
-  { id: "live",   label: "En direct",  Icon: Radio,   href: "/meet/live" },
+  { id: "all",        label: "Tous",        Icon: Star    },
+  { id: "free",       label: "FREE",        Icon: Unlock  },
+  { id: "abo",        label: "Abonnement",  Icon: Heart   },
+  { id: "ppv",        label: "PPV",         Icon: Palette },
+  { id: "legendary",  label: "Legendary",   Icon: Crown   },
+  { id: "live",       label: "En direct",   Icon: Radio, href: "/meet/live" },
 ];
 
-const ACTIVE_STYLE: React.CSSProperties = {
-  background: "rgba(123,75,245,.08)",
-  color: "#7B4BF5",
-  border: "1px solid rgba(123,75,245,.22)",
-  fontWeight: 700,
-};
+// Gradient Magic Clock identique aux étoiles et boutons CTA
+const GRAD_BG = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
+
 const IDLE_STYLE: React.CSSProperties = {
   background: "#f8fafc",
   color: "#64748b",
@@ -41,18 +35,26 @@ const IDLE_STYLE: React.CSSProperties = {
   fontWeight: 600,
 };
 
+// Style actif : gradient en background, texte blanc
+const ACTIVE_STYLE: React.CSSProperties = {
+  background: GRAD_BG,
+  color: "white",
+  border: "1px solid transparent",
+  fontWeight: 700,
+};
+
 type Props = { count: number };
 
 export default function AmazingHeader({ count }: Props) {
-  const [search, setSearch]             = useState("");
+  const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
-  const [visible, setVisible]           = useState(true);
-  const lastScrollY                     = useRef(0);
-  const hideTimer                       = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onScroll = () => {
-      const y    = window.scrollY ?? 0;
+      const y = window.scrollY ?? 0;
       const diff = y - lastScrollY.current;
       if (diff > 6 && y > 60) setVisible(false);
       if (diff < -6) setVisible(true);
@@ -109,7 +111,10 @@ export default function AmazingHeader({ count }: Props) {
           style={{ scrollbarWidth: "none" } as React.CSSProperties}
         >
           {FILTERS.map(({ id, label, Icon, href }) => {
-            const pillClass = "inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all";
+            const isActive = activeFilter === id;
+            const pillClass =
+              "inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all";
+
             if (href) {
               return (
                 <Link key={id} href={href} className={pillClass} style={IDLE_STYLE}>
@@ -118,13 +123,14 @@ export default function AmazingHeader({ count }: Props) {
                 </Link>
               );
             }
+
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => setActiveFilter(id)}
                 className={pillClass}
-                style={activeFilter === id ? ACTIVE_STYLE : IDLE_STYLE}
+                style={isActive ? ACTIVE_STYLE : IDLE_STYLE}
               >
                 <Icon className="h-2.5 w-2.5" />
                 {label}
