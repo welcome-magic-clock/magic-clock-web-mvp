@@ -118,7 +118,8 @@ export default function MeetPage() {
         .from("magic_clocks")
         .select("creator_handle, gating_mode")
         .in("creator_handle", handles)
-        .eq("is_published", true);
+        .eq("is_published", true)
+        .is("deleted_at", null);
 
       const clockRows = (rawClocks ?? []) as ClockRow[];
 
