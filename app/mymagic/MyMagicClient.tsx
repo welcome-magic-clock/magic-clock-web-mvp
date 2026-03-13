@@ -1,10 +1,8 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.13 — Tab Identité supprimé → IdentityDrawer (bottom sheet)
-// ✅ Tab bar réduite à 3 : CRÉATIONS · BIBLIOTHÈQUE · STATS
-// ✅ Avatar + bouton 📷 → ouvre IdentityDrawer
-// ✅ Badges non-lus réels : messages (Supabase Realtime) + notifications (polling 30s)
-// ✅ Architecture hybride : Realtime msgs uniquement, notifs en DB sans Realtime
+// ✅ v4.14 — Suppression Magic Clock : modale confirmation élégante + API delete
+// ✅ ShareModal : Magic Clock en 1ère position dans la liste des réseaux
+// ✅ Bouton ⋯ (options) sur chaque carte créateur → menu contextuel
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
@@ -18,7 +16,8 @@ import { STUDIO_FORWARD_KEY, type StudioForwardPayload } from "@/core/domain/mag
 import {
   BookOpen, Sparkles, BarChart2, Plus, Bell, Settings, Camera,
   MessageCircle, Star, Lock, Unlock, Share2, Copy, Check, X,
-  TrendingUp, Eye, Users, DollarSign, Heart, Box,
+  TrendingUp, Eye, Users, DollarSign, Heart, Box, Trash2, MoreHorizontal,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
@@ -114,19 +113,19 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
   const copyAndToast = async (label: string) => { try { await navigator.clipboard.writeText(url); } catch {} setToastNet(label); setTimeout(() => setToastNet(null), 2500); };
   const nativeShare = () => { if (typeof navigator !== "undefined" && "share" in navigator) navigator.share({ title: `Magic Clock — ${name}`, url }).catch(() => {}); };
   const nets: { label: string; logo: string; href: string | null; toast?: string }[] = [
-    { label: "WhatsApp",    logo: "/magic-clock-social-whatsapp.png?v=2", href: `https://wa.me/?text=${encodeURIComponent(`✨ Découvre mon Magic Clock : ${url}`)}` },
-    { label: "Facebook",    logo: "/magic-clock-social-facebook.png",     href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
-    { label: "X",           logo: "/magic-clock-social-x.png",            href: `https://x.com/intent/tweet?text=${encodeURIComponent(`✨ Mon Magic Clock :`)}&url=${encodeURIComponent(url)}` },
-    { label: "LinkedIn",    logo: "/magic-clock-social-linkedin.png",     href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
-    { label: "Instagram",   logo: "/magic-clock-social-instagram.png",    href: null, toast: "Lien copié ! Colle-le dans ta story ou ta bio Instagram." },
+    { label: "Magic Clock", logo: "/magic-clock-social-monet.png",        href: null, toast: "Lien copié ! Partage-le sur Magic Clock." },
     { label: "TikTok",      logo: "/magic-clock-social-tiktok.png",       href: null, toast: "Lien copié ! Colle-le dans ta bio TikTok." },
+    { label: "Instagram",   logo: "/magic-clock-social-instagram.png",    href: null, toast: "Lien copié ! Colle-le dans ta story ou ta bio Instagram." },
+    { label: "WhatsApp",    logo: "/magic-clock-social-whatsapp.png?v=2", href: `https://wa.me/?text=${encodeURIComponent(`✨ Découvre mon Magic Clock : ${url}`)}` },
+    { label: "X",           logo: "/magic-clock-social-x.png",            href: `https://x.com/intent/tweet?text=${encodeURIComponent(`✨ Mon Magic Clock :`)}&url=${encodeURIComponent(url)}` },
     { label: "Snapchat",    logo: "/magic-clock-social-snapchat.png",     href: `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(url)}` },
+    { label: "Facebook",    logo: "/magic-clock-social-facebook.png",     href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
+    { label: "BeReal",      logo: "/magic-clock-social-bereal.png",       href: null, toast: "Lien copié ! Partage-le sur BeReal." },
+    { label: "Twitch",      logo: "/magic-clock-social-twitch.png",       href: null, toast: "Lien copié ! Colle-le dans ta bio Twitch." },
+    { label: "YouTube",     logo: "/magic-clock-social-youtube.png",      href: null, toast: "Lien copié ! Ajoute-le à ta description YouTube." },
+    { label: "LinkedIn",    logo: "/magic-clock-social-linkedin.png",     href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
     { label: "Pinterest",   logo: "/magic-clock-social-pinterest.png",    href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(`✨ Mon Magic Clock`)}` },
     { label: "Threads",     logo: "/magic-clock-social-threads.png",      href: `https://www.threads.net/intent/post?text=${encodeURIComponent(`✨ Mon Magic Clock : ${url}`)}` },
-    { label: "YouTube",     logo: "/magic-clock-social-youtube.png",      href: null, toast: "Lien copié ! Ajoute-le à ta description YouTube." },
-    { label: "Twitch",      logo: "/magic-clock-social-twitch.png",       href: null, toast: "Lien copié ! Colle-le dans ta bio Twitch." },
-    { label: "BeReal",      logo: "/magic-clock-social-bereal.png",       href: null, toast: "Lien copié ! Partage-le sur BeReal." },
-    { label: "Magic Clock", logo: "/magic-clock-social-monet.png",        href: null, toast: "Lien copié ! Partage-le sur Magic Clock." },
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -170,9 +169,81 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
   );
 }
 
+// ── DeleteConfirmModal ─────────────────────────────────────────────────────
+function DeleteConfirmModal({ clock, onClose, onDeleted }: {
+  clock: SupabaseMagicClockRow;
+  onClose: () => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const title = (clock.work as any)?.studio?.title || clock.title || "ce Magic Clock";
+
+  async function handleDelete() {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch(`/api/magic-clocks/${clock.id}`, { method: "DELETE" });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d?.error ?? "Erreur serveur"); }
+      onDeleted(clock.id);
+      onClose();
+    } catch (e: any) { setError(e.message ?? "Une erreur est survenue."); setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-t-3xl bg-white pt-5 pb-10 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-slate-200" />
+
+        {/* Icône + titre */}
+        <div className="flex flex-col items-center gap-3 px-6 mb-6">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg,#fee2e2,#fecaca)" }}>
+            <Trash2 className="h-6 w-6 text-rose-500" strokeWidth={1.8} />
+          </div>
+          <h3 className="text-[17px] font-bold text-slate-900 text-center">Supprimer « {title} » ?</h3>
+          <p className="text-[13px] text-slate-500 text-center leading-relaxed max-w-xs">
+            Ce Magic Clock sera définitivement retiré de ta galerie.
+          </p>
+        </div>
+
+        {/* Message élégant accès conservé */}
+        <div className="mx-6 mb-6 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3.5 flex items-start gap-3">
+          <div className="mt-0.5 flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full" style={{ background: GRAD_MC }}>
+            <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
+          </div>
+          <div>
+            <p className="text-[12px] font-bold text-violet-800 mb-0.5">Les accès déjà acquis sont préservés</p>
+            <p className="text-[11px] text-violet-600 leading-relaxed">
+              Tes abonnés et clients PPV conserveront leur accès à ce Magic Clock. Cette suppression n'affecte pas leurs droits acquis.
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mx-6 mb-4 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2.5 text-xs text-rose-700">
+            <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />{error}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-3 px-6">
+          <button type="button" onClick={onClose} disabled={loading}
+            className="flex flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50">
+            Annuler
+          </button>
+          <button type="button" onClick={handleDelete} disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-[13px] font-bold text-white transition-all active:scale-95 disabled:opacity-60"
+            style={{ background: "linear-gradient(135deg,#f43f5e,#e11d48)" }}>
+            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Trash2 className="h-3.5 w-3.5" /> Supprimer</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MagicClockCard ─────────────────────────────────────────────────────────
-function MagicClockCard({ clock, creatorName, creatorHandle, avatarUrl, views, likes, isHighlighted, cardRef, isDraft = false }:
-  { clock: SupabaseMagicClockRow; creatorName: string; creatorHandle: string; avatarUrl: string | null; views?: number; likes?: number; isHighlighted?: boolean; cardRef?: (el: HTMLDivElement | null) => void; isDraft?: boolean }) {
+function MagicClockCard({ clock, creatorName, creatorHandle, avatarUrl, views, likes, isHighlighted, cardRef, isDraft = false, onDelete }:
+  { clock: SupabaseMagicClockRow; creatorName: string; creatorHandle: string; avatarUrl: string | null; views?: number; likes?: number; isHighlighted?: boolean; cardRef?: (el: HTMLDivElement | null) => void; isDraft?: boolean; onDelete?: (clock: SupabaseMagicClockRow) => void }) {
   const studio    = (clock.work as any)?.studio ?? {};
   const beforeUrl = typeof studio.beforeUrl === "string" ? studio.beforeUrl : FALLBACK_BEFORE;
   const afterUrl  = typeof studio.afterUrl  === "string" ? studio.afterUrl  : FALLBACK_AFTER;
@@ -184,6 +255,7 @@ function MagicClockCard({ clock, creatorName, creatorHandle, avatarUrl, views, l
   const [likesCount, setLikesCount] = useState(likes ?? 0);
   const [liked, setLiked]           = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [showMenu, setShowMenu]     = useState(false);
   async function handleLike(e: React.MouseEvent) {
     e.preventDefault(); e.stopPropagation(); if (likeLoading) return; setLikeLoading(true);
     const was = liked; setLiked(!was); setLikesCount(c => was ? Math.max(0, c - 1) : c + 1);
@@ -210,6 +282,26 @@ function MagicClockCard({ clock, creatorName, creatorHandle, avatarUrl, views, l
             </div>
           </Link>
           {isDraft && <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-lg bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold text-white"><Sparkles className="h-2.5 w-2.5" /> En cours</div>}
+          {/* ⋯ menu — visible uniquement si non-draft + callback delete fourni */}
+          {!isDraft && onDelete && (
+            <div className="absolute top-2 right-2 z-10">
+              <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); setShowMenu(v => !v); }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-all active:scale-90 hover:bg-black/60">
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-0" onClick={e => { e.stopPropagation(); setShowMenu(false); }} />
+                  <div className="absolute right-0 top-8 z-10 min-w-[148px] rounded-2xl bg-white shadow-xl border border-slate-100 overflow-hidden">
+                    <button type="button" onClick={e => { e.stopPropagation(); setShowMenu(false); onDelete(clock); }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-3 text-[12px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
+                      <Trash2 className="h-3.5 w-3.5 flex-shrink-0" /> Supprimer
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="px-2.5 pt-2 pb-2.5 space-y-1">
           <div className="flex items-center gap-1 min-w-0">
@@ -263,10 +355,13 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifs,   setUnreadNotifs]   = useState(0);
 
-  const avgRating  = initialPublished.length > 0 ? initialPublished.reduce((s, c) => s + (c.rating_avg ?? 0), 0) / (initialPublished.filter(c => c.rating_avg).length || 1) : 0;
-  const totalVotes = initialPublished.reduce((s, c) => s + (c.rating_count ?? 0), 0);
-  const [showShare,    setShowShare]    = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showShare,       setShowShare]       = useState(false);
+  const [showSettings,    setShowSettings]    = useState(false);
+  const [clockToDelete,   setClockToDelete]   = useState<SupabaseMagicClockRow | null>(null);
+  const [publishedClocks, setPublishedClocks] = useState<SupabaseMagicClockRow[]>(initialPublished);
+
+  const avgRating  = publishedClocks.length > 0 ? publishedClocks.reduce((s, c) => s + (c.rating_avg ?? 0), 0) / (publishedClocks.filter(c => c.rating_avg).length || 1) : 0;
+  const totalVotes = publishedClocks.reduce((s, c) => s + (c.rating_count ?? 0), 0);
 
   // ── Chargement profil ────────────────────────────────────────────────────
   useEffect(() => {
@@ -359,6 +454,13 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
     <>
       {showShare    && <ShareModal url={shareUrl} name={displayName} onClose={() => setShowShare(false)} />}
       {showSettings && <AccountSettingsModal onClose={() => setShowSettings(false)} userEmail={userEmail} />}
+      {clockToDelete && (
+        <DeleteConfirmModal
+          clock={clockToDelete}
+          onClose={() => setClockToDelete(null)}
+          onDeleted={(id) => setPublishedClocks(prev => prev.filter(c => c.id !== id))}
+        />
+      )}
 
       {/* ── Drawer Identité ── */}
       <IdentityDrawer
@@ -412,7 +514,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
           <p className="text-[13px] text-slate-500 mb-2"><span className="mc-text-gradient font-semibold">{displayHandle}</span>{" · Lausanne, Suisse"}</p>
           {profileBio && <p className="text-[13.5px] text-slate-500 leading-relaxed mb-3">{profileBio}</p>}
           <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm mb-4">
-            <div className="flex-1 py-3 text-center border-r border-slate-100"><p className="mc-text-gradient text-[20px] font-bold leading-none mb-1">{initialPublished.length}</p><p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Magic Clock</p></div>
+            <div className="flex-1 py-3 text-center border-r border-slate-100"><p className="mc-text-gradient text-[20px] font-bold leading-none mb-1">{publishedClocks.length}</p><p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Magic Clock</p></div>
             <div className="flex-1 py-3 text-center border-r border-slate-100"><p className="mc-text-gradient text-[20px] font-bold leading-none mb-1">{totalSocialFollowers > 0 ? formatNum(totalSocialFollowers) : "0"}</p><p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Followers</p></div>
             <div className="flex-1 py-3 text-center border-r border-slate-100"><p className="mc-text-gradient text-[20px] font-bold leading-none mb-1">0</p><p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Vues</p></div>
             <div className="flex-1 py-3 text-center flex flex-col items-center justify-center gap-0.5"><AmazingStars value={avgRating > 0 ? avgRating : null} />{totalVotes === 0 && <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-1">Note</p>}</div>
@@ -426,7 +528,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
         {/* ══ TABS — 3 onglets ══ */}
         <div className="flex border-b border-slate-200 px-4 mb-0" style={{ overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", alignItems: "stretch" } as React.CSSProperties}>
           {([
-            { id: "creations"    as const, label: "Créations",    icon: null,     count: initialPublished.length },
+            { id: "creations"    as const, label: "Créations",    icon: null,     count: publishedClocks.length },
             { id: "bibliotheque" as const, label: "Bibliothèque", icon: BookOpen, count: initialAcquired.length },
             { id: "stats"        as const, label: "Stats",         icon: BarChart2 },
           ] as const).map((tab) => {
@@ -454,11 +556,11 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
             {initialPublished.length > 0 && (
               <div><h3 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 after:flex-1 after:h-px after:bg-slate-100 after:content-['']">Publiés sur Amazing</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {initialPublished.map((clock) => <MagicClockCard key={clock.id} clock={clock} creatorName={displayName} creatorHandle={displayHandle} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && (clock.slug === openParam || clock.id === openParam)} cardRef={(el) => { creatorCardRefs.current[clock.id] = el; if (clock.slug) creatorCardRefs.current[clock.slug] = el; }} />)}
+                  {publishedClocks.map((clock) => <MagicClockCard key={clock.id} clock={clock} creatorName={displayName} creatorHandle={displayHandle} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && (clock.slug === openParam || clock.id === openParam)} cardRef={(el) => { creatorCardRefs.current[clock.id] = el; if (clock.slug) creatorCardRefs.current[clock.slug] = el; }} onDelete={setClockToDelete} />)}
                 </div>
               </div>
             )}
-            {initialPublished.length === 0 && !draftClock && (
+            {publishedClocks.length === 0 && !draftClock && (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
                 <p className="text-sm text-slate-400">Aucun Magic Clock publié.</p>
                 <Link href="/studio" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold mc-text-gradient hover:opacity-80">Créer mon premier Magic Clock →</Link>
