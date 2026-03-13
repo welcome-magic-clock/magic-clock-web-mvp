@@ -1,51 +1,19 @@
 "use client";
-// features/amazing/AmazingHeader.tsx — V6
-// ✅ "Expert" → "Legendary" avec icône Crown (Lucide)
-// ✅ Pills actives : gradient Magic Clock au lieu du violet uni
-// ✅ Pills inactives : style sobre inchangé
+// features/amazing/AmazingHeader.tsx
+// ✅ v7.0 — Bulles canoniques MC_FILTERS · gradient plein sur actif · callbacks filtrage réel
+
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, Star, Radio, Heart, Unlock, Palette, Crown } from "lucide-react";
+import { Search } from "lucide-react";
+import { MC_FILTERS, MC_PILL_ACTIVE, MC_PILL_IDLE, type FilterId } from "@/core/ui/filters";
 
-type FilterId = "all" | "free" | "abo" | "ppv" | "legendary" | "live";
-
-interface Filter {
-  id: FilterId;
-  label: string;
-  Icon: React.FC<{ className?: string }>;
-  href?: string;
-}
-
-const FILTERS: Filter[] = [
-  { id: "all",        label: "Tous",        Icon: Star    },
-  { id: "free",       label: "FREE",        Icon: Unlock  },
-  { id: "abo",        label: "Abonnement",  Icon: Heart   },
-  { id: "ppv",        label: "PPV",         Icon: Palette },
-  { id: "legendary",  label: "Legendary",   Icon: Crown   },
-  { id: "live",       label: "En direct",   Icon: Radio, href: "/meet/live" },
-];
-
-// Gradient Magic Clock identique aux étoiles et boutons CTA
-const GRAD_BG = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
-
-const IDLE_STYLE: React.CSSProperties = {
-  background: "#f8fafc",
-  color: "#64748b",
-  border: "1px solid #e2e8f0",
-  fontWeight: 600,
+type Props = {
+  count: number;
+  onFilterChange: (f: FilterId) => void;
+  onSearchChange: (q: string) => void;
 };
 
-// Style actif : gradient en background, texte blanc
-const ACTIVE_STYLE: React.CSSProperties = {
-  background: GRAD_BG,
-  color: "white",
-  border: "1px solid transparent",
-  fontWeight: 700,
-};
-
-type Props = { count: number };
-
-export default function AmazingHeader({ count }: Props) {
+export default function AmazingHeader({ count, onFilterChange, onSearchChange }: Props) {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [visible, setVisible] = useState(true);
@@ -71,76 +39,64 @@ export default function AmazingHeader({ count }: Props) {
     };
   }, []);
 
+  const handleSearch = (v: string) => { setSearch(v); onSearchChange(v); };
+  const handleFilter = (id: FilterId) => { setActiveFilter(id); onFilterChange(id); };
+
   return (
     <>
-      {/* Barre sticky */}
       <div
-        className={`sticky top-0 z-40 transition-transform duration-300 ${
-          visible ? "translate-y-0" : "-translate-y-full"
-        }`}
+        className={`sticky top-0 z-40 transition-transform duration-300 ${visible ? "translate-y-0" : "-translate-y-full"}`}
         style={{
           background: "rgba(248,249,252,.92)",
           backdropFilter: "blur(12px)",
           borderBottom: "1px solid rgba(226,232,240,.6)",
-          paddingTop: "10px",
-          paddingBottom: "8px",
-          marginLeft: "-16px",
-          marginRight: "-16px",
-          paddingLeft: "16px",
-          paddingRight: "16px",
+          paddingTop: "10px", paddingBottom: "8px",
+          marginLeft: "-16px", marginRight: "-16px",
+          paddingLeft: "16px", paddingRight: "16px",
         }}
       >
-        {/* Search */}
-        <div
-          className="mb-2 flex items-center gap-2 rounded-2xl px-3 py-2"
-          style={{ background: "white", border: "1.5px solid #e2e8f0" }}
-        >
+        {/* ── Search ── */}
+        <div className="mb-2 flex items-center gap-2 rounded-2xl px-3 py-2"
+          style={{ background: "white", border: "1.5px solid #e2e8f0" }}>
           <Search className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
           <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            type="text" value={search}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Rechercher une transformation, créateur…"
             className="min-w-0 flex-1 bg-transparent text-[12px] text-slate-800 outline-none placeholder:text-slate-400"
           />
+          {search && (
+            <button type="button" onClick={() => handleSearch("")} className="text-slate-400 hover:text-slate-600">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
 
-        {/* Pills */}
-        <div
-          className="flex gap-1.5 overflow-x-auto"
-          style={{ scrollbarWidth: "none" } as React.CSSProperties}
-        >
-          {FILTERS.map(({ id, label, Icon, href }) => {
+        {/* ── Pills canoniques ── */}
+        <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
+          {MC_FILTERS.map(({ id, label, Icon }) => {
             const isActive = activeFilter === id;
-            const pillClass =
-              "inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all";
-
-            if (href) {
+            const cls = "inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] transition-all active:scale-95";
+            if (id === "live") {
               return (
-                <Link key={id} href={href} className={pillClass} style={IDLE_STYLE}>
-                  <Icon className="h-2.5 w-2.5" />
-                  {label}
+                <Link key={id} href="/meet/live" className={cls} style={MC_PILL_IDLE}>
+                  <Icon className="h-2.5 w-2.5" />{label}
                 </Link>
               );
             }
-
             return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setActiveFilter(id)}
-                className={pillClass}
-                style={isActive ? ACTIVE_STYLE : IDLE_STYLE}
-              >
-                <Icon className="h-2.5 w-2.5" />
-                {label}
+              <button key={id} type="button" onClick={() => handleFilter(id)} className={cls}
+                style={isActive ? MC_PILL_ACTIVE : MC_PILL_IDLE}>
+                <Icon className="h-2.5 w-2.5" />{label}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Section header */}
+      {/* ── Section header ── */}
       <div className="mb-3 mt-3 flex items-baseline justify-between">
         <p className="text-[12px] font-bold text-slate-800">Transformations récentes</p>
         <p className="text-[10px] text-slate-400">{count} contenus</p>
