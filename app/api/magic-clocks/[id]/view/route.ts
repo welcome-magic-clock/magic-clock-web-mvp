@@ -2,7 +2,7 @@
 // ✅ v1.0 — Incrément vues Magic Clock (appelé automatiquement à l'ouverture)
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/core/supabase/admin";
 
 export async function POST(
   _req: NextRequest,
@@ -11,10 +11,8 @@ export async function POST(
   const { id } = params;
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
 
-  const supabase = createClient();
-
   // Incrément atomique via RPC
-  const { error } = await supabase.rpc("increment_views", { clock_id: id });
+  const { error } = await supabaseAdmin.rpc("increment_views", { clock_id: id });
 
   if (error) {
     console.error("[view] rpc error:", error.message);
