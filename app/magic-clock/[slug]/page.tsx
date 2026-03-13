@@ -1,5 +1,5 @@
 // app/magic-clock/[slug]/page.tsx
-// ✅ v2.0 — Ajout creator_rating_avg depuis profiles (étoiles créateur dans le bloc avatar)
+// ✅ v2.1 — Accès sécurisé : deleted_at géré (abonnés/PPV conservent l'accès)
 import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/core/supabase/admin";
 import MagicClockDetailClient from "./MagicClockDetailClient";
@@ -11,6 +11,8 @@ interface Props {
 export default async function MagicClockDetailPage({ params }: Props) {
   const { slug } = await params;
 
+  // ✅ On récupère SANS filtrer sur deleted_at ni is_published
+  //    La logique d'accès est gérée côté client via /api/access/check
   const { data: clock } = await supabaseAdmin
     .from("magic_clocks")
     .select(
@@ -21,6 +23,7 @@ export default async function MagicClockDetailPage({ params }: Props) {
       gating_mode,
       ppv_price,
       is_published,
+      deleted_at,
       creator_handle,
       creator_name,
       user_id,
@@ -36,9 +39,9 @@ export default async function MagicClockDetailPage({ params }: Props) {
     `
     )
     .eq("slug", slug)
-    .eq("is_published", true)
     .maybeSingle();
 
+  // Hard-deleted (pas de soft-delete) ou introuvable → 404
   if (!clock) notFound();
 
   // Profil créateur — on récupère aussi creator_rating_avg (moyenne de TOUS ses MCs)
