@@ -1,6 +1,6 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.3 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
+// ✅ v4.8 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
 // ✅ Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles)
 // ✅ Cover blanc · Tabs scrollable · Progression supprimée · Bloc "Nouveau Magic Clock" supprimé
 // ✅ Stats → Lucide uniquement · Fix TypeScript tag: string
@@ -447,13 +447,17 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
 
         {/* ══ AVATAR + ICÔNES — rangée flex horizontale ══ */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          {/* Avatar 88px · anneau gradient · bouton caméra */}
-          <div className="mc-avatar-ring relative flex-shrink-0" style={{ width: 88, height: 88 }}>
-            <div className="absolute inset-[3px] z-[2] rounded-full overflow-hidden bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
-              {profileAvatarUrl
-                ? <img src={profileAvatarUrl} alt={displayName} className="h-full w-full object-cover object-top" />
-                : <span className="mc-text-gradient text-2xl font-bold">{initial}</span>
-              }
+          {/* Avatar 88px · anneau gradient CSS natif · bouton caméra */}
+          <div className="mc-avatar-ring flex-shrink-0" style={{ width: 88, height: 88 }}>
+            {/* mc-avatar-ring > * force position:relative z-index:2 — on utilise padding natif de l'anneau */}
+            <div className="rounded-full overflow-hidden bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center"
+              style={{ width: "100%", height: "100%", padding: 3 }}>
+              <div className="w-full h-full rounded-full overflow-hidden">
+                {profileAvatarUrl
+                  ? <img src={profileAvatarUrl} alt={displayName} className="h-full w-full object-cover object-top" />
+                  : <span className="mc-text-gradient text-2xl font-bold flex items-center justify-center h-full">{initial}</span>
+                }
+              </div>
             </div>
             <button type="button" onClick={() => setTabInUrl("identite")}
               className="absolute bottom-0.5 right-0.5 z-[10] flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-white shadow-md text-slate-500 hover:scale-110 transition-transform">
@@ -522,7 +526,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
         {/* ✅ BLOC "Apprenti Horloger" SUPPRIMÉ */}
 
         {/* ══ TABS — scrollable horizontal (Stats visible sur iPhone) ══ */}
-        <div className="flex overflow-x-auto border-b border-slate-200 px-4 mb-0" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
+        <div className="flex border-b border-slate-200 px-4 mb-0" style={{ overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", alignItems: "stretch" } as React.CSSProperties}>
           {([
             { id: "creations"   as const, label: "Créations",   icon: null,      count: initialPublished.length },
             { id: "bibliotheque"as const, label: "Bibliothèque",icon: BookOpen,  count: initialAcquired.length },
