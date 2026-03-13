@@ -2,6 +2,7 @@
 // ✅ Séparation nette créateur / client :
 //    - initialPublished  → magic_clocks créés par ce user (Créations)
 //    - initialAcquired   → magic_clock_accesses de ce user (Bibliothèque)
+// ✅ v2.1 — Filtre deleted_at IS NULL (soft-delete)
 
 import { Suspense } from "react";
 import { MyMagicClient, type SupabaseMagicClockRow } from "./MyMagicClient";
@@ -41,6 +42,7 @@ async function getPublishedByUser(
     )
     .eq("is_published", true)
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (!errById && byId && byId.length > 0) {
@@ -58,6 +60,7 @@ async function getPublishedByUser(
     )
     .eq("is_published", true)
     .eq("creator_handle", clean)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (errByHandle) {
