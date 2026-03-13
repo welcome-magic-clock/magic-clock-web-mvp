@@ -1,18 +1,17 @@
 // app/monet/page.tsx
-// ✅ v4.6 — Suppression "Cockpit monétisation" visiteur · "Tu gagnes" · hero 1 rangée unique
+// ✅ v4.7 — Avatar anneau canonique Magic Clock (MCAvatar) · cohérence gradient logo
 "use client";
-
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BarChart2, SlidersHorizontal, Users, TrendingUp, Zap } from "lucide-react";
+import { BarChart2, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
 import { RealMonetPanel } from "./RealMonetPanel";
 import { SimMonetPanel } from "./SimMonetPanel";
+import { MCAvatar } from "@/components/ui/MCAvatar";
 
 const PRIMARY_GRADIENT = "linear-gradient(135deg,#7B4BF5,#C44BDA,#F54B8F)";
-
 const GRAD_TEXT = {
   background: "linear-gradient(135deg,#4B7BF5 0%,#7B4BF5 40%,#F54B8F 100%)",
   WebkitBackgroundClip: "text",
@@ -75,10 +74,11 @@ function MonetContent({
     ? displayName || user?.email || "Mon profil"
     : "Magic Clock";
   const headerHandle = isLoggedIn
-    ? handle ? `@${handle.replace(/^@/, "")}` : `@${user?.email?.split("@")[0] ?? "moi"}`
+    ? handle
+      ? `@${handle.replace(/^@/, "")}`
+      : `@${user?.email?.split("@")[0] ?? "moi"}`
     : "@magic_clock_app";
   const headerAvatar = isLoggedIn ? avatarUrl : null;
-  const headerInitial = (headerName[0] ?? "M").toUpperCase();
 
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
@@ -98,33 +98,23 @@ function MonetContent({
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <div className="relative flex-shrink-0">
               {isLoggedIn ? (
-                <div className="relative h-[46px] w-[46px]">
-                  <div
-                    className="absolute inset-[-2px] animate-spin rounded-full"
-                    style={{
-                      background: "conic-gradient(from 180deg,#4B7BF5 0%,#7B4BF5 25%,#C44BDA 50%,#F54B8F 75%,#F5834B 88%,#4B7BF5 100%)",
-                      animationDuration: "8s",
-                    }}
-                  />
-                  <div className="absolute inset-0 rounded-full bg-white" />
-                  <div
-                    className="absolute inset-[2px] overflow-hidden rounded-full"
-                    style={{ background: "linear-gradient(135deg,#ede9fe,#dbeafe)" }}
-                  >
-                    {headerAvatar ? (
-                      <Image src={headerAvatar} alt={headerName} fill className="object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[15px] font-black text-violet-600">
-                        {headerInitial}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                /* ✅ Anneau gradient canonique Magic Clock */
+                <MCAvatar
+                  src={headerAvatar}
+                  name={headerName}
+                  size="md"
+                  animated
+                />
               ) : (
+                /* Visiteur : l'ours, anneau gradient statique */
                 <div className="relative h-[46px] w-[46px]">
                   <div
                     className="absolute inset-[-2px] rounded-full"
-                    style={{ background: PRIMARY_GRADIENT, opacity: 0.35 }}
+                    style={{
+                      background:
+                        "conic-gradient(from 180deg, #4B7BF5 0%, #38BDF8 15%, #7B4BF5 40%, #C44BDA 58%, #F54B8F 75%, #F5834B 88%, #4B7BF5 100%)",
+                      opacity: 0.4,
+                    }}
                   />
                   <div className="absolute inset-0 rounded-full bg-white" />
                   <div className="absolute inset-[2px] overflow-hidden rounded-full bg-slate-100">
@@ -140,7 +130,6 @@ function MonetContent({
             </div>
 
             <div className="min-w-0">
-              {/* ✅ "Cockpit monétisation" affiché uniquement en mode connecté */}
               {isLoggedIn && (
                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                   Cockpit monétisation
@@ -180,7 +169,6 @@ function MonetContent({
                 Réalité
               </Link>
             )}
-
             <button
               type="button"
               onClick={() => setActiveMode("sim")}
@@ -214,13 +202,15 @@ function MonetContent({
                 <><strong className="text-slate-700">Mode Simulateur</strong> — Projette ton potentiel : ajuste followers, prix Abo &amp; PPV, taux de conversion.</>
               )
             ) : (
-              <><strong className="text-slate-700">Simulateur gratuit</strong> — Projette ton potentiel. <Link href="/auth?next=/monet" className="font-bold text-violet-600 underline">Se connecter</Link> pour accéder à tes données réelles.</>
+              <><strong className="text-slate-700">Simulateur gratuit</strong> — Projette ton potentiel.{" "}
+                <Link href="/auth?next=/monet" className="font-bold text-violet-600 underline">Se connecter</Link>{" "}
+                pour accéder à tes données réelles.</>
             )}
           </p>
         </div>
       </header>
 
-      {/* ══ HERO VISITEUR — titre + sous-titre uniquement, sans cards fixes ══ */}
+      {/* ══ HERO VISITEUR ══ */}
       {!isLoggedIn && activeMode === "sim" && (
         <div className="border-b border-slate-100 bg-white px-4 py-6">
           <h2 className="mb-2 text-[26px] font-black leading-tight tracking-tight text-slate-900">
@@ -236,9 +226,13 @@ function MonetContent({
 
       {/* ══ PANEL PRINCIPAL ══ */}
       {activeMode === "real" && isLoggedIn ? (
-        <RealMonetPanel creator={{ name: headerName, handle: headerHandle, avatar: avatarUrl ?? undefined }} />
+        <RealMonetPanel
+          creator={{ name: headerName, handle: headerHandle, avatar: avatarUrl ?? undefined }}
+        />
       ) : (
-        <SimMonetPanel creator={{ name: headerName, handle: headerHandle, avatar: avatarUrl ?? undefined }} />
+        <SimMonetPanel
+          creator={{ name: headerName, handle: headerHandle, avatar: avatarUrl ?? undefined }}
+        />
       )}
     </div>
   );
