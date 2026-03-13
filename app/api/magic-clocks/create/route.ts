@@ -222,7 +222,8 @@ export async function POST(req: Request) {
       }
 
       console.error("[Magic Clock] Insert error:", error);
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      console.error("[API create] error:", error?.message);
+      return NextResponse.json({ ok: false, error: "Une erreur est survenue" }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, id: data.id, slug: data.slug });
