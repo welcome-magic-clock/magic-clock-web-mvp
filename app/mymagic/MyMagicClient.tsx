@@ -511,7 +511,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
               <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Vues</p>
             </div>
             <div className="flex-1 py-3 text-center flex flex-col items-center justify-center gap-0.5">
-              <StarRating avg={avgRating > 0 ? avgRating : null} count={totalVotes} size="sm" />
+              <AmazingStars value={avgRating > 0 ? avgRating : null} />
               {totalVotes === 0 && <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-1">Note</p>}
             </div>
           </div>
@@ -700,7 +700,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
             </div>
             {totalVotes > 0 && (
               <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-4 shadow-sm">
-                <StarRating avg={avgRating} count={totalVotes} size="lg" />
+                <AmazingStars value={avgRating} />
                 <div>
                   <p className="text-sm font-bold text-slate-900">{avgRating.toFixed(1)} / 5</p>
                   <p className="text-[11px] text-slate-400">sur {formatNum(totalVotes)} votes</p>
