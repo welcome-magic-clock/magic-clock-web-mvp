@@ -1,10 +1,11 @@
 // features/meet/CreatorProfileSheet.tsx
-// ✅ v4.6 — Cartes Magic Clock : cercle blanc fin (anneau gradient conservé sur le bandeau profil uniquement)
+// ✅ v4.7 — Bouton Partager ajouté dans les actions du bandeau profil créateur
 "use client";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft, UserPlus, Check, MessageCircle, BadgeCheck,
   Layers, Eye, Heart, Lock, Unlock, Gift, Sparkles, CreditCard,
+  Share2, Copy, X,
 } from "lucide-react";
 import Link from "next/link";
 import type { CreatorFull } from "@/app/meet/page";
@@ -165,6 +166,74 @@ function UserRow({ name, handle, avatar }: { name: string; handle: string; avata
 }
 
 // SHEET PRINCIPALE
+// ── ShareMeetModal ─────────────────────────────────────────────────────────
+const GRAD_MC_SHARE = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
+
+function ShareMeetModal({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const [toastNet, setToastNet] = useState<string | null>(null);
+  const copyLink = async () => { try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch {} };
+  const copyAndToast = async (label: string) => { try { await navigator.clipboard.writeText(url); } catch {} setToastNet(label); setTimeout(() => setToastNet(null), 2500); };
+  const BASE_LOGOS = "https://raw.githubusercontent.com/welcome-magic-clock/magic-clock-web-mvp/main/public";
+  const nets: { label: string; logo: string; href: string | null; toast?: string }[] = [
+    { label: "Magic Clock", logo: `${BASE_LOGOS}/magic-clock-social-monet.png`,        href: null, toast: "Lien copié ! Partage-le sur Magic Clock." },
+    { label: "TikTok",      logo: `${BASE_LOGOS}/magic-clock-social-tiktok.png`,       href: null, toast: "Lien copié ! Colle-le dans ta bio TikTok." },
+    { label: "Instagram",   logo: `${BASE_LOGOS}/magic-clock-social-instagram.png`,    href: null, toast: "Lien copié ! Colle-le dans ta story Instagram." },
+    { label: "WhatsApp",    logo: `${BASE_LOGOS}/magic-clock-social-whatsapp.png`,     href: `https://wa.me/?text=${encodeURIComponent(`✨ Découvre ${name} sur Magic Clock : ${url}`)}` },
+    { label: "X",           logo: `${BASE_LOGOS}/magic-clock-social-x.png`,            href: `https://x.com/intent/tweet?text=${encodeURIComponent(`✨ ${name} sur Magic Clock :`)}&url=${encodeURIComponent(url)}` },
+    { label: "Snapchat",    logo: `${BASE_LOGOS}/magic-clock-social-snapchat.png`,     href: `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(url)}` },
+    { label: "Facebook",    logo: `${BASE_LOGOS}/magic-clock-social-facebook.png`,     href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
+    { label: "BeReal",      logo: `${BASE_LOGOS}/magic-clock-social-bereal.png`,       href: null, toast: "Lien copié ! Partage-le sur BeReal." },
+    { label: "Twitch",      logo: `${BASE_LOGOS}/magic-clock-social-twitch.png`,       href: null, toast: "Lien copié ! Colle-le dans ta bio Twitch." },
+    { label: "YouTube",     logo: `${BASE_LOGOS}/magic-clock-social-youtube.png`,      href: null, toast: "Lien copié ! Ajoute-le à ta description YouTube." },
+    { label: "LinkedIn",    logo: `${BASE_LOGOS}/magic-clock-social-linkedin.png`,     href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
+    { label: "Pinterest",   logo: `${BASE_LOGOS}/magic-clock-social-pinterest.png`,    href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(`✨ ${name} sur Magic Clock`)}` },
+    { label: "Threads",     logo: `${BASE_LOGOS}/magic-clock-social-threads.png`,      href: `https://www.threads.net/intent/post?text=${encodeURIComponent(`✨ ${name} sur Magic Clock : ${url}`)}` },
+  ];
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-t-3xl bg-white pt-4 pb-10 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
+        <div className="flex items-center justify-between px-5 mb-4">
+          <h3 className="text-base font-bold text-slate-900">Partager le profil</h3>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="mx-5 mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <span className="flex-1 truncate text-xs text-slate-500">{url}</span>
+          <button onClick={copyLink} className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all ${copied ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700 hover:bg-violet-200"}`}>
+            {copied ? <><Check className="h-3 w-3" /> Copié</> : <><Copy className="h-3 w-3" /> Copier</>}
+          </button>
+        </div>
+        {typeof navigator !== "undefined" && "share" in navigator && (
+          <button onClick={() => navigator.share({ title: `${name} — Magic Clock`, url }).catch(() => {})}
+            className="mx-5 mb-5 flex w-[calc(100%-40px)] items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white"
+            style={{ background: GRAD_MC_SHARE }}>
+            <Share2 className="h-4 w-4" /> Partager via…
+          </button>
+        )}
+        <div style={{ overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", paddingLeft: 20, paddingRight: 20 }}>
+          <div style={{ display: "flex", gap: 12, width: "max-content" }}>
+            {nets.map(n => (
+              <button key={n.label} onClick={n.href ? () => window.open(n.href!, "_blank") : () => copyAndToast(n.label)}
+                className="flex flex-col items-center gap-1.5 transition-transform active:scale-95" style={{ width: 60 }}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm" style={{ border: "1px solid rgba(226,232,240,.9)", flexShrink: 0 }}>
+                  <img src={n.logo} alt={n.label} style={{ width: 32, height: 32, objectFit: "contain" }} />
+                </div>
+                <span className="text-[10px] font-medium text-slate-600 text-center leading-tight w-full">{n.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {toastNet && (
+          <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 text-xs text-emerald-700 font-medium">
+            <Check className="h-3.5 w-3.5 flex-shrink-0" />{nets.find(n => n.label === toastNet)?.toast ?? "Lien copié !"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) {
   const statusInfo = STATUS_LABEL[creator.status ?? "idle"] ?? STATUS_LABEL.idle;
   const sb = getSupabaseBrowser();
@@ -176,7 +245,9 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
   const [abonnesCount, setAbonnesCount] = useState(0);
   const [activeTab, setActiveTab] = useState<"followers" | "abonnes" | "suivis">("followers");
   const [loading, setLoading] = useState(true);
+  const [showShare, setShowShare] = useState(false);
   const handle = creator.handle.replace("@", "");
+  const shareUrl = `https://magic-clock.com/meet/${handle}`;
 
   useEffect(() => {
     async function load() {
@@ -244,6 +315,7 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
   return (
     <div className="fixed inset-0 z-[200] bg-white overflow-y-auto"
       style={{ animation: "sheetUp .3s cubic-bezier(.34,1.2,.64,1)" }}>
+      {showShare && <ShareMeetModal url={shareUrl} name={creator.name} onClose={() => setShowShare(false)} />}
       {/* Header sticky */}
       <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3"
         style={{ background: "rgba(255,255,255,.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(226,232,240,.6)" }}>
@@ -328,6 +400,12 @@ export function CreatorProfileSheet({ creator, isMet, onMeet, onClose }: Props) 
               ? { background: "rgba(22,163,74,.1)", color: "#16a34a", border: "1px solid rgba(22,163,74,.2)" }
               : { background: "linear-gradient(135deg,#4B7BF5 0%,#7B4BF5 40%,#F54B8F 100%)", boxShadow: "0 4px 16px rgba(123,75,245,.35)", color: "white" }}>
             {isMet ? <><Check className="h-4 w-4" /><span className="text-emerald-600">Meet me !</span></> : <><UserPlus className="h-4 w-4" />Meet me</>}
+          </button>
+          <button type="button" onClick={() => setShowShare(true)}
+            className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[14px] transition-all active:scale-95"
+            style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+            aria-label="Partager ce profil">
+            <Share2 className="h-5 w-5 text-slate-500" />
           </button>
           <Link href={`/messages?to=${handle}`}
             className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[14px]"
