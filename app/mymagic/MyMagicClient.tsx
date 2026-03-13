@@ -1,8 +1,9 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.1 — Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles · CTA + cadenas)
+// ✅ v4.3 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
+// ✅ Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles)
 // ✅ Cover blanc · Tabs scrollable · Progression supprimée · Bloc "Nouveau Magic Clock" supprimé
-// ✅ Stats → Lucide uniquement
+// ✅ Stats → Lucide uniquement · Fix TypeScript tag: string
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
@@ -301,7 +302,7 @@ function MagicClockCard({
         {/* Ligne 2 : titre + hashtags */}
         <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
           {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug">{title}</span>}
-          {hashtags.slice(0, 2).map(tag => (
+          {hashtags.slice(0, 2).map((tag: string) => (
             <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
           ))}
         </div>
@@ -822,7 +823,7 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
           {/* Ligne 2 : titre + hashtags */}
           <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
             {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug">{title}</span>}
-            {hashtags.slice(0, 2).map(tag => (
+            {hashtags.slice(0, 2).map((tag: string) => (
               <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
             ))}
           </div>
