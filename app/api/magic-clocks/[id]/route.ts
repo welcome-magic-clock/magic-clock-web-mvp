@@ -55,7 +55,8 @@ export async function DELETE(
       .eq("id", id);
     if (hardErr) {
       console.error("[delete-mc] error:", hardErr.message);
-      return NextResponse.json({ error: hardErr.message }, { status: 500 });
+      console.error("[delete-mc] hard error:", hardErr.message);
+    return NextResponse.json({ error: "Une erreur est survenue" }, { status: 500 });
     }
   }
 
