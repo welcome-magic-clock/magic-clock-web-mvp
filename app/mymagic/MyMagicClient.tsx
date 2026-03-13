@@ -107,10 +107,10 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
     if (navigator.share) navigator.share({ title: `Magic Clock — ${name}`, url }).catch(() => {});
   };
   const shareLinks = [
-    { label: "WhatsApp", icon: "💬", color: "bg-green-500",    href: `https://wa.me/?text=${encodeURIComponent(`Découvre mon Magic Clock ✨ ${url}`)}`, action: undefined },
-    { label: "Instagram", icon: "📷", color: "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600", href: null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta story Instagram."); }},
-    { label: "TikTok",    icon: "🎵", color: "bg-slate-900",   href: null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta bio TikTok."); }},
-    { label: "Email",     icon: "✉️", color: "bg-blue-500",    href: `mailto:?subject=${encodeURIComponent("Mon Magic Clock")}&body=${encodeURIComponent(`Découvre ma transformation ✨\n${url}`)}`, action: undefined },
+    { label: "WhatsApp",  logo: "/magic-clock-social-whatsapp.png",  href: `https://wa.me/?text=${encodeURIComponent(`Découvre mon Magic Clock ✨ ${url}`)}`,  action: undefined as (() => void) | undefined },
+    { label: "Instagram", logo: "/magic-clock-social-instagram.png",  href: null as string | null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta story Instagram."); } },
+    { label: "TikTok",    logo: "/magic-clock-social-tiktok.png",     href: null as string | null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta bio TikTok."); } },
+    { label: "Facebook",  logo: "/magic-clock-social-facebook.png",   href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, action: undefined as (() => void) | undefined },
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -134,8 +134,11 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
         <div className="grid grid-cols-4 gap-3">
           {shareLinks.map(s => (
             <button key={s.label} onClick={s.href ? () => window.open(s.href!, "_blank") : s.action}
-              className="flex flex-col items-center gap-1.5">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl shadow-sm ${s.color}`}>{s.icon}</div>
+              className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+                style={{ border: "1px solid rgba(226,232,240,.8)" }}>
+                <img src={s.logo} alt={s.label} style={{ width: 28, height: 28, objectFit: "contain" }} />
+              </div>
               <span className="text-[10px] font-medium text-slate-600">{s.label}</span>
             </button>
           ))}
@@ -442,10 +445,23 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
 
       <main className="mx-auto max-w-lg pb-36 pt-0">
 
-        {/* ══ COVER BLANC — fond propre, pas de bloc rose ══ */}
-        <div className="relative h-16 w-full bg-white">
-          {/* Actions top-right */}
-          <div className="absolute top-3.5 right-3.5 flex gap-2 z-10">
+        {/* ══ AVATAR + ICÔNES — rangée flex horizontale ══ */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          {/* Avatar 88px · anneau gradient · bouton caméra */}
+          <div className="mc-avatar-ring relative flex-shrink-0" style={{ width: 88, height: 88 }}>
+            <div className="absolute inset-[3px] z-[2] rounded-full overflow-hidden bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
+              {profileAvatarUrl
+                ? <img src={profileAvatarUrl} alt={displayName} className="h-full w-full object-cover object-top" />
+                : <span className="mc-text-gradient text-2xl font-bold">{initial}</span>
+              }
+            </div>
+            <button type="button" onClick={() => setTabInUrl("identite")}
+              className="absolute bottom-0.5 right-0.5 z-[10] flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-white shadow-md text-slate-500 hover:scale-110 transition-transform">
+              <Camera className="h-3 w-3" strokeWidth={1.8} />
+            </button>
+          </div>
+          {/* Icônes droite : 💬 🔔 ⚙️ */}
+          <div className="flex gap-2 items-center">
             <Link href="/messages"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
               <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
@@ -461,27 +477,10 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
           </div>
         </div>
 
-        {/* ══ AVATAR — anneau gradient, recadrage via onglet Identité ══ */}
-        <div className="px-4 relative z-10 mb-3">
-          <div className="mc-avatar-ring inline-block" style={{ width: 100, height: 100 }}>
-            <div className="absolute inset-[3px] z-[2] rounded-full overflow-hidden bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
-              {profileAvatarUrl
-                ? <img src={profileAvatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                : <span className="mc-text-gradient text-3xl font-bold">{initial}</span>
-              }
-            </div>
-            <button type="button" onClick={() => setTabInUrl("identite")}
-              className="absolute bottom-1 right-1 z-[10] flex h-7 w-7 items-center justify-center rounded-full bg-white border-2 border-white shadow-md text-slate-500 hover:scale-110 transition-transform">
-              <Camera className="h-3.5 w-3.5" strokeWidth={1.8} />
-            </button>
-          </div>
-        </div>
-
         {/* ══ IDENTITÉ ══ */}
         <div className="px-4 mb-3">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h1 className="text-[22px] font-bold text-slate-900 leading-tight">{displayName}</h1>
-            <ProfessionBadge value={profession} onChange={saveProfession} />
           </div>
           <p className="text-[13px] text-slate-500 mb-2">
             <span className="mc-text-gradient font-semibold">{displayHandle}</span>{" · Lausanne, Suisse"}
