@@ -1,11 +1,12 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.0 — Cover blanc (suppression bloc rose) · Avatar crop-ready · Progression supprimée
-// ✅ Tabs scrollable horizontal (Stats visible iPhone) · Pictogramme Stats → Lucide
-// ✅ Cartes → bouton "Ouvrir mon Magic Clock" (Créations + Bibliothèque)
+// ✅ v4.1 — Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles · CTA + cadenas)
+// ✅ Cover blanc · Tabs scrollable · Progression supprimée · Bloc "Nouveau Magic Clock" supprimé
+// ✅ Stats → Lucide uniquement
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProfileSection from "@/components/mymagic/ProfileSection";
 import Cockpit from "@/features/monet/Cockpit";
@@ -14,7 +15,7 @@ import { STUDIO_FORWARD_KEY, type StudioForwardPayload } from "@/core/domain/mag
 import {
   BookOpen, Sparkles, User, BarChart2, Plus, Bell, Settings,
   Camera, MessageCircle, Star, Lock, Unlock, Share2, Copy, Check, X,
-  ExternalLink, TrendingUp, Eye, Users, DollarSign,
+  TrendingUp, Eye, Users, DollarSign, Heart, ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
@@ -81,38 +82,6 @@ function StudioMediaSlot({ src, alt, coverTime }: { src: string; alt: string; co
 function displayHref(id: string, slug?: string | null): string {
   if (slug) return `/magic-clock-display?slug=${encodeURIComponent(slug)}`;
   return `/magic-clock-display?id=${encodeURIComponent(id)}`;
-}
-
-// ── Étoiles ──────────────────────────────────────────────────────────────────
-function StarRating({ avg, count, size = "sm" }: { avg: number | null; count: number; size?: "sm" | "lg" }) {
-  if (!avg && count === 0) return (
-    <div className={`flex items-center gap-0.5 ${size === "lg" ? "gap-1" : ""}`}>
-      {[1,2,3,4,5].map(i => <Star key={i} className={size === "lg" ? "h-4 w-4 text-slate-200" : "h-3 w-3 text-slate-200"} fill="currentColor" />)}
-    </div>
-  );
-  const score = avg ?? 0;
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      <div className={`flex items-center gap-0.5 ${size === "lg" ? "gap-1" : ""}`}>
-        {[1,2,3,4,5].map(i => {
-          const filled  = score >= i;
-          const partial = !filled && score > i - 1;
-          const pct     = partial ? Math.round((score - (i - 1)) * 100) : 0;
-          return (
-            <span key={i} className="relative inline-block">
-              <Star className={size === "lg" ? "h-4 w-4 text-slate-200" : "h-3 w-3 text-slate-200"} fill="currentColor" />
-              {(filled || partial) && (
-                <span className="absolute inset-0 overflow-hidden" style={{ width: filled ? "100%" : `${pct}%` }}>
-                  <Star className={size === "lg" ? "h-4 w-4 text-amber-400" : "h-3 w-3 text-amber-400"} fill="currentColor" />
-                </span>
-              )}
-            </span>
-          );
-        })}
-      </div>
-      {count > 0 && <p className="text-[9px] text-slate-400 leading-none">sur {formatNum(count)} vote{count > 1 ? "s" : ""}</p>}
-    </div>
-  );
 }
 
 // ── Icône onglet Créations ────────────────────────────────────────────────────
@@ -201,12 +170,36 @@ function ProfessionBadge({ value, onChange }: { value: string; onChange: (v: str
   );
 }
 
-// ── Carte Magic Clock — bouton "Ouvrir mon Magic Clock" ───────────────────────
+// ── StarRating style Amazing ──────────────────────────────────────────────────
+const GRAD_MC = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
+const STAR_GRAD_STYLE: React.CSSProperties = { background: GRAD_MC, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
+
+function AmazingStars({ value }: { value?: number | null }) {
+  const filled = value != null ? Math.round(value) : 0;
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {[1,2,3,4,5].map(s => (
+        <span key={s} className="text-[9px] font-black leading-none"
+          style={s <= filled ? STAR_GRAD_STYLE : { color: "#cbd5e1" }}>★</span>
+      ))}
+      {value != null && (
+        <span className="ml-0.5 text-[9px] font-bold" style={STAR_GRAD_STYLE}>{value.toFixed(1)}</span>
+      )}
+    </span>
+  );
+}
+
+// ── Carte Magic Clock — footer identique Amazing ──────────────────────────────
 function MagicClockCard({
-  clock, avatarUrl, isHighlighted, cardRef, isDraft = false,
+  clock, creatorName, creatorHandle, avatarUrl, views, likes,
+  isHighlighted, cardRef, isDraft = false,
 }: {
   clock: SupabaseMagicClockRow;
+  creatorName: string;
+  creatorHandle: string;
   avatarUrl: string | null;
+  views?: number;
+  likes?: number;
   isHighlighted?: boolean;
   cardRef?: (el: HTMLDivElement | null) => void;
   isDraft?: boolean;
@@ -217,32 +210,57 @@ function MagicClockCard({
   const title     = studio.title || clock.title || "Magic Clock";
   const mode      = clock.gating_mode ?? "FREE";
   const hashtags  = (Array.isArray(studio.hashtags) ? studio.hashtags : []).map((t: string) => t.startsWith("#") ? t : `#${t}`);
+  const cleanHandle = creatorHandle.replace(/^@/, "");
+  const meetHref  = `/meet?creator=${encodeURIComponent(`@${cleanHandle}`)}`;
+  const avatar    = avatarUrl ?? "/images/magic-clock-bear/avatar.png";
+
+  const [likesCount, setLikesCount] = useState(likes ?? 0);
+  const [liked, setLiked]           = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  async function handleLike(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    if (likeLoading) return;
+    setLikeLoading(true);
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikesCount(c => wasLiked ? Math.max(0, c - 1) : c + 1);
+    try {
+      const res = await fetch(`/api/magic-clocks/${clock.id}/like`, { method: "POST" });
+      if (!res.ok) { setLiked(wasLiked); setLikesCount(c => wasLiked ? c + 1 : Math.max(0, c - 1)); }
+    } catch {
+      setLiked(wasLiked); setLikesCount(c => wasLiked ? c + 1 : Math.max(0, c - 1));
+    } finally { setLikeLoading(false); }
+  }
 
   const inner = (
     <article
       ref={cardRef}
-      className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all ${
-        isDraft         ? "border-dashed border-amber-200 bg-amber-50/30" :
-        isHighlighted   ? "border-violet-400 ring-2 ring-violet-200 ring-offset-2" :
-                          "border-slate-200"
-      }`}
+      className="w-full overflow-hidden rounded-3xl bg-white"
+      style={{
+        border: isDraft ? "1.5px dashed #fcd34d" : isHighlighted ? "1.5px solid #a78bfa" : "1px solid rgba(226,232,240,.8)",
+        boxShadow: isHighlighted ? "0 0 0 3px rgba(167,139,250,.2)" : "0 2px 12px rgba(0,0,0,.05)",
+      }}
     >
       {/* ── Visuel avant/après ── */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
+      <div className="relative w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
         <div className="grid h-full w-full grid-cols-2">
           <StudioMediaSlot src={beforeUrl} alt={`${title} - Avant`} coverTime={studio.beforeCoverTime} />
           <StudioMediaSlot src={afterUrl}  alt={`${title} - Après`} coverTime={studio.afterCoverTime}  />
         </div>
-        {/* Ligne centrale */}
-        <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
-        {/* Avatar centré — cercle blanc fin */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
-            style={{ width: 44, height: 44, border: "2px solid white" }}>
-            <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title}
-              className="h-full w-full object-cover rounded-full" />
+        {/* Séparateur central */}
+        <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-white/85" />
+        {/* Gradient bas */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0"
+          style={{ height: "30%", background: "linear-gradient(to top,rgba(10,15,30,.45),transparent)" }} />
+        {/* Avatar centré cliquable → Meet me */}
+        <Link href={meetHref} onClick={e => e.stopPropagation()}
+          className="pointer-events-auto absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+          <div className="overflow-hidden rounded-full bg-white transition-transform active:scale-95"
+            style={{ width: 52, height: 52, border: "2.5px solid white", boxShadow: "0 2px 14px rgba(0,0,0,.22)" }}>
+            <Image src={avatar} alt={creatorName} width={52} height={52} className="h-full w-full object-cover" />
           </div>
-        </div>
+        </Link>
         {isDraft && (
           <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-lg bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold text-white">
             <Sparkles className="h-2.5 w-2.5" /> En cours
@@ -250,44 +268,68 @@ function MagicClockCard({
         )}
       </div>
 
-      {/* ── Infos ── */}
-      <div className="px-3 pt-2.5 pb-2">
-        <p className="text-[12px] font-bold text-slate-900 truncate leading-tight">{title}</p>
-        {hashtags.length > 0 && (
-          <p className="mt-0.5 text-[10px] text-violet-500 truncate">{hashtags.slice(0, 2).join(" ")}</p>
-        )}
-        <div className="mt-1 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {mode === "FREE"
-              ? <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600"><Unlock className="h-2.5 w-2.5" /> FREE</span>
-              : <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600"><Lock className="h-2.5 w-2.5" /> {mode === "SUB" ? "Abo" : "PPV"}</span>
-            }
-          </div>
-          {(clock.rating_count ?? 0) > 0 && (
-            <StarRating avg={clock.rating_avg ?? null} count={clock.rating_count ?? 0} size="sm" />
-          )}
-        </div>
-      </div>
+      {/* ── Footer identique Amazing ── */}
+      <div className="px-3 pt-2.5 pb-3 space-y-1.5">
 
-      {/* ✅ Bouton "Ouvrir mon Magic Clock" */}
-      {!isDraft && (
-        <div className="px-3 pb-3">
-          <div className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold transition-all"
-            style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)", color: "white" }}>
-            <ExternalLink className="h-3 w-3" />
-            Ouvrir mon Magic Clock
-          </div>
+        {/* Ligne 1 : mini avatar · nom · handle · vues · ❤️ · étoiles */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Link href={meetHref} className="flex-shrink-0">
+            <div className="overflow-hidden rounded-full bg-slate-100"
+              style={{ width: 24, height: 24, border: "1.5px solid rgba(226,232,240,.8)" }}>
+              <Image src={avatar} alt={creatorName} width={24} height={24} className="h-full w-full object-cover" />
+            </div>
+          </Link>
+          <Link href={meetHref} className="flex items-center gap-1 min-w-0 flex-shrink">
+            <span className="text-[11px] font-bold text-slate-800 truncate max-w-[80px]">{creatorName}</span>
+            <span className="text-[9px] text-slate-400 truncate">@{cleanHandle}</span>
+          </Link>
+          <span className="h-[3px] w-[3px] rounded-full bg-slate-200 flex-shrink-0" />
+          <span className="flex items-center gap-0.5 text-[9px] text-slate-400 flex-shrink-0">
+            <Eye className="h-2.5 w-2.5" />{(views ?? 0) > 0 ? (views!).toLocaleString("fr-CH") : "0"}
+          </span>
+          <button type="button" onClick={handleLike} disabled={likeLoading}
+            className="flex items-center gap-0.5 text-[9px] flex-shrink-0 transition-transform active:scale-110 disabled:opacity-60"
+            style={{ color: liked ? "#F54B8F" : "#94a3b8" }}>
+            <Heart className="h-2.5 w-2.5 transition-all"
+              style={liked ? { fill: "#F54B8F", color: "#F54B8F", filter: "drop-shadow(0 0 2px #F54B8F88)" } : {}} />
+            {likesCount > 0 ? likesCount.toLocaleString("fr-CH") : "0"}
+          </button>
+          <span className="flex-1" />
+          <AmazingStars value={clock.rating_avg} />
         </div>
-      )}
+
+        {/* Ligne 2 : titre + hashtags */}
+        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
+          {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug">{title}</span>}
+          {hashtags.slice(0, 2).map(tag => (
+            <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
+          ))}
+        </div>
+
+        {/* Ligne 3 : CTA "Ouvrir mon Magic Clock" + cadenas */}
+        {!isDraft && (
+          <div className="flex gap-2 pt-0.5">
+            {/* ✅ Link direct vers la page display — "Ouvrir mon Magic Clock" */}
+            <Link href={displayHref(clock.id, clock.slug)} prefetch={false}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[11px] font-bold text-white transition-all active:scale-95"
+              style={{ background: GRAD_MC, boxShadow: "0 2px 10px rgba(123,75,245,.25)" }}>
+              <ExternalLink className="h-3 w-3" />
+              Ouvrir mon Magic Clock
+            </Link>
+            <div className="flex flex-shrink-0 items-center justify-center rounded-2xl px-3 py-2.5"
+              style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
+              {mode === "FREE" ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+            </div>
+          </div>
+        )}
+      </div>
     </article>
   );
 
-  if (isDraft) return inner;
-  return (
-    <Link href={displayHref(clock.id, clock.slug)} prefetch={false} className="block hover:-translate-y-0.5 transition-transform">
-      {inner}
-    </Link>
-  );
+  // Carte draft : pas de navigation globale
+  if (isDraft) return <div className="hover:-translate-y-0.5 transition-transform">{inner}</div>;
+  // Carte publiée : visuels cliquables aussi via wrapper
+  return <div className="hover:-translate-y-0.5 transition-transform">{inner}</div>;
 }
 
 // ── CLIENT PRINCIPAL ──────────────────────────────────────────────────────────
@@ -522,7 +564,8 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
                   <Sparkles className="h-3 w-3" /> En cours de création
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <MagicClockCard clock={draftClock} avatarUrl={profileAvatarUrl} isDraft />
+                  <MagicClockCard clock={draftClock} avatarUrl={profileAvatarUrl}
+                    creatorName={displayName} creatorHandle={displayHandle} isDraft />
                 </div>
               </div>
             )}
@@ -533,7 +576,9 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {initialPublished.map((clock) => (
-                    <MagicClockCard key={clock.id} clock={clock} avatarUrl={profileAvatarUrl}
+                    <MagicClockCard key={clock.id} clock={clock}
+                      creatorName={displayName} creatorHandle={displayHandle}
+                      avatarUrl={profileAvatarUrl}
                       isHighlighted={!!openParam && (clock.slug === openParam || clock.id === openParam)}
                       cardRef={(el) => { creatorCardRefs.current[clock.id] = el; if (clock.slug) creatorCardRefs.current[clock.slug] = el; }}
                     />
@@ -549,12 +594,6 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
                 </Link>
               </div>
             )}
-            <Link href="/studio"
-              className="rounded-2xl border border-dashed border-violet-200 bg-gradient-to-br from-violet-50/60 to-pink-50/40 p-5 flex flex-col items-center gap-2 text-center hover:border-violet-300 hover:from-violet-50 transition-colors">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] mc-bg-gradient shadow-md text-white text-xl">✦</div>
-              <p className="mc-text-gradient text-[14px] font-bold">Nouveau Magic Clock</p>
-              <p className="text-[12px] text-slate-400">Partage ta prochaine transformation sur Amazing</p>
-            </Link>
           </section>
         )}
 
@@ -688,7 +727,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
   );
 }
 
-// ── Carte acquise (Bibliothèque) — avec bouton "Ouvrir mon Magic Clock" ────────
+// ── Carte acquise (Bibliothèque) — footer identique Amazing ──────────────────
 function AcquiredCard({ item, avatarUrl, isHighlighted }: {
   item: AcquiredMagicClockRow;
   avatarUrl: string | null;
@@ -699,44 +738,109 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
   const afterUrl  = typeof studio.afterUrl  === "string" ? studio.afterUrl  : FALLBACK_AFTER;
   const title     = studio.title || item.title || "Magic Clock";
   const mode      = (item as any).gating_mode ?? "FREE";
+  const creatorName   = item.creator_name ?? item.creator_handle ?? "Créateur";
+  const cleanHandle   = (item.creator_handle ?? "").replace(/^@/, "");
+  const meetHref      = `/meet?creator=${encodeURIComponent(`@${cleanHandle}`)}`;
+  const avatar        = avatarUrl ?? "/images/magic-clock-bear/avatar.png";
+  const hashtags: string[] = Array.isArray(studio.hashtags)
+    ? studio.hashtags.map((t: string) => t.startsWith("#") ? t : `#${t}`) : [];
+
+  const [likesCount, setLikesCount] = useState(0);
+  const [liked, setLiked]           = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  async function handleLike(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    if (likeLoading) return;
+    setLikeLoading(true);
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikesCount(c => wasLiked ? Math.max(0, c - 1) : c + 1);
+    try {
+      const res = await fetch(`/api/magic-clocks/${item.magic_clock_id}/like`, { method: "POST" });
+      if (!res.ok) { setLiked(wasLiked); setLikesCount(c => wasLiked ? c + 1 : Math.max(0, c - 1)); }
+    } catch {
+      setLiked(wasLiked); setLikesCount(c => wasLiked ? c + 1 : Math.max(0, c - 1));
+    } finally { setLikeLoading(false); }
+  }
+
+  const displayUrl = item.slug
+    ? `/magic-clock-display?slug=${encodeURIComponent(item.slug)}`
+    : `/magic-clock-display?id=${encodeURIComponent(item.magic_clock_id)}`;
 
   return (
-    <Link href={`/magic-clock-display?id=${encodeURIComponent(item.magic_clock_id)}`}
-      className="block hover:-translate-y-0.5 transition-transform">
-      <article className={`rounded-2xl border bg-white shadow-sm overflow-hidden ${isHighlighted ? "border-violet-400 ring-2 ring-violet-200 ring-offset-2" : "border-slate-200"}`}>
-        <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
+    <div className="hover:-translate-y-0.5 transition-transform">
+      <article className="w-full overflow-hidden rounded-3xl bg-white"
+        style={{
+          border: isHighlighted ? "1.5px solid #a78bfa" : "1px solid rgba(226,232,240,.8)",
+          boxShadow: isHighlighted ? "0 0 0 3px rgba(167,139,250,.2)" : "0 2px 12px rgba(0,0,0,.05)",
+        }}>
+        {/* ── Visuel avant/après ── */}
+        <div className="relative w-full overflow-hidden bg-slate-100" style={{ aspectRatio: "4/5" }}>
           <div className="grid h-full w-full grid-cols-2">
             <StudioMediaSlot src={beforeUrl} alt={`${title} - Avant`} coverTime={studio.beforeCoverTime} />
             <StudioMediaSlot src={afterUrl}  alt={`${title} - Après`} coverTime={studio.afterCoverTime}  />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
+          <div className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-white/85" />
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0"
+            style={{ height: "30%", background: "linear-gradient(to top,rgba(10,15,30,.45),transparent)" }} />
+          {/* Avatar centré */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-            <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
-              style={{ width: 44, height: 44, border: "2px solid white" }}>
-              <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title}
-                className="h-full w-full object-cover rounded-full" />
+            <div className="overflow-hidden rounded-full bg-white"
+              style={{ width: 52, height: 52, border: "2.5px solid white", boxShadow: "0 2px 14px rgba(0,0,0,.22)" }}>
+              <Image src={avatar} alt={creatorName} width={52} height={52} className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
-        <div className="px-3 pt-2.5 pb-2">
-          <p className="text-[12px] font-bold text-slate-900 truncate">{title}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5 truncate">{item.creator_name ?? item.creator_handle}</p>
-          <div className="mt-1">
-            {mode === "FREE"
-              ? <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600"><Unlock className="h-2.5 w-2.5" /> FREE</span>
-              : <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600"><Lock className="h-2.5 w-2.5" /> {mode === "SUB" ? "Abo" : "PPV"}</span>
-            }
+
+        {/* ── Footer identique Amazing ── */}
+        <div className="px-3 pt-2.5 pb-3 space-y-1.5">
+          {/* Ligne 1 : mini avatar · nom · handle · vues · ❤️ · étoiles */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
+              style={{ width: 24, height: 24, border: "1.5px solid rgba(226,232,240,.8)" }}>
+              <Image src={avatar} alt={creatorName} width={24} height={24} className="h-full w-full object-cover" />
+            </div>
+            <div className="flex items-center gap-1 min-w-0 flex-shrink">
+              <span className="text-[11px] font-bold text-slate-800 truncate max-w-[80px]">{creatorName}</span>
+              {cleanHandle && <span className="text-[9px] text-slate-400 truncate">@{cleanHandle}</span>}
+            </div>
+            <span className="h-[3px] w-[3px] rounded-full bg-slate-200 flex-shrink-0" />
+            <span className="flex items-center gap-0.5 text-[9px] text-slate-400 flex-shrink-0">
+              <Eye className="h-2.5 w-2.5" />0
+            </span>
+            <button type="button" onClick={handleLike} disabled={likeLoading}
+              className="flex items-center gap-0.5 text-[9px] flex-shrink-0 transition-transform active:scale-110 disabled:opacity-60"
+              style={{ color: liked ? "#F54B8F" : "#94a3b8" }}>
+              <Heart className="h-2.5 w-2.5 transition-all"
+                style={liked ? { fill: "#F54B8F", color: "#F54B8F", filter: "drop-shadow(0 0 2px #F54B8F88)" } : {}} />
+              {likesCount > 0 ? likesCount.toLocaleString("fr-CH") : "0"}
+            </button>
+            <span className="flex-1" />
+            <AmazingStars value={null} />
           </div>
-        </div>
-        {/* ✅ Bouton "Ouvrir mon Magic Clock" */}
-        <div className="px-3 pb-3">
-          <div className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold"
-            style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)", color: "white" }}>
-            <ExternalLink className="h-3 w-3" />
-            Ouvrir mon Magic Clock
+          {/* Ligne 2 : titre + hashtags */}
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
+            {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug">{title}</span>}
+            {hashtags.slice(0, 2).map(tag => (
+              <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
+            ))}
+          </div>
+          {/* Ligne 3 : ✅ "Ouvrir mon Magic Clock" → navigation display */}
+          <div className="flex gap-2 pt-0.5">
+            <Link href={displayUrl} prefetch={false}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[11px] font-bold text-white transition-all active:scale-95"
+              style={{ background: GRAD_MC, boxShadow: "0 2px 10px rgba(123,75,245,.25)" }}>
+              <ExternalLink className="h-3 w-3" />
+              Ouvrir mon Magic Clock
+            </Link>
+            <div className="flex flex-shrink-0 items-center justify-center rounded-2xl px-3 py-2.5"
+              style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
+              {mode === "FREE" ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+            </div>
           </div>
         </div>
       </article>
-    </Link>
+    </div>
   );
 }
