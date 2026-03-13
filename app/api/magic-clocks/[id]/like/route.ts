@@ -8,9 +8,9 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
 
   // Auth — pattern exact du projet (same as /api/access/free)
