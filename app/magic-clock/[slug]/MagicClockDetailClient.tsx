@@ -313,23 +313,33 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
           style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 1px 6px rgba(0,0,0,.04)" }}
         >
           <div className="relative flex-shrink-0">
+            {/* Anneau gradient Magic Clock signature */}
             <div
-              className="overflow-hidden rounded-full bg-slate-100"
-              style={{ width: 44, height: 44, border: "2px solid white", boxShadow: "0 0 0 2px #7B4BF5" }}
+              className="rounded-full flex-shrink-0 flex items-center justify-center"
+              style={{
+                width: 48,
+                height: 48,
+                background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+                padding: 2,
+              }}
             >
-              {clock.creatorAvatar ? (
-                <Image
-                  src={clock.creatorAvatar}
-                  alt={clock.creatorName}
-                  width={44}
-                  height={44}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-[16px] font-bold text-violet-400">
-                  {clock.creatorName.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <div className="overflow-hidden rounded-full bg-slate-100 flex items-center justify-center"
+                style={{ width: 44, height: 44 }}
+              >
+                {clock.creatorAvatar ? (
+                  <Image
+                    src={clock.creatorAvatar}
+                    alt={clock.creatorName}
+                    width={44}
+                    height={44}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-[16px] font-bold text-violet-400">
+                    {clock.creatorName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -342,16 +352,15 @@ export default function MagicClockDetailClient({ clock }: { clock: ClockData }) 
             {clock.creatorBio && (
               <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">{clock.creatorBio}</p>
             )}
-            {/* ⭐ Étoiles CRÉATEUR — 5 grises si aucune note, gradient + chiffre si noté */}
-            <div className="mt-1">
-              <StarRow
-                value={clock.creatorRatingAvg ?? undefined}
-                size={10}
-              />
-            </div>
           </div>
 
-          <div className="flex flex-col items-end gap-0.5">
+          {/* Colonne droite : étoiles créateur + followers */}
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            {/* ⭐ Étoiles CRÉATEUR — 5 grises si aucune note, gradient + chiffre si noté */}
+            <StarRow
+              value={clock.creatorRatingAvg ?? undefined}
+              size={10}
+            />
             <span className="text-[11px] font-bold" style={GRAD}>{formatN(clock.creatorFollowers)}</span>
             <span className="flex items-center gap-0.5 text-[9px] text-slate-400">
               <Users className="h-2.5 w-2.5" />followers
