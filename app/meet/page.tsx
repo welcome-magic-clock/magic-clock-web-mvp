@@ -1,9 +1,9 @@
 "use client";
 // app/meet/page.tsx
-// ✅ v4.1 — SELECT Supabase optimisé (status, stars, magic_clocks_count natifs)
-// ✅ Bulles canoniques MC_FILTERS · gradient MC plein · filtrage réel Supabase
+// ✅ v4.2 — Fix TypeScript : SELECT en string littérale unique + typage explicite
+// ✅ Bulles canoniques MC_FILTERS · gradient MC plein · filtrage Supabase réel
 // ✅ "En direct" = profiles.status = 'live' · Legendary = followers ≥ 10k
-// ✅ access[] déduit des gating_modes réels depuis magic_clocks
+// ✅ access[] déduit des gating_modes réels (FREE / SUB / PPV)
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -24,6 +24,27 @@ export type CreatorFull = Creator & {
   bio?: string;
   isCertified?: boolean;
   resonance?: number;
+};
+
+// ── Type explicite pour les rows Supabase (évite GenericStringError) ──────────
+type ProfileRow = {
+  id: string;
+  handle: string | null;
+  display_name: string | null;
+  bio: string | null;
+  profession: string | null;
+  avatar_url: string | null;
+  followers_count: number | null;
+  is_creator: boolean | null;
+  status: string | null;
+  stars: number | null;
+  magic_clocks_count: number | null;
+  creator_rating_avg: number | null;
+};
+
+type ClockRow = {
+  creator_handle: string | null;
+  gating_mode: string | null;
 };
 
 // ── Seuil Legendary ──────────────────────────────────────────────────────────
@@ -70,48 +91,51 @@ export default function MeetPage() {
     const sb = getSupabaseBrowser();
 
     async function load() {
-      // ✅ SELECT optimisé — tous les champs natifs de profiles utilisés
-      const { data: profiles, error } = await sb
+      // ✅ SELECT en string littérale unique → pas de GenericStringError
+      const { data, error } = await sb
         .from("profiles")
-        .select(
-          "id, handle, display_name, bio, profession, avatar_url, " +
-          "followers_count, is_creator, status, stars, " +
-          "magic_clocks_count, creator_rating_avg"
-        )
+        .select("id, handle, display_name, bio, profession, avatar_url, followers_count, is_creator, status, stars, magic_clocks_count, creator_rating_avg")
         .not("handle", "is", null)
         .order("followers_count", { ascending: false, nullsFirst: false })
         .limit(40);
 
-      if (error || !profiles || profiles.length === 0) {
+      // ✅ Cast explicite pour sortir du type générique Supabase
+      const profiles = (data ?? []) as ProfileRow[];
+
+      if (error || profiles.length === 0) {
         setCreators(CREATORS.map((c) => ({
           ...c, status: "idle" as const, magicClocks: 0, resonance: 50,
         })));
         return;
       }
 
-      const handles = profiles.map((p) => p.handle).filter(Boolean) as string[];
+      const handles = profiles
+        .map((p) => p.handle)
+        .filter((h): h is string => h !== null);
 
-      // ✅ gating_modes réels depuis magic_clocks (access[] par créateur)
-      const { data: clockRows } = await sb
+      // ✅ gating_modes réels depuis magic_clocks
+      const { data: rawClocks } = await sb
         .from("magic_clocks")
         .select("creator_handle, gating_mode")
         .in("creator_handle", handles)
         .eq("is_published", true);
 
+      const clockRows = (rawClocks ?? []) as ClockRow[];
+
       // Agréger les modes par handle
       const modesMap = new Map<string, Set<string>>();
-      for (const row of clockRows ?? []) {
+      for (const row of clockRows) {
         const h = row.creator_handle;
         if (!h) continue;
         if (!modesMap.has(h)) modesMap.set(h, new Set());
-        if (row.gating_mode) modesMap.get(h)!.add(row.gating_mode as string);
+        if (row.gating_mode) modesMap.get(h)!.add(row.gating_mode);
       }
 
       const fromSupabase: CreatorFull[] = profiles.map((row, i) => {
         const handle = (row.handle ?? "").replace(/^@/, "");
         const modes = modesMap.get(handle) ?? new Set<string>();
 
-        // ✅ access[] déduit des gating_modes réels
+        // ✅ access[] déduit des gating_modes réels — "SUB" en base → "ABO" en UI
         const access: ("FREE" | "ABO" | "PPV")[] = [];
         if (modes.has("FREE") || modes.size === 0) access.push("FREE");
         if (modes.has("SUB") || modes.has("ABO"))  access.push("ABO");
@@ -128,7 +152,6 @@ export default function MeetPage() {
           access,
           specialties: row.profession ? [row.profession] : [],
           bio: row.bio ?? undefined,
-          // ✅ status, stars, magicClocks depuis profiles directement
           status: (row.status as "live" | "studio" | "idle") ?? "idle",
           stars: row.stars ?? row.creator_rating_avg ?? undefined,
           magicClocks: row.magic_clocks_count ?? 0,
