@@ -1,7 +1,6 @@
 // components/LeftNav.tsx
-// ✅ v3.0 — Ordre correct · Bear visiteur · Réglages connecté → AccountSettingsModal
+// ✅ v3.1 — Avatar anneau gradient canonique Magic Clock · Bear visiteur · Réglages connecté
 "use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -10,6 +9,7 @@ import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
 import { useEffect, useState } from "react";
 import AccountSettingsModal from "@/components/mymagic/AccountSettingsModal";
+import { MCAvatar } from "@/components/ui/MCAvatar";
 
 export default function LeftNav() {
   const pathname = usePathname();
@@ -41,12 +41,8 @@ export default function LeftNav() {
 
   const initial = (displayName[0] ?? "?").toUpperCase();
 
-  // ── Item commun : style lien actif/inactif ──
   const linkClass = (href: string) => {
-    const active =
-      href === "/"
-        ? pathname === "/"
-        : pathname === href || pathname.startsWith(href + "/");
+    const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
     return `flex items-center gap-3 rounded-xl px-3 py-2 text-sm border transition ${
       active
         ? "bg-violet-50 border-violet-400 text-violet-700"
@@ -59,7 +55,6 @@ export default function LeftNav() {
 
   return (
     <>
-      {/* Modale paramètres — connecté uniquement */}
       {showSettings && (
         <AccountSettingsModal
           onClose={() => setShowSettings(false)}
@@ -74,7 +69,6 @@ export default function LeftNav() {
           </div>
 
           <nav className="space-y-1">
-
             {/* 1. Amazing */}
             <Link href="/" className={linkClass("/")}>
               <Home className="h-4 w-4" />
@@ -90,35 +84,36 @@ export default function LeftNav() {
             {/* 3. My Magic Clock */}
             {isLoggedIn ? (
               <Link href="/mymagic" className={linkClass("/mymagic")}>
-                <div
-                  className={`relative h-7 w-7 overflow-hidden rounded-full border flex items-center justify-center bg-violet-50 ${
-                    isActive("/mymagic") ? "border-violet-400" : "border-slate-200"
-                  }`}
-                >
-                  {avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt={displayName}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span className="mc-text-gradient text-xs font-bold">
-                      {initial}
-                    </span>
-                  )}
-                </div>
+                {/* ✅ Anneau gradient canonique Magic Clock */}
+                <MCAvatar
+                  src={avatarUrl}
+                  name={displayName || initial}
+                  size="xs"
+                  animated={isActive("/mymagic")}
+                  duration={6}
+                />
                 <span>My Magic Clock</span>
               </Link>
             ) : (
               <Link href="/auth?next=/mymagic" className={linkClass("/mymagic")}>
-                <div className="relative h-7 w-7 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
-                  <Image
-                    src="/images/magic-clock-bear/avatar.png"
-                    alt="Magic Clock Bear"
-                    fill
-                    className="object-cover"
+                {/* Visiteur : ours avec anneau statique */}
+                <div className="relative h-7 w-7 flex-shrink-0">
+                  <div
+                    className="absolute inset-[-1px] rounded-full"
+                    style={{
+                      background: "conic-gradient(from 180deg, #4B7BF5 0%, #38BDF8 15%, #7B4BF5 40%, #C44BDA 58%, #F54B8F 75%, #F5834B 88%, #4B7BF5 100%)",
+                      opacity: 0.45,
+                    }}
                   />
+                  <div className="absolute inset-0 rounded-full bg-white" />
+                  <div className="absolute inset-[2px] overflow-hidden rounded-full bg-slate-100">
+                    <Image
+                      src="/images/magic-clock-bear/avatar.png"
+                      alt="Magic Clock Bear"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 </div>
                 <span>My Magic Clock</span>
               </Link>
@@ -141,7 +136,7 @@ export default function LeftNav() {
               <button
                 type="button"
                 onClick={() => setShowSettings(true)}
-                className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm border transition border-slate-200 text-slate-700 hover:bg-slate-100`}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm border transition border-slate-200 text-slate-700 hover:bg-slate-100"
               >
                 <Settings className="h-4 w-4" />
                 <span>Réglages</span>
@@ -158,7 +153,6 @@ export default function LeftNav() {
               <Shield className="h-4 w-4" />
               <span>Légal</span>
             </Link>
-
           </nav>
         </div>
       </aside>
