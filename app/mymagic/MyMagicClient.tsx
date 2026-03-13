@@ -1,6 +1,6 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.8 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
+// ✅ v4.9 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
 // ✅ Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles)
 // ✅ Cover blanc · Tabs scrollable · Progression supprimée · Bloc "Nouveau Magic Clock" supprimé
 // ✅ Stats → Lucide uniquement · Fix TypeScript tag: string
@@ -447,17 +447,19 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
 
         {/* ══ AVATAR + ICÔNES — rangée flex horizontale ══ */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          {/* Avatar 88px · anneau gradient CSS natif · bouton caméra */}
+          {/* Avatar 88px · anneau gradient CSS natif
+              ⚠️ mc-avatar-ring > * { z-index:2; position:relative } → l'enfant direct passe devant ::after blanc
+              ⚠️ mc-avatar-ring::after { z-index:1; inset:0; background:white } → cache tout si mal géré
+              Solution : enfant direct = div avec overflow:hidden + border-radius pour clipper l'image */}
           <div className="mc-avatar-ring flex-shrink-0" style={{ width: 88, height: 88 }}>
-            {/* mc-avatar-ring > * force position:relative z-index:2 — on utilise padding natif de l'anneau */}
-            <div className="rounded-full overflow-hidden bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center"
-              style={{ width: "100%", height: "100%", padding: 3 }}>
-              <div className="w-full h-full rounded-full overflow-hidden">
-                {profileAvatarUrl
-                  ? <img src={profileAvatarUrl} alt={displayName} className="h-full w-full object-cover object-top" />
-                  : <span className="mc-text-gradient text-2xl font-bold flex items-center justify-center h-full">{initial}</span>
-                }
-              </div>
+            {/* Enfant direct → hérite z-index:2 position:relative → passe devant ::after blanc */}
+            <div className="rounded-full overflow-hidden"
+              style={{ width: 82, height: 82, margin: 3, background: "#f5f3ff" }}>
+              {profileAvatarUrl
+                ? <img src={profileAvatarUrl} alt={displayName}
+                    className="h-full w-full object-cover object-top" />
+                : <span className="mc-text-gradient text-2xl font-bold flex items-center justify-center h-full w-full">{initial}</span>
+              }
             </div>
             <button type="button" onClick={() => setTabInUrl("identite")}
               className="absolute bottom-0.5 right-0.5 z-[10] flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-white shadow-md text-slate-500 hover:scale-110 transition-transform">
