@@ -16,7 +16,7 @@ import { STUDIO_FORWARD_KEY, type StudioForwardPayload } from "@/core/domain/mag
 import {
   BookOpen, Sparkles, User, BarChart2, Plus, Bell, Settings,
   Camera, MessageCircle, Star, Lock, Unlock, Share2, Copy, Check, X,
-  TrendingUp, Eye, Users, DollarSign, Heart, ExternalLink,
+  TrendingUp, Eye, Users, DollarSign, Heart, Box,
 } from "lucide-react";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
@@ -269,57 +269,49 @@ function MagicClockCard({
         )}
       </div>
 
-      {/* ── Footer identique Amazing ── */}
-      <div className="px-3 pt-2.5 pb-3 space-y-1.5">
+      {/* ── Footer style CreatorProfileSheet ── */}
+      <div className="px-2.5 pt-2 pb-2.5 space-y-1">
 
-        {/* Ligne 1 : mini avatar · nom · handle · vues · ❤️ · étoiles */}
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Link href={meetHref} className="flex-shrink-0">
-            <div className="overflow-hidden rounded-full bg-slate-100"
-              style={{ width: 24, height: 24, border: "1.5px solid rgba(226,232,240,.8)" }}>
-              <Image src={avatar} alt={creatorName} width={24} height={24} className="h-full w-full object-cover" />
-            </div>
-          </Link>
-          <Link href={meetHref} className="flex items-center gap-1 min-w-0 flex-shrink">
-            <span className="text-[11px] font-bold text-slate-800 truncate max-w-[80px]">{creatorName}</span>
-            <span className="text-[9px] text-slate-400 truncate">@{cleanHandle}</span>
-          </Link>
-          <span className="h-[3px] w-[3px] rounded-full bg-slate-200 flex-shrink-0" />
-          <span className="flex items-center gap-0.5 text-[9px] text-slate-400 flex-shrink-0">
+        {/* Ligne 1 : mini avatar · nom · · vues · ❤️  (pas d'étoiles) */}
+        <div className="flex items-center gap-1 min-w-0">
+          <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
+            style={{ width: 20, height: 20, border: "1.5px solid rgba(226,232,240,.8)" }}>
+            <Image src={avatar} alt={creatorName} width={20} height={20} className="h-full w-full object-cover" />
+          </div>
+          <span className="text-[10px] font-bold text-slate-800 truncate" style={{ maxWidth: 64 }}>{creatorName}</span>
+          <span className="h-[3px] w-[3px] flex-shrink-0 rounded-full bg-slate-200" />
+          <span className="flex flex-shrink-0 items-center gap-0.5 text-[9px] text-slate-400">
             <Eye className="h-2.5 w-2.5" />{(views ?? 0) > 0 ? (views!).toLocaleString("fr-CH") : "0"}
           </span>
           <button type="button" onClick={handleLike} disabled={likeLoading}
-            className="flex items-center gap-0.5 text-[9px] flex-shrink-0 transition-transform active:scale-110 disabled:opacity-60"
+            className="flex flex-shrink-0 items-center gap-0.5 text-[9px] transition-transform active:scale-110 disabled:opacity-60"
             style={{ color: liked ? "#F54B8F" : "#94a3b8" }}>
-            <Heart className="h-2.5 w-2.5 transition-all"
-              style={liked ? { fill: "#F54B8F", color: "#F54B8F", filter: "drop-shadow(0 0 2px #F54B8F88)" } : {}} />
+            <Heart className="h-2.5 w-2.5"
+              style={liked ? { fill: "#F54B8F", color: "#F54B8F" } : {}} />
             {likesCount > 0 ? likesCount.toLocaleString("fr-CH") : "0"}
           </button>
-          <span className="flex-1" />
-          <AmazingStars value={clock.rating_avg} />
         </div>
 
         {/* Ligne 2 : titre + hashtags */}
-        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
-          {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug">{title}</span>}
+        <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0 min-w-0">
+          {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug truncate">{title}</span>}
           {hashtags.slice(0, 2).map((tag: string) => (
             <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
           ))}
         </div>
 
-        {/* Ligne 3 : CTA "Ouvrir mon Magic Clock" + cadenas */}
+        {/* Ligne 3 : ✅ "Ouvrir Magic Clock" avec icône Box (cube 3D) + cadenas */}
         {!isDraft && (
-          <div className="flex gap-2 pt-0.5">
-            {/* ✅ Link direct vers la page display — "Ouvrir mon Magic Clock" */}
+          <div className="flex gap-1.5 pt-0.5">
             <Link href={displayHref(clock.id, clock.slug)} prefetch={false}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[11px] font-bold text-white transition-all active:scale-95"
-              style={{ background: GRAD_MC, boxShadow: "0 2px 10px rgba(123,75,245,.25)" }}>
-              <ExternalLink className="h-3 w-3" />
-              Ouvrir mon Magic Clock
+              className="flex flex-1 items-center justify-center gap-1 rounded-2xl py-2 text-[10px] font-bold text-white transition-all active:scale-95"
+              style={{ background: GRAD_MC, boxShadow: "0 2px 8px rgba(123,75,245,.2)", minWidth: 0 }}>
+              <Box className="h-2.5 w-2.5 flex-shrink-0" />
+              <span className="truncate">Ouvrir Magic Clock</span>
             </Link>
-            <div className="flex flex-shrink-0 items-center justify-center rounded-2xl px-3 py-2.5"
+            <div className="flex flex-shrink-0 items-center justify-center rounded-2xl px-2.5 py-2"
               style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
-              {mode === "FREE" ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+              {mode === "FREE" ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
             </div>
           </div>
         )}
@@ -806,38 +798,45 @@ function AcquiredCard({ item, avatarUrl, isHighlighted }: {
               <span className="text-[11px] font-bold text-slate-800 truncate max-w-[80px]">{creatorName}</span>
               {cleanHandle && <span className="text-[9px] text-slate-400 truncate">@{cleanHandle}</span>}
             </div>
-            <span className="h-[3px] w-[3px] rounded-full bg-slate-200 flex-shrink-0" />
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-400 flex-shrink-0">
+        {/* ── Footer style CreatorProfileSheet ── */}
+        <div className="px-2.5 pt-2 pb-2.5 space-y-1">
+          {/* Ligne 1 : mini avatar · nom · · vues · ❤️  (pas d'étoiles) */}
+          <div className="flex items-center gap-1 min-w-0">
+            <div className="flex-shrink-0 overflow-hidden rounded-full bg-slate-100"
+              style={{ width: 20, height: 20, border: "1.5px solid rgba(226,232,240,.8)" }}>
+              <Image src={avatar} alt={creatorName} width={20} height={20} className="h-full w-full object-cover" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-800 truncate" style={{ maxWidth: 64 }}>{creatorName}</span>
+            <span className="h-[3px] w-[3px] flex-shrink-0 rounded-full bg-slate-200" />
+            <span className="flex flex-shrink-0 items-center gap-0.5 text-[9px] text-slate-400">
               <Eye className="h-2.5 w-2.5" />0
             </span>
             <button type="button" onClick={handleLike} disabled={likeLoading}
-              className="flex items-center gap-0.5 text-[9px] flex-shrink-0 transition-transform active:scale-110 disabled:opacity-60"
+              className="flex flex-shrink-0 items-center gap-0.5 text-[9px] transition-transform active:scale-110 disabled:opacity-60"
               style={{ color: liked ? "#F54B8F" : "#94a3b8" }}>
-              <Heart className="h-2.5 w-2.5 transition-all"
-                style={liked ? { fill: "#F54B8F", color: "#F54B8F", filter: "drop-shadow(0 0 2px #F54B8F88)" } : {}} />
+              <Heart className="h-2.5 w-2.5"
+                style={liked ? { fill: "#F54B8F", color: "#F54B8F" } : {}} />
               {likesCount > 0 ? likesCount.toLocaleString("fr-CH") : "0"}
             </button>
-            <span className="flex-1" />
-            <AmazingStars value={null} />
           </div>
           {/* Ligne 2 : titre + hashtags */}
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
-            {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug">{title}</span>}
+          <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0 min-w-0">
+            {title && <span className="text-[11px] font-semibold text-slate-800 leading-snug truncate">{title}</span>}
             {hashtags.slice(0, 2).map((tag: string) => (
               <span key={tag} className="text-[10px] text-slate-400 font-medium">{tag}</span>
             ))}
           </div>
-          {/* Ligne 3 : ✅ "Ouvrir mon Magic Clock" → navigation display */}
-          <div className="flex gap-2 pt-0.5">
+          {/* Ligne 3 : ✅ "Ouvrir Magic Clock" avec icône Box (cube 3D) + cadenas */}
+          <div className="flex gap-1.5 pt-0.5">
             <Link href={displayUrl} prefetch={false}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[11px] font-bold text-white transition-all active:scale-95"
-              style={{ background: GRAD_MC, boxShadow: "0 2px 10px rgba(123,75,245,.25)" }}>
-              <ExternalLink className="h-3 w-3" />
-              Ouvrir mon Magic Clock
+              className="flex flex-1 items-center justify-center gap-1 rounded-2xl py-2 text-[10px] font-bold text-white transition-all active:scale-95"
+              style={{ background: GRAD_MC, boxShadow: "0 2px 8px rgba(123,75,245,.2)", minWidth: 0 }}>
+              <Box className="h-2.5 w-2.5 flex-shrink-0" />
+              <span className="truncate">Ouvrir Magic Clock</span>
             </Link>
-            <div className="flex flex-shrink-0 items-center justify-center rounded-2xl px-3 py-2.5"
+            <div className="flex flex-shrink-0 items-center justify-center rounded-2xl px-2.5 py-2"
               style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
-              {mode === "FREE" ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+              {mode === "FREE" ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
             </div>
           </div>
         </div>
