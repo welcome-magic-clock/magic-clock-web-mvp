@@ -1,6 +1,6 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.10 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
+// ✅ v4.12 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
 // ✅ Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles)
 // ✅ Cover blanc · Tabs scrollable · Progression supprimée · Bloc "Nouveau Magic Clock" supprimé
 // ✅ Stats → Lucide uniquement · Fix TypeScript tag: string
@@ -117,7 +117,7 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
 
   // 13 réseaux — href=null → copie lien + toast contextuel
   const nets: { label: string; logo: string; href: string | null; toast?: string }[] = [
-    { label: "WhatsApp",  logo: "/magic-clock-social-whatsapp.png",
+    { label: "WhatsApp",  logo: "/magic-clock-social-whatsapp.png?v=2",
       href: `https://wa.me/?text=${encodeURIComponent(`✨ Découvre mon Magic Clock : ${url}`)}` },
     { label: "Facebook",  logo: "/magic-clock-social-facebook.png",
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
@@ -141,8 +141,8 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
       href: null, toast: "Lien copié ! Colle-le dans ta bio Twitch." },
     { label: "BeReal",    logo: "/magic-clock-social-bereal.png",
       href: null, toast: "Lien copié ! Partage-le sur BeReal." },
-    { label: "Monet",     logo: "/magic-clock-social-monet.png",
-      href: null, toast: "Lien copié ! Partage-le sur Monet." },
+    { label: "Magic Clock", logo: "/magic-clock-social-monet.png",
+      href: null, toast: "Lien copié ! Partage-le sur Magic Clock." },
   ];
 
   return (
