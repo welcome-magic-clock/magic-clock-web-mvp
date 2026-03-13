@@ -1,6 +1,9 @@
-// app/mymagic/MyMagicClient.tsx
-// ✅ v3.2 — Avatar centré des cartes : cercle blanc fin (pas d'anneau gradient sur les cartes contenu)
 "use client";
+// app/mymagic/MyMagicClient.tsx
+// ✅ v4.0 — Cover blanc (suppression bloc rose) · Avatar crop-ready · Progression supprimée
+// ✅ Tabs scrollable horizontal (Stats visible iPhone) · Pictogramme Stats → Lucide
+// ✅ Cartes → bouton "Ouvrir mon Magic Clock" (Créations + Bibliothèque)
+
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,9 +12,9 @@ import Cockpit from "@/features/monet/Cockpit";
 import AccountSettingsModal from "@/components/mymagic/AccountSettingsModal";
 import { STUDIO_FORWARD_KEY, type StudioForwardPayload } from "@/core/domain/magicStudioBridge";
 import {
-  ArrowUpRight, BookOpen, Sparkles, LayoutGrid, User, BarChart2, Plus, Bell, Settings,
-  ChevronRight, Camera, MessageCircle, Star, Lock, Unlock, Share2, Copy, Check, X,
-  Scissors, Zap, Brush, Heart, Briefcase,
+  BookOpen, Sparkles, User, BarChart2, Plus, Bell, Settings,
+  Camera, MessageCircle, Star, Lock, Unlock, Share2, Copy, Check, X,
+  ExternalLink, TrendingUp, Eye, Users, DollarSign,
 } from "lucide-react";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
@@ -38,7 +41,7 @@ type MyMagicClientProps = {
   initialAcquired?: AcquiredMagicClockRow[];
 };
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 const FALLBACK_BEFORE = "/images/magic-clock-bear/before.jpg";
 const FALLBACK_AFTER  = "/images/magic-clock-bear/after.jpg";
 
@@ -63,10 +66,7 @@ function StudioMediaSlot({ src, alt, coverTime }: { src: string; alt: string; co
     if (!v) return;
     const seek = () => { try { v.currentTime = coverTime; v.pause(); } catch {} };
     if (v.readyState >= 1) seek();
-    else {
-      v.addEventListener("loadedmetadata", seek);
-      return () => v.removeEventListener("loadedmetadata", seek);
-    }
+    else { v.addEventListener("loadedmetadata", seek); return () => v.removeEventListener("loadedmetadata", seek); }
   }, [src, coverTime]);
   return (
     <div className="relative h-full w-full">
@@ -83,7 +83,7 @@ function displayHref(id: string, slug?: string | null): string {
   return `/magic-clock-display?id=${encodeURIComponent(id)}`;
 }
 
-// ── Étoiles ──────────────────────────────────────────────────
+// ── Étoiles ──────────────────────────────────────────────────────────────────
 function StarRating({ avg, count, size = "sm" }: { avg: number | null; count: number; size?: "sm" | "lg" }) {
   if (!avg && count === 0) return (
     <div className={`flex items-center gap-0.5 ${size === "lg" ? "gap-1" : ""}`}>
@@ -115,7 +115,7 @@ function StarRating({ avg, count, size = "sm" }: { avg: number | null; count: nu
   );
 }
 
-// ── Icône onglet Créations ────────────────────────────────────
+// ── Icône onglet Créations ────────────────────────────────────────────────────
 function BeforeAfterIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -127,7 +127,7 @@ function BeforeAfterIcon({ className = "h-3.5 w-3.5" }: { className?: string }) 
   );
 }
 
-// ── Modale Partage ────────────────────────────────────────────
+// ── Modale Partage ────────────────────────────────────────────────────────────
 function ShareModal({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const copyLink = async () => {
@@ -137,10 +137,10 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
     if (navigator.share) navigator.share({ title: `Magic Clock — ${name}`, url }).catch(() => {});
   };
   const shareLinks = [
-    { label: "WhatsApp", icon: "💬", color: "bg-green-500", href: `https://wa.me/?text=${encodeURIComponent(`Découvre mon Magic Clock ✨ ${url}`)}` },
+    { label: "WhatsApp", icon: "💬", color: "bg-green-500",    href: `https://wa.me/?text=${encodeURIComponent(`Découvre mon Magic Clock ✨ ${url}`)}`, action: undefined },
     { label: "Instagram", icon: "📷", color: "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600", href: null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta story Instagram."); }},
-    { label: "TikTok",    icon: "🎵", color: "bg-slate-900", href: null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta bio TikTok."); }},
-    { label: "Email",     icon: "✉️", color: "bg-blue-500",  href: `mailto:?subject=${encodeURIComponent("Mon Magic Clock")}&body=${encodeURIComponent(`Découvre ma transformation ✨\n${url}`)}` },
+    { label: "TikTok",    icon: "🎵", color: "bg-slate-900",   href: null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta bio TikTok."); }},
+    { label: "Email",     icon: "✉️", color: "bg-blue-500",    href: `mailto:?subject=${encodeURIComponent("Mon Magic Clock")}&body=${encodeURIComponent(`Découvre ma transformation ✨\n${url}`)}`, action: undefined },
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -163,7 +163,8 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
         )}
         <div className="grid grid-cols-4 gap-3">
           {shareLinks.map(s => (
-            <button key={s.label} onClick={s.href ? () => window.open(s.href!, "_blank") : s.action} className="flex flex-col items-center gap-1.5">
+            <button key={s.label} onClick={s.href ? () => window.open(s.href!, "_blank") : s.action}
+              className="flex flex-col items-center gap-1.5">
               <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl shadow-sm ${s.color}`}>{s.icon}</div>
               <span className="text-[10px] font-medium text-slate-600">{s.label}</span>
             </button>
@@ -174,7 +175,33 @@ function ShareModal({ url, name, onClose }: { url: string; name: string; onClose
   );
 }
 
-// ── Carte Magic Clock — avatar centré avec anneau gradient ────
+// ── Badge métier ──────────────────────────────────────────────────────────────
+function ProfessionBadge({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft]     = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+  const save = () => { onChange(draft.trim()); setEditing(false); };
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2.5 py-0.5">
+        <input ref={inputRef} value={draft} onChange={e => setDraft(e.target.value)}
+          onBlur={save} onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+          className="w-24 bg-transparent text-[10px] font-bold tracking-wide uppercase text-violet-600 outline-none placeholder:text-violet-300"
+          placeholder="Ton métier…" maxLength={30} />
+        <button onClick={save} className="text-violet-500 hover:text-violet-700"><Check className="h-2.5 w-2.5" /></button>
+      </span>
+    );
+  }
+  return (
+    <button onClick={() => { setDraft(value); setEditing(true); }}
+      className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase text-violet-600 hover:border-violet-300 hover:bg-violet-100 transition-colors">
+      ★ {value || "Créateur"}
+    </button>
+  );
+}
+
+// ── Carte Magic Clock — bouton "Ouvrir mon Magic Clock" ───────────────────────
 function MagicClockCard({
   clock, avatarUrl, isHighlighted, cardRef, isDraft = false,
 }: {
@@ -191,31 +218,31 @@ function MagicClockCard({
   const mode      = clock.gating_mode ?? "FREE";
   const hashtags  = (Array.isArray(studio.hashtags) ? studio.hashtags : []).map((t: string) => t.startsWith("#") ? t : `#${t}`);
 
-  const cardContent = (
+  const inner = (
     <article
       ref={cardRef}
       className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all ${
-        isDraft       ? "border-dashed border-amber-200 bg-amber-50/30"
-        : isHighlighted ? "border-violet-400 ring-2 ring-violet-200 ring-offset-2"
-        : "border-slate-200"
+        isDraft         ? "border-dashed border-amber-200 bg-amber-50/30" :
+        isHighlighted   ? "border-violet-400 ring-2 ring-violet-200 ring-offset-2" :
+                          "border-slate-200"
       }`}
     >
+      {/* ── Visuel avant/après ── */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
         <div className="grid h-full w-full grid-cols-2">
           <StudioMediaSlot src={beforeUrl} alt={`${title} - Avant`} coverTime={studio.beforeCoverTime} />
-          <StudioMediaSlot src={afterUrl}  alt={`${title} - Après`} coverTime={studio.afterCoverTime} />
+          <StudioMediaSlot src={afterUrl}  alt={`${title} - Après`} coverTime={studio.afterCoverTime}  />
         </div>
         {/* Ligne centrale */}
         <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
-
-        {/* Avatar centré — cercle blanc fin, pas d'anneau gradient sur les cartes contenu */}
+        {/* Avatar centré — cercle blanc fin */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
           <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
             style={{ width: 44, height: 44, border: "2px solid white" }}>
-            <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title} className="h-full w-full object-cover rounded-full" />
+            <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title}
+              className="h-full w-full object-cover rounded-full" />
           </div>
         </div>
-
         {isDraft && (
           <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-lg bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold text-white">
             <Sparkles className="h-2.5 w-2.5" /> En cours
@@ -223,12 +250,13 @@ function MagicClockCard({
         )}
       </div>
 
-      <div className="px-3 py-2.5">
+      {/* ── Infos ── */}
+      <div className="px-3 pt-2.5 pb-2">
         <p className="text-[12px] font-bold text-slate-900 truncate leading-tight">{title}</p>
         {hashtags.length > 0 && (
           <p className="mt-0.5 text-[10px] text-violet-500 truncate">{hashtags.slice(0, 2).join(" ")}</p>
         )}
-        <div className="mt-1.5 flex items-center justify-between">
+        <div className="mt-1 flex items-center justify-between">
           <div className="flex items-center gap-1">
             {mode === "FREE"
               ? <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600"><Unlock className="h-2.5 w-2.5" /> FREE</span>
@@ -240,93 +268,47 @@ function MagicClockCard({
           )}
         </div>
       </div>
+
+      {/* ✅ Bouton "Ouvrir mon Magic Clock" */}
+      {!isDraft && (
+        <div className="px-3 pb-3">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold transition-all"
+            style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)", color: "white" }}>
+            <ExternalLink className="h-3 w-3" />
+            Ouvrir mon Magic Clock
+          </div>
+        </div>
+      )}
     </article>
   );
 
-  if (isDraft) return cardContent;
+  if (isDraft) return inner;
   return (
     <Link href={displayHref(clock.id, clock.slug)} prefetch={false} className="block hover:-translate-y-0.5 transition-transform">
-      {cardContent}
+      {inner}
     </Link>
   );
 }
 
-// ── Progression Card ──────────────────────────────────────────
-function ProgressionCard({ publishedCount, profession, ratingAvg, ratingCount }: {
-  publishedCount: number; profession: string; ratingAvg: number; ratingCount: number;
-}) {
-  const target      = publishedCount >= 10 ? 20 : publishedCount >= 5 ? 10 : 5;
-  const progress    = Math.min((publishedCount / target) * 100, 100);
-  const stageLabel  = publishedCount >= 10 ? "Maître Horloger" : publishedCount >= 5 ? "Horloger Certifié" : "Apprenti Horloger";
-  const nextLabel   = publishedCount >= 10 ? "Grand Maître"    : publishedCount >= 5 ? "Maître Horloger"   : "Horloger Certifié";
-  return (
-    <div className="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-          <StarRating avg={ratingAvg > 0 ? ratingAvg : null} count={ratingCount} size="sm" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="text-[13px] font-bold mc-text-gradient leading-tight">{stageLabel}</p>
-            {profession && (
-              <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">{profession}</span>
-            )}
-          </div>
-          <p className="text-[10px] text-slate-400 mt-0.5 truncate">{Math.round(progress)}% vers {nextLabel}</p>
-          <div className="mc-progress-bar mt-1.5">
-            <div className="mc-progress-fill" style={{ width: `${progress}%`, transition: "width 1s ease" }} />
-          </div>
-        </div>
-        <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-300" />
-      </div>
-    </div>
-  );
-}
-
-// ── Badge métier ──────────────────────────────────────────────
-function ProfessionBadge({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [draft,   setDraft]   = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
-  const save = () => { onChange(draft.trim()); setEditing(false); };
-  if (editing) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2.5 py-0.5">
-        <input ref={inputRef} value={draft} onChange={e => setDraft(e.target.value)}
-          onBlur={save} onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
-          className="w-24 bg-transparent text-[10px] font-bold tracking-wide uppercase text-violet-600 outline-none placeholder:text-violet-300"
-          placeholder="Ton métier…" maxLength={30}
-        />
-        <button onClick={save} className="text-violet-500 hover:text-violet-700"><Check className="h-2.5 w-2.5" /></button>
-      </span>
-    );
-  }
-  return (
-    <button onClick={() => { setDraft(value); setEditing(true); }}
-      className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase text-violet-600 hover:border-violet-300 hover:bg-violet-100 transition-colors"
-    >★ {value || "Créateur"}</button>
-  );
-}
-
-// ── CLIENT PRINCIPAL ──────────────────────────────────────────
+// ── CLIENT PRINCIPAL ──────────────────────────────────────────────────────────
 export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: MyMagicClientProps) {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const { user }     = useAuth();
   const sb           = getSupabaseBrowser();
-  const userEmail    = user?.email ?? "";
-  const userId       = user?.id    ?? "";
 
-  const [profileHandle,      setProfileHandle]      = useState("");
-  const [profileDisplayName, setProfileDisplayName] = useState("");
-  const [profileAvatarUrl,   setProfileAvatarUrl]   = useState<string | null>(user?.user_metadata?.avatar_url ?? null);
-  const [profileBio,         setProfileBio]         = useState("");
-  const [profession,         setProfession]         = useState("");
+  const userEmail = user?.email ?? "";
+  const userId    = user?.id    ?? "";
+
+  const [profileHandle,     setProfileHandle]     = useState("");
+  const [profileDisplayName,setProfileDisplayName]= useState("");
+  const [profileAvatarUrl,  setProfileAvatarUrl]  = useState<string | null>(user?.user_metadata?.avatar_url ?? null);
+  const [profileBio,        setProfileBio]        = useState("");
+  const [profession,        setProfession]        = useState("");
   const [totalSocialFollowers, setTotalSocialFollowers] = useState(0);
 
   const avgRating  = initialPublished.length > 0
-    ? initialPublished.reduce((s, c) => s + (c.rating_avg ?? 0), 0) / initialPublished.filter(c => c.rating_avg).length || 0
+    ? initialPublished.reduce((s, c) => s + (c.rating_avg ?? 0), 0) / (initialPublished.filter(c => c.rating_avg).length || 1)
     : 0;
   const totalVotes = initialPublished.reduce((s, c) => s + (c.rating_count ?? 0), 0);
 
@@ -336,11 +318,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
   useEffect(() => {
     if (!userId) return;
     sb.from("profiles")
-      .select(`handle, display_name, avatar_url, bio, profession,
-        social_instagram_followers, social_tiktok_followers, social_youtube_followers,
-        social_facebook_followers, social_linkedin_followers, social_snapchat_followers,
-        social_x_followers, social_magic_clock_followers, social_pinterest_followers,
-        social_threads_followers, social_bereal_followers, social_twitch_followers`)
+      .select("handle, display_name, avatar_url, bio, profession, social_instagram_followers, social_tiktok_followers, social_youtube_followers, social_facebook_followers, social_linkedin_followers, social_snapchat_followers, social_x_followers, social_magic_clock_followers, social_pinterest_followers, social_threads_followers, social_bereal_followers, social_twitch_followers")
       .eq("id", userId).single()
       .then(({ data }) => {
         if (!data) return;
@@ -350,10 +328,12 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
         if (data.bio)          setProfileBio(data.bio);
         if (data.profession)   setProfession(data.profession);
         const total = [
-          data.social_instagram_followers, data.social_tiktok_followers, data.social_youtube_followers,
-          data.social_facebook_followers,  data.social_linkedin_followers, data.social_snapchat_followers,
-          data.social_x_followers, data.social_magic_clock_followers, data.social_pinterest_followers,
-          data.social_threads_followers, data.social_bereal_followers, data.social_twitch_followers,
+          data.social_instagram_followers, data.social_tiktok_followers,
+          data.social_youtube_followers,   data.social_facebook_followers,
+          data.social_linkedin_followers,  data.social_snapchat_followers,
+          data.social_x_followers,         data.social_magic_clock_followers,
+          data.social_pinterest_followers, data.social_threads_followers,
+          data.social_bereal_followers,    data.social_twitch_followers,
         ].reduce((s: number, v: any) => s + (v ?? 0), 0);
         setTotalSocialFollowers(total);
       });
@@ -364,18 +344,22 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
     if (userId) await sb.from("profiles").update({ profession: val || null }).eq("id", userId);
   }, [userId]);
 
-  const displayHandle = profileHandle ? `@${profileHandle.replace(/^@/, "")}` : userEmail ? `@${userEmail.split("@")[0]}` : "@…";
-  const displayName   = profileDisplayName || user?.user_metadata?.full_name || userEmail;
-  const initial       = (displayName[0] ?? "?").toUpperCase();
-  const shareUrl      = profileHandle ? `https://magic-clock.com/meet/${profileHandle}` : "https://magic-clock.com";
+  const displayHandle = profileHandle
+    ? `@${profileHandle.replace(/^@/, "")}`
+    : userEmail ? `@${userEmail.split("@")[0]}` : "@…";
+  const displayName = profileDisplayName || user?.user_metadata?.full_name || userEmail;
+  const initial     = (displayName[0] ?? "?").toUpperCase();
+  const shareUrl    = profileHandle ? `https://magic-clock.com/meet/${profileHandle}` : "https://magic-clock.com";
 
-  const openParam  = searchParams.get("open");
+  const openParam = searchParams.get("open");
   const [activeTab, setActiveTab] = useState<MyMagicTab>("creations");
+
   useEffect(() => {
     const tab = searchParams.get("tab") as MyMagicTab | null;
     if (tab === "identite" || tab === "stats" || tab === "bibliotheque") setActiveTab(tab);
     else setActiveTab("creations");
   }, [searchParams]);
+
   const setTabInUrl = (tab: MyMagicTab) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
@@ -384,6 +368,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
 
   const creatorCardRefs  = useRef<Record<string, HTMLDivElement | null>>({});
   const acquiredCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   useEffect(() => {
     if (!openParam) return;
     const t = setTimeout(() => {
@@ -395,6 +380,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
 
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [draftClock,  setDraftClock]  = useState<SupabaseMagicClockRow | null>(null);
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STUDIO_FORWARD_KEY);
@@ -420,22 +406,17 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
       {showSettings && <AccountSettingsModal onClose={() => setShowSettings(false)} userEmail={userEmail} />}
 
       <main className="mx-auto max-w-lg pb-36 pt-0">
-        {/* ══ COVER ══ */}
-        <div className="relative h-44 w-full overflow-hidden" style={{ background: "var(--mc-cover-bg)" }}>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-[0.07] pointer-events-none select-none">
-            <svg width="56" height="56" viewBox="0 0 100 100" fill="none">
-              <path d="M50 5L90 27.5L90 72.5L50 95L10 72.5L10 27.5Z" stroke="#7B4BF5" strokeWidth="4" fill="none"/>
-              <circle cx="50" cy="50" r="28" stroke="#7B4BF5" strokeWidth="4" fill="none"/>
-              <line x1="50" y1="24" x2="50" y2="50" stroke="#7B4BF5" strokeWidth="5" strokeLinecap="round"/>
-              <line x1="50" y1="50" x2="66" y2="50" stroke="#7B4BF5" strokeWidth="5" strokeLinecap="round"/>
-            </svg>
-            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-violet-500">Magic Clock</span>
-          </div>
+
+        {/* ══ COVER BLANC — fond propre, pas de bloc rose ══ */}
+        <div className="relative h-16 w-full bg-white">
+          {/* Actions top-right */}
           <div className="absolute top-3.5 right-3.5 flex gap-2 z-10">
-            <Link href="/messages" className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
+            <Link href="/messages"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
               <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
             </Link>
-            <Link href="/notifications" className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
+            <Link href="/notifications"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:shadow-md transition-shadow">
               <Bell className="h-4 w-4" strokeWidth={1.8} />
             </Link>
             <button type="button" onClick={() => setShowSettings(true)}
@@ -445,8 +426,8 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
           </div>
         </div>
 
-        {/* ══ AVATAR — utilise mc-avatar-ring existant (ProfileSection gère déjà l'anneau) ══ */}
-        <div className="px-4 -mt-14 relative z-10 mb-3">
+        {/* ══ AVATAR — anneau gradient, recadrage via onglet Identité ══ */}
+        <div className="px-4 relative z-10 mb-3">
           <div className="mc-avatar-ring inline-block" style={{ width: 100, height: 100 }}>
             <div className="absolute inset-[3px] z-[2] rounded-full overflow-hidden bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
               {profileAvatarUrl
@@ -504,22 +485,24 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
           </div>
         </div>
 
-        {/* ══ PROGRESSION ══ */}
-        <ProgressionCard publishedCount={initialPublished.length} profession={profession} ratingAvg={avgRating} ratingCount={totalVotes} />
+        {/* ✅ BLOC "Apprenti Horloger" SUPPRIMÉ */}
 
-        {/* ══ TABS ══ */}
-        <div className="flex border-b border-slate-200 px-4 mb-0">
+        {/* ══ TABS — scrollable horizontal (Stats visible sur iPhone) ══ */}
+        <div className="flex overflow-x-auto border-b border-slate-200 px-4 mb-0" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
           {([
-            { id: "creations"   as const, label: "Créations",   icon: null,       count: initialPublished.length },
-            { id: "bibliotheque"as const, label: "Bibliothèque", icon: BookOpen,   count: initialAcquired.length  },
-            { id: "identite"    as const, label: "Identité",     icon: User },
-            { id: "stats"       as const, label: "Stats",        icon: BarChart2 },
+            { id: "creations"   as const, label: "Créations",   icon: null,      count: initialPublished.length },
+            { id: "bibliotheque"as const, label: "Bibliothèque",icon: BookOpen,  count: initialAcquired.length },
+            { id: "identite"    as const, label: "Identité",    icon: User },
+            { id: "stats"       as const, label: "Stats",       icon: BarChart2 },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button key={tab.id} type="button" onClick={() => setTabInUrl(tab.id)}
-                className={`relative flex items-center gap-1.5 px-4 py-3 text-[11px] font-bold uppercase tracking-wider transition-colors ${isActive ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}>
-                {tab.id === "creations" ? <BeforeAfterIcon className="h-3.5 w-3.5" /> : tab.icon && <tab.icon className="h-3 w-3" strokeWidth={2} />}
+                className={`relative flex flex-shrink-0 items-center gap-1.5 px-4 py-3 text-[11px] font-bold uppercase tracking-wider transition-colors ${isActive ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}>
+                {tab.id === "creations"
+                  ? <BeforeAfterIcon className="h-3.5 w-3.5" />
+                  : tab.icon && <tab.icon className="h-3 w-3" strokeWidth={2} />
+                }
                 {tab.label}
                 {"count" in tab && (tab.count as number) > 0 && (
                   <span className="ml-0.5 rounded-lg border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600">{tab.count}</span>
@@ -550,13 +533,9 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {initialPublished.map((clock) => (
-                    <MagicClockCard
-                      key={clock.id} clock={clock} avatarUrl={profileAvatarUrl}
+                    <MagicClockCard key={clock.id} clock={clock} avatarUrl={profileAvatarUrl}
                       isHighlighted={!!openParam && (clock.slug === openParam || clock.id === openParam)}
-                      cardRef={(el) => {
-                        creatorCardRefs.current[clock.id] = el;
-                        if (clock.slug) creatorCardRefs.current[clock.slug] = el;
-                      }}
+                      cardRef={(el) => { creatorCardRefs.current[clock.id] = el; if (clock.slug) creatorCardRefs.current[clock.slug] = el; }}
                     />
                   ))}
                 </div>
@@ -576,51 +555,6 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
               <p className="mc-text-gradient text-[14px] font-bold">Nouveau Magic Clock</p>
               <p className="text-[12px] text-slate-400">Partage ta prochaine transformation sur Amazing</p>
             </Link>
-
-            {/* Bibliothèque inline dans Créations */}
-            {initialAcquired.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 after:flex-1 after:h-px after:bg-slate-100 after:content-['']">
-                  <BookOpen className="h-3 w-3" /> Bibliothèque
-                </h3>
-                {libraryFree.length > 0 && (
-                  <div className="mb-4">
-                    <div className="mb-2 flex items-center gap-1.5"><Unlock className="h-3 w-3 text-emerald-500" /><span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Gratuit</span></div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {libraryFree.map(item => (
-                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
-                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && (item.id === openParam || item.magic_clock_id === openParam)} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {librarySub.length > 0 && (
-                  <div className="mb-4">
-                    <div className="mb-2 flex items-center gap-1.5"><Lock className="h-3 w-3 text-violet-500" /><span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">Abonnement</span></div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {librarySub.map(item => (
-                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
-                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && item.id === openParam} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {libraryPPV.length > 0 && (
-                  <div>
-                    <div className="mb-2 flex items-center gap-1.5"><Lock className="h-3 w-3 text-amber-500" /><span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">À l'unité</span></div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {libraryPPV.map(item => (
-                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
-                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && item.id === openParam} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </section>
         )}
 
@@ -629,7 +563,9 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
           <section className="px-4 pt-4">
             {initialAcquired.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-16 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50"><BookOpen className="h-7 w-7 text-slate-200" /></div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50">
+                  <BookOpen className="h-7 w-7 text-slate-200" />
+                </div>
                 <p className="text-[13px] font-semibold text-slate-400">Ta bibliothèque est vide</p>
                 <p className="text-[11px] text-slate-300">Débloque des Magic Clocks depuis Amazing</p>
               </div>
@@ -637,36 +573,42 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
               <div className="space-y-5">
                 {libraryFree.length > 0 && (
                   <div>
-                    <div className="mb-2 flex items-center gap-1.5"><Unlock className="h-3 w-3 text-emerald-500" /><span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Gratuit · {libraryFree.length}</span></div>
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <Unlock className="h-3 w-3 text-emerald-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Gratuit · {libraryFree.length}</span>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       {libraryFree.map(item => (
-                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
-                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && (item.id === openParam || item.magic_clock_id === openParam)} />
-                        </Link>
+                        <AcquiredCard key={item.magic_clock_id} item={item} avatarUrl={profileAvatarUrl}
+                          isHighlighted={!!openParam && (item.id === openParam || item.magic_clock_id === openParam)} />
                       ))}
                     </div>
                   </div>
                 )}
                 {librarySub.length > 0 && (
                   <div>
-                    <div className="mb-2 flex items-center gap-1.5"><Lock className="h-3 w-3 text-violet-500" /><span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">Abonnement · {librarySub.length}</span></div>
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <Lock className="h-3 w-3 text-violet-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">Abonnement · {librarySub.length}</span>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       {librarySub.map(item => (
-                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
-                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && item.id === openParam} />
-                        </Link>
+                        <AcquiredCard key={item.magic_clock_id} item={item} avatarUrl={profileAvatarUrl}
+                          isHighlighted={!!openParam && item.id === openParam} />
                       ))}
                     </div>
                   </div>
                 )}
                 {libraryPPV.length > 0 && (
                   <div>
-                    <div className="mb-2 flex items-center gap-1.5"><Lock className="h-3 w-3 text-amber-500" /><span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">À l&apos;unité · {libraryPPV.length}</span></div>
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <Lock className="h-3 w-3 text-amber-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">À l&apos;unité · {libraryPPV.length}</span>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       {libraryPPV.map(item => (
-                        <Link key={item.magic_clock_id} href={displayHref(item.id, item.slug)} className="block hover:-translate-y-0.5 transition-transform">
-                          <AcquiredCard item={item} avatarUrl={profileAvatarUrl} isHighlighted={!!openParam && item.id === openParam} />
-                        </Link>
+                        <AcquiredCard key={item.magic_clock_id} item={item} avatarUrl={profileAvatarUrl}
+                          isHighlighted={!!openParam && item.id === openParam} />
                       ))}
                     </div>
                   </div>
@@ -693,19 +635,25 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
           </section>
         )}
 
-        {/* ══ TAB STATS ══ */}
+        {/* ══ TAB STATS — pictos Lucide uniquement ══ */}
         {activeTab === "stats" && (
           <section className="px-4 pt-5 space-y-3">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 after:flex-1 after:h-px after:bg-slate-100 after:content-['']">Cette semaine</h3>
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 after:flex-1 after:h-px after:bg-slate-100 after:content-['']">
+              Cette semaine
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { value: "0",                    label: "Vues totales" },
-                { value: totalSocialFollowers > 0 ? formatNum(totalSocialFollowers) : "0", label: "Abonnés totaux" },
-                { value: avgRating > 0 ? avgRating.toFixed(1) : "—", label: "Note moy." },
-                { value: "0€",                   label: "Revenus" },
+                { value: "0",                                                label: "Vues totales",   Icon: Eye         },
+                { value: totalSocialFollowers > 0 ? formatNum(totalSocialFollowers) : "0", label: "Abonnés totaux", Icon: Users       },
+                { value: avgRating > 0 ? avgRating.toFixed(1) : "—",        label: "Note moy.",     Icon: Star        },
+                { value: "0 CHF",                                            label: "Revenus",        Icon: DollarSign  },
               ].map((kpi) => (
-                <div key={kpi.label} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-                  <p className="mc-text-gradient text-[26px] font-bold leading-none mb-1">{kpi.value}</p>
+                <div key={kpi.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <kpi.Icon className="h-4 w-4 text-slate-300" strokeWidth={1.8} />
+                    <TrendingUp className="h-3 w-3 text-slate-200" strokeWidth={1.8} />
+                  </div>
+                  <p className="mc-text-gradient text-[24px] font-bold leading-none mb-1">{kpi.value}</p>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
                 </div>
               ))}
@@ -720,7 +668,7 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
               </div>
             )}
             <div className="rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm">
-              <p className="text-2xl mb-2">📊</p>
+              <BarChart2 className="h-8 w-8 text-slate-200 mx-auto mb-2" strokeWidth={1.5} />
               <p className="text-[13px] text-slate-500">
                 Statistiques détaillées dans{" "}
                 <Link href="/monet" className="mc-text-gradient font-semibold hover:opacity-80">Monétisation</Link>
@@ -740,42 +688,55 @@ export function MyMagicClient({ initialPublished = [], initialAcquired = [] }: M
   );
 }
 
-// ── Carte acquise (Bibliothèque) — avatar centré avec anneau gradient ──
+// ── Carte acquise (Bibliothèque) — avec bouton "Ouvrir mon Magic Clock" ────────
 function AcquiredCard({ item, avatarUrl, isHighlighted }: {
-  item: AcquiredMagicClockRow; avatarUrl: string | null; isHighlighted?: boolean;
+  item: AcquiredMagicClockRow;
+  avatarUrl: string | null;
+  isHighlighted?: boolean;
 }) {
   const studio    = (item.work as any)?.studio ?? {};
   const beforeUrl = typeof studio.beforeUrl === "string" ? studio.beforeUrl : FALLBACK_BEFORE;
   const afterUrl  = typeof studio.afterUrl  === "string" ? studio.afterUrl  : FALLBACK_AFTER;
   const title     = studio.title || item.title || "Magic Clock";
   const mode      = (item as any).gating_mode ?? "FREE";
-  return (
-    <article className={`rounded-2xl border bg-white shadow-sm overflow-hidden ${isHighlighted ? "border-violet-400 ring-2 ring-violet-200 ring-offset-2" : "border-slate-200"}`}>
-      <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
-        <div className="grid h-full w-full grid-cols-2">
-          <StudioMediaSlot src={beforeUrl} alt={`${title} - Avant`} coverTime={studio.beforeCoverTime} />
-          <StudioMediaSlot src={afterUrl}  alt={`${title} - Après`} coverTime={studio.afterCoverTime} />
-        </div>
-        <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
 
-        {/* Avatar centré — cercle blanc fin, pas d'anneau gradient sur les cartes contenu */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
-            style={{ width: 44, height: 44, border: "2px solid white" }}>
-            <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title} className="h-full w-full object-cover rounded-full" />
+  return (
+    <Link href={`/magic-clock-display?id=${encodeURIComponent(item.magic_clock_id)}`}
+      className="block hover:-translate-y-0.5 transition-transform">
+      <article className={`rounded-2xl border bg-white shadow-sm overflow-hidden ${isHighlighted ? "border-violet-400 ring-2 ring-violet-200 ring-offset-2" : "border-slate-200"}`}>
+        <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
+          <div className="grid h-full w-full grid-cols-2">
+            <StudioMediaSlot src={beforeUrl} alt={`${title} - Avant`} coverTime={studio.beforeCoverTime} />
+            <StudioMediaSlot src={afterUrl}  alt={`${title} - Après`} coverTime={studio.afterCoverTime}  />
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-white/80" />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
+              style={{ width: 44, height: 44, border: "2px solid white" }}>
+              <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt={title}
+                className="h-full w-full object-cover rounded-full" />
+            </div>
           </div>
         </div>
-      </div>
-      <div className="px-3 py-2.5">
-        <p className="text-[12px] font-bold text-slate-900 truncate">{title}</p>
-        <p className="text-[10px] text-slate-400 mt-0.5 truncate">{item.creator_name ?? item.creator_handle}</p>
-        <div className="mt-1.5">
-          {mode === "FREE"
-            ? <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600"><Unlock className="h-2.5 w-2.5" /> FREE</span>
-            : <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600"><Lock className="h-2.5 w-2.5" /> {mode === "SUB" ? "Abo" : "PPV"}</span>
-          }
+        <div className="px-3 pt-2.5 pb-2">
+          <p className="text-[12px] font-bold text-slate-900 truncate">{title}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5 truncate">{item.creator_name ?? item.creator_handle}</p>
+          <div className="mt-1">
+            {mode === "FREE"
+              ? <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600"><Unlock className="h-2.5 w-2.5" /> FREE</span>
+              : <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600"><Lock className="h-2.5 w-2.5" /> {mode === "SUB" ? "Abo" : "PPV"}</span>
+            }
+          </div>
         </div>
-      </div>
-    </article>
+        {/* ✅ Bouton "Ouvrir mon Magic Clock" */}
+        <div className="px-3 pb-3">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold"
+            style={{ background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)", color: "white" }}>
+            <ExternalLink className="h-3 w-3" />
+            Ouvrir mon Magic Clock
+          </div>
+        </div>
+      </article>
+    </Link>
   );
 }
