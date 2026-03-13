@@ -1,5 +1,5 @@
 // app/studio/page.tsx
-// ✅ v2.3 — Avatar central du canevas → anneau gradient canonique Magic Clock (MCAvatar)
+// ✅ v2.3 — Avatar central du canevas : cercle blanc fin (pas d'anneau gradient sur les cartes contenu)
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,6 @@ import { STUDIO_FORWARD_KEY, type StudioForwardPayload } from "@/core/domain/mag
 import { processAndUpload } from "@/lib/mediaCompressor";
 import { useAuth } from "@/core/supabase/useAuth";
 import { getSupabaseBrowser } from "@/core/supabase/browser";
-import { MCAvatar } from "@/components/ui/MCAvatar";
 
 // ── Avatar créateur au centre du canevas ─────────────────────
 function StudioAvatarCenter({ userId }: { userId: string }) {
@@ -31,13 +30,11 @@ function StudioAvatarCenter({ userId }: { userId: string }) {
   }, [userId]);
 
   return (
-    <MCAvatar
-      src={avatarUrl}
-      name={displayName}
-      px={80}
-      animated
-      duration={8}
-    />
+    // eslint-disable-next-line @next/next/no-img-element
+    <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
+      style={{ width: 80, height: 80, border: "2.5px solid white" }}>
+      <img src={avatarUrl ?? "/images/magic-clock-bear/avatar.png"} alt="Mon profil" className="h-full w-full object-cover" />
+    </div>
   );
 }
 
@@ -366,17 +363,16 @@ export default function MagicStudioPage() {
                 </button>
               </div>
 
-              {/* ✅ Avatar centré — anneau gradient canonique Magic Clock */}
+              {/* Avatar centré — cercle blanc fin */}
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
                 {user ? (
                   <StudioAvatarCenter userId={user.id} />
                 ) : (
-                  <MCAvatar
-                    src="/images/magic-clock-bear/avatar.png"
-                    name="Magic Clock"
-                    px={80}
-                    animated={false}
-                  />
+                  <div className="overflow-hidden rounded-full bg-white/20 shadow-md backdrop-blur-sm"
+                    style={{ width: 80, height: 80, border: "2.5px solid white" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/images/magic-clock-bear/avatar.png" alt="Magic Clock" className="h-full w-full object-cover" />
+                  </div>
                 )}
               </div>
             </div>
