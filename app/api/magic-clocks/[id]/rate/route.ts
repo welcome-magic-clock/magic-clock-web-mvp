@@ -53,7 +53,8 @@ export async function POST(
   });
 
   if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API] error:", error.message);
+    return NextResponse.json({ error: "Une erreur est survenue" }, { status: 500 });
 
   return NextResponse.json({ ok: true, rating });
 }
