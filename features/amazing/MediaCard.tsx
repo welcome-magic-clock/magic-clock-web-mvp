@@ -1,12 +1,13 @@
 "use client";
 // features/amazing/MediaCard.tsx
-// ✅ v10 — Avatar centré : cercle blanc fin (pas d'anneau gradient sur les cartes contenu)
+// ✅ v11 — Bouton Partager (Share2) ajouté dans le footer de chaque carte
+// ✅ ShareCardModal inline — même charte que MyMagic, Magic Clock en 1ère position
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   Eye, Heart, Lock, Unlock, Loader2, BadgeCheck,
-  Sparkles, CreditCard, Gift,
+  Sparkles, CreditCard, Gift, Share2, Copy, Check, X,
 } from "lucide-react";
 import type { FeedCard } from "@/core/domain/types";
 
@@ -132,6 +133,73 @@ function ConditionalLink({ href, children, className, style }: {
   return <div className={className} style={style}>{children}</div>;
 }
 
+// ── ShareCardModal ────────────────────────────────────────────────────────
+const GRAD_MC = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
+
+function ShareCardModal({ url, title, onClose }: { url: string; title: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const [toastNet, setToastNet] = useState<string | null>(null);
+  const copyLink = async () => { try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch {} };
+  const copyAndToast = async (label: string) => { try { await navigator.clipboard.writeText(url); } catch {} setToastNet(label); setTimeout(() => setToastNet(null), 2500); };
+  const nets: { label: string; logo: string; href: string | null; toast?: string }[] = [
+    { label: "Magic Clock", logo: "/magic-clock-social-monet.png",        href: null, toast: "Lien copié ! Partage-le sur Magic Clock." },
+    { label: "TikTok",      logo: "/magic-clock-social-tiktok.png",       href: null, toast: "Lien copié ! Colle-le dans ta bio TikTok." },
+    { label: "Instagram",   logo: "/magic-clock-social-instagram.png",    href: null, toast: "Lien copié ! Colle-le dans ta story ou ta bio Instagram." },
+    { label: "WhatsApp",    logo: "/magic-clock-social-whatsapp.png?v=2", href: `https://wa.me/?text=${encodeURIComponent(`✨ Découvre ce Magic Clock : ${url}`)}` },
+    { label: "X",           logo: "/magic-clock-social-x.png",            href: `https://x.com/intent/tweet?text=${encodeURIComponent(`✨ Magic Clock :`)}&url=${encodeURIComponent(url)}` },
+    { label: "Snapchat",    logo: "/magic-clock-social-snapchat.png",     href: `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(url)}` },
+    { label: "Facebook",    logo: "/magic-clock-social-facebook.png",     href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
+    { label: "BeReal",      logo: "/magic-clock-social-bereal.png",       href: null, toast: "Lien copié ! Partage-le sur BeReal." },
+    { label: "Twitch",      logo: "/magic-clock-social-twitch.png",       href: null, toast: "Lien copié ! Colle-le dans ta bio Twitch." },
+    { label: "YouTube",     logo: "/magic-clock-social-youtube.png",      href: null, toast: "Lien copié ! Ajoute-le à ta description YouTube." },
+    { label: "LinkedIn",    logo: "/magic-clock-social-linkedin.png",     href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
+    { label: "Pinterest",   logo: "/magic-clock-social-pinterest.png",    href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(`✨ Magic Clock`)}` },
+    { label: "Threads",     logo: "/magic-clock-social-threads.png",      href: `https://www.threads.net/intent/post?text=${encodeURIComponent(`✨ Magic Clock : ${url}`)}` },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-t-3xl bg-white pt-4 pb-10 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
+        <div className="flex items-center justify-between px-5 mb-4">
+          <h3 className="text-base font-bold text-slate-900">Partager ce Magic Clock</h3>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="mx-5 mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <span className="flex-1 truncate text-xs text-slate-500">{url}</span>
+          <button onClick={copyLink} className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all ${copied ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700 hover:bg-violet-200"}`}>
+            {copied ? <><Check className="h-3 w-3" /> Copié</> : <><Copy className="h-3 w-3" /> Copier</>}
+          </button>
+        </div>
+        {typeof navigator !== "undefined" && "share" in navigator && (
+          <button onClick={() => navigator.share({ title: `Magic Clock — ${title}`, url }).catch(() => {})}
+            className="mx-5 mb-5 flex w-[calc(100%-40px)] items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white"
+            style={{ background: GRAD_MC }}>
+            <Share2 className="h-4 w-4" /> Partager via…
+          </button>
+        )}
+        <div style={{ overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", paddingLeft: 20, paddingRight: 20 }}>
+          <div style={{ display: "flex", gap: 12, width: "max-content" }}>
+            {nets.map(n => (
+              <button key={n.label} onClick={n.href ? () => window.open(n.href!, "_blank") : () => copyAndToast(n.label)}
+                className="flex flex-col items-center gap-1.5 transition-transform active:scale-95" style={{ width: 60 }}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm" style={{ border: "1px solid rgba(226,232,240,.9)", flexShrink: 0 }}>
+                  <img src={n.logo} alt={n.label} style={{ width: 32, height: 32, objectFit: "contain" }} />
+                </div>
+                <span className="text-[10px] font-medium text-slate-600 text-center leading-tight w-full">{n.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {toastNet && (
+          <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 text-xs text-emerald-700 font-medium">
+            <Check className="h-3.5 w-3.5 flex-shrink-0" />{nets.find(n => n.label === toastNet)?.toast ?? "Lien copié !"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Composant principal ──────────────────────────────────────
 export default function MediaCard({ item }: Props) {
   const cleanUserHandle = item.user.startsWith("@") ? item.user.slice(1) : item.user;
@@ -172,6 +240,8 @@ export default function MediaCard({ item }: Props) {
   const [likesCount,  setLikesCount]  = useState(typeof (item as any).likes === "number" ? (item as any).likes : 0);
   const [liked,       setLiked]       = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [showShare,   setShowShare]   = useState(false);
+  const shareUrl = clockSlug ? `https://magic-clock.com/magic-clock/${clockSlug}` : `https://magic-clock.com`;
 
   useEffect(() => {
     fetch(`/api/magic-clocks/${magicClockId}/liked`)
@@ -247,6 +317,7 @@ export default function MediaCard({ item }: Props) {
       className="w-full overflow-hidden rounded-3xl bg-white"
       style={{ border: "1px solid rgba(226,232,240,.8)", boxShadow: "0 2px 12px rgba(0,0,0,.05)" }}
     >
+      {showShare && <ShareCardModal url={shareUrl} title={title} onClose={() => setShowShare(false)} />}
       {/* ── Zone média ── */}
       <ConditionalLink
         href={clockHref}
@@ -336,7 +407,7 @@ export default function MediaCard({ item }: Props) {
           ))}
         </div>
 
-        {/* Ligne 3 : CTA + cadenas */}
+        {/* Ligne 3 : CTA + partager + cadenas */}
         <div className="flex gap-2 pt-0.5">
           <button
             type="button" onClick={handleMainAction} disabled={isLoading !== null}
@@ -347,6 +418,14 @@ export default function MediaCard({ item }: Props) {
               ? <Loader2 className="h-3 w-3 animate-spin" />
               : <><btnCfg.Icon className="h-3 w-3" />{btnCfg.label}</>
             }
+          </button>
+          <button
+            type="button" onClick={() => setShowShare(true)}
+            className="flex flex-shrink-0 items-center justify-center rounded-2xl px-3 py-2.5 transition-all active:scale-95"
+            style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8" }}
+            aria-label="Partager"
+          >
+            <Share2 className="h-3.5 w-3.5" />
           </button>
           <button
             type="button" onClick={handleMainAction} disabled={isLoading !== null}
