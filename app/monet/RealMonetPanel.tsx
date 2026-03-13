@@ -117,6 +117,7 @@ export function RealMonetPanel({ creator }: Props) {
         .eq("user_id", user.id)
         .eq("gating_mode", "PPV")
         .eq("is_published", true)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (clocks && clocks.length > 0) {
