@@ -1,6 +1,7 @@
-// app/page.tsx — Amazing v7.0
+// app/page.tsx — Amazing v7.1
 // ✅ 0 mock — 100% Supabase — id UUID réel
 // ✅ v7.0 — AmazingHeader retiré ici : géré directement dans AmazingFeed (state filtre/search)
+// ✅ v7.1 — Filtre deleted_at IS NULL (soft-delete)
 // ✅ dynamic force pour feed toujours frais
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ async function getAmazingFeed(): Promise<FeedCard[]> {
         "id, slug, title, gating_mode, ppv_price, creator_handle, creator_name, work, created_at, rating_avg, views_count, likes_count, before_url, after_url",
       )
       .eq("is_published", true)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(100);
 
