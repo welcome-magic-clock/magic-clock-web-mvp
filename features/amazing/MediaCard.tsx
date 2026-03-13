@@ -34,18 +34,38 @@ function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max) + "…" : s;
 }
 
-// ── Étoiles — style doux : ★ unicode + chiffre gradient texte ──────────────
+// ── Étoiles — 5 grises par défaut → gradient + chiffre quand notée ──────────
+const GRAD_BG_STARS = "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)";
 const STAR_GRAD: React.CSSProperties = {
-  background: "linear-gradient(135deg,#4B7BF5,#7B4BF5,#C44BDA,#F54B8F,#F5834B)",
+  background: GRAD_BG_STARS,
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
 };
 
-function StarRating({ value }: { value: number }) {
+// value = undefined → 5 étoiles grises vides (aucune note)
+// value = nombre    → étoiles remplies gradient + chiffre à côté
+function StarRating({ value }: { value?: number }) {
+  const filled = value !== undefined ? Math.round(value) : 0;
   return (
     <span className="inline-flex items-center gap-0.5">
-      <span className="text-[10px] font-black" style={STAR_GRAD}>★</span>
-      <span className="text-[9px] font-bold" style={STAR_GRAD}>{value.toFixed(1)}</span>
+      {[1, 2, 3, 4, 5].map((s) => (
+        <span
+          key={s}
+          className="text-[9px] font-black leading-none"
+          style={
+            s <= filled
+              ? { background: GRAD_BG_STARS, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }
+              : { color: "#cbd5e1" }
+          }
+        >
+          ★
+        </span>
+      ))}
+      {value !== undefined && (
+        <span className="ml-0.5 text-[9px] font-bold" style={STAR_GRAD}>
+          {value.toFixed(1)}
+        </span>
+      )}
     </span>
   );
 }
@@ -536,9 +556,9 @@ export default function MediaCard({ item }: Props) {
             {likesCount > 0 ? likesCount.toLocaleString("fr-CH") : "0"}
           </button>
 
-          {/* Spacer + étoiles à droite */}
+          {/* Spacer + étoiles à droite — toujours visibles (grises si pas encore notée) */}
           <span className="flex-1" />
-          {starsValue !== undefined && <StarRating value={starsValue} />}
+          <StarRating value={starsValue} />
         </div>
 
         {/* Ligne 2 : titre + hashtags */}
