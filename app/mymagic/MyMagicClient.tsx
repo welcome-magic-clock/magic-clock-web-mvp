@@ -1,6 +1,6 @@
 "use client";
 // app/mymagic/MyMagicClient.tsx
-// ✅ v4.9 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
+// ✅ v4.10 — Bouton "Ouvrir mon Magic Clock" → Link réel vers /magic-clock-display?slug=...
 // ✅ Footer cartes identique Amazing (mini avatar · nom · handle · vues · ❤️ · étoiles)
 // ✅ Cover blanc · Tabs scrollable · Progression supprimée · Bloc "Nouveau Magic Clock" supprimé
 // ✅ Stats → Lucide uniquement · Fix TypeScript tag: string
@@ -97,52 +97,116 @@ function BeforeAfterIcon({ className = "h-3.5 w-3.5" }: { className?: string }) 
   );
 }
 
-// ── Modale Partage ────────────────────────────────────────────────────────────
+// ── Modale Partage v2 — scroll horizontal · 13 réseaux ───────────────────────
 function ShareModal({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
+  const [toastNet, setToastNet] = useState<string | null>(null);
+
   const copyLink = async () => {
-    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch {}
+  };
+  const copyAndToast = async (label: string) => {
+    try { await navigator.clipboard.writeText(url); } catch {}
+    setToastNet(label);
+    setTimeout(() => setToastNet(null), 2500);
   };
   const nativeShare = () => {
-    if (navigator.share) navigator.share({ title: `Magic Clock — ${name}`, url }).catch(() => {});
+    if (typeof navigator !== "undefined" && "share" in navigator)
+      navigator.share({ title: `Magic Clock — ${name}`, url }).catch(() => {});
   };
-  const shareLinks = [
-    { label: "WhatsApp",  logo: "/magic-clock-social-whatsapp.png",  href: `https://wa.me/?text=${encodeURIComponent(`Découvre mon Magic Clock ✨ ${url}`)}`,  action: undefined as (() => void) | undefined },
-    { label: "Instagram", logo: "/magic-clock-social-instagram.png",  href: null as string | null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta story Instagram."); } },
-    { label: "TikTok",    logo: "/magic-clock-social-tiktok.png",     href: null as string | null, action: () => { copyLink(); alert("Lien copié ! Colle-le dans ta bio TikTok."); } },
-    { label: "Facebook",  logo: "/magic-clock-social-facebook.png",   href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, action: undefined as (() => void) | undefined },
+
+  // 13 réseaux — href=null → copie lien + toast contextuel
+  const nets: { label: string; logo: string; href: string | null; toast?: string }[] = [
+    { label: "WhatsApp",  logo: "/magic-clock-social-whatsapp.png",
+      href: `https://wa.me/?text=${encodeURIComponent(`✨ Découvre mon Magic Clock : ${url}`)}` },
+    { label: "Facebook",  logo: "/magic-clock-social-facebook.png",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
+    { label: "X",         logo: "/magic-clock-social-x.png",
+      href: `https://x.com/intent/tweet?text=${encodeURIComponent(`✨ Mon Magic Clock :`)} &url=${encodeURIComponent(url)}` },
+    { label: "LinkedIn",  logo: "/magic-clock-social-linkedin.png",
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
+    { label: "Instagram", logo: "/magic-clock-social-instagram.png",
+      href: null, toast: "Lien copié ! Colle-le dans ta story ou ta bio Instagram." },
+    { label: "TikTok",    logo: "/magic-clock-social-tiktok.png",
+      href: null, toast: "Lien copié ! Colle-le dans ta bio TikTok." },
+    { label: "Snapchat",  logo: "/magic-clock-social-snapchat.png",
+      href: `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(url)}` },
+    { label: "Pinterest", logo: "/magic-clock-social-pinterest.png",
+      href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(`✨ Mon Magic Clock`)}` },
+    { label: "Threads",   logo: "/magic-clock-social-threads.png",
+      href: `https://www.threads.net/intent/post?text=${encodeURIComponent(`✨ Mon Magic Clock : ${url}`)}` },
+    { label: "YouTube",   logo: "/magic-clock-social-youtube.png",
+      href: null, toast: "Lien copié ! Ajoute-le à ta description YouTube." },
+    { label: "Twitch",    logo: "/magic-clock-social-twitch.png",
+      href: null, toast: "Lien copié ! Colle-le dans ta bio Twitch." },
+    { label: "BeReal",    logo: "/magic-clock-social-bereal.png",
+      href: null, toast: "Lien copié ! Partage-le sur BeReal." },
+    { label: "Monet",     logo: "/magic-clock-social-monet.png",
+      href: null, toast: "Lien copié ! Partage-le sur Monet." },
   ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-t-3xl bg-white p-6 pb-10 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-slate-200" />
-        <div className="flex items-center justify-between mb-5">
+      <div className="w-full max-w-lg rounded-t-3xl bg-white pt-4 pb-10 shadow-2xl" onClick={e => e.stopPropagation()}>
+
+        {/* Handle */}
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 mb-4">
           <h3 className="text-base font-bold text-slate-900">Partager mon profil</h3>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
+          <button onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200">
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+
+        {/* URL + Copier */}
+        <div className="mx-5 mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
           <span className="flex-1 truncate text-xs text-slate-500">{url}</span>
-          <button onClick={copyLink} className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all ${copied ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700 hover:bg-violet-200"}`}>
+          <button onClick={copyLink}
+            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all ${copied ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700 hover:bg-violet-200"}`}>
             {copied ? <><Check className="h-3 w-3" /> Copié</> : <><Copy className="h-3 w-3" /> Copier</>}
           </button>
         </div>
+
+        {/* Bouton Partager via… (native share API — mobile) */}
         {typeof navigator !== "undefined" && "share" in navigator && (
-          <button onClick={nativeShare} className="mc-btn-primary mb-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm">
+          <button onClick={nativeShare}
+            className="mc-btn-primary mx-5 mb-5 flex w-[calc(100%-40px)] items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold">
             <Share2 className="h-4 w-4" /> Partager via…
           </button>
         )}
-        <div className="grid grid-cols-4 gap-3">
-          {shareLinks.map(s => (
-            <button key={s.label} onClick={s.href ? () => window.open(s.href!, "_blank") : s.action}
-              className="flex flex-col items-center gap-1.5 transition-transform active:scale-95">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
-                style={{ border: "1px solid rgba(226,232,240,.8)" }}>
-                <img src={s.logo} alt={s.label} style={{ width: 28, height: 28, objectFit: "contain" }} />
-              </div>
-              <span className="text-[10px] font-medium text-slate-600">{s.label}</span>
-            </button>
-          ))}
+
+        {/* Scroll horizontal — 13 réseaux */}
+        <div style={{ overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", paddingLeft: 20, paddingRight: 20 }}>
+          <div style={{ display: "flex", gap: 12, width: "max-content" }}>
+            {nets.map(n => (
+              <button
+                key={n.label}
+                onClick={n.href
+                  ? () => window.open(n.href!, "_blank")
+                  : () => copyAndToast(n.label)}
+                className="flex flex-col items-center gap-1.5 transition-transform active:scale-95"
+                style={{ width: 60 }}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm"
+                  style={{ border: "1px solid rgba(226,232,240,0.9)", flexShrink: 0 }}>
+                  <img src={n.logo} alt={n.label}
+                    style={{ width: 32, height: 32, objectFit: "contain" }} />
+                </div>
+                <span className="text-[10px] font-medium text-slate-600 text-center leading-tight w-full">{n.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Toast contextuel copie */}
+        {toastNet && (
+          <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 text-xs text-emerald-700 font-medium">
+            <Check className="h-3.5 w-3.5 flex-shrink-0" />
+            {nets.find(n => n.label === toastNet)?.toast ?? "Lien copié !"}
+          </div>
+        )}
       </div>
     </div>
   );
