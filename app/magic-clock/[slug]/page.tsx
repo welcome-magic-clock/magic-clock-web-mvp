@@ -95,5 +95,5 @@ export default async function MagicClockPage({ params }: { params: { slug: strin
   const data = await getMagicClock(params.slug)
   if (!data) notFound()
 
-  return <MagicClockDetailClient initialData={data} />
+  return <MagicClockDetailClient clock={data} />
 }
