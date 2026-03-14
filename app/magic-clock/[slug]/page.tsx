@@ -90,10 +90,31 @@ async function getMagicClock(slug: string) {
   return data
 }
 
-// ── Page serveur ──────────────────────────────────────────────────────────
 export default async function MagicClockPage({ params }: { params: { slug: string } }) {
-  const data = await getMagicClock(params.slug)
-  if (!data) notFound()
+  const raw = await getMagicClock(params.slug)
+  if (!raw) notFound()
+
+  const data = {
+    id: raw.id,
+    slug: raw.slug,
+    title: raw.title,
+    gatingMode: raw.gating_mode as "FREE" | "SUB" | "PPV",
+    ppvPrice: raw.ppv_price,
+    creatorHandle: raw.creator_handle,
+    creatorName: raw.creator_name,
+    creatorAvatar: null,
+    creatorBio: null,
+    creatorFollowers: 0,
+    beforeUrl: raw.before_url,
+    afterUrl: raw.after_url,
+    thumbnailUrl: raw.after_url,
+    ratingAvg: raw.rating_avg,
+    ratingCount: raw.rating_count ?? 0,
+    creatorRatingAvg: null,
+    viewsCount: raw.view_count ?? 0,
+    likesCount: raw.like_count ?? 0,
+    hashtags: [],
+  }
 
   return <MagicClockDetailClient clock={data} />
 }
