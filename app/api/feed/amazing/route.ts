@@ -1,17 +1,7 @@
 /**
  * app/api/feed/amazing/route.ts
- * ✅ v1.0 — Feed Amazing avec cache Redis Upstash
- *
- * Architecture :
- *   GET /api/feed/amazing?page=0&filter=all
- *   1. Vérifie le cache Redis (TTL 30s)
- *   2. Si cache miss → requête Supabase
- *   3. Stocke en cache
- *   4. Retourne les données
- *
- * Impact : divise la charge Supabase par ~100 lors des pics de trafic
+ * ✅ v1.1 — Fix colonnes DB : views_count, likes_count, saves_count, shares_count
  */
-
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { cache, CACHE_KEYS, TTL } from "@/lib/redis"
@@ -27,13 +17,12 @@ const PAGE_SIZE = 20
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const page   = Math.max(0, parseInt(searchParams.get("page") ?? "0", 10))
+    const page = Math.max(0, parseInt(searchParams.get("page") ?? "0", 10))
     const filter = searchParams.get("filter") ?? "all"
 
     // ── 1. Vérifier le cache Redis ─────────────────────────────────────────
     const cacheKey = CACHE_KEYS.feedAmazing(page, filter)
     const cached = await cache.get<unknown[]>(cacheKey)
-
     if (cached) {
       return NextResponse.json(
         { data: cached, cached: true, page },
@@ -48,25 +37,17 @@ export async function GET(req: NextRequest) {
 
     // ── 2. Cache miss → requête Supabase ───────────────────────────────────
     const from = page * PAGE_SIZE
-    const to   = from + PAGE_SIZE - 1
+    const to = from + PAGE_SIZE - 1
 
     let query = supabaseAdmin
       .from("magic_clocks")
       .select(`
-        id,
-        slug,
-        title,
-        gating_mode,
-        ppv_price,
-        before_url,
-        after_url,
-        creator_handle,
-        creator_name,
+        id, slug, title, gating_mode, ppv_price,
+        before_url, after_url,
+        creator_handle, creator_name,
         created_at,
-        view_count,
-        like_count,
-        rating_avg,
-        rating_count
+        views_count, likes_count, saves_count, shares_count,
+        rating_avg, rating_count
       `)
       .is("deleted_at", null)
       .eq("is_published", true)
@@ -74,9 +55,9 @@ export async function GET(req: NextRequest) {
       .range(from, to)
 
     // Filtres optionnels
-    if (filter === "free")  query = query.eq("gating_mode", "FREE")
-    if (filter === "ppv")   query = query.eq("gating_mode", "PPV")
-    if (filter === "sub")   query = query.eq("gating_mode", "SUB")
+    if (filter === "free") query = query.eq("gating_mode", "FREE")
+    if (filter === "ppv")  query = query.eq("gating_mode", "PPV")
+    if (filter === "sub")  query = query.eq("gating_mode", "SUB")
 
     const { data, error } = await query
 
